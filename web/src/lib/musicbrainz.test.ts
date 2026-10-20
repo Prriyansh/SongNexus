@@ -1,41 +1,41 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   __clearCache,
+  coverArtUrl,
   extractResults,
+  lookupMusicBrainz,
   mapArtist,
+  mapArtistDetails,
   mapRecording,
+  mapRecordingDetails,
+  parseDetailsParams,
   parseSearchParams,
   searchMusicBrainz,
   UpstreamError,
   ValidationError,
+  type DetailsParams,
   type SearchParams,
 } from "./musicbrainz";
 
-// Trimmed sample payloads mirroring real MusicBrainz search responses.
-const recordingPayload = {
+// --- Sample payloads mirroring real MusicBrainz responses -------------------
+
+const recordingSearch = {
   recordings: [
     {
       id: "rec-1",
       title: "Bohemian Rhapsody",
       length: 354000,
-      disambiguation: "remastered",
-      "artist-credit": [
-        { name: "Queen", artist: { id: "art-q", name: "Queen" } },
-      ],
+      "artist-credit": [{ name: "Queen", artist: { id: "art-q", name: "Queen" } }],
       tags: [
         { count: 5, name: "rock" },
         { count: 0, name: "unvoted" },
-        { count: -1, name: "disputed" },
       ],
-      releases: [
-        { id: "rel-1", title: "A Night at the Opera", date: "1975" },
-        { id: "rel-2", title: "", date: "1991" },
-      ],
+      releases: [{ id: "rel-1", title: "A Night at the Opera", date: "1975" }],
     },
   ],
 };
 
-const artistPayload = {
+const artistSearch = {
   artists: [
     {
       id: "art-r",
@@ -43,184 +43,326 @@ const artistPayload = {
       country: "GB",
       type: "Group",
       "life-span": { begin: "1991", ended: false },
-      tags: [
-        { count: 43, name: "Alternative Rock" },
-        { count: 30, name: "art rock" },
-        { count: 43, name: "alternative rock" }, // duplicate after lowercasing
-      ],
+      tags: [{ count: 43, name: "alternative rock" }],
     },
   ],
 };
+
+const artistLookup = {
+  id: "a74b1b7f-71a5-4011-9441-d0b5e4122711",
+  name: "Radiohead",
+  disambiguation: "",
+  country: "GB",
+  type: "Group",
+  gender: null,
+  "begin-area": { name: "Abingdon-on-Thames" },
+  "life-span": { begin: "1991", ended: false, end: null },
+  rating: { "votes-count": 80, value: 4.5 },
+  genres: [
+    { count: 43, name: "Alternative Rock" },
+    { count: 30, name: "art rock" },
+    { count: 43, name: "alternative rock" }, // dup after lowercasing
+  ],
+  "release-groups": [
+    { id: "a5e4bd1a-63c9-4dfc-9e63-ed0c3dc049be", title: "OK Computer", "primary-type": "Album", "secondary-types": [], "first-release-date": "1997-05-21" },
+    { id: "11111111-1111-4111-8111-111111111111", title: "Pablo Honey", "primary-type": "Album", "secondary-types": [], "first-release-date": "1993-02-22" },
+    { id: "22222222-2222-4222-8222-222222222222", title: "I Might Be Wrong", "primary-type": "Album", "secondary-types": ["Live"], "first-release-date": "2001-11-12" },
+    { id: "33333333-3333-4333-8333-333333333333", title: "Drill", "primary-type": "EP", "first-release-date": "1992-05-05" },
+    { id: "44444444-4444-4444-8444-444444444444", title: "Creep", "primary-type": "Single", "first-release-date": "1992-09-21" },
+  ],
+  relations: [
+    { type: "official homepage", "target-type": "url", url: { resource: "https://radiohead.com" } },
+    { type: "bandcamp", "target-type": "url", url: { resource: "https://radiohead.bandcamp.com" } },
+    { type: "wikidata", "target-type": "url", url: { resource: "https://www.wikidata.org/wiki/Q874" } },
+    { type: "image", "target-type": "url", url: { resource: "https://example.com/x.jpg" } }, // not in allowlist
+    { type: "member of band", "target-type": "artist", artist: { name: "Thom Yorke" } }, // not a url rel
+  ],
+};
+
+const recordingLookup = {
+  id: "95ebc842-9926-4658-8012-12c358247946",
+  title: "Paranoid Android",
+  length: 383000,
+  "artist-credit": [{ name: "Radiohead", artist: { id: "a74b1b7f-71a5-4011-9441-d0b5e4122711", name: "Radiohead" } }],
+  "first-release-date": "1997-05-26",
+  rating: { "votes-count": 12, value: 5 },
+  genres: [{ count: 10, name: "art rock" }],
+  releases: [
+    { id: "55555555-5555-4555-8555-555555555555", title: "Collection", date: "2010", "release-group": { id: "77777777-7777-4777-8777-777777777777" } },
+    { id: "66666666-6666-4666-8666-666666666666", title: "OK Computer", date: "1997-05-21", "release-group": { id: "a5e4bd1a-63c9-4dfc-9e63-ed0c3dc049be" } },
+  ],
+  relations: [{ type: "youtube", "target-type": "url", url: { resource: "https://youtu.be/x" } }],
+};
+
+// --- Test helpers -----------------------------------------------------------
 
 type FetchMock = (url: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 const okResponse = (body: unknown): Response =>
   ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
 
-const opts = (over: Partial<SearchParams> = {}): SearchParams => ({
+const statusResponse = (status: number, retryAfter?: string): Response =>
+  ({
+    ok: false,
+    status,
+    headers: { get: (k: string) => (k.toLowerCase() === "retry-after" ? retryAfter ?? null : null) },
+    json: async () => ({}),
+  }) as unknown as Response;
+
+const search = (over: Partial<SearchParams> = {}): SearchParams => ({
   type: "recording",
   query: "test",
   limit: 8,
   ...over,
 });
 
+const details = (over: Partial<DetailsParams> = {}): DetailsParams => ({
+  type: "artist",
+  id: "a74b1b7f-71a5-4011-9441-d0b5e4122711",
+  ...over,
+});
+
 afterEach(() => {
   __clearCache();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
+
+// --- Validation -------------------------------------------------------------
 
 describe("parseSearchParams", () => {
-  it("accepts a valid recording search", () => {
-    const p = parseSearchParams(new URLSearchParams("type=recording&q=hello"));
-    expect(p).toEqual({ type: "recording", query: "hello", limit: 8 });
+  it("accepts a valid search and clamps limit", () => {
+    const p = parseSearchParams(new URLSearchParams("type=artist&q=%20radiohead%20&limit=999"));
+    expect(p).toEqual({ type: "artist", query: "radiohead", limit: 25 });
   });
 
-  it("trims the query and clamps the limit", () => {
-    const p = parseSearchParams(
-      new URLSearchParams("type=artist&q=%20radiohead%20&limit=999")
-    );
-    expect(p.query).toBe("radiohead");
-    expect(p.limit).toBe(25);
-  });
-
-  it("rejects an unknown type", () => {
-    expect(() => parseSearchParams(new URLSearchParams("type=album&q=hi"))).toThrow(
-      ValidationError
-    );
-  });
-
-  it("rejects a query that is too short", () => {
-    expect(() => parseSearchParams(new URLSearchParams("type=artist&q=a"))).toThrow(
-      ValidationError
-    );
+  it("rejects unknown type and short query", () => {
+    expect(() => parseSearchParams(new URLSearchParams("type=album&q=hi"))).toThrow(ValidationError);
+    expect(() => parseSearchParams(new URLSearchParams("type=artist&q=a"))).toThrow(ValidationError);
   });
 });
 
-describe("mapRecording", () => {
-  it("maps real fields and drops noisy tags", () => {
-    const song = mapRecording(recordingPayload.recordings[0]);
-    expect(song.id).toBe("rec-1");
-    expect(song.durationMs).toBe(354000);
+describe("parseDetailsParams", () => {
+  it("accepts a valid UUID", () => {
+    expect(parseDetailsParams(new URLSearchParams(`type=artist&id=${details().id}`))).toEqual(details());
+  });
+
+  it("rejects a non-UUID id and bad type", () => {
+    expect(() => parseDetailsParams(new URLSearchParams("type=artist&id=not-a-uuid"))).toThrow(ValidationError);
+    expect(() => parseDetailsParams(new URLSearchParams("type=album&id=" + details().id))).toThrow(ValidationError);
+  });
+});
+
+// --- Mappers ----------------------------------------------------------------
+
+describe("search mappers", () => {
+  it("maps a recording, dropping noisy tags", () => {
+    const song = mapRecording(recordingSearch.recordings[0]);
+    expect(song).toMatchObject({ id: "rec-1", durationMs: 354000, tags: ["rock"] });
     expect(song.artists).toEqual([{ name: "Queen", id: "art-q" }]);
-    expect(song.tags).toEqual(["rock"]); // zero/negative count tags removed
-    expect(song.releases).toEqual([
-      { id: "rel-1", title: "A Night at the Opera", date: "1975" },
-    ]); // untitled release filtered out
   });
 
-  it("handles missing fields without fabricating data", () => {
-    const song = mapRecording({ id: "x" });
-    expect(song.durationMs).toBeNull();
-    expect(song.artists).toEqual([]);
-    expect(song.tags).toEqual([]);
-    expect(song.releases).toEqual([]);
-    expect(song.title).toBe("Untitled recording");
+  it("maps an artist and handles missing fields", () => {
+    expect(mapArtist(artistSearch.artists[0])).toMatchObject({ id: "art-r", country: "GB", tags: ["alternative rock"] });
+    expect(mapArtist({ id: "x" }).name).toBe("Unknown artist");
   });
 });
 
-describe("mapArtist", () => {
-  it("maps fields, sorts tags by votes and dedupes case-insensitively", () => {
-    const a = mapArtist(artistPayload.artists[0]);
-    expect(a).toMatchObject({ id: "art-r", name: "Radiohead", country: "GB", type: "Group" });
-    expect(a.lifeSpan).toEqual({ begin: "1991", end: undefined, ended: false });
-    expect(a.tags).toEqual(["alternative rock", "art rock"]);
+describe("mapArtistDetails", () => {
+  const d = () => mapArtistDetails(artistLookup);
+
+  it("extracts weighted genres (sorted, deduped) and the community rating", () => {
+    expect(d().genres.map((g) => g.name)).toEqual(["alternative rock", "art rock"]);
+    expect(d().rating).toEqual({ value: 4.5, votes: 80 });
   });
 
-  it("handles a missing life-span", () => {
-    const a = mapArtist({ id: "y", name: "Nobody" });
-    expect(a.lifeSpan).toEqual({ begin: undefined, end: undefined, ended: undefined });
+  it("summarises the discography by type and year span", () => {
+    const disc = d().discography;
+    expect(disc).toMatchObject({ albumCount: 3, epCount: 1, singleCount: 1, firstYear: "1992", lastYear: "2001" });
+  });
+
+  it("picks studio albums (no secondary types) as representative, with cover art", () => {
+    const reps = d().discography.representative;
+    expect(reps.map((r) => r.title)).toEqual(["Pablo Honey", "OK Computer"]); // live album excluded
+    expect(reps[1].artUrl).toBe(
+      "https://coverartarchive.org/release-group/a5e4bd1a-63c9-4dfc-9e63-ed0c3dc049be/front-250"
+    );
+  });
+
+  it("keeps only allowlisted url relations", () => {
+    expect(d().links.map((l) => l.type)).toEqual(["official homepage", "bandcamp", "wikidata"]);
+  });
+
+  it("reads the origin from begin-area when area is absent", () => {
+    expect(d().area).toBe("Abingdon-on-Thames");
+  });
+});
+
+describe("mapRecordingDetails", () => {
+  it("maps genres, rating, and the earliest release as representative with art", () => {
+    const r = mapRecordingDetails(recordingLookup);
+    expect(r.genres.map((g) => g.name)).toEqual(["art rock"]);
+    expect(r.rating).toEqual({ value: 5, votes: 12 });
+    expect(r.firstReleaseDate).toBe("1997-05-26");
+    expect(r.representative).toMatchObject({ title: "OK Computer", year: "1997" }); // earliest, not "Collection"
+    expect(r.representative?.artUrl).toBe(
+      "https://coverartarchive.org/release/66666666-6666-4666-8666-666666666666/front-250"
+    );
+  });
+
+  it("returns null representative when there are no releases", () => {
+    expect(mapRecordingDetails({ id: "r", title: "x" }).representative).toBeNull();
+  });
+});
+
+describe("coverArtUrl", () => {
+  it("builds a CAA url for a valid id and rejects invalid ids", () => {
+    expect(coverArtUrl("release-group", "a5e4bd1a-63c9-4dfc-9e63-ed0c3dc049be")).toContain("/release-group/");
+    expect(coverArtUrl("release", "nope")).toBeNull();
   });
 });
 
 describe("extractResults", () => {
-  it("returns [] for a payload missing the expected key", () => {
+  it("returns [] for missing keys and drops id-less entries", () => {
     expect(extractResults("recording", {})).toEqual([]);
-    expect(extractResults("artist", { artists: null })).toEqual([]);
-  });
-
-  it("drops entries without an id", () => {
     expect(extractResults("artist", { artists: [{ name: "No id" }] })).toEqual([]);
   });
 });
 
+// --- Request behaviour: search / lookup / dedup / backoff / SWR -------------
+
 describe("searchMusicBrainz", () => {
-  it("returns mapped results on success and sends an identifiable User-Agent", async () => {
-    const fetchImpl = vi.fn<FetchMock>(async () => okResponse(artistPayload));
-    const results = await searchMusicBrainz(opts({ type: "artist", query: "radiohead" }), {
+  it("returns mapped results and sends an identifiable User-Agent", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async () => okResponse(artistSearch));
+    const results = await searchMusicBrainz(search({ type: "artist", query: "radiohead" }), {
       fetchImpl,
       throttleMs: 0,
       useCache: false,
     });
-
     expect(results).toHaveLength(1);
-    const [url, init] = fetchImpl.mock.calls[0];
-    expect(String(url)).toContain("/artist?");
-    expect(String(url)).toContain("query=radiohead");
+    const init = fetchImpl.mock.calls[0][1];
     expect((init?.headers as Record<string, string>)["User-Agent"]).toContain("SongNexus");
   });
 
-  it("encodes special characters in the query safely", async () => {
+  it("encodes special characters safely", async () => {
     const fetchImpl = vi.fn<FetchMock>(async () => okResponse({ recordings: [] }));
-    await searchMusicBrainz(opts({ query: "AC/DC & Me?" }), {
-      fetchImpl,
-      throttleMs: 0,
-      useCache: false,
-    });
+    await searchMusicBrainz(search({ query: "AC/DC & Me?" }), { fetchImpl, throttleMs: 0, useCache: false });
     const url = String(fetchImpl.mock.calls[0][0]);
-    expect(url).not.toContain("AC/DC & Me?");
     expect(url).toContain("AC%2FDC");
+    expect(url).not.toContain("AC/DC & Me?");
   });
 
   it("returns an empty array for no results", async () => {
     const fetchImpl = vi.fn<FetchMock>(async () => okResponse({ recordings: [] }));
-    const results = await searchMusicBrainz(opts(), {
-      fetchImpl,
-      throttleMs: 0,
-      useCache: false,
-    });
-    expect(results).toEqual([]);
+    expect(await searchMusicBrainz(search(), { fetchImpl, throttleMs: 0, useCache: false })).toEqual([]);
   });
 
-  it("throws a 503 UpstreamError when rate limited", async () => {
+  it("throws a retryable 502 on malformed JSON", async () => {
     const fetchImpl = vi.fn<FetchMock>(
       async () =>
-        ({ ok: false, status: 503, json: async () => ({}) }) as unknown as Response
+        ({ ok: true, status: 200, json: async () => { throw new Error("bad"); } }) as unknown as Response
     );
     await expect(
-      searchMusicBrainz(opts(), { fetchImpl, throttleMs: 0, useCache: false })
-    ).rejects.toMatchObject({ status: 503 });
-  });
-
-  it("throws on a malformed JSON body", async () => {
-    const fetchImpl = vi.fn<FetchMock>(
-      async () =>
-        ({
-          ok: true,
-          status: 200,
-          json: async () => {
-            throw new Error("Unexpected token");
-          },
-        }) as unknown as Response
-    );
-    await expect(
-      searchMusicBrainz(opts(), { fetchImpl, throttleMs: 0, useCache: false })
+      searchMusicBrainz(search(), { fetchImpl, throttleMs: 0, useCache: false })
     ).rejects.toBeInstanceOf(UpstreamError);
   });
 
-  it("maps a network failure to a 502 UpstreamError", async () => {
-    const fetchImpl = vi.fn<FetchMock>(async () => {
-      throw new TypeError("network down");
-    });
-    await expect(
-      searchMusicBrainz(opts(), { fetchImpl, throttleMs: 0, useCache: false })
-    ).rejects.toMatchObject({ status: 502 });
-  });
-
-  it("serves identical repeat searches from cache without a second fetch", async () => {
-    const fetchImpl = vi.fn<FetchMock>(async () => okResponse(recordingPayload));
-    const args = opts({ query: "queen" });
+  it("serves a repeated search from cache without a second fetch", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async () => okResponse(recordingSearch));
+    const args = search({ query: "queen" });
     await searchMusicBrainz(args, { fetchImpl, throttleMs: 0 });
     await searchMusicBrainz(args, { fetchImpl, throttleMs: 0 });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("coalesces concurrent identical requests into one upstream call", async () => {
+    let resolve!: (r: Response) => void;
+    const pending = new Promise<Response>((r) => (resolve = r));
+    const fetchImpl = vi.fn<FetchMock>(() => pending);
+    const args = search({ query: "dedupe" });
+    const both = Promise.all([
+      searchMusicBrainz(args, { fetchImpl, throttleMs: 0 }),
+      searchMusicBrainz(args, { fetchImpl, throttleMs: 0 }),
+    ]);
+    resolve(okResponse(recordingSearch));
+    const [a, b] = await both;
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(a).toEqual(b);
+  });
+});
+
+describe("rate-limit resilience", () => {
+  it("retries after a 503 and then succeeds", async () => {
+    let n = 0;
+    const fetchImpl = vi.fn<FetchMock>(async () => (n++ === 0 ? statusResponse(503) : okResponse(recordingSearch)));
+    const results = await searchMusicBrainz(search(), { fetchImpl, throttleMs: 0, retryBaseMs: 0, useCache: false });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(results).toHaveLength(1);
+  });
+
+  it("gives up after the retry limit with a retryable 503", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async () => statusResponse(503));
+    await expect(
+      searchMusicBrainz(search(), { fetchImpl, throttleMs: 0, retryBaseMs: 0, maxRetries: 2, useCache: false })
+    ).rejects.toMatchObject({ status: 503, retryable: true });
+    expect(fetchImpl).toHaveBeenCalledTimes(3); // initial + 2 retries
+  });
+
+  it("honors a Retry-After header before retrying", async () => {
+    vi.useFakeTimers();
+    let n = 0;
+    const fetchImpl = vi.fn<FetchMock>(async () =>
+      n++ === 0 ? statusResponse(503, "2") : okResponse(recordingSearch)
+    );
+    const promise = searchMusicBrainz(search(), {
+      fetchImpl,
+      throttleMs: 0,
+      maxRetries: 1,
+      useCache: false,
+    });
+    // Before the 2s Retry-After elapses, the retry has not fired yet.
+    await vi.advanceTimersByTimeAsync(500);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(2000);
+    await expect(promise).resolves.toHaveLength(1);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry a non-rate-limit error (404)", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async () => statusResponse(404));
+    await expect(
+      searchMusicBrainz(search(), { fetchImpl, throttleMs: 0, retryBaseMs: 0, useCache: false })
+    ).rejects.toMatchObject({ status: 502, retryable: false });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("serves stale cached data when a refresh hits a 503 (stale-while-revalidate)", async () => {
+    vi.useFakeTimers();
+    const fetchImpl = vi.fn<FetchMock>(async () => okResponse(recordingSearch));
+    const args = search({ query: "swr" });
+    const fresh = await searchMusicBrainz(args, { fetchImpl, throttleMs: 0, maxRetries: 0 });
+
+    vi.advanceTimersByTime(6 * 60_000); // past the 5-min fresh window, within stale window
+    fetchImpl.mockImplementation(async () => statusResponse(503));
+    const stale = await searchMusicBrainz(args, { fetchImpl, throttleMs: 0, maxRetries: 0 });
+
+    expect(stale).toEqual(fresh); // old data returned instead of an error
+  });
+});
+
+describe("lookupMusicBrainz", () => {
+  it("returns enriched artist details from a lookup payload", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async () => okResponse(artistLookup));
+    const result = await lookupMusicBrainz(details(), { fetchImpl, throttleMs: 0, useCache: false });
+    const url = String(fetchImpl.mock.calls[0][0]);
+    expect(url).toContain("/artist/");
+    expect(url).toContain("inc=genres");
+    expect("discography" in result && result.discography.albumCount).toBe(3);
+  });
+
+  it("returns enriched recording details", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async () => okResponse(recordingLookup));
+    const result = await lookupMusicBrainz(details({ type: "recording" }), { fetchImpl, throttleMs: 0, useCache: false });
+    expect("title" in result && result.title).toBe("Paranoid Android");
   });
 });

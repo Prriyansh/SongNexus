@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   formatDuration,
+  formatYears,
   isSong,
+  partitionGenres,
   sharedTags,
   type Artist,
+  type Genre,
   type Song,
 } from "./types";
 
@@ -57,5 +60,27 @@ describe("sharedTags", () => {
 
   it("returns an empty array when nothing overlaps", () => {
     expect(sharedTags(song({ tags: ["rock"] }), artist({ tags: ["jazz"] }))).toEqual([]);
+  });
+});
+
+describe("partitionGenres", () => {
+  const g = (names: string[]): Genre[] => names.map((name, i) => ({ name, count: 10 - i }));
+
+  it("splits into shared, onlyA, onlyB preserving input order", () => {
+    const result = partitionGenres(g(["rock", "pop", "indie"]), g(["indie", "rock", "jazz"]));
+    expect(result).toEqual({ shared: ["rock", "indie"], onlyA: ["pop"], onlyB: ["jazz"] });
+  });
+
+  it("handles one side having no genres", () => {
+    expect(partitionGenres(g(["rock"]), [])).toEqual({ shared: [], onlyA: ["rock"], onlyB: [] });
+  });
+});
+
+describe("formatYears", () => {
+  it("formats ongoing, ended, and unknown ranges", () => {
+    expect(formatYears("1991", "", false)).toBe("1991 – present");
+    expect(formatYears("1960", "1970")).toBe("1960 – 1970");
+    expect(formatYears("1980", "", true)).toBe("1980");
+    expect(formatYears("", "")).toBe("Unknown");
   });
 });

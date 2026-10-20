@@ -1,5 +1,54 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## SongNexus comparison data
+
+SongNexus compares two songs or two artists using real catalogue metadata.
+
+**Data sources**
+
+- **MusicBrainz** (no credentials, just a User-Agent) — the backbone.
+  - _Search_ (`/api/musicbrainz/search`) powers the pickers.
+  - _Lookup_ (`/api/musicbrainz/details`) enriches the two selected items with
+    curated **genres**, **discography** (release-groups → album/EP/single counts
+    and year span), the **community rating**, and **external links** (official
+    site, streaming, Bandcamp, Discogs…). A full comparison costs at most two
+    lookups, both cached.
+- **Cover Art Archive** (no credentials) — representative album/release artwork.
+
+**Deliberately not shown.** Popularity, play counts, monthly listeners and audio
+features (tempo, energy, danceability, mood) are **not** provided by these
+sources, so they are omitted rather than estimated. AcousticBrainz (the former
+open audio-feature source) is discontinued. Spotify deprecated its audio-feature
+endpoints for new apps in November 2024, so new credentials cannot supply them
+either. Facts come from catalogued metadata; "insights" are derived from it and
+labelled as such.
+
+**Future (optional, needs credentials).** A Spotify integration could add
+popularity, artist/album imagery and preview links via the Client Credentials
+flow. It would live behind environment variables, kept separate from the
+MusicBrainz path — and would still not provide audio features for a new app.
+
+## Rate limiting & caching (serverless caveat)
+
+MusicBrainz asks clients to average ≤ 1 request/second per IP. The integration
+layer (`src/lib/musicbrainz.ts`) mitigates this with:
+
+- client-side debouncing and request cancellation;
+- a short-lived response cache with **stale-while-revalidate** (serves cached
+  data if a refresh hits a transient error);
+- **in-flight de-duplication** so concurrent identical requests share one call;
+- **bounded exponential backoff with jitter**, honoring `Retry-After`;
+- a best-effort ~1 req/s outbound throttle.
+
+> **Important:** the throttle and cache live in **module memory, which is
+> per-instance**. On a platform like Vercel multiple instances run concurrently,
+> so this does **not** guarantee a global 1 req/s or a shared cache across the
+> whole deployment. For a hard global limit, back the throttle and cache with a
+> shared store such as **Upstash Redis** or **Vercel KV** (a token bucket keyed
+> by provider + a shared response cache). That adds a dependency and a small
+> amount of latency/cost, so it is recommended only if rate-limit errors persist
+> in production.
+
 ## Getting Started
 
 First, run the development server:

@@ -33,7 +33,10 @@ export async function GET(request: Request) {
       console.error(
         `[musicbrainz] upstream failure (${error.status}): ${error.message}`
       );
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return NextResponse.json(
+        { error: error.message, retryable: error.retryable },
+        { status: error.status }
+      );
     }
     console.error("[musicbrainz] unexpected failure:", error);
     return NextResponse.json(
