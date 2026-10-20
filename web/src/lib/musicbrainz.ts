@@ -17,7 +17,11 @@
 import type {
   Artist,
   ArtistDetails,
+  Collaborator,
+  CollaboratorComparison,
+  Coverage,
   DetailsResult,
+  Discography,
   Genre,
   LinkRef,
   Rating,
@@ -25,6 +29,7 @@ import type {
   ReleaseRef,
   Result,
   Song,
+  TrackRef,
 } from "./types";
 
 export type SearchType = "recording" | "artist";
@@ -48,6 +53,7 @@ const MAX_RETRIES = 2; // up to 3 attempts total
 const RETRY_BASE_MS = 500;
 const RETRY_CAP_MS = 4_000;
 const MAX_RETRY_AFTER_MS = 5_000; // don't honor absurd Retry-After within a request
+const ALBUM_PAGE_SIZE = 100; // MusicBrainz browse maximum
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -112,6 +118,7 @@ type RawRelation = {
   type?: unknown;
   "target-type"?: unknown;
   url?: RawRelationUrl | null;
+  artist?: { id?: unknown; name?: unknown } | null;
 };
 
 type RawReleaseGroup = {
@@ -283,28 +290,25 @@ const STUDIO_ALBUM = (g: RawReleaseGroup) =>
   g?.["primary-type"] === "Album" &&
   (!Array.isArray(g?.["secondary-types"]) || g["secondary-types"].length === 0);
 
-export function mapArtistDetails(raw: RawArtist): ArtistDetails {
-  const base = mapArtist(raw);
-  const rgs = Array.isArray(raw["release-groups"]) ? raw["release-groups"] : [];
+/** Browse payload for `release-group?artist=…&type=album`. */
+type RawAlbumBrowse = { "release-group-count"?: unknown; "release-groups"?: RawReleaseGroup[] };
 
-  let albumCount = 0,
-    epCount = 0,
-    singleCount = 0,
-    otherCount = 0;
-  const years: string[] = [];
-  for (const g of rgs) {
-    const type = str(g?.["primary-type"]);
-    if (type === "Album") albumCount++;
-    else if (type === "EP") epCount++;
-    else if (type === "Single") singleCount++;
-    else otherCount++;
-    const y = yearOf(str(g?.["first-release-date"]));
-    if (y) years.push(y);
-  }
-  years.sort();
+/**
+ * Summarises an artist's albums from a release-group browse. `release-group-count` is the exact
+ * total; the page holds at most ALBUM_PAGE_SIZE groups, so studio counts are a lower bound when
+ * the artist has more albums than that (e.g. bands with hundreds of live bootlegs).
+ */
+export function mapDiscography(browse: RawAlbumBrowse | null | undefined): Discography | null {
+  if (!browse || !Array.isArray(browse["release-groups"])) return null;
+  const groups = browse["release-groups"].filter((g) => g?.["primary-type"] === "Album");
+  const total = typeof browse["release-group-count"] === "number" ? browse["release-group-count"] : groups.length;
+  const studio = groups.filter(STUDIO_ALBUM);
 
-  const representative: ReleaseRef[] = rgs
-    .filter(STUDIO_ALBUM)
+  const yearsOf = (list: RawReleaseGroup[]) =>
+    list.map((g) => yearOf(str(g?.["first-release-date"]))).filter(Boolean).sort();
+  const years = studio.length ? yearsOf(studio) : yearsOf(groups);
+
+  const representative: ReleaseRef[] = studio
     .map((g) => ({
       id: str(g?.id),
       title: str(g?.title),
@@ -317,21 +321,25 @@ export function mapArtistDetails(raw: RawArtist): ArtistDetails {
     .slice(0, 6);
 
   return {
-    ...base,
+    albumCount: Math.max(total, groups.length),
+    studioAlbumCount: studio.length,
+    complete: groups.length >= total,
+    firstYear: years[0] ?? "",
+    lastYear: years[years.length - 1] ?? "",
+    representative,
+  };
+}
+
+/** Maps an artist lookup plus its album browse (null when the browse failed). */
+export function mapArtistDetails(raw: RawArtist, albums: RawAlbumBrowse | null = null): ArtistDetails {
+  return {
+    ...mapArtist(raw),
     gender: str(raw.gender),
     area: str(raw.area?.name) || str(raw["begin-area"]?.name),
     genres: mapCounted(raw.genres),
     rating: mapRating(raw.rating),
     links: mapLinks(raw.relations),
-    discography: {
-      albumCount,
-      epCount,
-      singleCount,
-      otherCount,
-      firstYear: years[0] ?? "",
-      lastYear: years[years.length - 1] ?? "",
-      representative,
-    },
+    discography: mapDiscography(albums),
   };
 }
 
@@ -371,6 +379,118 @@ export function mapRecordingDetails(raw: RawRecording): RecordingDetails {
   };
 }
 
+// --- Mutual collaborators ----------------------------------------------------
+
+/** MusicBrainz recording relationship types we show, and the label each gets. */
+const CREDIT_ROLES: Record<string, string> = {
+  producer: "producer",
+  "co-producer": "producer",
+  programming: "programming",
+  mix: "mixing",
+  engineer: "engineering",
+  recording: "engineering",
+  vocal: "vocals",
+  instrument: "instruments",
+  "performing orchestra": "instruments",
+};
+/** Placeholder artists MusicBrainz uses for compilations and unknown credits. */
+const SPECIAL_ARTISTS = new Set([
+  "89ad4ac3-39f7-470e-963a-56509c546377", // Various Artists
+  "125ec42a-7229-4250-afc5-e057484327fe", // [unknown]
+]);
+const RECORDING_PAGE_SIZE = 100;
+/** Most recent studio albums read per artist when looking for shared collaborators. */
+const ALBUMS_FOR_CREDITS = 3;
+
+type Person = { name: string; roles: Set<string>; tracks: Map<string, string> };
+/** Everyone credited on one artist's scanned recordings, keyed by MusicBrainz artist id. */
+export type CreditIndex = { coverage: Coverage; people: Map<string, Person> };
+
+/**
+ * Indexes recordings (with artist-credits + artist-rels): who appears on the artist's
+ * recordings, in what role, on which tracks. Co-credited artists count as "featured".
+ * `coverage` says how much of the catalogue these recordings represent.
+ */
+export function indexCredits(recordings: RawRecording[], selfId: string, coverage: Coverage): CreditIndex {
+  const people = new Map<string, Person>();
+
+  const credit = (rawId: unknown, rawName: unknown, role: string, rec: RawRecording) => {
+    const id = str(rawId);
+    const name = str(rawName);
+    if (!id || !name || id === selfId || SPECIAL_ARTISTS.has(id)) return;
+    const person = people.get(id) ?? { name, roles: new Set<string>(), tracks: new Map<string, string>() };
+    person.roles.add(role);
+    person.tracks.set(str(rec.id), str(rec.title) || "Untitled recording");
+    people.set(id, person);
+  };
+
+  for (const rec of recordings) {
+    if (!str(rec?.id)) continue;
+    for (const c of Array.isArray(rec["artist-credit"]) ? rec["artist-credit"] : []) {
+      credit(c?.artist?.id, c?.artist?.name, "featured", rec);
+    }
+    for (const rel of Array.isArray(rec.relations) ? rec.relations : []) {
+      const role = CREDIT_ROLES[str(rel?.type)];
+      if (role) credit(rel?.artist?.id, rel?.artist?.name, role, rec);
+    }
+  }
+
+  return { coverage, people };
+}
+
+type RawTrack = { "artist-credit"?: RawArtistCredit[]; recording?: RawRecording | null };
+type RawReleaseWithTracks = { media?: { tracks?: RawTrack[] }[] };
+
+/** The recordings on a release's tracklist, each carrying its track-level artist credit. */
+export function releaseRecordings(release: RawReleaseWithTracks | null | undefined): RawRecording[] {
+  return (release?.media ?? []).flatMap((medium) =>
+    (medium?.tracks ?? []).flatMap((track) =>
+      track?.recording
+        ? [{ ...track.recording, "artist-credit": track["artist-credit"] ?? track.recording["artist-credit"] }]
+        : []
+    )
+  );
+}
+
+/** People credited on both artists' recordings, strongest overlap first, plus direct links. */
+export function compareCredits(
+  a: CreditIndex,
+  b: CreditIndex,
+  aId: string,
+  bId: string,
+  max = 12,
+  tracksPerSide = 5
+): CollaboratorComparison {
+  const refs = (tracks: Map<string, string> | undefined): TrackRef[] =>
+    [...(tracks ?? [])].slice(0, tracksPerSide).map(([id, title]) => ({ id, title }));
+
+  const mutual: Collaborator[] = [...a.people]
+    .filter(([id]) => id !== aId && id !== bId && b.people.has(id))
+    .map(([id, pa]) => {
+      const pb = b.people.get(id)!;
+      return {
+        id,
+        name: pa.name,
+        roles: { a: [...pa.roles].sort(), b: [...pb.roles].sort() },
+        trackCount: { a: pa.tracks.size, b: pb.tracks.size },
+        tracks: { a: refs(pa.tracks), b: refs(pb.tracks) },
+      };
+    })
+    .sort(
+      (x, y) =>
+        Math.min(y.trackCount.a, y.trackCount.b) - Math.min(x.trackCount.a, x.trackCount.b) ||
+        y.trackCount.a + y.trackCount.b - (x.trackCount.a + x.trackCount.b) ||
+        x.name.localeCompare(y.name)
+    )
+    .slice(0, max);
+
+  return {
+    mutual,
+    direct: { bOnA: refs(a.people.get(bId)?.tracks), aOnB: refs(b.people.get(aId)?.tracks) },
+    coverage: { a: a.coverage, b: b.coverage },
+  };
+}
+
 // --- Request validation -----------------------------------------------------
 
 export type SearchParams = { type: SearchType; query: string; limit: number };
@@ -402,6 +522,21 @@ export function parseSearchParams(params: URLSearchParams): SearchParams {
   }
 
   return { type, query, limit };
+}
+
+export type CollaboratorParams = { a: string; b: string };
+
+/** Validates the two artist ids for a collaborator comparison. */
+export function parseCollaboratorParams(params: URLSearchParams): CollaboratorParams {
+  const a = (params.get("a") ?? "").trim();
+  const b = (params.get("b") ?? "").trim();
+  if (!UUID_RE.test(a) || !UUID_RE.test(b)) {
+    throw new ValidationError('Query params "a" and "b" must be MusicBrainz artist UUIDs.');
+  }
+  if (a.toLowerCase() === b.toLowerCase()) {
+    throw new ValidationError("Pick two different artists.");
+  }
+  return { a, b };
 }
 
 /** Validates and normalizes details (lookup) params. */
@@ -612,11 +747,17 @@ function buildSearchUrl({ type, query, limit }: SearchParams): string {
 }
 
 function buildLookupUrl({ type, id }: DetailsParams): string {
+  // Artist lookups skip release-groups: they're capped at 25 there. Albums come from a browse.
   const inc =
     type === "artist"
-      ? "genres+tags+ratings+release-groups+url-rels"
+      ? "genres+tags+ratings+url-rels"
       : "genres+tags+ratings+artist-credits+releases+release-groups+url-rels";
   return `${MB_BASE}/${type}/${id}?inc=${inc}&fmt=json`;
+}
+
+/** Browse of an artist's album release-groups; carries the exact total in release-group-count. */
+function buildAlbumBrowseUrl(artistId: string): string {
+  return `${MB_BASE}/release-group?artist=${artistId}&type=album&limit=${ALBUM_PAGE_SIZE}&fmt=json`;
 }
 
 /** Searches MusicBrainz for recordings or artists and returns normalized results. */
@@ -641,10 +782,100 @@ export async function lookupMusicBrainz(
   const key = `lookup:${input.type}:${input.id}`;
   return withCache(key, LOOKUP_TTL_MS, useCache, async () => {
     const payload = await fetchJson(buildLookupUrl(input), options);
-    return input.type === "artist"
-      ? mapArtistDetails(payload as RawArtist)
-      : mapRecordingDetails(payload as RawRecording);
+    if (input.type !== "artist") return mapRecordingDetails(payload as RawRecording);
+
+    // Second call for accurate album counts. If only this one fails, still return the artist.
+    let albums: RawAlbumBrowse | null = null;
+    try {
+      albums = await albumBrowse(input.id, options);
+    } catch (error) {
+      if (!(error instanceof UpstreamError)) throw error;
+      console.warn(`[musicbrainz] album browse failed for ${input.id}: ${error.message}`);
+    }
+    return mapArtistDetails(payload as RawArtist, albums);
   });
+}
+
+/** An artist's album release-groups, cached: shared by the details card and the collaborator scan. */
+function albumBrowse(artistId: string, options: RequestOptions): Promise<RawAlbumBrowse> {
+  return withCache(`albums:${artistId}`, LOOKUP_TTL_MS, options.useCache ?? true, async () =>
+    (await fetchJson(buildAlbumBrowseUrl(artistId), options)) as RawAlbumBrowse
+  );
+}
+
+/** Recordings by an artist with everyone credited on them (one page of 100). */
+function buildRecordingCreditsUrl(artistId: string): string {
+  return `${MB_BASE}/recording?artist=${artistId}&inc=artist-credits+artist-rels&limit=${RECORDING_PAGE_SIZE}&fmt=json`;
+}
+
+/** One official release of a release-group, with every track's credits. */
+function buildAlbumCreditsUrl(releaseGroupId: string): string {
+  return `${MB_BASE}/release?release-group=${releaseGroupId}&status=official&inc=recordings+artist-credits+recording-level-rels+artist-rels&limit=1&fmt=json`;
+}
+
+/**
+ * Who is credited on an artist's work. Reads the full credits of their most recent studio albums
+ * (one request each); artists without studio albums fall back to one page of their recordings.
+ */
+async function artistCredits(artistId: string, options: RequestOptions): Promise<CreditIndex> {
+  return withCache(`credits:${artistId}`, LOOKUP_TTL_MS, options.useCache ?? true, async () => {
+    const studio = ((await albumBrowse(artistId, options))["release-groups"] ?? [])
+      .filter(STUDIO_ALBUM)
+      .filter((g) => UUID_RE.test(str(g?.id)))
+      .sort((x, y) => str(y?.["first-release-date"]).localeCompare(str(x?.["first-release-date"])));
+
+    if (!studio.length) {
+      const page = (await fetchJson(buildRecordingCreditsUrl(artistId), options)) as {
+        recordings?: RawRecording[];
+        "recording-count"?: unknown;
+      };
+      const recordings = Array.isArray(page.recordings) ? page.recordings : [];
+      const total = typeof page["recording-count"] === "number" ? page["recording-count"] : recordings.length;
+      return indexCredits(recordings, artistId, { scanned: recordings.length, total, unit: "recordings" });
+    }
+
+    const recent = studio.slice(0, ALBUMS_FOR_CREDITS);
+    const recordings: RawRecording[] = [];
+    for (const group of recent) {
+      const page = (await fetchJson(buildAlbumCreditsUrl(str(group.id)), options)) as { releases?: RawReleaseWithTracks[] };
+      recordings.push(...releaseRecordings(page.releases?.[0]));
+    }
+    return indexCredits(recordings, artistId, { scanned: recent.length, total: studio.length, unit: "albums" });
+  });
+}
+
+/**
+ * Collaborators shared by two artists. Costs up to ALBUMS_FOR_CREDITS requests per artist
+ * (plus the album list the details card already cached), all cached afterwards.
+ */
+export async function compareCollaborators(
+  input: CollaboratorParams,
+  options: RequestOptions = {}
+): Promise<CollaboratorComparison> {
+  const a = await artistCredits(input.a, options);
+  const b = await artistCredits(input.b, options);
+  return compareCredits(a, b, input.a, input.b);
+}
+
+const normTitle = (title: string) =>
+  title
+    .toLowerCase()
+    .replace(/[’']/g, "'")
+    .replace(/\s*[([](feat|ft|with)\.?[^)\]]*[)\]]/g, "")
+    .replace(/\s+-\s+.*(remaster|version|edit|mix).*$/i, "")
+    .trim();
+
+/** Finds an artist's recording with this exact title (ignoring "feat." and remaster suffixes). */
+export async function findRecording(
+  artistId: string,
+  title: string,
+  options: RequestOptions = {}
+): Promise<Song | null> {
+  const clean = normTitle(title);
+  if (!UUID_RE.test(artistId) || !clean) return null;
+  const query = `recording:"${clean.replace(/["\\]/g, "")}" AND arid:${artistId} AND status:official`;
+  const results = (await searchMusicBrainz({ type: "recording", query, limit: 10 }, options)) as Song[];
+  return results.find((song) => normTitle(song.title) === clean) ?? null;
 }
 
 /** Pulls the right array out of a search payload and maps it; tolerant of missing keys. */

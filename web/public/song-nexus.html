@@ -465,7 +465,30 @@ button{font:inherit;color:inherit}
 #v-compare .cmp-links{display:flex;flex-wrap:wrap;gap:8px}
 #v-compare .cmp-links a{text-transform:capitalize;font-size:12.5px;height:30px;padding:0 12px}
 #v-compare .g-chip{background:var(--surface);border:1px solid var(--line-2)}
-#v-compare .g-chip.shared{background:var(--green-soft);border-color:var(--green);color:var(--ink)}
+#v-compare .g-chip.shared{background:var(--blue-soft);border-color:var(--blue);color:var(--ink)}
+#v-compare .g-hub{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr);gap:12px;margin-top:10px}
+#v-compare .g-hub>div{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+#v-compare .g-hub .hub{border-color:var(--blue);background:var(--blue-soft);text-align:center;align-items:center}
+#v-compare .g-hub .hub .chips{justify-content:center}
+#v-compare .g-hub .hub .g-chip{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+#v-compare .g-hub .side-b{text-align:right;align-items:flex-end}
+#v-compare .g-hub .side-b .chips{justify-content:flex-end}
+@media (max-width:760px){#v-compare .g-hub{grid-template-columns:1fr}#v-compare .g-hub .hub{order:-1}#v-compare .g-hub .side-b{text-align:left;align-items:flex-start}#v-compare .g-hub .side-b .chips{justify-content:flex-start}}
+#v-compare .cmp-explore{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+#v-compare .collab{margin-top:18px}
+#v-compare .collab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:12px}
+#v-compare .collab-card{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+#v-compare .collab-card summary{cursor:pointer;list-style:none;padding:12px 14px;display:flex;flex-direction:column;gap:3px}
+#v-compare .collab-card summary::-webkit-details-marker{display:none}
+#v-compare .collab-card summary b{font-size:15px}
+#v-compare .collab-card summary .meta{color:var(--ink-2)}
+#v-compare .collab-card summary .more{font-size:12.5px;color:var(--blue);font-weight:600}
+#v-compare .collab-card[open] summary .more{display:none}
+#v-compare .collab-tracks{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 12px}
+#v-compare .collab-tracks ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
+#v-compare .collab-tracks button{background:none;border:0;padding:0;text-align:left;color:var(--ink);font-size:13.5px;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+#v-compare .collab-tracks button:hover{color:var(--blue);text-decoration-color:var(--blue)}
+#v-compare .collab-skel{height:120px;margin-top:12px;border-radius:12px;background:var(--surface-2);opacity:.6;animation:cmpPulse 1.2s ease-in-out infinite}
 #v-compare .cmp-skel{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media (max-width:760px){#v-compare .cmp-skel{grid-template-columns:1fr}}
 #v-compare .cmp-skel .card{height:280px;opacity:.5;animation:cmpPulse 1.2s ease-in-out infinite}
@@ -1329,6 +1352,8 @@ go((location.hash||"").slice(1)||"foryou");
   const C = { mode:"artists", a:null, b:null, cache:{a:[],b:[]}, req:{a:0,b:0}, out:null, debounce:{a:null,b:null} };
   const mbType = () => C.mode === "artists" ? "artist" : "recording";
   const titleOf = it => C.mode === "artists" ? it.name : it.title;
+  const nameOf = it => it.name || it.title || "";
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const subOf = it => C.mode === "artists"
     ? [it.type, it.country, it.disambiguation].filter(Boolean).join(" · ") || "Artist"
     : ((it.artists||[]).map(a=>a.name).join(", ") || "Artist unavailable");
@@ -1352,17 +1377,20 @@ go((location.hash||"").slice(1)||"foryou");
     return `<h4>Listen &amp; learn more</h4><div class="cmp-links">${links.map(l=>`<a class="chip" href="${esc(l.url)}" target="_blank" rel="noreferrer noopener">${esc(l.type)}</a>`).join("")}</div>`;
   }
 
+  // "18 studio albums", or "12+ studio albums" when MusicBrainz had more albums than one page.
+  function studioAlbums(disc){
+    const n = disc.studioAlbumCount, more = disc.complete === false;
+    return `${n}${more?"+":""} studio album${n===1&&!more?"":"s"}`;
+  }
   function artistCard(label, d, shared){
-    const disc = d.discography || {};
-    const counts = [
-      disc.albumCount?`${disc.albumCount} album${disc.albumCount===1?"":"s"}`:"",
-      disc.epCount?`${disc.epCount} EP${disc.epCount===1?"":"s"}`:"",
-      disc.singleCount?`${disc.singleCount} single${disc.singleCount===1?"":"s"}`:""
-    ].filter(Boolean).join(" · ") || "Not available";
-    const span = disc.firstYear ? ` · ${disc.firstYear}${disc.lastYear&&disc.lastYear!==disc.firstYear?"–"+disc.lastYear:""}` : "";
+    const disc = d.discography || null;
+    const counts = !disc ? "Album counts not available"
+      : !disc.albumCount ? "No albums catalogued"
+      : [studioAlbums(disc), disc.albumCount>disc.studioAlbumCount?`${disc.albumCount} incl. live & compilations`:""].filter(Boolean).join(" · ");
+    const span = disc && disc.firstYear ? ` · ${disc.firstYear}${disc.lastYear&&disc.lastYear!==disc.firstYear?"–"+disc.lastYear:""}` : "";
     const ls = d.lifeSpan || {};
     const active = ls.begin ? (ls.end ? `${ls.begin} – ${ls.end}` : (ls.ended ? ls.begin : `${ls.begin} – present`)) : "Unknown";
-    const reps = (disc.representative||[]).slice(0,3);
+    const reps = ((disc && disc.representative)||[]).slice(0,3);
     return `<aside class="card side">
       <div class="side-top">${cmpArt(reps[0]&&reps[0].artUrl)}<div><p class="eyebrow-s">${esc(label)}</p><h3>${esc(d.name)}</h3>${d.area||d.country?`<p>${esc(d.area||d.country)}${d.area&&d.country?` (${esc(d.country)})`:""}</p>`:""}</div></div>
       <h4>Genres</h4>${genreChips((d.genres||[]).map(g=>g.name), shared)}
@@ -1396,19 +1424,20 @@ go((location.hash||"").slice(1)||"foryou");
     } else {
       if(da.country && db.country) facts.push(da.country===db.country?`Both originate from ${esc(da.country)}.`:`Different origins: ${esc(da.country)} vs ${esc(db.country)}.`);
       if((da.lifeSpan||{}).begin && (db.lifeSpan||{}).begin) facts.push(`Careers began ${esc(da.lifeSpan.begin)} and ${esc(db.lifeSpan.begin)}.`);
-      const aa=(da.discography||{}).albumCount, ab=(db.discography||{}).albumCount;
-      if(aa||ab) facts.push(`Catalogued albums: ${aa||0} vs ${ab||0}.`);
+      if(da.discography && db.discography) facts.push(`Studio albums: ${studioAlbums(da.discography).replace(/ studio albums?/,"")} vs ${studioAlbums(db.discography).replace(/ studio albums?/,"")}.`);
     }
     const sh = new Set(shared);
     return `<div class="card sims" style="display:block">
       <div class="sims-h"><h2>Insights</h2><span class="meta">Derived from catalogued metadata</span></div>
       <div style="margin-top:8px"><span class="lbl">Genre overlap</span>
       ${both
-        ? (shared.length
-            ? `<p style="margin:8px 0">${genreChips(shared, sh)}</p><p class="muted" style="font-size:13.5px">${shared.length} shared genre${shared.length===1?"":"s"} in MusicBrainz community data — how listeners categorise the music, not measured audio similarity.</p>`
-            : `<p class="muted" style="margin-top:8px">No genres in common; each is tagged distinctly below.</p>`)
+        ? `<div class="g-hub">
+            <div class="side-a"><span class="lbl">Only ${esc(nameOf(da))}</span>${onlyA.length?genreChips(onlyA, new Set()):`<span class="muted">Nothing distinct</span>`}</div>
+            <div class="hub"><span class="lbl">Shared</span>${shared.length?genreChips(shared, sh):`<span class="muted">No genres in common</span>`}</div>
+            <div class="side-b"><span class="lbl">Only ${esc(nameOf(db))}</span>${onlyB.length?genreChips(onlyB, new Set()):`<span class="muted">Nothing distinct</span>`}</div>
+          </div>
+          <p class="muted" style="font-size:13.5px;margin-top:10px">${shared.length} shared genre${shared.length===1?"":"s"} in MusicBrainz community data: how listeners categorise the music, not measured audio similarity.</p>`
         : `<p class="muted" style="margin-top:8px">Genre overlap can't be assessed — MusicBrainz has no curated genres for at least one of these yet.</p>`}
-      ${(onlyA.length||onlyB.length)?`<div class="cmp-pick" style="margin-top:12px"><div><p class="muted" style="font-size:12px;margin:0 0 6px">Distinct to the first</p>${genreChips(onlyA, new Set())}</div><div><p class="muted" style="font-size:12px;margin:0 0 6px">Distinct to the second</p>${genreChips(onlyB, new Set())}</div></div>`:""}
       </div>
       ${facts.length?`<ul class="notes" style="margin-top:14px">${facts.map(f=>`<li>${f}</li>`).join("")}</ul>`:""}
       <p class="muted" style="font-size:12px;margin-top:14px">Not shown: popularity, play counts and audio features (tempo, energy, danceability, mood). No configured source provides these, so they are omitted rather than estimated.</p>
@@ -1433,11 +1462,123 @@ go((location.hash||"").slice(1)||"foryou");
       const sharedSet = new Set((da.genres||[]).map(g=>g.name).filter(n=>new Set((db.genres||[]).map(g=>g.name)).has(n)));
       const cardFn = mode === "artists" ? artistCard : songCard;
       const labels = mode === "artists" ? ["Artist A","Artist B"] : ["Song A","Song B"];
-      out.innerHTML = `<div class="cmp-pick">${cardFn(labels[0],da,sharedSet)}${cardFn(labels[1],db,sharedSet)}</div>${insightsHTML(da,db)}`;
-      C.out = { idA, idB, mode };
+      const explore = mode === "artists"
+        ? `<div class="cmp-explore"><button class="btn btn-ghost" data-cmpexplore>Explore track comparison →</button><span class="meta" id="cmpExploreMsg">Compares each artist’s top song (ranked by Deezer).</span></div>` : "";
+      const collab = mode === "artists"
+        ? `<div class="card collab" id="cmpCollab"><div class="sims-h"><h2>Mutual collaborators</h2><span class="meta">Reading album credits…</span></div><div class="collab-skel"></div></div>` : "";
+      out.innerHTML = `${explore}<div class="cmp-pick">${cardFn(labels[0],da,sharedSet)}${cardFn(labels[1],db,sharedSet)}</div>${insightsHTML(da,db)}${collab}`;
+      C.out = { idA, idB, mode, da, db };
+      // Show the real names (deep links start with ids only) and make the URL shareable.
+      C.a = Object.assign({}, C.a, da); C.b = Object.assign({}, C.b, db);
+      showChosen("a"); showChosen("b");
+      syncUrl();
+      if(mode === "artists") loadCollaborators(da, db);
     }catch(err){
       out.innerHTML = `<div class="card cmp-error"><p style="margin:0 0 4px"><b>${esc(err.message||"Something went wrong.")}</b></p>${err.retryable?`<p class="muted" style="margin:0 0 10px">MusicBrainz may be rate limiting. You can retry.</p><button class="btn btn-primary" data-cmpretry>Try again</button>`:`<p class="muted" style="margin:0">Please adjust your selection and try again.</p>`}</div>`;
     }
+  }
+
+  // People credited on both artists' albums. Loads after the cards: it reads several albums' credits.
+  async function loadCollaborators(da, db){
+    const box = () => $("#cmpCollab");
+    const key = C.out && `${C.out.idA}|${C.out.idB}`;
+    try{
+      const r = await fetch(`/api/musicbrainz/collaborators?a=${encodeURIComponent(da.id)}&b=${encodeURIComponent(db.id)}`);
+      const data = await r.json().catch(()=>({}));
+      if(!C.out || `${C.out.idA}|${C.out.idB}` !== key || !box()) return; // stale
+      if(!r.ok) throw new Error(data.error || "Could not load collaborators.");
+      C.collab = data.collaborators;
+      box().innerHTML = collaboratorsHTML(da, db, data.collaborators);
+    }catch(err){
+      if(box()) box().innerHTML = `<div class="sims-h"><h2>Mutual collaborators</h2></div><p class="muted">${esc(err.message||"Could not load collaborators.")}</p>`;
+    }
+  }
+
+  function coverageText(name, cov){
+    if(!cov || !cov.total) return `${esc(name)}: no recordings found`;
+    return cov.unit === "albums"
+      ? `${esc(name)}: ${cov.scanned===cov.total?"all":`latest ${cov.scanned} of`} ${cov.total} studio album${cov.total===1?"":"s"}`
+      : `${esc(name)}: ${cov.scanned} of ${cov.total} recordings`;
+  }
+
+  function collaboratorsHTML(da, db, c){
+    const roles = list => list.map(r => r === "featured" ? "featured" : r).join(", ");
+    const direct = [
+      ...c.direct.bOnA.map(t => `${esc(db.name)} is credited on ${esc(da.name)}’s “${esc(t.title)}”`),
+      ...c.direct.aOnB.map(t => `${esc(da.name)} is credited on ${esc(db.name)}’s “${esc(t.title)}”`),
+    ];
+    const cards = c.mutual.map((m, i) => `<details class="collab-card">
+        <summary><b>${esc(m.name)}</b>
+          <span class="meta">${esc(roles(m.roles.a))} for ${esc(da.name)} · ${esc(roles(m.roles.b))} for ${esc(db.name)}</span>
+          <span class="meta">${m.trackCount.a} track${m.trackCount.a===1?"":"s"} · ${m.trackCount.b} track${m.trackCount.b===1?"":"s"}</span>
+          <span class="more">Show tracks</span></summary>
+        <div class="collab-tracks">
+          <div><span class="lbl">With ${esc(da.name)}</span><ul>${m.tracks.a.map((t,j)=>`<li><button data-cmptrack="${i}:a:${j}">${esc(t.title)}</button></li>`).join("")}</ul></div>
+          <div><span class="lbl">With ${esc(db.name)}</span><ul>${m.tracks.b.map((t,j)=>`<li><button data-cmptrack="${i}:b:${j}">${esc(t.title)}</button></li>`).join("")}</ul></div>
+        </div></details>`).join("");
+    return `<div class="sims-h"><h2>Mutual collaborators</h2><span class="meta">Producers, featured artists, mixers and players credited on both</span></div>
+      ${direct.length?`<ul class="notes" style="margin:10px 0 0">${direct.map(d=>`<li>${d}</li>`).join("")}</ul>`:""}
+      ${cards ? `<div class="collab-grid">${cards}</div><p class="muted" style="font-size:12.5px;margin-top:10px">Pick a song to compare it with the same collaborator’s work for the other artist.</p>`
+              : `<p class="muted" style="margin-top:10px">No one is credited on both artists’ scanned albums.</p>`}
+      <p class="muted" style="font-size:12px;margin-top:10px">Credits scanned: ${coverageText(da.name, c.coverage.a)}; ${coverageText(db.name, c.coverage.b)}. Songwriting credits aren’t included.</p>`;
+  }
+
+  // Song comparison between one artist's track and the other artist's track with the same collaborator.
+  function compareCollabTrack(i, side, j){
+    const m = C.collab && C.collab.mutual[i]; const o = C.out;
+    if(!m || !o) return;
+    const other = side === "a" ? "b" : "a";
+    const pick = (s, k) => ({ id: m.tracks[s][k].id, title: m.tracks[s][k].title, artists: [{ id: (s==="a"?o.da:o.db).id, name: (s==="a"?o.da:o.db).name }] });
+    const mine = pick(side, j), theirs = pick(other, 0);
+    openComparison("songs", side === "a" ? mine : theirs, side === "a" ? theirs : mine);
+  }
+
+  async function exploreTracks(btn){
+    const o = C.out; if(!o || o.mode !== "artists") return;
+    const msg = $("#cmpExploreMsg");
+    btn.disabled = true; btn.textContent = "Finding top tracks…";
+    try{
+      const top = async d => {
+        const r = await fetch(`/api/top-track?id=${encodeURIComponent(d.id)}&name=${encodeURIComponent(d.name)}`);
+        const data = await r.json().catch(()=>({}));
+        if(!r.ok) throw new Error(data.error || "Could not find top tracks.");
+        if(!data.track) throw new Error(`Couldn’t find a top track for ${d.name} on MusicBrainz.`);
+        return data.track;
+      };
+      const [ta, tb] = await Promise.all([top(o.da), top(o.db)]);
+      openComparison("songs", ta, tb);
+    }catch(err){
+      btn.disabled = false; btn.textContent = "Explore track comparison →";
+      if(msg) msg.textContent = err.message;
+    }
+  }
+
+  function openComparison(mode, a, b){
+    if(mode !== C.mode){ setMode(mode); }
+    choose("a", a); choose("b", b);
+    window.scrollTo({ top: 0 });
+    runCompare();
+  }
+
+  // --- Shareable URLs: /compare/artists?artistA=…&artistB=… and /compare/songs?songA=…&songB=…
+  const PARAM = { artists: ["artistA","artistB"], songs: ["songA","songB"] };
+  function syncUrl(){
+    if(!C.a || !C.b || !history.replaceState) return;
+    const [pa, pb] = PARAM[C.mode];
+    const url = `/compare/${C.mode}?${pa}=${encodeURIComponent(C.a.id)}&${pb}=${encodeURIComponent(C.b.id)}`;
+    if(location.pathname + location.search !== url) history.replaceState(null, "", url);
+  }
+  function loadFromUrl(){
+    const m = location.pathname.match(/^\/compare\/(artists|songs)\/?$/);
+    if(!m) return false;
+    const mode = m[1], q = new URLSearchParams(location.search), [pa, pb] = PARAM[mode];
+    const a = q.get(pa), b = q.get(pb);
+    if(typeof go === "function") go("compare");
+    if(mode !== C.mode) setMode(mode);
+    if(!UUID.test(a||"") || !UUID.test(b||"")) return true;
+    const stub = id => mode === "artists" ? { id, name: "Loading…" } : { id, title: "Loading…", artists: [] };
+    openComparison(mode, stub(a), stub(b));
+    return true;
   }
 
   async function doSearch(slot, q){
@@ -1465,11 +1606,16 @@ go((location.hash||"").slice(1)||"foryou");
     const input = $("#q"+slot.toUpperCase());
     const res = $("#res"+slot.toUpperCase());
     res.hidden = true; res.innerHTML = ""; input.value = "";
+    showChosen(slot);
+    syncRun();
+  }
+
+  function showChosen(slot){
+    const item = C[slot], sel = $("#chosen"+slot.toUpperCase());
     if(item){
       sel.hidden = false;
       sel.innerHTML = `<div><b>${esc(titleOf(item))}</b><div class="meta">${esc(subOf(item))}</div></div><button class="link" data-clear="${slot}">Clear</button>`;
     } else { sel.hidden = true; sel.innerHTML = ""; }
-    syncRun();
   }
 
   function syncRun(){
@@ -1505,7 +1651,7 @@ go((location.hash||"").slice(1)||"foryou");
       const q = input.value.trim();
       const res = $("#res"+slot.toUpperCase());
       if(q.length < 2){ C.req[slot]++; res.hidden = true; res.innerHTML = ""; return; }
-      C.debounce[slot] = setTimeout(()=>doSearch(slot, q), 450);
+      C.debounce[slot] = setTimeout(()=>doSearch(slot, q), 300);
     });
   });
   $("#cmpMode").addEventListener("click", e=>{ const b = e.target.closest("[data-cmpmode]"); if(b) setMode(b.dataset.cmpmode); });
@@ -1515,11 +1661,21 @@ go((location.hash||"").slice(1)||"foryou");
     if(pick){ const [slot,i] = pick.dataset.pick.split(":"); choose(slot, C.cache[slot][+i]); return; }
     const clr = e.target.closest("[data-clear]"); if(clr){ choose(clr.dataset.clear, null); return; }
     const retry = e.target.closest("[data-cmpretry]"); if(retry){ runCompare(); return; }
+    const exp = e.target.closest("[data-cmpexplore]"); if(exp){ exploreTracks(exp); return; }
+    const tr = e.target.closest("[data-cmptrack]");
+    if(tr){ const [i, side, j] = tr.dataset.cmptrack.split(":"); compareCollabTrack(+i, side, +j); return; }
   });
 
   // Register this view with the existing router so nav + hash routing work.
   if(typeof RENDER === "object") RENDER.compare = renderCompare;
   renderCompare();
+
+  // Leaving Compare drops the /compare/… URL so a reload doesn't reopen it.
+  if(typeof go === "function"){
+    const routerGo = go;
+    go = function(v){ if(v !== "compare" && location.pathname.startsWith("/compare/") && history.replaceState) history.replaceState(null, "", "/" + location.hash); return routerGo(v); };
+  }
+  loadFromUrl();
 })();
 </script>
 

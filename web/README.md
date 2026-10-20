@@ -9,11 +9,31 @@ SongNexus compares two songs or two artists using real catalogue metadata.
 - **MusicBrainz** (no credentials, just a User-Agent) — the backbone.
   - _Search_ (`/api/musicbrainz/search`) powers the pickers.
   - _Lookup_ (`/api/musicbrainz/details`) enriches the two selected items with
-    curated **genres**, **discography** (release-groups → album/EP/single counts
-    and year span), the **community rating**, and **external links** (official
-    site, streaming, Bandcamp, Discogs…). A full comparison costs at most two
-    lookups, both cached.
+    curated **genres**, **discography** (studio and total album counts, studio
+    year span), the **community rating**, and **external links** (official
+    site, streaming, Bandcamp, Discogs…). An artist costs two cached requests
+    (lookup + album browse); a recording costs one.
 - **Cover Art Archive** (no credentials) — representative album/release artwork.
+- **Deezer** (no credentials) — used *only* to pick each artist's top song for the
+  "Explore track comparison" shortcut (`/api/top-track`). The song is then matched to a
+  MusicBrainz recording, so the comparison itself stays on MusicBrainz data. No Deezer
+  numbers (fans, plays) are shown.
+
+**Comparison features**
+
+- **Album counts** come from a release-group *browse* (`type=album`), because an artist
+  *lookup* only returns the first 25 release-groups. Cards show studio albums plus all albums
+  (live, compilations…); when an artist has more than 100 albums the studio count is shown as
+  a lower bound ("12+").
+- **Mutual collaborators** (`/api/musicbrainz/collaborators?a=&b=`) — people credited on both
+  artists' recordings: producers, featured artists, mixers/engineers, vocalists and players.
+  Reads the full credits of each artist's 3 most recent studio albums (one request per album,
+  cached), so a cold comparison takes ~10 s; it loads after the main cards. Songwriting credits
+  live on MusicBrainz *works* and aren't included.
+- **Genre hub** — shared genres in the middle, each artist's own genres on either side.
+- **Shareable URLs** — `/compare/artists?artistA=<mbid>&artistB=<mbid>` and
+  `/compare/songs?songA=<mbid>&songB=<mbid>` open straight into a comparison.
+- **Not built (no data source):** monthly listeners and audio-feature radar charts.
 
 **Deliberately not shown.** Popularity, play counts, monthly listeners and audio
 features (tempo, energy, danceability, mood) are **not** provided by these

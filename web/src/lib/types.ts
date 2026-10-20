@@ -46,15 +46,21 @@ export type ReleaseRef = {
 /** An external link (streaming, official site, database) from url-rels. */
 export type LinkRef = { type: string; url: string };
 
-/** Discography summary derived from an artist's release-groups. */
+/**
+ * Album summary from a browse of the artist's album release-groups.
+ * (An artist *lookup* only returns the first 25 release-groups, so it can't be used for counts.)
+ */
 export type Discography = {
+  /** Every album-type release-group: studio, live, compilation, remix, demo. Exact. */
   albumCount: number;
-  epCount: number;
-  singleCount: number;
-  otherCount: number;
+  /** Studio albums (no secondary type). A lower bound when `complete` is false. */
+  studioAlbumCount: number;
+  /** False when the artist has more albums than one page, so studio counts may be low. */
+  complete: boolean;
+  /** Year span of the studio albums (falls back to all albums). */
   firstYear: string;
   lastYear: string;
-  /** Up to a handful of representative studio albums, newest-worthy first. */
+  /** Up to a handful of representative studio albums, oldest first. */
   representative: ReleaseRef[];
 };
 
@@ -63,7 +69,8 @@ export type ArtistDetails = Artist & {
   area: string;
   genres: Genre[];
   rating: Rating | null;
-  discography: Discography;
+  /** Null when the album browse failed; the rest of the details are still usable. */
+  discography: Discography | null;
   links: LinkRef[];
 };
 
@@ -76,6 +83,38 @@ export type RecordingDetails = Song & {
 };
 
 export type DetailsResult = ArtistDetails | RecordingDetails;
+
+/** A recording, as listed under a collaborator. */
+export type TrackRef = { id: string; title: string };
+
+/** Someone credited on recordings by both artists (producer, featured artist, mixer…). */
+export type Collaborator = {
+  id: string;
+  name: string;
+  /** Their roles on each artist's recordings, e.g. ["producer", "instruments"]. */
+  roles: { a: string[]; b: string[] };
+  /** How many scanned recordings of each artist credit them. */
+  trackCount: { a: number; b: number };
+  /** A few of those recordings per artist. */
+  tracks: { a: TrackRef[]; b: TrackRef[] };
+};
+
+/**
+ * What a collaborator scan covered: the artist's most recent studio albums (unit "albums"), or,
+ * for artists without studio albums, one page of their recordings (unit "recordings").
+ */
+export type Coverage = { scanned: number; total: number; unit: "albums" | "recordings" };
+
+export type CollaboratorComparison = {
+  mutual: Collaborator[];
+  /** Recordings where one artist is credited on the other's catalogue. */
+  direct: { bOnA: TrackRef[]; aOnB: TrackRef[] };
+  /** How much of each catalogue was scanned. */
+  coverage: { a: Coverage; b: Coverage };
+};
+
+/** An artist's most popular track (ranked by Deezer), matched to a MusicBrainz recording. */
+export type TopTrack = Song & { source: "Deezer" };
 
 /** Narrows a Result to a Song. Songs have a `title`; artists have a `name`. */
 export function isSong(result: Result): result is Song {

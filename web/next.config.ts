@@ -10,7 +10,11 @@ const nextConfig: NextConfig = {
   // intentionally not used as the frontend.
   async rewrites() {
     return {
-      beforeFiles: [{ source: "/", destination: "/song-nexus.html" }],
+      beforeFiles: [
+        { source: "/", destination: "/song-nexus.html" },
+        // Shareable comparison links, e.g. /compare/artists?artistA=…&artistB=…
+        { source: "/compare/:mode(artists|songs)", destination: "/song-nexus.html" },
+      ],
       afterFiles: [],
       fallback: [],
     };

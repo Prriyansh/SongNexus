@@ -63,13 +63,6 @@ const artistLookup = {
     { count: 30, name: "art rock" },
     { count: 43, name: "alternative rock" }, // dup after lowercasing
   ],
-  "release-groups": [
-    { id: "a5e4bd1a-63c9-4dfc-9e63-ed0c3dc049be", title: "OK Computer", "primary-type": "Album", "secondary-types": [], "first-release-date": "1997-05-21" },
-    { id: "11111111-1111-4111-8111-111111111111", title: "Pablo Honey", "primary-type": "Album", "secondary-types": [], "first-release-date": "1993-02-22" },
-    { id: "22222222-2222-4222-8222-222222222222", title: "I Might Be Wrong", "primary-type": "Album", "secondary-types": ["Live"], "first-release-date": "2001-11-12" },
-    { id: "33333333-3333-4333-8333-333333333333", title: "Drill", "primary-type": "EP", "first-release-date": "1992-05-05" },
-    { id: "44444444-4444-4444-8444-444444444444", title: "Creep", "primary-type": "Single", "first-release-date": "1992-09-21" },
-  ],
   relations: [
     { type: "official homepage", "target-type": "url", url: { resource: "https://radiohead.com" } },
     { type: "bandcamp", "target-type": "url", url: { resource: "https://radiohead.bandcamp.com" } },
@@ -168,21 +161,47 @@ describe("search mappers", () => {
   });
 });
 
+// Browse of the artist's album release-groups (`release-group?artist=…&type=album`).
+// release-group-count is MusicBrainz's exact total; the page holds at most 100.
+const albumBrowse = {
+  "release-group-count": 3,
+  "release-groups": [
+    { id: "a5e4bd1a-63c9-4dfc-9e63-ed0c3dc049be", title: "OK Computer", "primary-type": "Album", "secondary-types": [], "first-release-date": "1997-05-21" },
+    { id: "11111111-1111-4111-8111-111111111111", title: "Pablo Honey", "primary-type": "Album", "secondary-types": [], "first-release-date": "1993-02-22" },
+    { id: "22222222-2222-4222-8222-222222222222", title: "I Might Be Wrong", "primary-type": "Album", "secondary-types": ["Live"], "first-release-date": "2001-11-12" },
+  ],
+};
+
 describe("mapArtistDetails", () => {
-  const d = () => mapArtistDetails(artistLookup);
+  const d = () => mapArtistDetails(artistLookup, albumBrowse);
 
   it("extracts weighted genres (sorted, deduped) and the community rating", () => {
     expect(d().genres.map((g) => g.name)).toEqual(["alternative rock", "art rock"]);
     expect(d().rating).toEqual({ value: 4.5, votes: 80 });
   });
 
-  it("summarises the discography by type and year span", () => {
-    const disc = d().discography;
-    expect(disc).toMatchObject({ albumCount: 3, epCount: 1, singleCount: 1, firstYear: "1992", lastYear: "2001" });
+  it("counts all albums and studio albums, with the studio-album year span", () => {
+    expect(d().discography).toMatchObject({
+      albumCount: 3,
+      studioAlbumCount: 2, // the live album isn't a studio album
+      complete: true,
+      firstYear: "1993",
+      lastYear: "1997",
+    });
+  });
+
+  it("uses MusicBrainz's exact total and flags a partial page", () => {
+    // e.g. Metallica: 979 album release-groups (mostly live bootlegs), only 100 per page.
+    const disc = mapArtistDetails(artistLookup, { ...albumBrowse, "release-group-count": 979 }).discography;
+    expect(disc).toMatchObject({ albumCount: 979, studioAlbumCount: 2, complete: false });
+  });
+
+  it("has no discography when the album browse is unavailable", () => {
+    expect(mapArtistDetails(artistLookup).discography).toBeNull();
   });
 
   it("picks studio albums (no secondary types) as representative, with cover art", () => {
-    const reps = d().discography.representative;
+    const reps = d().discography!.representative;
     expect(reps.map((r) => r.title)).toEqual(["Pablo Honey", "OK Computer"]); // live album excluded
     expect(reps[1].artUrl).toBe(
       "https://coverartarchive.org/release-group/a5e4bd1a-63c9-4dfc-9e63-ed0c3dc049be/front-250"
@@ -351,13 +370,27 @@ describe("rate-limit resilience", () => {
 });
 
 describe("lookupMusicBrainz", () => {
-  it("returns enriched artist details from a lookup payload", async () => {
-    const fetchImpl = vi.fn<FetchMock>(async () => okResponse(artistLookup));
+  it("returns enriched artist details from a lookup plus an album browse", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async (url) =>
+      okResponse(String(url).includes("/release-group?") ? albumBrowse : artistLookup)
+    );
     const result = await lookupMusicBrainz(details(), { fetchImpl, throttleMs: 0, useCache: false });
-    const url = String(fetchImpl.mock.calls[0][0]);
-    expect(url).toContain("/artist/");
-    expect(url).toContain("inc=genres");
-    expect("discography" in result && result.discography.albumCount).toBe(3);
+    const [lookupUrl, browseUrl] = fetchImpl.mock.calls.map((c) => String(c[0]));
+    expect(lookupUrl).toContain("/artist/");
+    expect(lookupUrl).toContain("inc=genres");
+    expect(lookupUrl).not.toContain("release-groups"); // capped at 25 on lookups
+    expect(browseUrl).toContain("type=album");
+    expect(browseUrl).toContain("limit=100");
+    expect("discography" in result && result.discography?.studioAlbumCount).toBe(2);
+  });
+
+  it("still returns the artist when only the album browse fails", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async (url) =>
+      String(url).includes("/release-group?") ? statusResponse(500) : okResponse(artistLookup)
+    );
+    const result = await lookupMusicBrainz(details(), { fetchImpl, throttleMs: 0, retryBaseMs: 0, useCache: false });
+    expect("name" in result && result.name).toBe("Radiohead");
+    expect("discography" in result && result.discography).toBeNull();
   });
 
   it("returns enriched recording details", async () => {
