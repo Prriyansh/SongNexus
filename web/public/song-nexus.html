@@ -1,0 +1,1527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Song Nexus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#EDF0F6; --surface:#FFFFFF; --surface-2:#F4F6FB; --ink:#101A3F; --ink-2:#4B5579; --ink-3:#8189A8;
+  --line:#DADFEB; --line-2:#C4CBDD;
+  --blue:#2A45D8; --blue-soft:#E4E8FF; --on-blue:#FFFFFF; --green:#0E8A5F; --green-soft:#DCF2E8;
+  --c-collab:#2A45D8; --c-prod:#0E8A5F; --c-member:#7A3FC4; --c-credit:#C63D66; --c-influence:#B8730C; --c-tour:#6E7899;
+  --label:#F6F2E8; --label-ink:#101A3F;
+  --feature:#15215C; --feature-ink:#EEF1FF; --feature-ink-2:#AEB8E8; --feature-line:#FF93B3; --feature-edge:rgba(238,241,255,.18);
+  --scrim:rgba(10,15,40,.38);
+  --display:'Archivo','Arial Narrow',system-ui,sans-serif;
+  --body:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0A0F24; --surface:#121936; --surface-2:#18203F; --ink:#E6EAF7; --ink-2:#A3ABCB; --ink-3:#6E77A0;
+    --line:#242C51; --line-2:#333C68;
+    --blue:#8496FF; --blue-soft:#1D2657; --on-blue:#0A0F24; --green:#3ECF98; --green-soft:#12322B;
+    --c-collab:#8496FF; --c-prod:#3ECF98; --c-member:#B994F7; --c-credit:#F27C9E; --c-influence:#EDB24E; --c-tour:#8E97BD;
+    --feature:#1C2A7A; --scrim:rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0A0F24; --surface:#121936; --surface-2:#18203F; --ink:#E6EAF7; --ink-2:#A3ABCB; --ink-3:#6E77A0;
+  --line:#242C51; --line-2:#333C68;
+  --blue:#8496FF; --blue-soft:#1D2657; --on-blue:#0A0F24; --green:#3ECF98; --green-soft:#12322B;
+  --c-collab:#8496FF; --c-prod:#3ECF98; --c-member:#B994F7; --c-credit:#F27C9E; --c-influence:#EDB24E; --c-tour:#8E97BD;
+  --feature:#1C2A7A; --scrim:rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+.display{font-family:var(--display);font-stretch:125%;font-variation-settings:"wdth" 125;font-weight:800;letter-spacing:-.025em;line-height:1.02;text-wrap:balance}
+.mono{font-family:var(--mono)}
+.muted{color:var(--ink-2)}
+
+/* shell */
+.app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+.rail{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:28px;padding:22px 14px;border-right:1px solid var(--line);background:var(--surface);z-index:30}
+.brand{display:flex;align-items:center;gap:10px;padding:0 10px}
+.brand svg{width:30px;height:30px;flex:none}
+.brand b{font-family:var(--display);font-stretch:125%;font-variation-settings:"wdth" 125;font-weight:800;font-size:19px;letter-spacing:-.02em}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:0;background:none;color:var(--ink-2);font-weight:600;font-size:14px;cursor:pointer;text-align:left}
+.nav button:hover{background:var(--surface-2);color:var(--ink)}
+.nav button[aria-current="page"]{background:var(--blue-soft);color:var(--blue)}
+.nav svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rail-foot{margin-top:auto;padding:12px 10px 0;border-top:1px solid var(--line);font:12px/1.55 var(--mono);color:var(--ink-3)}
+.rail-foot strong{color:var(--ink-2);font-weight:600;display:block}
+
+.main{min-width:0;padding-inline:clamp(16px,3vw,40px);padding-block:0 56px}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:12px;padding-block:14px;background:color-mix(in srgb,var(--ground) 86%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.search{flex:1;max-width:540px;position:relative}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;fill:none;stroke:var(--ink-3);stroke-width:2;stroke-linecap:round}
+.search input{width:100%;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--surface);padding:0 16px 0 42px;font:500 15px var(--body);color:var(--ink)}
+.search input::placeholder{color:var(--ink-3)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:13px;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--surface);display:grid;place-items:center;font:700 12px var(--mono);border:0;cursor:pointer}
+
+.view{display:flex;flex-direction:column;gap:22px;padding-top:10px}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin:0}
+.head h1{font-size:clamp(30px,4.4vw,50px);margin:10px 0 0}
+.lede{color:var(--ink-2);max-width:62ch;margin:10px 0 0;font-size:16px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.card-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 12px;margin-bottom:14px}
+.card-h h2{font-family:var(--display);font-stretch:110%;font-variation-settings:"wdth" 110;font-weight:750;font-size:18px;margin:0;letter-spacing:-.01em}
+.meta{font:12px var(--mono);color:var(--ink-3)}
+.sample{font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);border:1px dashed var(--line-2);padding:4px 7px;border-radius:6px}
+
+.btn{height:40px;padding:0 16px;border-radius:10px;font-weight:600;font-size:14px;border:1px solid transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
+.btn-primary{background:var(--blue);color:var(--on-blue)}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost{background:transparent;border-color:var(--line-2);color:var(--ink)}
+.btn-ghost:hover{background:var(--surface-2)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;padding:0;color:var(--ink);font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+.link:hover{text-decoration-color:var(--blue);color:var(--blue)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-weight:600;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--ink-3)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.tag{display:inline-block;font:500 10.5px/1 var(--mono);letter-spacing:.07em;text-transform:uppercase;padding:4px 7px;border-radius:6px;color:var(--t);background:color-mix(in srgb,var(--t) 13%,transparent);white-space:nowrap}
+.t-collab{--t:var(--c-collab)} .t-prod{--t:var(--c-prod)} .t-credit{--t:var(--c-credit)} .t-influence{--t:var(--c-influence)} .t-tour{--t:var(--c-tour)} .t-member{--t:var(--c-member)}
+.disc{display:block;flex:none}
+.disc .lbl{fill:var(--label)} .disc .lbl-t{fill:var(--label-ink);font-family:var(--mono);font-weight:600}
+
+/* graph */
+.graph{position:relative;width:100%;border-radius:12px;background-color:var(--surface-2);background-image:radial-gradient(var(--line) 1px,transparent 1.2px);background-size:22px 22px;overflow:hidden}
+.graph svg{display:block;width:100%}
+.edge{fill:none;stroke-width:2;stroke-linecap:round}
+.edge.collab{stroke:var(--c-collab)} .edge.prod{stroke:var(--c-prod)}
+.edge.credit{stroke:var(--c-credit);stroke-dasharray:7 4}
+.edge.influence{stroke:var(--c-influence);stroke-dasharray:.5 5;stroke-width:2.6}
+.edge.tour{stroke:var(--c-tour);stroke-dasharray:10 4 2 4}
+.edge.member{stroke:var(--c-member);stroke-width:3.5;stroke-opacity:.7}
+.edge.on-path{stroke-width:4.5}
+.hit{stroke:transparent;stroke-width:14;fill:none;cursor:help}
+.node{cursor:pointer}
+.node .n-label{font:600 11.5px var(--body);fill:var(--ink);paint-order:stroke;stroke:var(--surface-2);stroke-width:4px;stroke-linejoin:round}
+.node .lbl{fill:var(--label)} .node .lbl-t{fill:var(--label-ink);font-family:var(--mono);font-weight:600}
+.node .ring{fill:none;stroke:var(--green);stroke-width:2.5;stroke-dasharray:4 3}
+.node .focus-ring{fill:none;stroke:var(--ink);stroke-width:2}
+.node:hover .disc-c{filter:brightness(1.15)}
+.dim{opacity:.16}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12.5px;line-height:1.4;padding:8px 10px;border-radius:8px;max-width:250px;transform:translate(-50%,calc(-100% - 14px));z-index:5;box-shadow:0 8px 20px -8px rgba(0,0,0,.4)}
+.tip b{display:block;font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font:12px var(--mono);color:var(--ink-2);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend svg{width:26px;height:8px}
+
+/* for you */
+.nudge{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding:12px 14px 12px 18px;border-radius:14px;background:var(--blue-soft);color:var(--ink)}
+.nudge p{margin:0;flex:1;min-width:220px}
+.nudge p b{color:var(--blue)}
+.fy-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}
+.s12{grid-column:span 12}.s8{grid-column:span 8}.s7{grid-column:span 7}.s5{grid-column:span 5}.s4{grid-column:span 4}
+.cod{background:var(--feature);color:var(--feature-ink);border-color:transparent;padding:26px;display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden}
+.cod .eyebrow{color:var(--feature-ink-2)}
+.cod-pair{display:flex;align-items:center;gap:6px}
+.cod-artist{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:0;cursor:pointer;color:var(--feature-ink);font-weight:600;font-size:13px;flex:none}
+.cod-line{flex:1;height:44px;min-width:40px}
+.cod-line path{fill:none;stroke:var(--feature-line);stroke-width:2.5;stroke-dasharray:8 5;vector-effect:non-scaling-stroke}
+.cod h2{font-size:clamp(22px,2.6vw,30px);margin:0;max-width:30ch}
+.credit{font:12.5px/1.6 var(--mono);color:var(--feature-ink-2);margin:0;padding-top:12px;border-top:1px solid var(--feature-edge)}
+.cod .actions{display:flex;flex-wrap:wrap;gap:10px}
+.btn-feature{background:var(--feature-ink);color:var(--feature)}
+.btn-feature-ghost{border-color:var(--feature-edge);color:var(--feature-ink);background:transparent}
+.btn-feature-ghost:hover{background:var(--feature-edge)}
+.artist-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.artist-row{display:flex;align-items:center;gap:12px;padding:9px 6px;border-radius:10px;background:none;border:0;width:100%;text-align:left;cursor:pointer}
+.artist-row:hover{background:var(--surface-2)}
+.artist-row .nm{font-weight:650;display:block;line-height:1.25}
+.artist-row .sub{font-size:12.5px;color:var(--ink-2)}
+.artist-row .count{margin-left:auto;font:12px var(--mono);color:var(--ink-3);white-space:nowrap}
+.stack{display:flex;height:12px;border-radius:999px;overflow:hidden;gap:2px;margin:6px 0 10px}
+.stack i{display:block;height:100%}
+.stack-legend{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font:12px var(--mono);color:var(--ink-2);margin:0 0 16px}
+.stack-legend span{display:flex;align-items:center;gap:6px}
+.stack-legend i{width:8px;height:8px;border-radius:2px;flex:none}
+.insight{padding:14px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.insight p{margin:0}
+.insight .big{font-family:var(--display);font-stretch:115%;font-variation-settings:"wdth" 115;font-weight:750;font-size:17px;line-height:1.3;letter-spacing:-.01em}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{border-top:1px solid var(--line)}
+.feed li:first-child{border-top:0}
+.feed button{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:center;padding:12px 4px;width:100%;text-align:left;background:none;border:0;cursor:pointer;border-radius:8px}
+.feed button:hover{background:var(--surface-2)}
+.pair{display:flex;align-items:center}
+.pair .disc+.disc{margin-left:-10px}
+.feed .ttl{font-weight:650}
+.feed .nt{grid-column:2;font:12px/1.5 var(--mono);color:var(--ink-2)}
+.recs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.rec{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.rec-top{display:flex;align-items:center;gap:12px}
+.rec-top b{display:block;font-size:15px}
+.rec-top span{font-size:12.5px;color:var(--ink-2)}
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:12.5px;color:var(--ink-2)}
+.chain .arrow{color:var(--ink-3)}
+.rec .nt{font:11.5px/1.5 var(--mono);color:var(--ink-3);margin:0}
+.rec .row{display:flex;gap:8px;margin-top:auto}
+.rec .btn{height:34px;font-size:13px;padding:0 12px}
+
+/* hero reveal */
+.hero{background:var(--feature);color:var(--feature-ink);border-radius:18px;padding:clamp(16px,2.2vw,24px) clamp(16px,2.6vw,28px);display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden;
+  background-image:radial-gradient(var(--feature-edge) 1px,transparent 1.3px);background-size:24px 24px}
+.hero-top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.hero .eyebrow{color:var(--feature-ink-2)}
+.hero h1{font-size:clamp(22px,2.8vw,34px);margin:8px 0 0;max-width:none}
+.hero h1 em{font-style:normal;color:var(--feature-line)}
+.hero-sub{margin:6px 0 0;color:var(--feature-ink-2);font-size:14px;max-width:60ch}
+.hero-ctl{display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.hero-ctl .controls{justify-content:flex-end}
+.hero-dots{display:flex;gap:6px}
+.hero-dots button{width:26px;height:6px;border-radius:999px;border:0;background:var(--feature-edge);cursor:pointer;padding:0}
+.hero-dots button[aria-current="true"]{background:var(--feature-line)}
+.hero-chain{width:100%;min-height:100px}
+.hero-chain svg{display:block;width:100%;overflow:visible}
+.hero-chain .h-edge{fill:none;stroke:var(--feature-ink-2);stroke-opacity:.45;stroke-width:2;stroke-dasharray:6 6;transition:stroke .3s,stroke-opacity .3s}
+.hero-chain .h-edge.on{stroke:var(--feature-line);stroke-opacity:1;stroke-dasharray:none;stroke-width:3}
+.hero-chain .h-lab{font:500 11.5px var(--mono);fill:var(--feature-ink-2);transition:fill .3s}
+.hero-chain .h-lab.on{fill:var(--feature-ink)}
+.hero-chain .h-name{font:700 13px var(--body);fill:var(--feature-ink)}
+.hero-chain .h-type{font:500 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;fill:var(--feature-ink-2)}
+.hero-chain .hnode{cursor:pointer}
+.hero-chain .hnode:hover .h-name,.hero-chain .hnode:focus .h-name{fill:var(--feature-line)}
+.hero-chain .h-halo{fill:none;stroke:var(--feature-line);stroke-width:2;opacity:0;transition:opacity .3s}
+.hero-chain .hnode.on .h-halo{opacity:1}
+.hero-chain .h-dot{fill:var(--feature-line)}
+
+/* start from a song */
+.start{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:24px;padding:24px}
+.start-form{display:flex;flex-direction:column;gap:12px}
+.start-form h2{font-size:clamp(26px,3vw,36px);margin:0}
+.start-form > p{margin:0;color:var(--ink-2);max-width:48ch}
+.song-in{display:flex;flex-wrap:wrap;gap:8px}
+.song-in .select{flex:none;height:44px}
+.song-in input{flex:1;min-width:160px;height:44px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font:500 15px var(--body);padding:0 14px}
+.song-in .btn{height:44px}
+.examples{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.examples .chip{height:30px;font-size:12.5px;padding:0 12px}
+.notice{margin:0;padding:10px 12px;border-radius:10px;background:var(--surface-2);font-size:13.5px;color:var(--ink-2)}
+.song-res{border-left:1px solid var(--line);padding-left:24px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.song-head{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.song-head h3{margin:4px 0 0;font-family:var(--display);font-stretch:118%;font-variation-settings:"wdth" 118;font-weight:800;font-size:26px;line-height:1.05;letter-spacing:-.02em}
+.song-head p.muted{margin:2px 0 0;font-size:13.5px}
+.sleeve{width:64px;height:64px;border-radius:8px;flex:none;display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.sleeve svg,.song-disc svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sub-h{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:0 0 8px}
+.credits-list{display:flex;flex-wrap:wrap;gap:8px}
+.credit-chip{display:flex;align-items:center;gap:8px;padding:4px 14px 4px 4px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;text-align:left}
+.credit-chip:hover{border-color:var(--blue)}
+.credit-chip b{display:block;font-size:13px;line-height:1.2}
+.credit-chip span span{display:block;font-size:11.5px;color:var(--ink-2);line-height:1.3}
+.next-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.next{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;background:var(--surface);text-align:left;min-width:0}
+.next:hover{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.next-top{display:flex;align-items:center;gap:10px}
+.next-top b{font-size:14px;line-height:1.2}
+.why{font-size:12.5px;line-height:1.45;color:var(--ink-2);margin:0}
+.why b{color:var(--ink);font-weight:650}
+.moods{display:flex;flex-wrap:wrap;gap:4px}
+.mood{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font:500 11px var(--mono);background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
+.mood.match{background:var(--green-soft);color:var(--green);border-color:transparent}
+.recs-tools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.recs-tools .chip{height:28px;font-size:12.5px;padding:0 11px}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-2);white-space:nowrap}
+.switch input{appearance:none;-webkit-appearance:none;width:34px;height:20px;border-radius:999px;background:var(--line-2);position:relative;cursor:pointer;margin:0;flex:none}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);transition:transform .15s}
+.switch input:checked{background:var(--green)}
+.switch input:checked::after{transform:translateX(14px)}
+.nfm{margin-left:auto;align-self:flex-start;font-size:12.5px;color:var(--ink-3);text-decoration-color:var(--line)}
+.hidden-list{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pill.trail{color:var(--ink)}
+.pill.trail svg{width:16px;height:16px;fill:none;stroke:var(--blue);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* share */
+.modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:var(--scrim)}
+.modal-box{background:var(--surface);border-radius:18px;width:min(460px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 30px 60px -20px rgba(0,0,0,.4)}
+.modal-box .card-h h2{font-family:var(--display);font-stretch:110%;font-variation-settings:"wdth" 110;font-weight:750;font-size:18px;margin:0}
+.share-card{background:var(--feature);color:var(--feature-ink);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.share-card .eyebrow{color:var(--feature-ink-2)}
+.share-card h3{margin:0;font-size:24px}
+.share-steps{list-style:none;margin:0;padding:0}
+.share-steps li{display:flex;align-items:center;gap:12px;padding:7px 0;position:relative}
+.share-steps li+li::before{content:"";position:absolute;left:17px;top:-7px;height:14px;border-left:2px dashed var(--feature-line)}
+.share-steps b{display:block;font-size:14px}
+.share-steps .nt{display:block;font:11px/1.45 var(--mono);color:var(--feature-ink-2)}
+.song-disc{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;flex:none;background:var(--feature-edge)}
+.song-disc svg{width:20px;height:20px}
+.share-foot{margin:0;font:11px var(--mono);color:var(--feature-ink-2);border-top:1px solid var(--feature-edge);padding-top:10px}
+.share-text{font:12.5px/1.5 var(--mono);padding:10px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);width:100%;resize:none;color:var(--ink)}
+
+/* connect */
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.select{height:42px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font:600 14px var(--body);padding:0 34px 0 12px;min-width:0;max-width:220px}
+.icon-btn{width:42px;height:42px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.icon-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cmp{display:grid;grid-template-columns:260px minmax(0,1fr) 260px;gap:18px;align-items:start}
+.side{display:flex;flex-direction:column;gap:14px}
+.side-top{display:flex;align-items:center;gap:14px}
+.side-top h3{margin:4px 0 0;font-family:var(--display);font-stretch:112%;font-variation-settings:"wdth" 112;font-weight:800;font-size:20px;line-height:1.1;letter-spacing:-.015em}
+.side-top p{margin:2px 0 0;font-size:13px;color:var(--ink-2)}
+.eyebrow-s{font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:0}
+.side h4{margin:0;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.works{list-style:none;margin:0;padding:0;font-size:14px}
+.works li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.works .yr{font:12.5px var(--mono);color:var(--ink-3);font-variant-numeric:tabular-nums}
+.further{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:9px;font-size:13.5px}
+.further li::marker{font:600 12px var(--mono);color:var(--ink-3)}
+.further .k{display:block;font-size:12px;color:var(--ink-3)}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.filters .chip{height:30px;font-size:12.5px;padding:0 12px}
+.sims{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+.sims-h{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:6px}
+.sims-h h2{font-family:var(--display);font-stretch:125%;font-variation-settings:"wdth" 125;font-weight:800;font-size:22px;margin:0;letter-spacing:-.02em}
+.sim{padding:14px 18px 6px 0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sim+.sim{padding-left:18px;border-left:1px solid var(--line)}
+.sim p{margin:0;font-size:14px}
+.sim .k{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.path-chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.path-chain .arrow{color:var(--ink-3);font-size:13px}
+.minis{display:flex;flex-direction:column;gap:6px}
+.mini{display:flex;align-items:center;gap:8px;background:none;border:0;padding:0;cursor:pointer;text-align:left;font-size:13.5px;font-weight:600}
+.mini:hover span{color:var(--blue)}
+.notes{margin:0;padding-left:18px;font-size:13.5px;display:flex;flex-direction:column;gap:6px;color:var(--ink-2)}
+
+/* explore */
+.sources{display:grid;grid-template-columns:1fr auto 1fr;gap:20px}
+.src-group h3{margin:0 0 12px;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.src-divider{width:1px;background:var(--line)}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);cursor:pointer;text-align:left;min-width:0}
+.tile:hover{border-color:var(--ink-3)}
+.tile[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft)}
+.tile .glyph{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--surface-2);flex:none;color:var(--ink)}
+.tile[aria-pressed="true"] .glyph{background:var(--surface);color:var(--blue)}
+.tile .glyph svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tile b{display:block;font-size:14px;line-height:1.2}
+.tile span{display:block;font-size:12px;color:var(--ink-2);line-height:1.3}
+.tile .state{margin-left:auto;font:500 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--green);white-space:nowrap}
+.lens-top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.lens-top h2{font-family:var(--display);font-stretch:118%;font-variation-settings:"wdth" 118;font-weight:800;font-size:22px;margin:0;letter-spacing:-.02em}
+.lens-top p{margin:4px 0 0;color:var(--ink-2);max-width:60ch}
+.ai{display:flex;gap:8px;width:100%;margin-top:4px}
+.ai input{flex:1;min-width:0;height:44px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font:500 15px var(--body);padding:0 14px}
+.answer{margin:12px 0 0;padding:14px 16px;border-radius:12px;background:var(--surface-2);font-size:14.5px;line-height:1.6}
+.answer ol{margin:6px 0 0;padding-left:20px}
+.answer .nt{font:12px var(--mono);color:var(--ink-2)}
+.ranked{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.ranked li{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border-radius:999px;border:1px solid var(--line);font-size:13px;font-weight:600}
+.ranked .n{font:600 11px var(--mono);color:var(--ink-3)}
+
+/* six degrees */
+.deg-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start}
+.score{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.score .nums{display:flex;gap:18px}
+.score .num{font:12px var(--mono);color:var(--ink-3)}
+.score .num b{display:block;font-family:var(--display);font-stretch:125%;font-variation-settings:"wdth" 125;font-weight:800;font-size:28px;color:var(--ink);line-height:1}
+.current{display:flex;align-items:center;gap:16px;padding:16px;border-radius:14px;background:var(--surface-2);margin-bottom:16px}
+.current h3{margin:4px 0 0;font-family:var(--display);font-stretch:118%;font-variation-settings:"wdth" 118;font-weight:800;font-size:24px;letter-spacing:-.02em;line-height:1.05}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);cursor:pointer;text-align:left}
+.opt:hover:not([disabled]){border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.opt[disabled]{opacity:.4;cursor:default}
+.opt.hint{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+.opt b{display:block;font-size:14px;line-height:1.25}
+.opt .nt{display:block;font:11.5px/1.45 var(--mono);color:var(--ink-2);margin-top:4px}
+.opt .tag{margin-top:6px}
+.won{padding:22px;border-radius:14px;background:var(--feature);color:var(--feature-ink);display:flex;flex-direction:column;gap:12px}
+.won h3{margin:0;font-size:28px}
+.won p{margin:0;color:var(--feature-ink-2)}
+.tracklist{list-style:none;margin:0;padding:0;counter-reset:t}
+.tracklist li{display:grid;grid-template-columns:28px auto 1fr;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.tracklist li::before{counter-increment:t;content:counter(t,decimal-leading-zero);font:600 12px var(--mono);color:var(--ink-3)}
+.tracklist b{display:block;font-size:14px}
+.tracklist .nt{font:11.5px/1.45 var(--mono);color:var(--ink-2)}
+.tracklist li.goal{opacity:.55}
+.tracklist li.goal::before{content:"→"}
+
+/* setup */
+.setup{max-width:980px;width:100%;margin:0 auto;padding:0;overflow:hidden}
+.steps{display:flex;border-bottom:1px solid var(--line);overflow-x:auto}
+.steps span{flex:1;min-width:110px;padding:14px 16px;font:500 12px var(--mono);color:var(--ink-3);border-bottom:3px solid transparent;white-space:nowrap}
+.steps span.on{color:var(--blue);border-bottom-color:var(--blue)}
+.steps span.done{color:var(--ink-2)}
+.setup-body{padding:clamp(20px,4vw,40px);display:flex;flex-direction:column;gap:18px}
+.setup-body h2{font-size:clamp(26px,3.4vw,40px);margin:0}
+.setup-body > p{margin:0;color:var(--ink-2);max-width:60ch;font-size:16px}
+.welcome{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:center}
+.welcome .stack-btns{display:flex;flex-direction:column;gap:10px;max-width:340px}
+.welcome .stack-btns .btn{height:46px;justify-content:flex-start;padding:0 16px}
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pick{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--surface);cursor:pointer;text-align:left;font-weight:600;font-size:13.5px;line-height:1.2}
+.pick[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);color:var(--blue)}
+.q-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.q{padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--surface);text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.q b{font-size:15.5px}
+.q span{font-size:13.5px;color:var(--ink-2)}
+.q[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft)}
+.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.field input[type=text],.field input[type=search]{height:44px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font:500 15px var(--body);padding:0 14px}
+.upload{display:flex;align-items:center;gap:12px;padding:14px;border:1.5px dashed var(--line-2);border-radius:12px;font-size:14px;color:var(--ink-2)}
+.upload input{max-width:100%;font-size:13px}
+.manual{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.setup-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px clamp(20px,4vw,40px);border-top:1px solid var(--line);background:var(--surface-2)}
+.setup-foot .meta{flex:1}
+
+/* drawer + toast */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:41;overflow-y:auto;padding:20px 24px;padding-top:calc(20px + env(safe-area-inset-top,0px));padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:18px;box-shadow:-20px 0 50px -20px rgba(0,0,0,.3)}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .22s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.4}}}
+.dr-close{align-self:flex-end}
+.dr-hero{display:flex;flex-direction:column;gap:10px}
+.dr-hero h2{font-size:32px;margin:0}
+.dr-sec h4{margin:0 0 8px;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.conn{list-style:none;margin:0;padding:0}
+.conn li button{display:flex;gap:10px;align-items:center;width:100%;padding:8px 4px;background:none;border:0;border-bottom:1px dashed var(--line);text-align:left;cursor:pointer}
+.conn li button:hover b{color:var(--blue)}
+.conn b{display:block;font-size:14px}
+.conn .nt{font:11.5px/1.45 var(--mono);color:var(--ink-2)}
+.conn .tag{margin-left:auto;align-self:center}
+.dr-actions{display:flex;flex-wrap:wrap;gap:8px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:12px 18px;border-radius:12px;font-weight:600;font-size:14px;z-index:60;box-shadow:0 12px 30px -10px rgba(0,0,0,.4);max-width:calc(100% - 32px)}
+
+@media (max-width:1180px){
+  .cmp{grid-template-columns:1fr 1fr}
+  .cmp .center{grid-column:1/-1;order:-1}
+  .sims{grid-template-columns:1fr 1fr}
+  .sim:nth-child(4){border-left:0;padding-left:0}
+  .s8,.s7,.s5,.s4{grid-column:span 12}
+  .start{grid-template-columns:1fr}
+  .song-res{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px}
+  .deg-grid{grid-template-columns:1fr}
+}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .rail{position:fixed;top:auto;bottom:0;left:0;right:0;height:auto;flex-direction:row;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));border-right:0;border-top:1px solid var(--line);gap:0}
+  .brand,.rail-foot{display:none}
+  .nav{flex-direction:row;width:100%;justify-content:space-around}
+  .nav button{flex-direction:column;gap:3px;font-size:10.5px;padding:6px 6px;flex:1;align-items:center}
+  .main{padding-bottom:100px}
+  .pill.src{display:none}
+  .sources{grid-template-columns:1fr}
+  .src-divider{display:none}
+  .welcome{grid-template-columns:1fr}
+}
+@media (max-width:620px){
+  .cmp{grid-template-columns:1fr}
+  .sims{grid-template-columns:1fr}
+  .sim+.sim{border-left:0;padding-left:0;border-top:1px solid var(--line)}
+  .recs,.q-grid,.manual,.tiles{grid-template-columns:1fr}
+  .pill.trail #trailTxt{display:none}
+  .select{max-width:none;flex:1}
+  .stack-legend{grid-template-columns:1fr}
+}
+
+/* ---------- Compare view (MusicBrainz) — additive, reuses design tokens ---------- */
+#v-compare .cmp-pick{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:760px){#v-compare .cmp-pick{grid-template-columns:1fr}}
+#v-compare .pick{display:flex;flex-direction:column;gap:12px}
+#v-compare .pick-label{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+#v-compare .pick-field{position:relative}
+#v-compare .cmp-input{width:100%;height:44px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font:500 15px var(--body);padding:0 14px}
+#v-compare .cmp-input::placeholder{color:var(--ink-3)}
+#v-compare .cmp-input:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+#v-compare .pick-results{position:absolute;z-index:5;left:0;right:0;top:50px;max-height:264px;overflow-y:auto;background:var(--surface);border:1px solid var(--line-2);border-radius:12px;box-shadow:0 18px 40px -18px rgba(0,0,0,.35);padding:6px}
+#v-compare .pick-item{display:block;width:100%;text-align:left;border:0;background:none;border-radius:8px;padding:9px 10px;cursor:pointer}
+#v-compare .pick-item:hover,#v-compare .pick-item:focus-visible{background:var(--surface-2)}
+#v-compare .pick-item b{display:block;font-weight:600;font-size:14px;color:var(--ink)}
+#v-compare .pick-item span{display:block;font-size:12.5px;color:var(--ink-2);margin-top:1px}
+#v-compare .pick-msg{padding:10px;font-size:13.5px;color:var(--ink-2)}
+#v-compare .pick-msg.warn{color:var(--c-influence)}
+#v-compare .pick-sel{display:flex;align-items:center;gap:12px;background:var(--blue-soft);border:1px solid var(--line-2);border-radius:12px;padding:10px 12px}
+#v-compare .pick-sel .meta{color:var(--ink-2)}
+#v-compare .pick-sel .link{margin-left:auto}
+#v-compare .cmp-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#v-compare .cmp-art{width:64px;height:64px;border-radius:12px;flex:none;background:var(--surface-2);border:1px solid var(--line);position:relative;display:grid;place-items:center;color:var(--ink-3);font-size:22px;overflow:hidden}
+#v-compare .cmp-art.sm{width:44px;height:44px;border-radius:10px;font-size:16px}
+#v-compare .cmp-art.alb{width:100%;height:auto;aspect-ratio:1}
+#v-compare .cmp-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#v-compare .works{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+#v-compare .works li{display:flex;justify-content:space-between;gap:10px;font-size:14px;border-top:1px solid var(--line);padding-top:7px}
+#v-compare .works .yr{color:var(--ink-3);font:12px var(--mono)}
+#v-compare .albums{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+#v-compare .albums figure{margin:0}
+#v-compare .albums figcaption{font-size:12px;margin-top:5px;line-height:1.3}
+#v-compare .albums figcaption .yr{color:var(--ink-3);font:11px var(--mono)}
+#v-compare .cmp-links{display:flex;flex-wrap:wrap;gap:8px}
+#v-compare .cmp-links a{text-transform:capitalize;font-size:12.5px;height:30px;padding:0 12px}
+#v-compare .g-chip{background:var(--surface);border:1px solid var(--line-2)}
+#v-compare .g-chip.shared{background:var(--green-soft);border-color:var(--green);color:var(--ink)}
+#v-compare .cmp-skel{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:760px){#v-compare .cmp-skel{grid-template-columns:1fr}}
+#v-compare .cmp-skel .card{height:280px;opacity:.5;animation:cmpPulse 1.2s ease-in-out infinite}
+@keyframes cmpPulse{50%{opacity:.85}}
+#v-compare .cmp-error{border:1px solid var(--c-influence);background:color-mix(in srgb,var(--c-influence) 10%,var(--surface))}
+#v-compare .lbl{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+#v-compare .side h4{margin-top:4px}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Main">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="11" cy="17" r="9" fill="var(--blue)"/><circle cx="11" cy="17" r="5.5" fill="none" stroke="var(--surface)" stroke-opacity=".35"/><circle cx="11" cy="17" r="2.6" fill="var(--surface)"/><path d="M18.6 13.4 21.6 11.4M18.4 21.4l3.4 2" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><circle cx="25" cy="9" r="4.5" fill="var(--green)"/><circle cx="25" cy="25" r="3.6" fill="none" stroke="var(--ink)" stroke-width="2"/></svg>
+      <b>Song Nexus</b>
+    </div>
+    <div class="nav" id="nav">
+      <button data-go="foryou"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5" opacity=".45"/><circle cx="12" cy="12" r="2"/></svg>For you</button>
+      <button data-go="connect"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="2.8"/><circle cx="18.5" cy="6" r="2.8"/><circle cx="18.5" cy="18" r="2.8"/><path d="M8 10.8 16 7.2M8 13.2l8 3.6"/></svg>Connect</button>
+      <button data-go="compare"><svg viewBox="0 0 24 24"><path d="M12 3v18M6 7 3 13h6zM18 7l-3 6h6z"/><path d="M5 7h5M14 7h5"/></svg>Compare</button>
+      <button data-go="explore"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>Explore</button>
+      <button data-go="degrees"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 1 0-5.6l2-2a4 4 0 0 1 5.6 5.6l-1 1"/><path d="M14 10a4 4 0 0 1 0 5.6l-2 2a4 4 0 0 1-5.6-5.6l1-1"/></svg>Six Degrees</button>
+      <button data-go="setup"><svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>Setup</button>
+    </div>
+    <div class="rail-foot"><strong>Prototype 1.1</strong>Connections are real public credits. Sound tags, listening stats, campus and trending data are samples.</div>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input id="q" type="search" list="artist-names" placeholder="Search an artist, producer or band" autocomplete="off" aria-label="Search artists">
+        <datalist id="artist-names"></datalist>
+      </label>
+      <div class="top-right">
+        <button class="pill trail" data-sharetrail aria-label="Share your discovery trail"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M7 19h6a3.5 3.5 0 0 0 0-7h-2a3.5 3.5 0 0 1 0-7h6"/></svg><span id="trailTxt"></span></button>
+        <button class="pill src" data-go="explore" id="srcPill"><span class="dot"></span><span></span></button>
+        <button class="avatar" data-go="setup" aria-label="Guest profile, open setup">GU</button>
+      </div>
+    </header>
+
+    <section class="view" id="v-foryou" hidden>
+      <section class="hero" id="hero" aria-label="How far apart are two artists?"></section>
+      <div class="nudge" id="nudge">
+        <p><b>New here?</b> Tell us three artists you love and we’ll draw the web around them. It takes about 30 seconds.</p>
+        <button class="btn btn-primary" data-go="setup">Start setup</button>
+        <button class="btn btn-ghost" id="nudgeClose">Not now</button>
+      </div>
+      <div class="head">
+        <div>
+          <p class="eyebrow">For you</p>
+          <h1 class="display">Tonight’s picks for you</h1>
+          <p class="lede" id="fyLede"></p>
+        </div>
+      </div>
+      <div class="fy-grid">
+        <article class="card s8" id="recsCard"></article>
+        <article class="card s4" id="yourArtists"></article>
+        <article class="card s12 start" id="songStart"></article>
+        <article class="card cod s7" id="cod"></article>
+        <article class="card s5" id="whatsnew"></article>
+        <article class="card s8">
+          <div class="card-h"><h2 id="webTitle">Genre web</h2><div class="chips" id="genreChips"></div></div>
+          <div class="graph" id="g-foryou"></div>
+          <div class="legend" data-legend="yours"></div>
+        </article>
+        <article class="card s4" id="insights"></article>
+      </div>
+    </section>
+
+    <section class="view" id="v-connect" hidden>
+      <div class="head">
+        <div>
+          <p class="eyebrow">Comparison / Connection</p>
+          <h1 class="display" id="cmpTitle"></h1>
+        </div>
+        <div class="controls">
+          <select class="select" id="selA" aria-label="First artist"></select>
+          <button class="icon-btn" id="swap" aria-label="Swap artists"><svg viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg></button>
+          <select class="select" id="selB" aria-label="Second artist"></select>
+        </div>
+      </div>
+      <div class="cmp">
+        <aside class="card side" id="sideA"></aside>
+        <div class="card center">
+          <div class="filters" id="cmpFilters"></div>
+          <div class="graph" id="g-connect"></div>
+          <div class="legend" data-legend="shared"></div>
+        </div>
+        <aside class="card side" id="sideB"></aside>
+      </div>
+      <div class="card sims" id="sims"></div>
+    </section>
+
+    <section class="view" id="v-compare" hidden>
+      <div class="head">
+        <div>
+          <p class="eyebrow">Compare</p>
+          <h1 class="display">Song &amp; artist comparison</h1>
+          <p class="lede">Search two songs or two artists, pick a result for each, and compare their catalogued details and genre overlap. Live data from MusicBrainz and the Cover Art Archive.</p>
+        </div>
+        <div class="chips" id="cmpMode" role="tablist" aria-label="Comparison mode">
+          <button class="chip" role="tab" aria-pressed="true" data-cmpmode="artists">Artists</button>
+          <button class="chip" role="tab" aria-pressed="false" data-cmpmode="songs">Songs</button>
+        </div>
+      </div>
+
+      <div class="cmp-pick">
+        <div class="card pick">
+          <div class="pick-label" id="labelA">Artist A</div>
+          <div class="pick-field">
+            <input class="cmp-input" id="qA" type="search" autocomplete="off" aria-label="Search for the first item">
+            <div class="pick-results" id="resA" hidden></div>
+          </div>
+          <div class="pick-sel" id="chosenA" hidden></div>
+        </div>
+        <div class="card pick">
+          <div class="pick-label" id="labelB">Artist B</div>
+          <div class="pick-field">
+            <input class="cmp-input" id="qB" type="search" autocomplete="off" aria-label="Search for the second item">
+            <div class="pick-results" id="resB" hidden></div>
+          </div>
+          <div class="pick-sel" id="chosenB" hidden></div>
+        </div>
+      </div>
+
+      <div class="cmp-actions">
+        <button class="btn btn-primary" id="cmpRun" disabled>Compare</button>
+        <span class="meta" id="cmpHint">Pick two different items to compare.</span>
+      </div>
+
+      <div id="cmpOut"></div>
+    </section>
+
+    <section class="view" id="v-explore" hidden>
+      <div class="head">
+        <div>
+          <p class="eyebrow">Explore</p>
+          <h1 class="display">Start from anywhere</h1>
+          <p class="lede">Pull in what you already listen to, or look at the web through a lens: your campus, a city, a question, or what’s rising this week.</p>
+        </div>
+      </div>
+      <div class="card sources">
+        <div class="src-group"><h3>Your listening</h3><div class="tiles" id="srcTiles"></div></div>
+        <div class="src-divider"></div>
+        <div class="src-group"><h3>Lenses</h3><div class="tiles" id="lensTiles"></div></div>
+      </div>
+      <div class="card">
+        <div id="lensInfo"></div>
+        <div class="graph" id="g-explore"></div>
+        <div class="legend" data-legend="plain"></div>
+      </div>
+    </section>
+
+    <section class="view" id="v-degrees" hidden>
+      <div class="head">
+        <div>
+          <p class="eyebrow">Six Degrees</p>
+          <h1 class="display" id="degTitle"></h1>
+          <p class="lede" id="degLede"></p>
+        </div>
+      </div>
+      <div class="chips" id="challenges"></div>
+      <div class="deg-grid">
+        <div class="card" id="degBoard"></div>
+        <div class="card" id="degPath"></div>
+      </div>
+    </section>
+
+    <section class="view" id="v-setup" hidden>
+      <div class="card setup" id="setup"></div>
+    </section>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Artist details"></aside>
+<div class="toast" id="toast" hidden role="status"></div>
+<div class="modal" id="share" hidden role="dialog" aria-modal="true" aria-labelledby="shareTitle"><div class="modal-box" id="shareBox"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+/* ---------- data: real public credits ---------- */
+const A = {
+  taylor:{n:"Taylor Swift",i:"TS",h:222,g:["Pop","Country","Folk"],from:"West Reading, PA",w:[["folklore",2020],["Midnights",2022],["The Tortured Poets Department",2024]],inf:["shania"]},
+  olivia:{n:"Olivia Rodrigo",i:"OR",h:275,g:["Pop","Pop-punk","Rock"],from:"Murrieta, CA",w:[["SOUR",2021],["GUTS",2023]],inf:["taylor","lorde","paramore"]},
+  antonoff:{n:"Jack Antonoff",i:"JA",h:30,role:"Producer · Bleachers",g:["Pop","Indie"],from:"Bergenfield, NJ",w:[["Melodrama (co-prod.)",2017],["NFR! (prod.)",2019],["Midnights (prod.)",2022]]},
+  nigro:{n:"Dan Nigro",i:"DN",h:10,role:"Producer",g:["Pop","Rock"],w:[["Kid Krow (prod.)",2020],["SOUR (prod.)",2021],["Midwest Princess (prod.)",2023]]},
+  dessner:{n:"Aaron Dessner",i:"AD",h:160,role:"Producer · The National",g:["Indie","Folk"],from:"Cincinnati, OH",w:[["folklore (prod.)",2020],["Good Riddance (prod.)",2023],["Subtract (prod.)",2023]]},
+  boniver:{n:"Bon Iver",i:"BI",h:140,g:["Folk","Indie"],from:"Eau Claire, WI",w:[["For Emma, Forever Ago",2007],["22, A Million",2016]]},
+  phoebe:{n:"Phoebe Bridgers",i:"PB",h:198,g:["Indie","Folk"],from:"Pasadena, CA",w:[["Stranger in the Alps",2017],["Punisher",2020]]},
+  lana:{n:"Lana Del Rey",i:"LDR",h:350,g:["Pop","Indie"],from:"Lake Placid, NY",w:[["Born to Die",2012],["NFR!",2019]]},
+  lorde:{n:"Lorde",i:"L",h:250,g:["Pop","Indie"],from:"Auckland, NZ",w:[["Pure Heroine",2013],["Melodrama",2017]]},
+  sabrina:{n:"Sabrina Carpenter",i:"SC",h:330,g:["Pop"],from:"Quakertown, PA",w:[["emails i can’t send",2022],["Short n’ Sweet",2024]]},
+  chappell:{n:"Chappell Roan",i:"CR",h:305,g:["Pop"],from:"Willard, MO",w:[["The Rise and Fall of a Midwest Princess",2023]]},
+  paramore:{n:"Paramore",i:"P",h:20,g:["Rock","Pop-punk"],from:"Franklin, TN",w:[["Riot!",2007],["This Is Why",2023]]},
+  ed:{n:"Ed Sheeran",i:"ES",h:45,g:["Pop"],from:"Framlingham, UK",w:[["÷ (Divide)",2017],["− (Subtract)",2023]]},
+  kendrick:{n:"Kendrick Lamar",i:"KL",h:0,g:["Hip-hop"],from:"Compton, CA",w:[["To Pimp a Butterfly",2015],["GNX",2024]]},
+  post:{n:"Post Malone",i:"PM",h:95,g:["Hip-hop","Pop","Country"],from:"Grapevine, TX",w:[["Hollywood’s Bleeding",2019],["F-1 Trillion",2024]]},
+  stv:{n:"St. Vincent",i:"SV",h:185,g:["Indie","Rock"],from:"Dallas, TX",w:[["MASSEDUCTION",2017],["All Born Screaming",2024]]},
+  gracie:{n:"Gracie Abrams",i:"GA",h:208,g:["Pop","Indie"],from:"Los Angeles, CA",w:[["Good Riddance",2023],["The Secret of Us",2024]]},
+  haim:{n:"HAIM",i:"H",h:15,g:["Rock","Pop"],from:"Los Angeles, CA",w:[["Days Are Gone",2013],["Women in Music Pt. III",2020]]},
+  shania:{n:"Shania Twain",i:"ST",h:55,g:["Country","Pop"],from:"Timmins, ON",w:[["Come On Over",1997]]},
+  conan:{n:"Conan Gray",i:"CG",h:232,g:["Pop","Indie"],from:"Georgetown, TX",w:[["Kid Krow",2020]]},
+  bts:{n:"BTS",i:"BTS",h:265,g:["K-pop"],from:"Seoul, KR",w:[["Map of the Soul: 7",2020],["BE",2020]]},
+  gaga:{n:"Lady Gaga",i:"LG",h:340,g:["Pop"],from:"New York, NY",w:[["The Fame",2008],["Mayhem",2025]]},
+  bruno:{n:"Bruno Mars",i:"BM",h:38,g:["Pop"],from:"Honolulu, HI",w:[["24K Magic",2016]]},
+  rose:{n:"ROSÉ",i:"R",h:355,g:["K-pop","Pop"],from:"Auckland, NZ → Melbourne",w:[["rosie",2024]]},
+  metallica:{n:"Metallica",i:"M",h:215,g:["Metal"],from:"Los Angeles, CA",w:[["Master of Puppets",1986],["72 Seasons",2023]]},
+  coldplay:{n:"Coldplay",i:"C",h:178,g:["Rock","Pop"],from:"London, UK",w:[["Parachutes",2000],["Music of the Spheres",2021]]},
+  kanye:{n:"Kanye West",i:"KW",h:28,g:["Hip-hop"],from:"Chicago, IL",w:[["The College Dropout",2004],["My Beautiful Dark Twisted Fantasy",2010]]},
+  bigred:{n:"Big Red Machine",i:"BRM",h:5,role:"Duo · Aaron Dessner & Justin Vernon",g:["Indie","Folk"],w:[["Big Red Machine",2018],["How Long Do You Think It’s Gonna Last?",2021]]},
+  boygenius:{n:"boygenius",i:"BG",h:120,role:"Band · Bridgers, Baker & Dacus",g:["Indie","Rock"],from:"Los Angeles, CA",w:[["boygenius (EP)",2018],["the record",2023]]},
+};
+/* sound tags: editorial samples, not measured audio features */
+const MOODS={kanye:["High-energy","Moody"],taylor:["Moody","Acoustic","Upbeat"],olivia:["Moody","High-energy"],boniver:["Acoustic","Dreamy"],phoebe:["Moody","Acoustic"],lana:["Dreamy","Moody"],lorde:["Moody","Dreamy"],sabrina:["Upbeat"],chappell:["Upbeat","High-energy"],paramore:["High-energy"],ed:["Acoustic","Upbeat"],kendrick:["High-energy"],post:["Moody","Upbeat"],stv:["Moody","High-energy"],gracie:["Moody","Acoustic"],haim:["Upbeat"],shania:["Upbeat"],conan:["Moody","Dreamy"],bts:["Upbeat","High-energy"],gaga:["High-energy","Upbeat"],bruno:["Upbeat"],rose:["Upbeat","Moody"],metallica:["High-energy"],coldplay:["Dreamy","Upbeat"],bigred:["Acoustic","Dreamy"],boygenius:["Acoustic","Moody"]};
+Object.entries(MOODS).forEach(([k,v])=>A[k].m=v);
+["boniver","phoebe","stv","haim","conan","bigred","boygenius"].forEach(k=>A[k].deep=true);
+const L = [
+  ["olivia","taylor","credit","“deja vu” (2021) interpolates “Cruel Summer”; “1 step forward, 3 steps back” interpolates “New Year’s Day”"],
+  ["olivia","antonoff","credit","Co-writer credit on “deja vu” via “Cruel Summer” (2021)"],
+  ["olivia","stv","credit","Annie Clark credited on “deja vu” via “Cruel Summer” (2021)"],
+  ["olivia","paramore","credit","“good 4 u” (2021) credits “Misery Business” writers"],
+  ["bts","ed","credit","Sheeran co-wrote “Permission to Dance” (2021)"],
+  ["taylor","boniver","collab","“exile” (2020)"],
+  ["taylor","phoebe","collab","“Nothing New” (2021)"],
+  ["taylor","lana","collab","“Snow on the Beach” (2022)"],
+  ["taylor","ed","collab","“Everything Has Changed” (2012), “End Game” (2017)"],
+  ["taylor","kendrick","collab","“Bad Blood” remix (2015)"],
+  ["taylor","post","collab","“Fortnight” (2024)"],
+  ["taylor","haim","collab","“no body, no crime” (2020)"],
+  ["taylor","gracie","collab","“us.” (2024)"],
+  ["gaga","bruno","collab","“Die With a Smile” (2024)"],
+  ["bruno","rose","collab","“APT.” (2024)"],
+  ["ed","bruno","collab","“BLOW” with Chris Stapleton (2019)"],
+  ["gaga","metallica","collab","“Moth Into Flame”, live at the Grammys (2017)"],
+  ["bts","coldplay","collab","“My Universe” (2021)"],
+  ["antonoff","taylor","prod","Produced 1989 through Midnights (2014–2022)"],
+  ["antonoff","lana","prod","Produced NFR! (2019)"],
+  ["antonoff","lorde","prod","Co-produced Melodrama (2017)"],
+  ["antonoff","sabrina","prod","Co-produced Short n’ Sweet (2024)"],
+  ["antonoff","stv","prod","Co-produced MASSEDUCTION (2017)"],
+  ["nigro","olivia","prod","Produced SOUR (2021) and GUTS (2023)"],
+  ["nigro","chappell","prod","Produced Midwest Princess (2023)"],
+  ["nigro","conan","prod","Produced Kid Krow (2020)"],
+  ["dessner","taylor","prod","Produced folklore & evermore (2020)"],
+  ["dessner","gracie","prod","Produced Good Riddance (2023)"],
+  ["dessner","ed","prod","Produced − (Subtract) (2023)"],
+  ["sabrina","taylor","tour","Opened the Eras Tour (2023–24)"],
+  ["chappell","olivia","tour","Opened the Sour and GUTS tours"],
+  ["shania","taylor","influence","Swift has named Twain as an early influence"],
+  ["lorde","olivia","influence","Rodrigo has named Lorde as an influence"],
+  ["kanye","boniver","collab","“Lost in the World”, “Monster” (2010)"],
+  ["kanye","coldplay","collab","“Homecoming” with Chris Martin (2007)"],
+  ["dessner","bigred","member","Aaron Dessner is one half of the duo"],
+  ["boniver","bigred","member","Justin Vernon is the other half"],
+  ["taylor","bigred","collab","“Renegade” (2021)"],
+  ["phoebe","boygenius","member","With Julien Baker and Lucy Dacus"],
+];
+const TYPES = {collab:"Collaboration",prod:"Production",credit:"Writing credit",influence:"Influence",tour:"Tour",member:"Band member"};
+const ADJ = {}; Object.keys(A).forEach(k=>ADJ[k]=[]);
+L.forEach(([s,t,type,note])=>{ADJ[s].push({id:t,type,note});ADJ[t].push({id:s,type,note});});
+const isProd = id => (A[id].role||"").startsWith("Producer");
+const edge = (a,b) => ADJ[a].find(e=>e.id===b);
+function bfs(s,t){
+  if(s===t) return [s];
+  const prev={[s]:null}, q=[s];
+  while(q.length){const u=q.shift();for(const e of ADJ[u]){if(!(e.id in prev)){prev[e.id]=u;if(e.id===t){const p=[t];let c=u;while(c){p.unshift(c);c=prev[c];}return p;}q.push(e.id);}}}
+  return null;
+}
+const dist = (s,t) => {const p=bfs(s,t);return p?p.length-1:Infinity};
+const byName = (a,b) => A[a].n.localeCompare(A[b].n);
+const artistIds = Object.keys(A).filter(k=>!isProd(k));
+
+const PAIR_NOTES = {
+  "olivia|taylor":["Both released debut albums as teenagers: Swift at 16 (2006), Rodrigo at 18 (SOUR, 2021).","Diary-style songwriting that names specific people, places and moments.","Rodrigo has called Swift a defining influence, and the two have met and talked songwriting publicly."],
+  "gaga|metallica":["Performed “Moth Into Flame” together at the 2017 Grammys.","Both are known for theatrical, larger-than-life stage shows."],
+  "lorde|rose":["Both were born in Auckland, New Zealand.","Both became global names before turning 25."],
+};
+const SONGS={
+  fortnight:{t:"Fortnight",y:2024,by:["taylor","post"],credits:[["taylor","Vocals, writer, producer"],["post","Vocals, writer"],["antonoff","Producer, writer"]],mood:["Moody","Dreamy"]},
+  apt:{t:"APT.",y:2024,by:["rose","bruno"],credits:[["rose","Vocals, co-writer"],["bruno","Vocals, co-writer"]],mood:["Upbeat","High-energy"]},
+  dejavu:{t:"deja vu",y:2021,by:["olivia"],credits:[["olivia","Vocals, writer"],["nigro","Producer, writer"],["taylor","Writer (via “Cruel Summer”)"],["antonoff","Writer (via “Cruel Summer”)"],["stv","Writer (via “Cruel Summer”)"]],mood:["Moody","Dreamy"]},
+  goodluck:{t:"Good Luck, Babe!",y:2024,by:["chappell"],credits:[["chappell","Vocals, writer"],["nigro","Producer, writer"]],mood:["Upbeat","High-energy"]},
+  exile:{t:"exile",y:2020,by:["taylor","boniver"],credits:[["taylor","Vocals, writer"],["boniver","Vocals (Justin Vernon), writer"],["dessner","Producer"]],mood:["Acoustic","Moody"]},
+  renegade:{t:"Renegade",y:2021,by:["bigred","taylor"],credits:[["bigred","Performers"],["taylor","Vocals, writer"],["dessner","Producer, writer"]],mood:["Acoustic","Dreamy"]},
+  please:{t:"Please Please Please",y:2024,by:["sabrina"],credits:[["sabrina","Vocals, writer"],["antonoff","Producer, writer"]],mood:["Upbeat"]},
+  good4u:{t:"good 4 u",y:2021,by:["olivia"],credits:[["olivia","Vocals, writer"],["nigro","Producer, writer"],["paramore","Credited (via “Misery Business”)"]],mood:["High-energy"]},
+};
+
+/* ---------- state ---------- */
+const S = {
+  view:"foryou", favs:["taylor","olivia","sabrina","phoebe","chappell"], genres:["Pop","Folk","Rock"], curious:["sound","why"],
+  sources:{spotify:true,apple:false,youtube:false,shazam:false},
+  cmp:{a:"taylor",b:"olivia",filter:"all"}, fyGenre:"Pop", lens:"trending", campus:"UW–Madison", city:"Auckland", ai:"How is Metallica connected to Olivia Rodrigo?",
+  game:null, step:0, nudge:true, q:"",
+  heroI:0, blocked:new Set(), mood:"Any", deep:false, song:"fortnight", songSrc:"TikTok", songMsg:"", trail:[{kind:"song",k:"fortnight",src:"TikTok"}], where:["TikTok","Friends"]
+};
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- small renderers ---------- */
+function disc(id,size=40){
+  const a=A[id], three=a.i.length>2;
+  return `<svg class="disc" width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19.5" fill="hsl(${a.h} 46% 40%)"/><circle cx="20" cy="20" r="17" fill="none" stroke="rgba(255,255,255,.14)"/><circle cx="20" cy="20" r="14.5" fill="none" stroke="rgba(255,255,255,.1)"/><circle cx="20" cy="20" r="11" class="lbl"/><text x="20" y="20.6" text-anchor="middle" dominant-baseline="middle" class="lbl-t" font-size="${three?6.4:8.2}">${a.i}</text></svg>`;
+}
+const tag = t => `<span class="tag t-${t}">${TYPES[t]}</span>`;
+const nameBtn = id => `<button class="link" data-open="${id}">${esc(A[id].n)}</button>`;
+const MOOD_LIST=["Upbeat","Moody","Acoustic","High-energy","Dreamy"];
+const moodChips=(list,match=[])=>`<span class="moods">${(list||[]).map(m=>`<span class="mood${match.includes(m)?" match":""}">${m}</span>`).join("")}</span>`;
+function legend(kind){
+  const line=(cls)=>`<svg viewBox="0 0 26 8"><line class="edge ${cls}" x1="2" y1="4" x2="24" y2="4"/></svg>`;
+  let h=Object.keys(TYPES).map(t=>`<span>${line(t)}${TYPES[t]}</span>`).join("");
+  if(kind==="shared") h+=`<span><svg viewBox="0 0 26 8" style="width:14px;height:14px"><circle cx="13" cy="4" r="3" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-dasharray="2 1.5"/></svg>Shared connection</span>`;
+  if(kind==="yours") h+=`<span><svg viewBox="0 0 26 8" style="width:14px;height:14px"><circle cx="13" cy="4" r="3" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-dasharray="2 1.5"/></svg>In your artists</span>`;
+  return h;
+}
+document.querySelectorAll("[data-legend]").forEach(el=>el.innerHTML=legend(el.dataset.legend));
+
+/* ---------- graph ---------- */
+function drawGraph(el,opt){
+  const {ids,focus=[],ring=new Set(),highlight=null,path=null,filter="all",h=440} = opt;
+  if(el._sim) el._sim.stop();
+  el.innerHTML="";
+  const w=Math.max(280,el.clientWidth||600);
+  const compact=w<520;
+  const set=new Set(ids);
+  const pathKeys=new Set();
+  if(path) for(let i=0;i<path.length-1;i++){pathKeys.add(path[i]+"|"+path[i+1]);pathKeys.add(path[i+1]+"|"+path[i]);}
+  const nodes=ids.map(id=>({id}));
+  const links=L.filter(([s,t,type])=>set.has(s)&&set.has(t)&&(filter==="all"||type===filter||pathKeys.has(s+"|"+t)))
+    .map(([s,t,type,note])=>({source:s,target:t,type,note,onPath:pathKeys.has(s+"|"+t)}));
+  const R=d=>focus.includes(d.id)?(compact?24:30):(compact?15:19);
+  if(focus.length===2){
+    const a=nodes.find(n=>n.id===focus[0]),b=nodes.find(n=>n.id===focus[1]);
+    if(a){a.fx=w*(compact?.2:.18);a.fy=h/2;a.pinned=true}
+    if(b){b.fx=w*(compact?.8:.82);b.fy=h/2;b.pinned=true}
+  }
+  const sim=d3.forceSimulation(nodes)
+    .force("link",d3.forceLink(links).id(d=>d.id).distance(compact?58:78).strength(.5))
+    .force("charge",d3.forceManyBody().strength(compact?-190:-300))
+    .force("x",d3.forceX(w/2).strength(.06)).force("y",d3.forceY(h/2).strength(.1))
+    .force("collide",d3.forceCollide(d=>R(d)+(compact?12:18)))
+    .stop();
+  for(let i=0;i<260;i++) sim.tick();
+  el._sim=sim;
+  const svg=d3.select(el).append("svg").attr("viewBox",[0,0,w,h]).attr("height",h).attr("role","img").attr("aria-label","Connection graph of "+ids.map(i=>A[i].n).join(", "));
+  const tip=d3.select(el).append("div").attr("class","tip").attr("hidden",true);
+  const lit=id=>!highlight||highlight.has(id);
+  const lg=svg.append("g").selectAll("g").data(links).join("g").attr("class",d=>(!lit(d.source.id)||!lit(d.target.id))?"dim":"");
+  const vis=lg.append("line").attr("class",d=>"edge "+d.type+(d.onPath?" on-path":""));
+  const hit=lg.append("line").attr("class","hit")
+    .on("mouseenter",(e,d)=>showTip(e,`<b>${esc(d.source.n||A[d.source.id].n)} · ${esc(A[d.target.id].n)}</b>${TYPES[d.type]} — ${esc(d.note)}`))
+    .on("mousemove",moveTip).on("mouseleave",hideTip);
+  const ng=svg.append("g").selectAll("g").data(nodes).join("g").attr("class",d=>"node"+(lit(d.id)?"":" dim")).attr("tabindex",0).attr("role","button").attr("aria-label",d=>A[d.id].n)
+    .on("click",(e,d)=>openDrawer(d.id)).on("keydown",(e,d)=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openDrawer(d.id)}})
+    .on("mouseenter",(e,d)=>showTip(e,`<b>${esc(A[d.id].n)}</b>${esc(A[d.id].role||A[d.id].g.join(" · "))} · ${ADJ[d.id].length} links`)).on("mousemove",moveTip).on("mouseleave",hideTip);
+  ng.filter(d=>ring.has(d.id)).append("circle").attr("class","ring").attr("r",d=>R(d)+5);
+  ng.filter(d=>focus.includes(d.id)).append("circle").attr("class","focus-ring").attr("r",d=>R(d)+4);
+  ng.append("circle").attr("class","disc-c").attr("r",R).attr("fill",d=>`hsl(${A[d.id].h} 46% 40%)`);
+  ng.append("circle").attr("r",d=>R(d)*.84).attr("fill","none").attr("stroke","rgba(255,255,255,.14)");
+  ng.append("circle").attr("r",d=>R(d)*.7).attr("fill","none").attr("stroke","rgba(255,255,255,.1)");
+  ng.append("circle").attr("class","lbl").attr("r",d=>R(d)*.56);
+  ng.append("text").attr("class","lbl-t").attr("text-anchor","middle").attr("dy","0.36em").attr("font-size",d=>R(d)*(A[d.id].i.length>2?.3:.4)).text(d=>A[d.id].i);
+  ng.append("text").attr("class","n-label").attr("text-anchor","middle").attr("y",d=>R(d)+15).text(d=>A[d.id].n);
+  ng.call(d3.drag()
+    .on("start",(e,d)=>{if(!e.active)sim.alphaTarget(.25).restart();d.fx=d.x;d.fy=d.y;hideTip()})
+    .on("drag",(e,d)=>{d.fx=e.x;d.fy=e.y})
+    .on("end",(e,d)=>{if(!e.active)sim.alphaTarget(0);if(!d.pinned){d.fx=null;d.fy=null}}));
+  function clamp(){nodes.forEach(d=>{const r=R(d)+6;d.x=Math.max(r+30,Math.min(w-r-30,d.x));d.y=Math.max(r,Math.min(h-r-18,d.y));});}
+  function tick(){clamp();
+    vis.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
+    hit.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
+    ng.attr("transform",d=>`translate(${d.x},${d.y})`);}
+  tick();
+  sim.on("tick",tick);
+  if(!RM) sim.alpha(.08).restart();
+  function showTip(e,html){tip.html(html).attr("hidden",null);moveTip(e)}
+  function moveTip(e){const r=el.getBoundingClientRect();tip.style("left",(e.clientX-r.left)+"px").style("top",(e.clientY-r.top)+"px")}
+  function hideTip(){tip.attr("hidden",true)}
+}
+
+/* ---------- For you ---------- */
+function renderForYou(){
+  $("#nudge").hidden=!S.nudge;
+  $("#fyLede").textContent=`Start from a song you just heard, or dig into picks from your ${S.favs.length} artists. Every pick shows why it’s here.`;
+  $("#cod").innerHTML=`
+    <p class="eyebrow">Connection of the day</p>
+    <div class="cod-pair">
+      <button class="cod-artist" data-open="olivia">${disc("olivia",72)}<span>Olivia Rodrigo</span></button>
+      <svg class="cod-line" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true"><path d="M0 22 C 60 -4, 140 48, 200 22"/></svg>
+      <button class="cod-artist" data-open="taylor">${disc("taylor",72)}<span>Taylor Swift</span></button>
+    </div>
+    <h2 class="display">“deja vu” borrows from “Cruel Summer”, so Taylor Swift is on the writing credits.</h2>
+    <p class="credit">deja vu · written by O. Rodrigo, D. Nigro, T. Swift, J. Antonoff, A. Clark · ℗ 2021 Geffen Records</p>
+    <div class="actions">
+      <button class="btn btn-feature" data-compare="olivia,taylor">Compare these two</button>
+      <a class="btn btn-feature-ghost" href="https://www.youtube.com/results?search_query=olivia+rodrigo+deja+vu" target="_blank" rel="noopener">Listen on YouTube ↗</a>
+    </div>`;
+  $("#yourArtists").innerHTML=`<div class="card-h"><h2>Your artists</h2><button class="link" data-go="setup">Edit</button></div>
+    <ul class="artist-list">${S.favs.map(id=>`<li><button class="artist-row" data-open="${id}">${disc(id,44)}<span><span class="nm">${esc(A[id].n)}</span><span class="sub">${A[id].g.join(" · ")}</span></span><span class="count">${ADJ[id].length} links</span></button></li>`).join("")}</ul>`;
+  // genre web
+  const gs=["Pop","Folk","Rock","Indie","K-pop","Country","Hip-hop","Metal"].filter(g=>S.genres.includes(g)||g==="Pop");
+  if(!gs.includes(S.fyGenre)) S.fyGenre=gs[0];
+  $("#genreChips").innerHTML=gs.map(g=>`<button class="chip" aria-pressed="${g===S.fyGenre}" data-fygenre="${g}">${g}</button>`).join("");
+  $("#webTitle").textContent=`Genre web · ${S.fyGenre}`;
+  let ids=artistIds.filter(k=>A[k].g.includes(S.fyGenre));
+  if(ids.length<5){const extra=new Set(ids);ids.forEach(k=>ADJ[k].forEach(e=>extra.add(e.id)));ids=[...extra]}
+  Object.keys(A).filter(isProd).forEach(p=>{if(!ids.includes(p)&&ADJ[p].filter(e=>ids.includes(e.id)).length>=2) ids.push(p)});
+  drawGraph($("#g-foryou"),{ids,ring:new Set(S.favs),h:400});
+  renderHero(); renderSong(); renderInsights(); renderWhatsNew(); renderRecs();
+}
+const HEARD=["TikTok","Instagram","Spotify","Radio","A friend","A concert"];
+function songPicks(k){
+  const sg=SONGS[k], seeds=sg.credits.map(c=>c[0]), seen=new Set(seeds), cand=[];
+  seeds.forEach(p=>ADJ[p].forEach(e=>{const m=e.id;if(seen.has(m)||isProd(m)||S.blocked.has(m))return;const match=(A[m].m||[]).filter(x=>sg.mood.includes(x));cand.push({id:m,via:p,e,match,score:match.length*2+(isProd(p)?1:0)+(A[m].deep?1:0)})}));
+  cand.sort((a,b)=>b.score-a.score);
+  const out=[];cand.forEach(c=>{if(!seen.has(c.id)&&out.length<3){seen.add(c.id);out.push(c)}});
+  return out;
+}
+const norm=s=>s.toLowerCase().replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim();
+function traceSong(q,src){
+  q=q.trim(); if(!q) return;
+  S.songSrc=src||S.songSrc;
+  if(/https?:\/\/|\.com\//i.test(q)){S.songMsg="Link lookup arrives with the Spotify and TikTok integrations. For this prototype, type a song title or pick one below.";return renderSong()}
+  const n=norm(q);
+  const k=Object.keys(SONGS).find(k=>{const t=norm(SONGS[k].t);return t===n||(n.length>2&&(t.includes(n)||n.includes(t)))});
+  if(!k){S.songMsg=`We don’t have “${q}” in the prototype yet. Try one of these.`;return renderSong()}
+  startTrail(k);
+}
+function startTrail(k){S.song=k;S.songMsg="";S.trail=[{kind:"song",k,src:S.songSrc}];renderSong();renderTrailPill()}
+const NOTE_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>';
+function renderSong(){
+  const sg=SONGS[S.song], picks=songPicks(S.song), first=sg.by[0], last=sg.by[sg.by.length-1];
+  $("#songStart").innerHTML=`<div class="start-form">
+      <p class="eyebrow">Start from a song</p>
+      <h2 class="display">Heard something good?</h2>
+      <p>Most new music finds you first, on TikTok, the radio or a friend’s story. Drop the song here and we’ll show who made it and where to go next.</p>
+      <form class="song-in" id="songForm">
+        <select class="select" id="songSrc" aria-label="Where you heard it">${HEARD.map(x=>`<option ${x===S.songSrc?"selected":""}>${x}</option>`).join("")}</select>
+        <input id="songQ" type="text" placeholder="Song title, or paste a link" aria-label="Song title or link" autocomplete="off">
+        <button class="btn btn-primary" type="submit">Trace it</button>
+      </form>
+      ${S.songMsg?`<p class="notice">${esc(S.songMsg)}</p>`:""}
+      <div class="examples"><span class="meta">Try</span>${Object.keys(SONGS).map(k=>`<button class="chip" aria-pressed="${k===S.song}" data-song="${k}">${esc(SONGS[k].t)}</button>`).join("")}</div>
+    </div>
+    <div class="song-res">
+      <div class="song-head"><span class="sleeve" style="background:linear-gradient(135deg,hsl(${A[first].h} 50% 44%),hsl(${A[last].h+30} 45% 24%))">${NOTE_SVG}</span>
+        <div><p class="eyebrow-s">Heard on ${esc(S.songSrc)}</p><h3>${esc(sg.t)}</h3><p class="muted">${esc(sg.by.map(id=>A[id].n).join(" & "))} · ${sg.y}</p></div>
+        <span style="margin-left:auto">${moodChips(sg.mood)}</span></div>
+      <div><p class="sub-h">On the credits</p><div class="credits-list">${sg.credits.map(([id,role])=>`<button class="credit-chip" data-open="${id}">${disc(id,32)}<span><b>${esc(A[id].n)}</b><span>${esc(role)}</span></span></button>`).join("")}</div></div>
+      <div><p class="sub-h">Where to go next · matched on sound</p><div class="next-list">${picks.map(p=>`<button class="next" data-open="${p.id}"><span class="next-top">${disc(p.id,36)}<b>${esc(A[p.id].n)}</b></span><span class="why">Via ${esc(A[p.via].n)} · ${esc(p.e.note)}</span>${moodChips(A[p.id].m,p.match)}</button>`).join("")||'<p class="muted">Nothing new nearby. You’ve hidden everyone in this corner of the web.</p>'}</div></div>
+      <div class="controls"><button class="btn btn-ghost" data-sharetrail>Share this trail</button>${sg.by.length>1?`<button class="btn btn-ghost" data-compare="${sg.by[0]},${sg.by[1]}">See how they connect</button>`:`<button class="btn btn-ghost" data-open="${first}">About ${esc(A[first].n)}</button>`}</div>
+    </div>`;
+}
+/* hero: surprising connections, animated hop by hop */
+const HERO_PAIRS=[["kanye","taylor","Yes, even after the 2009 VMAs. Justin Vernon sang for both of them."],["metallica","olivia"],["bts","chappell"],["kendrick","lorde"],["rose","boniver"],["shania","chappell"],["coldplay","sabrina"]];
+let heroRAF=null,heroPaused=false;
+const shortNote=e=>{const m=e.note.match(/“([^”]+)”/);return m?`“${m[1]}”`:(e.note.length>26?e.note.slice(0,25)+"…":e.note)};
+function renderHero(){
+  cancelAnimationFrame(heroRAF);
+  const [a,b,kicker]=HERO_PAIRS[S.heroI%HERO_PAIRS.length], path=bfs(a,b), hops=path.length-1;
+  const el=$("#hero");
+  el.innerHTML=`<div class="hero-top"><div>
+      <p class="eyebrow">Song Nexus · every artist is closer than you think</p>
+      <h1 class="display">${esc(A[a].n)} is ${hops<=2?"only ":""}<em>${hops} step${hops===1?"":"s"}</em> from ${esc(A[b].n)}.</h1></div>
+    <div class="hero-ctl"><div class="controls"><button class="btn btn-feature" id="heroNext">Show me another</button><button class="btn btn-feature-ghost" data-play="${a},${b}">Race this route</button><button class="btn btn-feature-ghost" data-compare="${a},${b}">Compare</button></div>
+      <div class="hero-dots">${HERO_PAIRS.map((p,i)=>`<button aria-label="${esc(A[p[0]].n)} to ${esc(A[p[1]].n)}" aria-current="${i===S.heroI%HERO_PAIRS.length}" data-hero="${i}"></button>`).join("")}</div></div></div>
+    <div class="hero-chain" id="heroChain"></div>`;
+  $("#heroNext").onclick=()=>{S.heroI++;renderHero()};
+  const box=$("#heroChain"), W=Math.max(300,box.clientWidth), vertical=W<560;
+  const n=path.length, R=vertical?18:22;
+  let pts,H;
+  if(vertical){H=30+(n-1)*64+26;pts=path.map((id,i)=>[26,26+i*64])}
+  else{H=150;const gap=Math.min(230,(W-120)/(n-1)),x0=(W-gap*(n-1))/2;pts=path.map((id,i)=>[x0+i*gap,i%2?56:92])}
+  const segs=[];
+  let svg=`<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(path.map(p=>A[p].n).join(" to "))}">`;
+  for(let i=0;i<n-1;i++){
+    const [x1,y1]=pts[i],[x2,y2]=pts[i+1], e=edge(path[i],path[i+1]);
+    let d,lx,ly,anchor="middle";
+    if(vertical){d=`M${x1} ${y1} L${x2} ${y2}`;lx=x1+R+18;ly=(y1+y2)/2+4;anchor="start"}
+    else{const cx=(x1+x2)/2,cy=Math.min(y1,y2)-26;d=`M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}`;lx=cx;ly=(y1+y2)/2-(y1<y2?-2:10)-14}
+    segs.push({x1,y1,x2,y2,vertical,cx:(x1+x2)/2,cy:Math.min(y1,y2)-26});
+    svg+=`<path class="h-edge" id="he${i}" d="${d}"/>`;
+    svg+=vertical?`<text class="h-lab" id="hl${i}" x="${lx}" y="${ly}" text-anchor="${anchor}">↓ ${esc(shortNote(e))} <tspan class="h-type">${TYPES[e.type]}</tspan></text>`
+      :`<text class="h-lab" id="hl${i}" x="${lx}" y="${ly}" text-anchor="middle">${esc(shortNote(e))}</text><text class="h-type" x="${lx}" y="${ly+13}" text-anchor="middle">${TYPES[e.type]}</text>`;
+  }
+  path.forEach((id,i)=>{const [x,y]=pts[i];
+    svg+=`<g class="hnode" id="hn${i}" data-open="${id}" tabindex="0" role="button" aria-label="${esc(A[id].n)}"><circle class="h-halo" cx="${x}" cy="${y}" r="${R+6}"/><g transform="translate(${x-R},${y-R})">${disc(id,R*2)}</g>`+
+      (vertical?`<text class="h-name" x="${x+R+18}" y="${y+5}">${esc(A[id].n)}</text>`:`<text class="h-name" x="${x}" y="${y+R+20}" text-anchor="middle">${esc(A[id].n)}</text>`)+`</g>`;
+  });
+  svg+=`<circle class="h-dot" id="hdot" r="6" cx="${pts[0][0]}" cy="${pts[0][1]}"/></svg>`;
+  box.innerHTML=svg;
+  const setOn=k=>{for(let i=0;i<n;i++){const nd=document.getElementById("hn"+i);if(nd)nd.classList.toggle("on",i<=k)}for(let i=0;i<n-1;i++){["he","hl"].forEach(p=>{const x=document.getElementById(p+i);if(x)x.classList.toggle("on",i<k)})}};
+  if(RM){setOn(n-1);$("#hdot").remove();return}
+  const HOP=1100,HOLD=1800;let start=performance.now();let pausedAt=null,offset=0;
+  const pos=(sg,t)=>sg.vertical?[sg.x1+(sg.x2-sg.x1)*t,sg.y1+(sg.y2-sg.y1)*t]:[(1-t)*(1-t)*sg.x1+2*(1-t)*t*sg.cx+t*t*sg.x2,(1-t)*(1-t)*sg.y1+2*(1-t)*t*sg.cy+t*t*sg.y2];
+  const frame=now=>{
+    if(heroPaused||document.hidden){if(pausedAt===null)pausedAt=now;heroRAF=requestAnimationFrame(frame);return}
+    if(pausedAt!==null){offset+=now-pausedAt;pausedAt=null}
+    const el2=Math.max(0,now-start-offset), k=Math.floor(el2/HOP), dot=$("#hdot");
+    if(!dot) return;
+    if(k>=n-1){setOn(n-1);dot.setAttribute("cx",pts[n-1][0]);dot.setAttribute("cy",pts[n-1][1]);
+      if(el2>(n-1)*HOP+HOLD){start=now;offset=0}}
+    else{setOn(k);const [x,y]=pos(segs[k],(el2%HOP)/HOP);dot.setAttribute("cx",x);dot.setAttribute("cy",y)}
+    heroRAF=requestAnimationFrame(frame);
+  };
+  setOn(0);heroRAF=requestAnimationFrame(frame);
+}
+function renderInsights(){
+  const counts=Object.fromEntries(Object.keys(TYPES).map(k=>[k,0]));
+  L.forEach(([s,t,type])=>{if(S.favs.includes(s)||S.favs.includes(t))counts[type]++});
+  const tot=Object.values(counts).reduce((a,b)=>a+b,0)||1;
+  const col={collab:"var(--c-collab)",prod:"var(--c-prod)",credit:"var(--c-credit)",influence:"var(--c-influence)",tour:"var(--c-tour)",member:"var(--c-member)"};
+  let hub=null,hubN=0;
+  Object.keys(A).forEach(k=>{if(S.favs.includes(k))return;const n=ADJ[k].filter(e=>S.favs.includes(e.id)).length;if(n>hubN){hub=k;hubN=n}});
+  let far=null,farD=0;
+  for(let i=0;i<S.favs.length;i++)for(let j=i+1;j<S.favs.length;j++){const d=dist(S.favs[i],S.favs[j]);if(d>farD&&d<Infinity){farD=d;far=[S.favs[i],S.favs[j]]}}
+  $("#insights").innerHTML=`<div class="card-h"><h2>Insights</h2><span class="meta">${tot} links</span></div>
+    <p class="meta" style="margin:0">How your artists are connected</p>
+    <div class="stack" role="img" aria-label="Link types">${Object.keys(counts).filter(k=>counts[k]).map(k=>`<i style="width:${counts[k]/tot*100}%;background:${col[k]}"></i>`).join("")}</div>
+    <div class="stack-legend">${Object.keys(counts).filter(k=>counts[k]).map(k=>`<span><i style="background:${col[k]}"></i>${TYPES[k]} ${Math.round(counts[k]/tot*100)}%</span>`).join("")}</div>
+    ${hub?`<div class="insight"><p class="big">${esc(A[hub].n)} links ${hubN} of your artists.</p><p class="muted" style="font-size:13.5px">The most connected person in your web${isProd(hub)?" — and they’re a producer, not a performer":""}.</p><div><button class="btn btn-ghost" data-open="${hub}" style="height:34px;font-size:13px">See ${esc(A[hub].n.split(" ")[0])}’s credits</button></div></div>`:""}
+    ${far?`<div class="insight"><p class="big">${esc(A[far[0]].n)} and ${esc(A[far[1]].n)} are ${farD} hops apart.</p><p class="muted" style="font-size:13.5px">Your two least-connected favorites.</p><div><button class="btn btn-ghost" data-play="${far[0]},${far[1]}" style="height:34px;font-size:13px">Connect them in Six Degrees</button></div></div>`:""}`;
+}
+function renderWhatsNew(){
+  const items=[
+    ["antonoff","sabrina","prod","New credit","Jack Antonoff co-produced Short n’ Sweet (2024)"],
+    ["bruno","rose","collab","Crossover","“APT.” (2024) puts K-pop and pop on one track"],
+    ["chappell","olivia","tour","Tour link","Chappell Roan opened both the Sour and GUTS tours"],
+    ["taylor","post","collab","Feature","“Fortnight” (2024) links Swift to Post Malone’s orbit"],
+  ];
+  $("#whatsnew").innerHTML=`<div class="card-h"><h2>What’s new in your web</h2><span class="sample">Sample feed</span></div>
+    <ul class="feed">${items.map(([a,b,t,ttl,nt])=>`<li><button data-compare="${a},${b}"><span class="pair">${disc(a,34)}${disc(b,34)}</span><span><span class="ttl">${ttl}</span> ${tag(t)}</span><span class="nt">${esc(nt)}</span></button></li>`).join("")}</ul>`;
+}
+function recPicks(){
+  const cand=[];
+  const add=(id,from,via,e,base)=>{if(S.favs.includes(id)||isProd(id)||S.blocked.has(id))return;const match=(A[id].m||[]).filter(x=>(A[from].m||[]).includes(x));cand.push({id,from,via,e,match,score:base+match.length+(A[id].deep?1:0)})};
+  S.favs.forEach(f=>ADJ[f].forEach(n=>{add(n.id,f,null,n,n.type==="collab"?2:1);ADJ[n.id].forEach(m=>{if(m.id!==f)add(m.id,f,n.id,m,isProd(n.id)?2:0)})}));
+  cand.sort((a,b)=>b.score-a.score);
+  const out=[],seen=new Set();
+  cand.forEach(c=>{if(seen.has(c.id))return;if(S.mood!=="Any"&&!(A[c.id].m||[]).includes(S.mood))return;if(S.deep&&!A[c.id].deep)return;seen.add(c.id);out.push(c)});
+  return out.slice(0,4);
+}
+function renderRecs(){
+  const out=recPicks();
+  const chain=r=>`${nameBtn(r.from)}<span class="arrow">→</span>${r.via?`${nameBtn(r.via)}<span class="arrow">→</span>`:""}<b>${esc(A[r.id].n)}</b>`;
+  $("#recsCard").innerHTML=`<div class="card-h"><h2>Recommended, with reasons</h2><span class="meta">Every pick shows why it’s here</span></div>
+    <div class="recs-tools"><div class="chips" role="group" aria-label="Filter by sound">${["Any",...MOOD_LIST].map(m=>`<button class="chip" aria-pressed="${S.mood===m}" data-mood="${m}">${m==="Any"?"Any sound":m}</button>`).join("")}</div>
+      <label class="switch"><input type="checkbox" id="deepToggle" ${S.deep?"checked":""}>Lesser-known only</label></div>
+    ${out.length?`<div class="recs">${out.map(r=>`<div class="rec">
+      <div class="rec-top">${disc(r.id,48)}<div><b>${esc(A[r.id].n)}</b><span>${A[r.id].g.join(" · ")}${A[r.id].deep?" · under the radar":""}</span></div><button class="link nfm" data-block="${r.id}" aria-label="Don’t recommend ${esc(A[r.id].n)}">Not for me</button></div>
+      <p class="why">${r.match.length?`<b>Sounds like ${esc(A[r.from].n)}:</b> ${r.match.join(", ").toLowerCase()}`:`<b>A new sound</b> for a ${esc(A[r.from].n)} fan`}</p>
+      <div class="chain">${chain(r)}</div>
+      <p class="nt">${esc(r.e.note)}</p>
+      ${moodChips(A[r.id].m,r.match)}
+      <div class="row"><button class="btn btn-ghost" data-compare="${r.from},${r.id}">Compare</button><button class="btn btn-ghost" data-share="rec:${r.from},${r.via||""},${r.id}">Share</button></div>
+    </div>`).join("")}</div>`:`<p class="notice">No picks match that yet. Try a different sound${S.deep?" or turn off Lesser-known only":""}.</p>`}
+    ${S.blocked.size?`<div class="hidden-list"><span class="meta">Not recommending:</span>${[...S.blocked].map(id=>`<button class="chip" data-unblock="${id}" style="height:28px;font-size:12.5px">${esc(A[id].n)} · Undo</button>`).join("")}</div>`:""}`;
+  $("#deepToggle").onchange=e=>{S.deep=e.target.checked;renderRecs()};
+}
+
+/* ---------- Connect ---------- */
+function similar(id,excl){
+  return artistIds.filter(k=>k!==id&&k!==excl).map(k=>({k,s:A[k].g.filter(g=>A[id].g.includes(g)).length+(A[k].m||[]).filter(m=>(A[id].m||[]).includes(m)).length,d:dist(id,k)}))
+    .filter(x=>x.s>0).sort((a,b)=>b.s-a.s||a.d-b.d).slice(0,3).map(x=>x.k);
+}
+function sideHTML(id,other){
+  const a=A[id];
+  const collabs=ADJ[id].filter(e=>e.id!==other&&e.type!=="influence").slice(0,3).map(e=>e.id);
+  const infl=(a.inf||[]).concat(L.filter(l=>l[1]===id&&l[2]==="influence").map(l=>l[0])).filter((v,i,arr)=>arr.indexOf(v)===i);
+  return `<div class="side-top">${disc(id,64)}<div><p class="eyebrow-s">${esc(a.role||"Artist")}</p><h3>${esc(a.n)}</h3>${a.from?`<p>${esc(a.from)}</p>`:""}</div></div>
+    ${a.m?`<h4>Sound</h4>${moodChips(a.m,A[other].m||[])}`:""}
+    <h4>Works</h4><ul class="works">${a.w.map(([t,y])=>`<li><span>${esc(t)}</span><span class="yr">${y}</span></li>`).join("")}</ul>
+    <h4>Further</h4><ol class="further">
+      <li><span class="k">Other collaborators</span>${collabs.length?collabs.map(nameBtn).join(", "):"—"}</li>
+      <li><span class="k">Sounds similar</span>${similar(id,other).map(nameBtn).join(", ")||"—"}</li>
+      <li><span class="k">Genre</span>${a.g.join(", ")}</li>
+      <li><span class="k">Influences</span>${infl.length?infl.map(nameBtn).join(", "):"Not documented yet"}</li>
+    </ol>`;
+}
+function renderConnect(){
+  const {a,b,filter}=S.cmp;
+  const opts=Object.keys(A).sort(byName);
+  ["#selA","#selB"].forEach((s,i)=>{$(s).innerHTML=opts.map(k=>`<option value="${k}">${esc(A[k].n)}</option>`).join("");$(s).value=i?b:a;});
+  $("#cmpTitle").textContent=`${A[a].n} & ${A[b].n}`;
+  $("#sideA").innerHTML=sideHTML(a,b); $("#sideB").innerHTML=sideHTML(b,a);
+  $("#cmpFilters").innerHTML=[["all","Everything"],...Object.entries(TYPES)].map(([k,v])=>`<button class="chip" aria-pressed="${filter===k}" data-filter="${k}">${v}</button>`).join("");
+  const path=bfs(a,b)||[];
+  const na=ADJ[a].map(e=>e.id), nbb=ADJ[b].map(e=>e.id);
+  const shared=na.filter(x=>nbb.includes(x));
+  const ids=[...new Set([a,b,...na,...nbb,...path])];
+  const w=$("#g-connect").clientWidth;
+  drawGraph($("#g-connect"),{ids,focus:[a,b],ring:new Set(shared),path,filter,h:w<520?420:470});
+  // similarities
+  const direct=edge(a,b);
+  const sg=A[a].g.filter(g=>A[b].g.includes(g));
+  const sm=(A[a].m||[]).filter(x=>(A[b].m||[]).includes(x));
+  const notes=PAIR_NOTES[[a,b].sort().join("|")]||[];
+  const hops=path.length-1;
+  $("#sims").innerHTML=`<div class="sims-h"><h2>Similarities</h2><span class="meta">${hops>0?`${hops} hop${hops>1?"s":""} apart · ${shared.length} shared connection${shared.length===1?"":"s"}`:"Pick two different artists"}</span></div>
+    <div class="sim"><span class="k">${direct?"Direct link":"Shortest path"}</span>
+      ${direct?`<p>${tag(direct.type)}</p><p>${esc(direct.note)}</p>`:`<div class="path-chain">${path.map((p,i)=>`${i?'<span class="arrow">→</span>':""}<button class="mini" data-open="${p}">${disc(p,28)}</button>`).join("")}</div><p class="muted" style="font-size:13px">${path.map(p=>A[p].n).join(" → ")}</p>`}
+      ${hops>1?`<div><button class="btn btn-ghost" data-play="${a},${b}" style="height:34px;font-size:13px">Race it in Six Degrees</button></div>`:""}</div>
+    <div class="sim"><span class="k">Shared connections</span>${shared.length?`<div class="minis">${shared.map(s=>`<button class="mini" data-open="${s}">${disc(s,28)}<span>${esc(A[s].n)}</span></button>`).join("")}</div>`:`<p class="muted">None yet — they connect through ${hops>1?A[path[1]].n:"each other"}.</p>`}</div>
+    <div class="sim"><span class="k">Sound & genre</span>${sm.length?`<p>Both lean ${sm.join(", ").toLowerCase()}.</p>${moodChips(sm,sm)}`:`<p class="muted">Different energy: ${esc(((A[a].m||["—"])[0]).toLowerCase())} vs ${esc(((A[b].m||["—"])[0]).toLowerCase())}.</p>`}<p class="muted" style="font-size:13px">${sg.length?`Shared genres: ${sg.join(", ")}`:`${A[a].g[0]} meets ${A[b].g[0]}.`}</p></div>
+    <div class="sim"><span class="k">Why they sound related</span>${notes.length?`<ul class="notes">${notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:`<p class="muted">Both sit within ${hops} step${hops===1?"":"s"} of each other through ${[...new Set(path.slice(0,-1).map((p,i)=>TYPES[edge(p,path[i+1]).type].toLowerCase()))].join(" and ")}.</p>`}</div>`;
+}
+
+/* ---------- Explore ---------- */
+const GLYPH={
+  spotify:'<path d="M6 9.5c4-1.3 8.5-1 12 1M7 13c3.2-.9 6.8-.6 9.5 1M8 16.3c2.4-.6 5-.4 7 .8"/><circle cx="12" cy="12" r="9.5"/>',
+  apple:'<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+  youtube:'<rect x="3" y="5.5" width="18" height="13" rx="3.5"/><path d="m10 9.2 5 2.8-5 2.8z"/>',
+  shazam:'<path d="M4 12h2l2-5 3 10 3-8 2 5 2-2h2"/>',
+  university:'<path d="M3 9.5 12 5l9 4.5M5 10v7M9.5 10v7M14.5 10v7M19 10v7M3 19.5h18"/>',
+  city:'<path d="M3 20h18M5 20V10h4v10M9 20V5h6v15M15 20v-8h4v8"/>',
+  ai:'<circle cx="10.5" cy="10.5" r="6"/><path d="m20 20-5-5M17.5 3v4M15.5 5h4"/>',
+  trending:'<path d="M3 17 9 11l4 4 8-8M15 7h6v6"/>'
+};
+const SOURCES=[["spotify","Spotify","Top artists & playlists"],["apple","Apple Music","Library & replays"],["youtube","YouTube","Watch history"],["shazam","Shazam","Songs you identified"]];
+const LENSES=[["university","University","What your campus plays"],["city","City","Where artists come from"],["ai","AI search","Ask how two artists connect"],["trending","Trending","Rising this week"]];
+const CAMPUS={"UW–Madison":["boniver","chappell","olivia","post","boygenius"],"UT Austin":["chappell","sabrina","olivia","post","kendrick"],"NYU":["lana","phoebe","gracie","stv","rose"],"UCLA":["kendrick","haim","gracie","olivia","bts"],"U of Michigan":["taylor","ed","coldplay","chappell","metallica"]};
+const CITY={"Auckland":[["lorde","rose"],"Lorde and ROSÉ were both born in Auckland, New Zealand, before their careers took them to the world."],
+  "Los Angeles":[["phoebe","gracie","haim","kendrick","metallica"],"Born, raised or formed in LA County: from Compton hip-hop to Pasadena indie to LA thrash metal."],
+  "Nashville":[["taylor","paramore"],"Swift moved to the Nashville area at 14 to write songs; Paramore formed in nearby Franklin."],
+  "New York":[["gaga","lana","post"],"New York State roots: Gaga (NYC), Lana Del Rey (raised in Lake Placid), Post Malone (born in Syracuse)."]};
+const TRENDING=["sabrina","chappell","gracie","rose","bruno","gaga"];
+function findArtists(text){
+  const t=text.toLowerCase(), alias={taylor:["taylor","tswift","t swift"],olivia:["olivia","rodrigo"],gaga:["gaga"],bruno:["bruno"],rose:["rosé","rose"],kendrick:["kendrick"],ed:["sheeran"],sabrina:["sabrina"],chappell:["chappell"],phoebe:["phoebe"],lana:["lana"],antonoff:["antonoff"],nigro:["nigro"],dessner:["dessner"]};
+  const hits=[];
+  Object.keys(A).forEach(k=>{const keys=[A[k].n.toLowerCase(),...(alias[k]||[])];let pos=-1;keys.forEach(x=>{const p=t.indexOf(x);if(p>=0&&(pos<0||p<pos))pos=p});if(pos>=0)hits.push([pos,k])});
+  return hits.sort((a,b)=>a[0]-b[0]).map(h=>h[1]).filter((v,i,a)=>a.indexOf(v)===i);
+}
+function renderExplore(){
+  $("#srcTiles").innerHTML=SOURCES.map(([id,n,sub])=>`<button class="tile" aria-pressed="${!!S.sources[id]}" data-src="${id}"><span class="glyph"><svg viewBox="0 0 24 24">${GLYPH[id]}</svg></span><span><b>${n}</b><span>${sub}</span></span>${S.sources[id]?'<span class="state">Linked</span>':""}</button>`).join("");
+  $("#lensTiles").innerHTML=LENSES.map(([id,n,sub])=>`<button class="tile" aria-pressed="${S.lens===id}" data-lens="${id}"><span class="glyph"><svg viewBox="0 0 24 24">${GLYPH[id]}</svg></span><span><b>${n}</b><span>${sub}</span></span></button>`).join("");
+  let hl=null,path=null,info="";
+  if(S.lens==="university"){
+    hl=new Set(CAMPUS[S.campus]);
+    info=`<div class="lens-top"><div><h2>Campus pulse · ${esc(S.campus)}</h2><p>The five artists students here are playing most this month, lit up in the full web.</p></div>
+      <div class="controls"><select class="select" id="campus" aria-label="Campus">${Object.keys(CAMPUS).map(c=>`<option ${c===S.campus?"selected":""}>${c}</option>`).join("")}</select><span class="sample">Sample data</span></div></div>
+      <ol class="ranked" style="margin-bottom:14px">${CAMPUS[S.campus].map((k,i)=>`<li>${disc(k,26)}<span class="n">${i+1}</span>${esc(A[k].n)}</li>`).join("")}</ol>`;
+  } else if(S.lens==="city"){
+    const [ids,note]=CITY[S.city]; hl=new Set(ids);
+    info=`<div class="lens-top"><div><h2>Roots · ${esc(S.city)}</h2><p>${esc(note)}</p></div>
+      <div class="chips">${Object.keys(CITY).map(c=>`<button class="chip" aria-pressed="${c===S.city}" data-city="${c}">${c}</button>`).join("")}</div></div>`;
+  } else if(S.lens==="ai"){
+    const hits=findArtists(S.ai);
+    let ans="";
+    if(hits.length>=2){path=bfs(hits[0],hits[1]);hl=new Set(path);
+      ans=`<b>${esc(A[hits[0]].n)} reaches ${esc(A[hits[1]].n)} in ${path.length-1} hops:</b><ol>${path.slice(1).map((p,i)=>{const e=edge(path[i],p);return `<li>${esc(A[path[i]].n)} → <b>${esc(A[p].n)}</b> <span class="nt">· ${TYPES[e.type].toLowerCase()} · ${esc(e.note)}</span></li>`}).join("")}</ol>`;}
+    else if(hits.length===1){hl=new Set([hits[0],...ADJ[hits[0]].map(e=>e.id)]);ans=`<b>${esc(A[hits[0]].n)}</b> has ${ADJ[hits[0]].length} documented connections, lit up below. Name a second artist to find the path between them.`}
+    else ans=`Name two artists, for example “How is BTS connected to Olivia Rodrigo?”`;
+    info=`<div class="lens-top" style="display:block"><h2>Ask the web</h2><p>Answers come straight from the credits graph, so every step can be checked.</p>
+      <form class="ai" id="aiForm"><input id="aiInput" type="text" value="${esc(S.ai)}" aria-label="Ask how two artists connect"><button class="btn btn-primary" type="submit" style="height:44px">Ask</button></form>
+      <div class="answer">${ans}</div></div>`;
+  } else {
+    hl=new Set(TRENDING);
+    info=`<div class="lens-top"><div><h2>Rising this week</h2><p>Artists whose connections are getting the most taps across Song Nexus, highlighted in the full web.</p></div><span class="sample">Sample data</span></div>
+      <ol class="ranked" style="margin-bottom:14px">${TRENDING.map((k,i)=>`<li>${disc(k,26)}<span class="n">${i+1}</span>${esc(A[k].n)}</li>`).join("")}</ol>`;
+  }
+  $("#lensInfo").innerHTML=info;
+  const w=$("#g-explore").clientWidth;
+  drawGraph($("#g-explore"),{ids:Object.keys(A),highlight:hl,path,h:w<520?560:580});
+}
+
+/* ---------- Six Degrees ---------- */
+const CHALLENGES=[["bts","olivia"],["metallica","olivia"],["kendrick","chappell"],["rose","boniver"],["coldplay","lorde"]];
+function startGame(s,t){S.game={s,t,path:[s],hint:null,gaveUp:false}}
+function renderDegrees(){
+  if(!S.game) startGame(...CHALLENGES[1]);
+  const G=S.game, cur=G.path[G.path.length-1], par=dist(G.s,G.t), won=cur===G.t;
+  $("#degTitle").textContent=`${A[G.s].n} → ${A[G.t].n}`;
+  $("#degLede").textContent=`Hop through real collaborations, credits, productions and tours. Par is ${par}.`;
+  $("#challenges").innerHTML=CHALLENGES.map(([a,b])=>`<button class="chip" aria-pressed="${G.s===a&&G.t===b}" data-play="${a},${b}">${esc(A[a].n)} → ${esc(A[b].n)}</button>`).join("");
+  const hops=G.path.length-1;
+  let board=`<div class="score"><div class="nums"><span class="num"><b>${hops}</b>hops</span><span class="num"><b>${par}</b>par</span><span class="num"><b>${won?0:dist(cur,G.t)}</b>to go</span></div>
+    <div class="controls"><button class="btn btn-ghost" id="undo" ${hops&&!won?"":"disabled"}>Undo</button><button class="btn btn-ghost" id="hint" ${won?"disabled":""}>Hint</button><button class="btn btn-ghost" id="giveup" ${won?"disabled":""}>Show path</button></div></div>`;
+  if(won){
+    const verdict=G.gaveUp?"Here’s the shortest route.":hops===par?"Perfect route — you hit par.":`Connected — ${hops-par} over par.`;
+    board+=`<div class="won"><p class="eyebrow" style="color:var(--feature-ink-2)">${G.gaveUp?"Solution":"Connected"}</p><h3 class="display">${hops} hop${hops===1?"":"s"}. ${verdict}</h3><p>${G.path.map(p=>A[p].n).join(" → ")}</p>
+      <div class="controls"><button class="btn btn-feature" id="next">Next challenge</button><button class="btn btn-feature-ghost" data-share="route">Share route</button><button class="btn btn-feature-ghost" data-compare="${G.s},${G.t}">Compare ${esc(A[G.s].n)} & ${esc(A[G.t].n)}</button></div></div>`;
+  } else {
+    board+=`<div class="current">${disc(cur,64)}<div><p class="eyebrow-s">You’re at</p><h3>${esc(A[cur].n)}</h3></div></div>
+      <p class="meta" style="margin:0 0 10px">Who is ${esc(A[cur].n)} connected to?</p>
+      <div class="opts">${ADJ[cur].slice().sort((x,y)=>byName(x.id,y.id)).map(e=>`<button class="opt${G.hint===e.id?" hint":""}" data-hop="${e.id}" ${G.path.includes(e.id)?"disabled":""}>${disc(e.id,38)}<span><b>${esc(A[e.id].n)}</b><span class="nt">${esc(e.note)}</span>${tag(e.type)}</span></button>`).join("")}</div>`;
+  }
+  $("#degBoard").innerHTML=board;
+  $("#degPath").innerHTML=`<div class="card-h"><h2>Your route</h2><span class="meta">tracklist</span></div>
+    <ol class="tracklist">${G.path.map((p,i)=>{const e=i?edge(G.path[i-1],p):null;return `<li>${disc(p,34)}<span><b>${esc(A[p].n)}</b><span class="nt">${e?`${TYPES[e.type]} · ${esc(e.note)}`:"Start"}</span></span></li>`}).join("")}
+    ${won?"":`<li class="goal">${disc(G.t,34)}<span><b>${esc(A[G.t].n)}</b><span class="nt">Target</span></span></li>`}</ol>`;
+  $("#undo").onclick=()=>{G.path.pop();G.hint=null;renderDegrees()};
+  $("#hint").onclick=()=>{const d=dist(cur,G.t);const best=ADJ[cur].find(e=>!G.path.includes(e.id)&&dist(e.id,G.t)===d-1);G.hint=best?best.id:null;renderDegrees()};
+  $("#giveup").onclick=()=>{G.path=bfs(G.s,G.t);G.gaveUp=true;renderDegrees()};
+  const nx=$("#next"); if(nx) nx.onclick=()=>{const i=CHALLENGES.findIndex(([a,b])=>a===G.s&&b===G.t);const c=CHALLENGES[(i+1)%CHALLENGES.length];startGame(...c);renderDegrees()};
+}
+
+/* ---------- Setup ---------- */
+const STEPS=["Welcome","Artists","Genres","Curiosity","Connect"];
+const CURIOUS=[["sound","Artists that sound like this","Same mood, energy and genre"],["why","Why something was recommended","The path behind every pick"],["collab","Who they’ve worked with","Features and duets, a bridge to new artists"],["influence","Who inspired them","Extra context on where the sound came from"]];
+const WHERE=["TikTok","Instagram","Spotify","Friends","Radio","Concerts & festivals"];
+function renderSetup(){
+  const st=S.step;
+  let body="";
+  if(st===0){
+    body=`<div class="welcome"><div style="display:flex;flex-direction:column;gap:16px"><p class="eyebrow">Song Nexus 1.0</p>
+      <h2 class="display">See who’s behind the music you love.</h2>
+      <p class="muted" style="margin:0;font-size:16px">Hear a song, see who made it, and find what to play next, with the reason spelled out: the collaborators, producers and sound that connect it to music you already love.</p>
+      <div class="stack-btns"><button class="btn btn-primary" data-next>Continue with Spotify</button><button class="btn btn-ghost" data-next>Log in with email</button><button class="btn btn-ghost" data-next>Continue as guest</button></div></div>
+      <div class="graph" id="g-welcome"></div></div>`;
+  } else if(st===1){
+    const list=artistIds.filter(k=>A[k].n.toLowerCase().includes(S.q.toLowerCase())).sort(byName);
+    body=`<h2 class="display">Who do you have on repeat?</h2><p>Pick at least three. We’ll start the web from them.</p>
+      <label class="field">Find an artist<input type="search" id="pickQ" value="${esc(S.q)}" placeholder="Try “Lorde” or “BTS”"></label>
+      <div class="pick-grid">${list.map(k=>`<button class="pick" aria-pressed="${S.favs.includes(k)}" data-fav="${k}">${disc(k,34)}${esc(A[k].n)}</button>`).join("")||'<p class="muted">No match yet. We’re adding artists every week.</p>'}</div>`;
+  } else if(st===2){
+    body=`<h2 class="display">Which genres feel like home?</h2><p>We’ll use these to draw your genre web.</p>
+      <div class="chips">${["Pop","K-pop","Metal","Folk","Rock","Indie","Country","Hip-hop","Pop-punk"].map(g=>`<button class="chip" style="height:40px;font-size:14px;padding:0 18px" aria-pressed="${S.genres.includes(g)}" data-genre="${g}">${g}</button>`).join("")}</div>`;
+  } else if(st===3){
+    body=`<h2 class="display">What do you want to know?</h2><p>Choose any. This decides which connections we show first.</p>
+      <div class="q-grid">${CURIOUS.map(([k,b,s])=>`<button class="q" aria-pressed="${S.curious.includes(k)}" data-cur="${k}"><b>${b}</b><span>${s}</span></button>`).join("")}</div>
+      <div><p class="sub-h" style="margin-bottom:10px">Where do you usually find new music?</p><div class="chips">${WHERE.map(w=>`<button class="chip" aria-pressed="${S.where.includes(w)}" data-where="${w}">${w}</button>`).join("")}</div></div>`;
+  } else {
+    body=`<h2 class="display">Bring your listening with you.</h2><p>Link a service to fill your web automatically, or add music by hand.</p>
+      <div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">${SOURCES.map(([id,n,sub])=>`<button class="tile" aria-pressed="${!!S.sources[id]}" data-src="${id}"><span class="glyph"><svg viewBox="0 0 24 24">${GLYPH[id]}</svg></span><span><b>${n}</b><span>${sub}</span></span>${S.sources[id]?'<span class="state">Linked</span>':""}</button>`).join("")}</div>
+      <div class="manual"><label class="field">Search a song or album<input type="text" id="manualQ" placeholder="e.g. folklore, APT., Master of Puppets"></label>
+      <div class="field">Upload a playlist<label class="upload"><input type="file" id="playlist" accept=".csv,.m3u,.txt"></label></div></div>`;
+  }
+  const canNext=!(st===1&&S.favs.length<3);
+  $("#setup").innerHTML=`<div class="steps">${STEPS.map((s,i)=>`<span class="${i===st?"on":i<st?"done":""}">${String(i+1).padStart(2,"0")} ${s}</span>`).join("")}</div>
+    <div class="setup-body">${body}</div>
+    ${st>0?`<div class="setup-foot"><button class="btn btn-ghost" id="back">Back</button><span class="meta">${st===1?`${S.favs.length} selected`:st===2?`${S.genres.length} selected`:""}</span><button class="btn btn-primary" id="fwd" ${canNext?"":"disabled"}>${st===STEPS.length-1?"Build my web":"Next"}</button></div>`:""}`;
+  if(st===0) drawGraph($("#g-welcome"),{ids:["taylor","olivia","antonoff","nigro","chappell","lorde","sabrina","dessner","gracie"],h:320});
+  const b=$("#back"); if(b) b.onclick=()=>{S.step--;renderSetup()};
+  const f=$("#fwd"); if(f) f.onclick=()=>{if(S.step===STEPS.length-1){S.step=0;S.nudge=false;go("foryou");toast("Your web is ready")}else{S.step++;renderSetup()}};
+  const pq=$("#pickQ"); if(pq){pq.oninput=e=>{S.q=e.target.value;renderSetup();const n=$("#pickQ");n.focus();n.setSelectionRange(n.value.length,n.value.length)}}
+  const pl=$("#playlist"); if(pl) pl.onchange=e=>{if(e.target.files[0]) toast(`Added “${e.target.files[0].name}” — we’ll read it once you finish`)};
+}
+
+/* ---------- drawer ---------- */
+function openDrawer(id){
+  const a=A[id];
+  const lastT=S.trail[S.trail.length-1];
+  if(!lastT||lastT.kind!=="artist"||lastT.id!==id){S.trail.push({kind:"artist",id});if(S.trail.length>12)S.trail.splice(1,1);renderTrailPill()}
+  const groups={};ADJ[id].forEach(e=>(groups[e.type]=groups[e.type]||[]).push(e));
+  $("#drawer").innerHTML=`<button class="icon-btn dr-close" id="drClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="dr-hero">${disc(id,88)}<p class="eyebrow">${esc(a.role||"Artist")}</p><h2 class="display">${esc(a.n)}</h2><p class="muted" style="margin:0">${a.from?esc(a.from)+" · ":""}${a.g.join(" · ")}</p>${a.m?`<div>${moodChips(a.m)}</div>`:""}${a.deep?'<p class="meta" style="margin:0">Under-the-radar pick</p>':""}</div>
+    <div class="dr-actions"><button class="btn btn-primary" data-compare="${id===S.cmp.a?S.cmp.b:S.cmp.a},${id}">Compare with ${esc(A[id===S.cmp.a?S.cmp.b:S.cmp.a].n)}</button><button class="btn btn-ghost" data-degfrom="${id}">Six Degrees from here</button>${isProd(id)?"":`<button class="btn btn-ghost" data-block="${id}">${S.blocked.has(id)?"Recommend again":"Not for me"}</button>`}</div>
+    <div class="dr-sec"><h4>Works</h4><ul class="works">${a.w.map(([t,y])=>`<li><span>${esc(t)}</span><span class="yr">${y}</span></li>`).join("")}</ul></div>
+    ${Object.keys(TYPES).filter(t=>groups[t]).map(t=>`<div class="dr-sec"><h4>${TYPES[t]} · ${groups[t].length}</h4><ul class="conn">${groups[t].map(e=>`<li><button data-open="${e.id}">${disc(e.id,34)}<span><b>${esc(A[e.id].n)}</b><span class="nt">${esc(e.note)}</span></span></button></li>`).join("")}</ul></div>`).join("")}
+    <div class="dr-actions"><a class="btn btn-ghost" href="https://open.spotify.com/search/${encodeURIComponent(a.n)}" target="_blank" rel="noopener">Spotify ↗</a><a class="btn btn-ghost" href="https://www.youtube.com/results?search_query=${encodeURIComponent(a.n)}" target="_blank" rel="noopener">YouTube ↗</a><a class="btn btn-ghost" href="https://genius.com/search?q=${encodeURIComponent(a.n)}" target="_blank" rel="noopener">Genius ↗</a></div>`;
+  $("#drawer").hidden=false;$("#scrim").hidden=false;$("#drawer").scrollTop=0;
+  $("#drClose").focus();
+}
+function closeDrawer(){$("#drawer").hidden=true;$("#scrim").hidden=true}
+
+/* ---------- trail + share ---------- */
+function trailSteps(){
+  return S.trail.map((t,i)=>{
+    if(t.kind==="song") return {song:true,label:`“${SONGS[t.k].t}”`,nt:`Heard on ${t.src}`};
+    const prev=S.trail[i-1];let nt="Jumped here";
+    if(prev&&prev.kind==="artist"){const e=edge(prev.id,t.id);if(e)nt=`${TYPES[e.type]} · ${e.note}`}
+    else if(prev&&prev.kind==="song"){const c=SONGS[prev.k].credits.find(c=>c[0]===t.id);if(c)nt=`On the credits · ${c[1]}`;else{const via=SONGS[prev.k].credits.map(c=>edge(c[0],t.id)).find(Boolean);if(via)nt=`${TYPES[via.type]} · ${via.note}`}}
+    return {id:t.id,label:A[t.id].n,nt};
+  });
+}
+function pathSteps(ids,firstNote){return ids.map((id,i)=>{const e=i?edge(ids[i-1],id):null;return {id,label:A[id].n,nt:e?`${TYPES[e.type]} · ${e.note}`:firstNote}})}
+function renderTrailPill(){const n=S.trail.length;$("#trailTxt").textContent=`Trail · ${n} stop${n===1?"":"s"}`}
+function openShare(eyebrow,title,steps){
+  const text=`${title}: ${steps.map(s=>s.label).join(" → ")} (found on Song Nexus)`;
+  $("#shareBox").innerHTML=`<div class="card-h" style="margin:0"><h2 id="shareTitle">Share your discovery</h2><button class="icon-btn" data-closeshare aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="share-card"><p class="eyebrow">${esc(eyebrow)}</p><h3 class="display">${esc(title)}</h3>
+      <ol class="share-steps">${steps.map(s=>`<li>${s.song?`<span class="song-disc">${NOTE_SVG}</span>`:disc(s.id,36)}<span><b>${esc(s.label)}</b>${s.nt?`<span class="nt">${esc(s.nt)}</span>`:""}</span></li>`).join("")}</ol>
+      <p class="share-foot">Song Nexus · every step is a real credit</p></div>
+    <label class="field">Message<textarea class="share-text" id="shareText" rows="3" readonly>${esc(text)}</textarea></label>
+    <div class="controls"><button class="btn btn-primary" id="shareCopy">Copy message</button><button class="btn btn-ghost" data-closeshare>Done</button></div>
+    <p class="meta" style="margin:0">In the full app this becomes a link friends can open to follow the same trail.</p>`;
+  closeDrawer();
+  $("#share").hidden=false;
+  $("#shareCopy").onclick=()=>{const ta=$("#shareText");const fall=()=>{ta.focus();ta.select();toast("Selected. Press ⌘C or Ctrl+C to copy")};try{navigator.clipboard.writeText(text).then(()=>toast("Copied. Paste it anywhere"),fall)}catch(err){fall()}};
+  $("#shareCopy").focus();
+}
+function closeShare(){$("#share").hidden=true}
+
+/* ---------- navigation & events ---------- */
+let toastT;
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600)}
+function renderSrcPill(){const on=SOURCES.filter(([id])=>S.sources[id]);$("#srcPill").lastElementChild.textContent=on.length?`${on[0][1]}${on.length>1?` +${on.length-1}`:""} linked`:"No sources linked";$("#srcPill .dot").style.background=on.length?"var(--green)":"var(--ink-3)"}
+const RENDER={foryou:renderForYou,connect:renderConnect,explore:renderExplore,degrees:renderDegrees,setup:renderSetup};
+function go(v){
+  if(!RENDER[v]) v="foryou";
+  S.view=v; closeDrawer(); if(v!=="foryou") cancelAnimationFrame(heroRAF);
+  document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);
+  document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.go===v?"page":"false"));
+  RENDER[v](); renderSrcPill(); window.scrollTo({top:0});
+}
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-open],[data-go],[data-compare],[data-play],[data-degfrom],[data-fygenre],[data-filter],[data-src],[data-lens],[data-city],[data-hop],[data-next],[data-fav],[data-genre],[data-cur],[data-mood],[data-block],[data-unblock],[data-song],[data-share],[data-sharetrail],[data-closeshare],[data-where],[data-hero]");
+  if(e.target.id==="share"){closeShare();return}
+  if(!t) return;
+  const d=t.dataset;
+  if(d.open) openDrawer(d.open);
+  else if(d.go) go(d.go);
+  else if(d.compare){const [a,b]=d.compare.split(",");S.cmp.a=a;S.cmp.b=b;go("connect")}
+  else if(d.play){const [a,b]=d.play.split(",");startGame(a,b);go("degrees")}
+  else if(d.degfrom){const s=d.degfrom;let far=s,fd=0;Object.keys(A).forEach(k=>{const x=dist(s,k);if(x>fd&&x<Infinity&&!isProd(k)){fd=x;far=k}});startGame(s,far);go("degrees")}
+  else if(d.fygenre){S.fyGenre=d.fygenre;renderForYou()}
+  else if(d.filter){S.cmp.filter=d.filter;renderConnect()}
+  else if(d.src){S.sources[d.src]=!S.sources[d.src];const n=SOURCES.find(s=>s[0]===d.src)[1];toast(S.sources[d.src]?`${n} linked (prototype)`:`${n} unlinked`);S.view==="setup"?renderSetup():renderExplore();renderSrcPill()}
+  else if(d.lens){S.lens=d.lens;renderExplore()}
+  else if(d.city){S.city=d.city;renderExplore()}
+  else if(d.hop){S.game.path.push(d.hop);S.game.hint=null;renderDegrees()}
+  else if(d.next!==undefined){S.step=1;renderSetup()}
+  else if(d.fav){const i=S.favs.indexOf(d.fav);i>=0?S.favs.splice(i,1):S.favs.push(d.fav);renderSetup()}
+  else if(d.genre){const i=S.genres.indexOf(d.genre);i>=0?S.genres.splice(i,1):S.genres.push(d.genre);renderSetup()}
+  else if(d.cur){const i=S.curious.indexOf(d.cur);i>=0?S.curious.splice(i,1):S.curious.push(d.cur);renderSetup()}
+  else if(d.where){const i=S.where.indexOf(d.where);i>=0?S.where.splice(i,1):S.where.push(d.where);renderSetup()}
+  else if(d.mood){S.mood=d.mood;renderRecs()}
+  else if(d.block){const id=d.block;if(S.blocked.has(id)){S.blocked.delete(id);toast(`${A[id].n} can be recommended again`)}else{S.blocked.add(id);toast(`Got it. We won’t recommend ${A[id].n}`)}if(!$("#drawer").hidden)openDrawer(id);if(S.view==="foryou"){renderRecs();renderSong()}}
+  else if(d.unblock){S.blocked.delete(d.unblock);renderRecs();renderSong()}
+  else if(d.song){startTrail(d.song)}
+  else if(d.sharetrail!==undefined){const st=trailSteps();openShare("My discovery trail",st.length>1?`How I got from ${st[0].label} to ${st[st.length-1].label}`:`Just found ${st[0].label}`,st)}
+  else if(d.share){if(d.share==="route"){const G=S.game;openShare("Six Degrees",`${A[G.s].n} to ${A[G.t].n} in ${G.path.length-1} hops`,pathSteps(G.path,"Start"))}else{const [f,v,id]=d.share.slice(4).split(",");openShare("Recommended, with a reason",`Why Song Nexus picked ${A[id].n} for me`,pathSteps(v?[f,v,id]:[f,id],"One of my artists"))}}
+  else if(d.closeshare!==undefined) closeShare();
+  else if(d.hero!==undefined){S.heroI=+d.hero;renderHero()}
+});
+document.addEventListener("change",e=>{
+  if(e.target.id==="selA"||e.target.id==="selB"){S.cmp[e.target.id==="selA"?"a":"b"]=e.target.value;if(S.cmp.a===S.cmp.b)S.cmp.b=Object.keys(A).find(k=>k!==S.cmp.a);renderConnect()}
+  if(e.target.id==="campus"){S.campus=e.target.value;renderExplore()}
+  if(e.target.id==="songSrc"){S.songSrc=e.target.value;if(S.trail[0]&&S.trail[0].kind==="song")S.trail[0].src=S.songSrc;renderSong()}
+});
+document.addEventListener("submit",e=>{if(e.target.id==="aiForm"){e.preventDefault();S.ai=$("#aiInput").value;renderExplore()}if(e.target.id==="songForm"){e.preventDefault();traceSong($("#songQ").value,$("#songSrc").value)}});
+$("#swap").onclick=()=>{S.cmp={...S.cmp,a:S.cmp.b,b:S.cmp.a};renderConnect()};
+$("#nudgeClose").onclick=()=>{S.nudge=false;$("#nudge").hidden=true};
+$("#scrim").onclick=closeDrawer;
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("#share").hidden)closeShare();else if(!$("#drawer").hidden)closeDrawer()});
+$("#artist-names").innerHTML=Object.keys(A).sort(byName).map(k=>`<option value="${esc(A[k].n)}"></option>`).join("");
+function searchGo(){const v=$("#q").value.trim().toLowerCase();if(!v)return;const k=Object.keys(A).find(k=>A[k].n.toLowerCase()===v)||Object.keys(A).find(k=>A[k].n.toLowerCase().includes(v));if(k){openDrawer(k);$("#q").value=""}else toast(`No artist called “${$("#q").value}” yet`)}
+$("#q").addEventListener("change",searchGo);
+$("#q").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchGo()}});
+let rT,lastW=innerWidth;
+addEventListener("resize",()=>{clearTimeout(rT);rT=setTimeout(()=>{if(Math.abs(innerWidth-lastW)>40){lastW=innerWidth;RENDER[S.view]()}},250)});
+$("#hero").addEventListener("mouseenter",()=>heroPaused=true);
+$("#hero").addEventListener("mouseleave",()=>heroPaused=false);
+$("#hero").addEventListener("focusin",()=>heroPaused=true);
+$("#hero").addEventListener("focusout",()=>heroPaused=false);
+renderTrailPill();
+go((location.hash||"").slice(1)||"foryou");
+</script>
+
+<script>
+/* ---------- Compare (MusicBrainz) — real data via the app's own API routes.
+   No MusicBrainz calls, keys, rate-limiting or caching live here: the browser
+   only talks to same-origin /api/musicbrainz/* which handles all of that. ---- */
+(function(){
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const C = { mode:"artists", a:null, b:null, cache:{a:[],b:[]}, req:{a:0,b:0}, out:null, debounce:{a:null,b:null} };
+  const mbType = () => C.mode === "artists" ? "artist" : "recording";
+  const titleOf = it => C.mode === "artists" ? it.name : it.title;
+  const subOf = it => C.mode === "artists"
+    ? [it.type, it.country, it.disambiguation].filter(Boolean).join(" · ") || "Artist"
+    : ((it.artists||[]).map(a=>a.name).join(", ") || "Artist unavailable");
+  const fmtDur = ms => ms==null ? "Not available"
+    : `${Math.floor(Math.round(ms/1000)/60)}:${String(Math.round(ms/1000)%60).padStart(2,"0")}`;
+
+  function cmpArt(url, extra){
+    const cls = "cmp-art" + (extra ? " "+extra : "");
+    const img = url ? `<img src="${esc(url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : "";
+    return `<span class="${cls}">♪${img}</span>`;
+  }
+  function ratingHTML(r){
+    return r ? `${r.value.toFixed(1)}<span class="muted">/5</span> <span class="meta">(${r.votes} vote${r.votes===1?"":"s"})</span>` : `<span class="muted">Not rated</span>`;
+  }
+  function genreChips(names, shared){
+    if(!names.length) return `<span class="muted">No genres catalogued</span>`;
+    return `<div class="chips">${names.slice(0,10).map(n=>`<span class="chip g-chip${shared.has(n)?" shared":""}">${esc(n)}</span>`).join("")}</div>`;
+  }
+  function linksHTML(links){
+    if(!links || !links.length) return "";
+    return `<h4>Listen &amp; learn more</h4><div class="cmp-links">${links.map(l=>`<a class="chip" href="${esc(l.url)}" target="_blank" rel="noreferrer noopener">${esc(l.type)}</a>`).join("")}</div>`;
+  }
+
+  function artistCard(label, d, shared){
+    const disc = d.discography || {};
+    const counts = [
+      disc.albumCount?`${disc.albumCount} album${disc.albumCount===1?"":"s"}`:"",
+      disc.epCount?`${disc.epCount} EP${disc.epCount===1?"":"s"}`:"",
+      disc.singleCount?`${disc.singleCount} single${disc.singleCount===1?"":"s"}`:""
+    ].filter(Boolean).join(" · ") || "Not available";
+    const span = disc.firstYear ? ` · ${disc.firstYear}${disc.lastYear&&disc.lastYear!==disc.firstYear?"–"+disc.lastYear:""}` : "";
+    const ls = d.lifeSpan || {};
+    const active = ls.begin ? (ls.end ? `${ls.begin} – ${ls.end}` : (ls.ended ? ls.begin : `${ls.begin} – present`)) : "Unknown";
+    const reps = (disc.representative||[]).slice(0,3);
+    return `<aside class="card side">
+      <div class="side-top">${cmpArt(reps[0]&&reps[0].artUrl)}<div><p class="eyebrow-s">${esc(label)}</p><h3>${esc(d.name)}</h3>${d.area||d.country?`<p>${esc(d.area||d.country)}${d.area&&d.country?` (${esc(d.country)})`:""}</p>`:""}</div></div>
+      <h4>Genres</h4>${genreChips((d.genres||[]).map(g=>g.name), shared)}
+      <h4>Catalogue</h4><ul class="works"><li><span>${esc([d.type,d.gender].filter(Boolean).join(" · ")||"Artist")}</span><span class="yr">${esc(active)}</span></li><li><span>${esc(counts)}${span?`<span class="muted">${esc(span)}</span>`:""}</span></li></ul>
+      <h4>Community rating</h4><p>${ratingHTML(d.rating)}</p>
+      ${reps.length?`<h4>Representative albums</h4><div class="albums">${reps.map(r=>`<figure>${cmpArt(r.artUrl,"alb")}<figcaption>${esc(r.title)}${r.year?`<br><span class="yr">${esc(r.year)}</span>`:""}</figcaption></figure>`).join("")}</div>`:""}
+      ${linksHTML(d.links)}
+    </aside>`;
+  }
+  function songCard(label, d, shared){
+    const rep = d.representative;
+    return `<aside class="card side">
+      <div class="side-top">${cmpArt(rep&&rep.artUrl)}<div><p class="eyebrow-s">${esc(label)}</p><h3>${esc(d.title)}</h3><p>${esc((d.artists||[]).map(a=>a.name).join(", ")||"Artist unavailable")}</p></div></div>
+      <h4>Details</h4><ul class="works"><li><span>Duration</span><span class="yr">${esc(fmtDur(d.durationMs))}</span></li><li><span>First released</span><span class="yr">${esc(d.firstReleaseDate||"—")}</span></li><li><span>Appears on</span><span class="yr">${esc(rep?rep.title+(rep.year?` (${rep.year})`:""):"—")}</span></li></ul>
+      <h4>Genres</h4>${genreChips((d.genres||[]).map(g=>g.name), shared)}
+      <h4>Community rating</h4><p>${ratingHTML(d.rating)}</p>
+      ${linksHTML(d.links)}
+    </aside>`;
+  }
+
+  function insightsHTML(da, db){
+    const ga = (da.genres||[]).map(g=>g.name), gb = (db.genres||[]).map(g=>g.name);
+    const bset = new Set(gb), aset = new Set(ga);
+    const shared = ga.filter(n=>bset.has(n)), onlyA = ga.filter(n=>!bset.has(n)), onlyB = gb.filter(n=>!aset.has(n));
+    const both = ga.length && gb.length;
+    const facts = [];
+    if(C.mode === "songs"){
+      facts.push(da.durationMs!=null && db.durationMs!=null
+        ? `Duration gap: ${fmtDur(Math.abs(da.durationMs - db.durationMs))}.`
+        : `Duration gap unavailable — missing for at least one recording.`);
+    } else {
+      if(da.country && db.country) facts.push(da.country===db.country?`Both originate from ${esc(da.country)}.`:`Different origins: ${esc(da.country)} vs ${esc(db.country)}.`);
+      if((da.lifeSpan||{}).begin && (db.lifeSpan||{}).begin) facts.push(`Careers began ${esc(da.lifeSpan.begin)} and ${esc(db.lifeSpan.begin)}.`);
+      const aa=(da.discography||{}).albumCount, ab=(db.discography||{}).albumCount;
+      if(aa||ab) facts.push(`Catalogued albums: ${aa||0} vs ${ab||0}.`);
+    }
+    const sh = new Set(shared);
+    return `<div class="card sims" style="display:block">
+      <div class="sims-h"><h2>Insights</h2><span class="meta">Derived from catalogued metadata</span></div>
+      <div style="margin-top:8px"><span class="lbl">Genre overlap</span>
+      ${both
+        ? (shared.length
+            ? `<p style="margin:8px 0">${genreChips(shared, sh)}</p><p class="muted" style="font-size:13.5px">${shared.length} shared genre${shared.length===1?"":"s"} in MusicBrainz community data — how listeners categorise the music, not measured audio similarity.</p>`
+            : `<p class="muted" style="margin-top:8px">No genres in common; each is tagged distinctly below.</p>`)
+        : `<p class="muted" style="margin-top:8px">Genre overlap can't be assessed — MusicBrainz has no curated genres for at least one of these yet.</p>`}
+      ${(onlyA.length||onlyB.length)?`<div class="cmp-pick" style="margin-top:12px"><div><p class="muted" style="font-size:12px;margin:0 0 6px">Distinct to the first</p>${genreChips(onlyA, new Set())}</div><div><p class="muted" style="font-size:12px;margin:0 0 6px">Distinct to the second</p>${genreChips(onlyB, new Set())}</div></div>`:""}
+      </div>
+      ${facts.length?`<ul class="notes" style="margin-top:14px">${facts.map(f=>`<li>${f}</li>`).join("")}</ul>`:""}
+      <p class="muted" style="font-size:12px;margin-top:14px">Not shown: popularity, play counts and audio features (tempo, energy, danceability, mood). No configured source provides these, so they are omitted rather than estimated.</p>
+    </div>`;
+  }
+
+  async function fetchDetails(id){
+    const r = await fetch(`/api/musicbrainz/details?type=${mbType()}&id=${encodeURIComponent(id)}`);
+    const data = await r.json().catch(()=>({}));
+    if(!r.ok){ const e = new Error(data.error || "Could not load details."); e.retryable = !!data.retryable; throw e; }
+    return data.details;
+  }
+
+  async function runCompare(){
+    if(!C.a || !C.b || C.a.id === C.b.id) return;
+    const out = $("#cmpOut");
+    out.innerHTML = `<div class="cmp-skel"><div class="card"></div><div class="card"></div></div>`;
+    const idA = C.a.id, idB = C.b.id, mode = C.mode;
+    try{
+      const [da, db] = await Promise.all([fetchDetails(idA), fetchDetails(idB)]);
+      if(C.mode !== mode || !C.a || C.a.id !== idA || !C.b || C.b.id !== idB) return; // stale
+      const sharedSet = new Set((da.genres||[]).map(g=>g.name).filter(n=>new Set((db.genres||[]).map(g=>g.name)).has(n)));
+      const cardFn = mode === "artists" ? artistCard : songCard;
+      const labels = mode === "artists" ? ["Artist A","Artist B"] : ["Song A","Song B"];
+      out.innerHTML = `<div class="cmp-pick">${cardFn(labels[0],da,sharedSet)}${cardFn(labels[1],db,sharedSet)}</div>${insightsHTML(da,db)}`;
+      C.out = { idA, idB, mode };
+    }catch(err){
+      out.innerHTML = `<div class="card cmp-error"><p style="margin:0 0 4px"><b>${esc(err.message||"Something went wrong.")}</b></p>${err.retryable?`<p class="muted" style="margin:0 0 10px">MusicBrainz may be rate limiting. You can retry.</p><button class="btn btn-primary" data-cmpretry>Try again</button>`:`<p class="muted" style="margin:0">Please adjust your selection and try again.</p>`}</div>`;
+    }
+  }
+
+  async function doSearch(slot, q){
+    const res = $("#res"+slot.toUpperCase());
+    const reqId = ++C.req[slot];
+    res.hidden = false;
+    res.innerHTML = `<div class="pick-msg">Searching MusicBrainz…</div>`;
+    try{
+      const r = await fetch(`/api/musicbrainz/search?type=${mbType()}&q=${encodeURIComponent(q)}&limit=8`);
+      const data = await r.json().catch(()=>({}));
+      if(reqId !== C.req[slot]) return; // stale response
+      if(!r.ok){ res.innerHTML = `<div class="pick-msg warn">${esc(data.error || "Search failed.")}</div>`; return; }
+      const items = data.results || [];
+      C.cache[slot] = items;
+      if(!items.length){ res.innerHTML = `<div class="pick-msg">No matches. Try another search.</div>`; return; }
+      res.innerHTML = items.map((it,i)=>`<button class="pick-item" data-pick="${slot}:${i}"><b>${esc(titleOf(it))}</b><span>${esc(subOf(it))}</span></button>`).join("");
+    }catch(e){
+      if(reqId === C.req[slot]) res.innerHTML = `<div class="pick-msg warn">Network error. Please try again.</div>`;
+    }
+  }
+
+  function choose(slot, item){
+    C[slot] = item;
+    const sel = $("#chosen"+slot.toUpperCase());
+    const input = $("#q"+slot.toUpperCase());
+    const res = $("#res"+slot.toUpperCase());
+    res.hidden = true; res.innerHTML = ""; input.value = "";
+    if(item){
+      sel.hidden = false;
+      sel.innerHTML = `<div><b>${esc(titleOf(item))}</b><div class="meta">${esc(subOf(item))}</div></div><button class="link" data-clear="${slot}">Clear</button>`;
+    } else { sel.hidden = true; sel.innerHTML = ""; }
+    syncRun();
+  }
+
+  function syncRun(){
+    const ok = C.a && C.b && C.a.id !== C.b.id;
+    $("#cmpRun").disabled = !ok;
+    $("#cmpHint").textContent = !C.a || !C.b ? "Pick two different items to compare."
+      : (C.a.id === C.b.id ? "Those are the same item — pick two different ones." : "Ready to compare.");
+  }
+
+  function setMode(mode){
+    if(mode === C.mode) return;
+    C.mode = mode; C.a = null; C.b = null; C.out = null;
+    ["a","b"].forEach(s=>{ $("#res"+s.toUpperCase()).hidden = true; $("#chosen"+s.toUpperCase()).hidden = true; $("#q"+s.toUpperCase()).value = ""; });
+    $("#cmpOut").innerHTML = "";
+    renderCompare();
+  }
+
+  function renderCompare(){
+    const noun = C.mode === "artists" ? "Artist" : "Song";
+    $("#labelA").textContent = noun + " A";
+    $("#labelB").textContent = noun + " B";
+    $("#qA").placeholder = C.mode === "artists" ? "Search artist name…" : "Search song title…";
+    $("#qB").placeholder = C.mode === "artists" ? "Search artist name…" : "Search song title…";
+    document.querySelectorAll("#cmpMode [data-cmpmode]").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.cmpmode === C.mode)));
+    syncRun();
+  }
+
+  // Wire listeners once (the view DOM persists; it is only hidden/shown).
+  ["a","b"].forEach(slot=>{
+    const input = $("#q"+slot.toUpperCase());
+    input.addEventListener("input", ()=>{
+      clearTimeout(C.debounce[slot]);
+      const q = input.value.trim();
+      const res = $("#res"+slot.toUpperCase());
+      if(q.length < 2){ C.req[slot]++; res.hidden = true; res.innerHTML = ""; return; }
+      C.debounce[slot] = setTimeout(()=>doSearch(slot, q), 450);
+    });
+  });
+  $("#cmpMode").addEventListener("click", e=>{ const b = e.target.closest("[data-cmpmode]"); if(b) setMode(b.dataset.cmpmode); });
+  $("#cmpRun").addEventListener("click", runCompare);
+  $("#v-compare").addEventListener("click", e=>{
+    const pick = e.target.closest("[data-pick]");
+    if(pick){ const [slot,i] = pick.dataset.pick.split(":"); choose(slot, C.cache[slot][+i]); return; }
+    const clr = e.target.closest("[data-clear]"); if(clr){ choose(clr.dataset.clear, null); return; }
+    const retry = e.target.closest("[data-cmpretry]"); if(retry){ runCompare(); return; }
+  });
+
+  // Register this view with the existing router so nav + hash routing work.
+  if(typeof RENDER === "object") RENDER.compare = renderCompare;
+  renderCompare();
+})();
+</script>
+
+</body>
+</html>
