@@ -1,4 +1,29 @@
-import type { GraphEdge, GraphNode } from './data';
+import type { EntityType } from './types';
+
+export interface GraphNode {
+  id: string;
+  entityType: EntityType;
+  label: string;
+  subtitle: string;
+  x: number;
+  y: number;
+  role?: string; // 'Comparison anchor' for the two selected nodes.
+  contributor?: boolean;
+  artUrl?: string | null;
+}
+
+export interface GraphEdge {
+  from: string;
+  to: string;
+  label: string;
+  category: 'factual' | 'similarity';
+  detail?: string;
+  relationshipId?: string;
+  sourceUrls?: string[];
+  score?: number;
+  onPath?: boolean;
+  relationships?: GraphEdge[]; // Underlying records for a grouped visible edge.
+}
 
 export interface ComparisonGraph {
   nodes: GraphNode[];
