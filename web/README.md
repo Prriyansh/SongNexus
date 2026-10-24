@@ -1,5 +1,32 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Frontend
+
+The app is Helen's React design (`src/frontend/`), rendered as a single client page at `/` and
+served by the same Next.js server as the API routes. Everything it shows comes from those routes;
+it never calls MusicBrainz or Deezer directly.
+
+| URL | Screen |
+| --- | --- |
+| `/`, `/about` | About Me: favourite artists, genres, albums and songs |
+| `/about/manual` | Add to your taste (MusicBrainz search; albums come from an artist's studio discography) |
+| `/compare/artists?artistA=&artistB=` | Explore: two artists, side by side, connection web, insights |
+| `/compare/songs?songA=&songB=` | Explore: two songs |
+| `/about?profile=…` | A shared About Me snapshot (read-only) |
+| `/prototype` | The earlier HTML prototype (`public/song-nexus.html`) |
+
+- `api.ts` is the browser client for our routes; `useAsync.ts` loads data per key.
+- `graph.ts` turns the collaborators response into the connection web; Helen's `graph-layout.ts`
+  places and routes it. Solid lines are credits; the dashed line is shared genre tags.
+- `profile.ts` keeps About Me in localStorage (there are no accounts yet). Shared profile links
+  are validated, and only Cover Art Archive images are allowed in them.
+- `playlist.ts` reads CSV/JSON/TXT playlist exports in the browser and matches the first 50
+  rows with one MusicBrainz search each (about a second per song).
+- Helen's genre filter is a **role filter** here, since collaborators carry credited roles
+  (producer, mixing, featured…) rather than genres.
+- Tests: unit tests per module in `src/frontend/__tests__/`, and
+  `app.integration.test.tsx`, which renders the whole app in jsdom against a mocked API.
+
 ## SongNexus comparison data
 
 SongNexus compares two songs or two artists using real catalogue metadata.
@@ -30,7 +57,7 @@ SongNexus compares two songs or two artists using real catalogue metadata.
   Reads the full credits of each artist's 3 most recent studio albums (one request per album,
   cached), so a cold comparison takes ~10 s; it loads after the main cards. Songwriting credits
   live on MusicBrainz *works* and aren't included.
-- **Genre hub** — shared genres in the middle, each artist's own genres on either side.
+- **Shared genres** — genre tags both artists (or songs) have on MusicBrainz.
 - **Shareable URLs** — `/compare/artists?artistA=<mbid>&artistB=<mbid>` and
   `/compare/songs?songA=<mbid>&songB=<mbid>` open straight into a comparison.
 - **Not built (no data source):** monthly listeners and audio-feature radar charts.
@@ -85,9 +112,13 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The screens live in `src/frontend/` and auto-update as you edit them. Checks:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm test           # unit + integration tests (Vitest)
+npm run lint
+npm run typecheck
+```
 
 ## Learn More
 

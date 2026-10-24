@@ -1,5 +1,10 @@
 # Song Nexus frontend appearance: backend integration guide
 
+> **Integrated (Oct 2026).** These files now live in `web/src/frontend/` and run inside the Next.js
+> app, backed by the team's MusicBrainz API routes instead of the `src/data.ts` module described
+> below. See `web/README.md` → *Frontend*. This guide and the screenshots are kept as the design
+> reference.
+
 This folder contains the React/TypeScript appearance and interaction layer for Song Nexus. It includes 19 source/configuration files and five visual reference screenshots. The dataset, data-processing modules, generated build, dependencies, and original tests were deliberately excluded.
 
 **Integration status:** this is a source handoff, not a standalone runnable application. The screens import `src/data.ts`, which is absent. Your team must implement that module against its own data/backend, or refactor the consumers to use your application's data hooks. Installing dependencies alone will not resolve the missing module.
