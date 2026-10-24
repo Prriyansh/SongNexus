@@ -7,7 +7,7 @@ import type { Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Song } from '@/lib/types';
 import {
-  collab, EXPECTATIONS, expectationsDetails, killBill, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, PATIENT_ZERO,
+  collab, SOUR_ART, EXPECTATIONS, expectationsDetails, killBill, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, PATIENT_ZERO,
   patientZeroDetails, PHOEBE, phoebe, phoebeDetails, PUNISHER, TAYLOR, taylorDetails, VAMPIRE, vampireDetails,
 } from './fixtures';
 
@@ -102,6 +102,24 @@ describe('Explore: artists', () => {
     const nodes = [...document.querySelectorAll('.graph-node')].map(n => n.getAttribute('aria-label'));
     expect(nodes.some(label => label?.startsWith('Serban Ghenea'))).toBe(true);
     expect(text()).toContain('Neither is credited on the other’s scanned albums.');
+  });
+
+  it('shows album covers for artists and their albums', async () => {
+    await render('/compare/artists');
+    const cardImages = [...document.querySelectorAll('.selected-card img')].map(img => img.getAttribute('src'));
+    expect(cardImages).toEqual([SOUR_ART]); // Olivia has a cover; Taylor's fixture albums have none
+    const strip = [...document.querySelectorAll('.comparison-details .album-thumb')];
+    expect(strip.map(a => a.textContent)).toEqual(['GUTS2023', 'SOUR2021', '19892014']);
+    expect(strip[1].querySelector('img')?.getAttribute('src')).toBe(SOUR_ART);
+    expect(document.querySelector('.comparison-details')!.textContent).toContain('First 1 of 18 studio albums');
+    expect(document.querySelector('.graph-node.is-primary img')?.getAttribute('src')).toBe(SOUR_ART);
+  });
+
+  it('loads the cover for a saved artist on About Me', async () => {
+    localStorage.setItem('song-nexus-profile', JSON.stringify({ artists: [{ id: OLIVIA, name: 'Olivia Rodrigo', subtitle: 'Person' }], songs: [], albums: [], genres: [] }));
+    await render('/about');
+    expect(called(`/api/musicbrainz/details?type=artist&id=${OLIVIA}`)).toBe(true);
+    expect(document.querySelector('.favorite-item img')?.getAttribute('src')).toBe(SOUR_ART);
   });
 
   it('writes the default pair into a bare /compare/artists link', async () => {

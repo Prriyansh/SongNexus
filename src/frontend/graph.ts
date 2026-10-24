@@ -5,7 +5,7 @@ import type { ArtistDetails, Collaborator, CollaboratorComparison, RecordingDeta
 import { partitionGenres } from '@/lib/types';
 import { layoutComparison, presentEdges } from './graph-layout';
 import type { ComparisonGraph, GraphEdge, GraphNode } from './graph-layout';
-import { capitalize, musicBrainzUrl, roleText, songArtists } from './model';
+import { artistCover, capitalize, musicBrainzUrl, roleText, songArtists } from './model';
 import type { EntityType } from './types';
 
 export type GraphInput =
@@ -85,7 +85,7 @@ export function buildGraph(input: GraphInput, expanded: string[], narrow: boolea
 
   if (input.kind === 'artist') {
     const { a, b } = input;
-    for (const artist of [a, b]) nodes.push(node(artist.id, 'artist', artist.name, capitalize(artist.genres[0]?.name || artist.type || 'Artist'), { role: 'Comparison anchor' }));
+    for (const artist of [a, b]) nodes.push(node(artist.id, 'artist', artist.name, capitalize(artist.genres[0]?.name || artist.type || 'Artist'), { role: 'Comparison anchor', artUrl: artistCover(artist) }));
     if (input.collab) {
       const found = addCollaborators(nodes, records, a, b, input.collab, input.role, expanded, anchors);
       path = found.direct ? anchors : found.first ? [a.id, found.first.id, b.id] : [];

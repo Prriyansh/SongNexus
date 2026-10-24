@@ -9,6 +9,7 @@ export const OPHELIA = examples.song[1];
 export const SERBAN = 'd1f01df7-fcac-4c64-a530-0f49aacf98bb';
 export const BRYCE = '8cbe7c9c-c829-46fc-97ef-08f01b8ea53a';
 export const NIGRO = '2a3e4b7c-1111-4222-8333-944455556666';
+export const SOUR_ART = 'https://coverartarchive.org/release-group/bb000000-0000-4000-8000-000000000001/front-250';
 export const PHOEBE = '0f2d3c4b-5a69-4788-9a0b-1c2d3e4f5a6b';
 export const PUNISHER = '6b7c8d9e-0f1a-4b2c-8d3e-4f5a6b7c8d9e';
 export const MAKING_THE_BED = 'aa000000-0000-4000-8000-000000000001';
@@ -21,7 +22,7 @@ export const oliviaDetails: ArtistDetails = {
   genres: [{ name: 'pop', count: 9 }, { name: 'pop rock', count: 6 }, { name: 'pop punk', count: 4 }],
   rating: { value: 4.3, votes: 11 },
   discography: { albumCount: 4, studioAlbumCount: 3, complete: true, firstYear: '2021', lastYear: '2026', representative: [
-    { id: 'bb000000-0000-4000-8000-000000000001', title: 'SOUR', year: '2021', type: 'Album', artUrl: null },
+    { id: 'bb000000-0000-4000-8000-000000000001', title: 'SOUR', year: '2021', type: 'Album', artUrl: 'https://coverartarchive.org/release-group/bb000000-0000-4000-8000-000000000001/front-250' },
     { id: 'bb000000-0000-4000-8000-000000000002', title: 'GUTS', year: '2023', type: 'Album', artUrl: null },
   ] },
   links: [

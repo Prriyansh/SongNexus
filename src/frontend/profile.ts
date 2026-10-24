@@ -1,19 +1,20 @@
 // About Me preferences. There's no account backend yet, so the profile lives in localStorage.
 // Each favourite is a small snapshot (id + display fields) so the page can render without
 // re-fetching every item, and a shared profile link can be shown to someone else as-is.
-import type { Artist, ReleaseRef, Song } from '@/lib/types';
-import { artistSubtitle, coverForRelease, firstRelease, songArtists, yearOf } from './model';
+import type { Artist, ArtistDetails, ReleaseRef, Song } from '@/lib/types';
+import { artistCover, artistSubtitle, coverForRelease, firstRelease, songArtists, yearOf } from './model';
 import { formatDuration } from '@/lib/types';
 
-export type SavedArtist = { id: string; name: string; subtitle: string };
+export type SavedArtist = { id: string; name: string; subtitle: string; artUrl: string | null };
 export type SavedSong = { id: string; title: string; artist: string; artistId: string | null; album: string; year: string; duration: string; artUrl: string | null };
 export type SavedAlbum = { id: string; title: string; artist: string; artistId: string | null; year: string; artUrl: string | null };
 export type MusicProfile = { artists: SavedArtist[]; songs: SavedSong[]; albums: SavedAlbum[]; genres: string[] };
 
 export const emptyProfile: MusicProfile = { artists: [], songs: [], albums: [], genres: [] };
 
-export function artistSnapshot(artist: Artist): SavedArtist {
-  return { id: artist.id, name: artist.name, subtitle: artistSubtitle(artist) };
+/** Search results carry no albums, so their cover is filled in later (see ArtistPicture). */
+export function artistSnapshot(artist: Artist | ArtistDetails): SavedArtist {
+  return { id: artist.id, name: artist.name, subtitle: artistSubtitle(artist), artUrl: 'discography' in artist ? artistCover(artist) : null };
 }
 
 export function songSnapshot(song: Song): SavedSong {
@@ -64,7 +65,7 @@ export function parseProfile(value: unknown): MusicProfile | null {
   return {
     artists: list(raw.artists, item => {
       const key = id(item.id), name = text(item.name);
-      return key && name ? { id: key, name, subtitle: text(item.subtitle) } : null;
+      return key && name ? { id: key, name, subtitle: text(item.subtitle), artUrl: art(item.artUrl) } : null;
     }),
     songs: list(raw.songs, item => {
       const key = id(item.id), title = text(item.title);

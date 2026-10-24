@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildGraph, matchesRole, songArtistPair } from '../graph';
 import type { GraphInput } from '../graph';
 import type { GraphEdge } from '../graph-layout';
-import { BRYCE, collab, MAKING_THE_BED, NIGRO, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, SERBAN, TAYLOR, taylorDetails, VAMPIRE, vampireDetails } from './fixtures';
+import { BRYCE, SOUR_ART, collab, MAKING_THE_BED, NIGRO, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, SERBAN, TAYLOR, taylorDetails, VAMPIRE, vampireDetails } from './fixtures';
 
 const artists = (extra: Partial<Extract<GraphInput, { kind: 'artist' }>> = {}): GraphInput =>
   ({ kind: 'artist', a: oliviaDetails, b: taylorDetails, collab, role: 'all', ...extra });
@@ -18,6 +18,7 @@ describe('buildGraph: artists', () => {
       expect(factual(graph).filter(e => [e.from, e.to].includes(person))).toHaveLength(2);
     }
     expect(graph.nodes.find(n => n.id === SERBAN)).toMatchObject({ contributor: true, entityType: 'artist', subtitle: 'Mixing' });
+    expect(graph.nodes.find(n => n.id === OLIVIA)?.artUrl).toBe(SOUR_ART);
   });
 
   it('explains each credit edge with the songs behind it and MusicBrainz sources', () => {

@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import type { ArtistDetails, Collaborator, CollaboratorComparison, Coverage, RecordingDetails, TrackRef } from '@/lib/types';
 import { formatDuration, partitionGenres } from '@/lib/types';
-import { capitalize, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, roleText, songArtists, studioAlbumText, yearOf } from '../model';
+import { albumSampleNote, capitalize, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, roleText, songArtists, studioAlbumText, yearOf } from '../model';
 import { matchesRole } from '../graph';
+import { AlbumCover } from './Artwork';
 import type { Selection } from '../types';
 
 export type Loadable<T> = { data?: T; loading: boolean; error?: Error; retry: () => void };
@@ -75,7 +76,7 @@ export function ComparisonDetails({ kind, a, b, collab, role, onSelect, onCompar
         ? <button className="inline-link" key={artist.id} onClick={() => onSelect({ type: 'artist', id: artist.id! })}>{artist.name} ↗</button>
         : <p key={artist.name}>{artist.name}</p>)}</div>)}/>
       <Row name="Released" values={two(s => s.firstReleaseDate ? <p>{yearOf(s.firstReleaseDate)}<small>{s.firstReleaseDate}</small></p> : null)}/>
-      <Row name="Album" values={two(s => s.representative ? <a className="inline-link" href={musicBrainzUrl('release', s.representative.id)} target="_blank" rel="noreferrer">{s.representative.title} ↗</a> : null)}/>
+      <Row name="Album" values={two(s => s.representative ? <div className="album-strip"><a className="album-thumb" href={musicBrainzUrl('release', s.representative.id)} target="_blank" rel="noreferrer" title={`${s.representative.title} on MusicBrainz`}><AlbumCover cover={s.representative} size="md" /><span>{s.representative.title}{s.representative.year && <small>{s.representative.year}</small>}</span></a></div> : null)}/>
       <Row name="Length" values={two(s => <p>{s.durationMs == null ? '—' : formatDuration(s.durationMs)}</p>)}/>
       <Row name="Genre / style" values={two(s => { const text = genreText(s.genres, s.tags); return text ? <p>{text}<small>MusicBrainz community tags</small></p> : null; })}/>
       {pair.some(s => s.rating) && <Row name="Rating" values={two(s => s.rating ? <p>{s.rating.value.toFixed(1)} / 5<small>{s.rating.votes} votes</small></p> : null)}/>}
@@ -95,7 +96,7 @@ export function ComparisonDetails({ kind, a, b, collab, role, onSelect, onCompar
     <Row name="Born / formed" values={two(lifeSpan)}/>
     <Row name="Genres" values={two(x => { const text = genreText(x.genres, x.tags); return text ? <p>{text}<small>MusicBrainz community tags</small></p> : null; })}/>
     <Row name="Studio albums" values={two(x => <p>{studioAlbumText(x)}{x.discography?.firstYear && <small>Debut album {x.discography.firstYear}{x.discography.lastYear && x.discography.lastYear !== x.discography.firstYear ? ` · latest ${x.discography.lastYear}` : ''}</small>}</p>)}/>
-    <Row name="Recent albums" values={two(x => x.discography?.representative.length ? <div className="inline-credit-list">{recentAlbums(x.discography.representative).slice(0, 3).map(album => <a className="inline-link" key={album.id} href={musicBrainzUrl('release-group', album.id)} target="_blank" rel="noreferrer">{album.title}{album.year ? ` (${album.year})` : ''} ↗</a>)}</div> : null)}/>
+    <Row name="Albums" values={two(x => x.discography?.representative.length ? <div><div className="album-strip">{recentAlbums(x.discography.representative).slice(0, 3).map(album => <a className="album-thumb" key={album.id} href={musicBrainzUrl('release-group', album.id)} target="_blank" rel="noreferrer" title={`${album.title} on MusicBrainz`}><AlbumCover cover={album} size="md" /><span>{album.title}{album.year && <small>{album.year}</small>}</span></a>)}</div>{albumSampleNote(x) && <small>{albumSampleNote(x)}</small>}</div> : null)}/>
     {pair.some(x => x.rating) && <Row name="Rating" values={two(x => x.rating ? <p>{x.rating.value.toFixed(1)} / 5<small>{x.rating.votes} votes</small></p> : null)}/>}
     {pair.some(x => x.links.length) && <Row name="Links" values={two(x => <Links links={x.links}/>)}/>}
     <SharedGenres a={aa} b={ab}/>

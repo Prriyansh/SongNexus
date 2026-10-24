@@ -15,8 +15,10 @@ React components for Helen's screens. Markup and class names follow her design; 
 - `PlaylistUpload.tsx` — reads a local file, then matches rows one by one (first 50) through
   the search route, with progress and abort on close.
 - `Modal.tsx` — portal dialog/drawer: focus trap, Escape, scroll lock, `#root` inert.
-- `Artwork.tsx` — initials avatars (no invented artist photos) and Cover Art Archive covers
-  with a disc fallback.
+- `Artwork.tsx` — `AlbumCover` (Cover Art Archive art with a disc fallback); `ArtistAvatar` (the
+  artist's first studio album cover, as in the earlier prototype, falling back to initials;
+  MusicBrainz has no artist photos); `ArtistPicture` (an `ArtistAvatar` that looks up the
+  artist's details to find that cover; each new artist costs a lookup, so keep it out of long lists).
 - `CLAUDE.md` — this guide.
 
 Components take data and callbacks as props; fetching happens through `../api.ts` (via

@@ -111,7 +111,7 @@ export function ConnectionGraph({ input, status, onSelect }: { input: GraphInput
             onPointerEnter={() => { setHoveredId(node.id); setHoveredEdgeKey(null); }} onPointerLeave={() => setHoveredId(null)}
             onFocus={() => { setHoveredId(node.id); setHoveredEdgeKey(null); }} onBlur={() => setHoveredId(null)}
             aria-pressed={selectedId === node.id} aria-label={`${node.label}, ${primary ? `comparison ${node.id === left ? 'one' : 'two'}` : subtitle}. Select node`} title={`${node.label} · ${subtitle}`}>
-            <span className="graph-node-visual">{node.entityType === 'song' ? <AlbumCover cover={{ id: node.id, artUrl: node.artUrl }}/> : <ArtistAvatar artist={{ id: node.id, name: node.label }}/>}{primary && <span className="graph-anchor-index">{node.id === left ? '1' : '2'}</span>}</span>
+            <span className="graph-node-visual">{node.entityType === 'song' ? <AlbumCover cover={{ id: node.id, artUrl: node.artUrl }}/> : <ArtistAvatar artist={{ id: node.id, name: node.label, artUrl: node.artUrl }}/>}{primary && <span className="graph-anchor-index">{node.id === left ? '1' : '2'}</span>}</span>
             <strong>{node.label}</strong><small>{subtitle}</small>
           </button>;
         })}

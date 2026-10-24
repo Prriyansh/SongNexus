@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { artistSubtitle, capitalize, colorFor, coverForRelease, firstRelease, lifeSpanLabels, linkLabel, recentAlbums, roleText, studioAlbumText, uniqueLinks } from '../model';
+import { albumSampleNote, artistCover, artistSubtitle, capitalize, colorFor, coverForRelease, firstRelease, lifeSpanLabels, linkLabel, recentAlbums, roleText, studioAlbumText, uniqueLinks } from '../model';
 import { allGenres, familyOf, genreFamilies } from '../genres';
-import { killBill, oliviaDetails, phoebe, taylorDetails } from './fixtures';
+import { killBill, oliviaDetails, phoebe, phoebeDetails, SOUR_ART, taylorDetails } from './fixtures';
 
 describe('lifeSpanLabels', () => {
   // MusicBrainz's life-span.begin is a birth date for people, not when a career began.
@@ -18,6 +18,23 @@ describe('studioAlbumText', () => {
     expect(studioAlbumText({ ...taylorDetails, discography: { ...taylorDetails.discography!, studioAlbumCount: 12, complete: false } })).toBe('12+ studio albums');
     expect(studioAlbumText({ ...taylorDetails, discography: { ...taylorDetails.discography!, studioAlbumCount: 1 } })).toBe('1 studio album');
     expect(studioAlbumText({ ...taylorDetails, discography: null })).toBe('Not available');
+  });
+});
+
+describe('artistCover', () => {
+  it('uses the first studio album that has cover art, like the earlier prototype', () => {
+    expect(artistCover(oliviaDetails)).toBe(SOUR_ART);
+    expect(artistCover(taylorDetails)).toBeNull(); // no album with art
+    expect(artistCover({ ...taylorDetails, discography: null })).toBeNull();
+  });
+});
+
+describe('albumSampleNote', () => {
+  it('says when the albums shown are only an artist’s first few', () => {
+    expect(albumSampleNote(phoebeDetails)).toBe(''); // both albums shown
+    expect(albumSampleNote(oliviaDetails)).toBe('First 2 of 3 studio albums');
+    expect(albumSampleNote(taylorDetails)).toBe('First 1 of 18 studio albums');
+    expect(albumSampleNote({ ...taylorDetails, discography: { ...taylorDetails.discography!, complete: false } })).toBe('First 1 of 18+ studio albums');
   });
 });
 

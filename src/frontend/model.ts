@@ -36,8 +36,25 @@ export function firstRelease(song: Song): Song['releases'][number] | undefined {
 export const coverForRelease = (id?: string | null) =>
   id && /^[0-9a-f-]{36}$/i.test(id) ? `https://coverartarchive.org/release/${id}/front-250` : null;
 
+/**
+ * The picture for an artist: the cover of their first studio album that has one (MusicBrainz has
+ * no artist photos). Same choice as the earlier prototype's artist cards.
+ */
+export const artistCover = (details: ArtistDetails): string | null =>
+  details.discography?.representative.find(album => album.artUrl)?.artUrl ?? null;
+
 /** Studio albums, most recent first (the API returns them oldest first). */
 export const recentAlbums = (albums: ReleaseRef[]) => [...albums].reverse();
+
+/**
+ * The API returns an artist's first few studio albums, not their latest, so say which ones these
+ * are when there are more: "First 6 of 18 studio albums".
+ */
+export function albumSampleNote(details: ArtistDetails): string {
+  const disc = details.discography;
+  if (!disc || disc.representative.length >= disc.studioAlbumCount) return '';
+  return `First ${disc.representative.length} of ${disc.studioAlbumCount}${disc.complete ? '' : '+'} studio albums`;
+}
 
 /** "18 studio albums", or "12+ studio albums" when the browse didn't cover the whole catalogue. */
 export function studioAlbumText(details: ArtistDetails): string {

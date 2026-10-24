@@ -9,7 +9,7 @@ import { albumSnapshot, artistSnapshot, songSnapshot } from '../profile';
 import type { MusicProfile, SavedAlbum, SavedArtist, SavedSong } from '../profile';
 import type { Selection } from '../types';
 import { useAsync } from '../useAsync';
-import { ArtistAvatar, AlbumCover } from './Artwork';
+import { ArtistAvatar, ArtistPicture, AlbumCover } from './Artwork';
 import { PlaylistUpload } from './PlaylistUpload';
 
 type Category = 'artist' | 'genre' | 'album' | 'song';
@@ -76,7 +76,7 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
   const has = (key: 'artists' | 'songs' | 'albums', id: string) => profile[key].some(x => x.id === id);
 
   const savedEntries = (c: Category): Entry[] =>
-    c === 'artist' ? profile.artists.map(a => ({ id: a.id, title: a.name, subtitle: a.subtitle, visual: <ArtistAvatar artist={a} size="lg"/>, added: true, toggle: () => toggle.artist(a) }))
+    c === 'artist' ? profile.artists.map(a => ({ id: a.id, title: a.name, subtitle: a.subtitle, visual: <ArtistPicture artist={a} size="lg"/>, added: true, toggle: () => toggle.artist(a) }))
     : c === 'song' ? profile.songs.map(s => ({ id: s.id, title: s.title, subtitle: `${s.artist}${s.year ? ` · ${s.year}` : ''}`, visual: <AlbumCover cover={s} size="lg"/>, added: true, toggle: () => toggle.song(s) }))
     : profile.albums.map(al => ({ id: al.id, title: al.title, subtitle: `${al.artist}${al.year ? ` · ${al.year}` : ''}`, visual: <AlbumCover cover={al} size="lg"/>, added: true, toggle: () => toggle.album(al) }));
 
@@ -99,7 +99,7 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
 
   const importSongs = (matched: Song[]) => {
     const songs = matched.map(songSnapshot);
-    const artists = matched.flatMap(s => s.artists.filter(a => a.id).slice(0, 1).map(a => ({ id: a.id!, name: a.name, subtitle: 'Artist' })));
+    const artists = matched.flatMap(s => s.artists.filter(a => a.id).slice(0, 1).map(a => ({ id: a.id!, name: a.name, subtitle: 'Artist', artUrl: null })));
     onProfileChange(current => ({
       ...current,
       songs: [...current.songs, ...songs.filter(s => !current.songs.some(x => x.id === s.id))],
@@ -130,7 +130,7 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
       <div className="page-heading about-heading"><div><div className="eyebrow"><Heart size={14}/> A LITTLE MORE YOU</div><h1>{readOnly ? 'A taste worth sharing.' : 'Your taste. Your starting point.'}</h1><p>{readOnly ? 'Favorite artists, genres, albums, and songs from this shared profile.' : 'Here’s what we know about your music taste so far.'}</p></div></div>
       {!readOnly && <div className="taste-actions"><button className="add-music-search" onClick={() => openManual()}><Search size={19}/><span>Add an artist, genre, album, or song</span><kbd>+</kbd></button><button className="secondary-button upload-cta" onClick={() => setUpload(true)}><Upload size={17}/> Upload Playlist</button></div>}
       <div className="taste-grid">
-        <PreferenceSection title="Artists" count={profile.artists.length} icon={<Users size={18}/>} onAdd={readOnly ? undefined : () => openManual('artist')}><div className="favorite-grid">{profile.artists.map(a => <div className="preference-card" key={a.id}><button className="favorite-item" onClick={() => onSelect({ type: 'artist', id: a.id })}><ArtistAvatar artist={a} size="lg"/><strong>{a.name}</strong><small>{a.subtitle}</small></button>{!readOnly && <button className="remove-preference" aria-label={`Remove ${a.name}`} onClick={() => toggle.artist(a)}><X size={13}/></button>}</div>)}{!profile.artists.length && empty('artist')}</div></PreferenceSection>
+        <PreferenceSection title="Artists" count={profile.artists.length} icon={<Users size={18}/>} onAdd={readOnly ? undefined : () => openManual('artist')}><div className="favorite-grid">{profile.artists.map(a => <div className="preference-card" key={a.id}><button className="favorite-item" onClick={() => onSelect({ type: 'artist', id: a.id })}><ArtistPicture artist={a} size="lg"/><strong>{a.name}</strong><small>{a.subtitle}</small></button>{!readOnly && <button className="remove-preference" aria-label={`Remove ${a.name}`} onClick={() => toggle.artist(a)}><X size={13}/></button>}</div>)}{!profile.artists.length && empty('artist')}</div></PreferenceSection>
         <PreferenceSection title="Genres" count={profile.genres.length} icon={<Disc3 size={18}/>} onAdd={readOnly ? undefined : () => openManual('genre')}><div className="genre-favorites">{profile.genres.map((g, i) => <div className={`genre-square square-${i % 4}`} key={g}><span className="genre-family">{familyOf(g)}</span><strong>{capitalize(g)}</strong><Disc3 size={27} strokeWidth={1}/>{!readOnly && <button className="remove-preference" aria-label={`Remove ${g}`} onClick={() => toggle.genre(g)}><X size={13}/></button>}</div>)}{!profile.genres.length && empty('genre')}</div></PreferenceSection>
         <PreferenceSection title="Albums" count={profile.albums.length} icon={<Music2 size={18}/>} onAdd={readOnly ? undefined : () => openManual('album')}><div className="favorite-grid">{profile.albums.map(al => <div className="preference-card" key={al.id}><button className="favorite-item" onClick={() => onSelect({ type: 'album', id: al.id, album: al })}><AlbumCover cover={al} size="lg"/><strong>{al.title}</strong><small>{al.artist}</small></button>{!readOnly && <button className="remove-preference" aria-label={`Remove ${al.title}`} onClick={() => toggle.album(al)}><X size={13}/></button>}</div>)}{!profile.albums.length && empty('album')}</div></PreferenceSection>
       </div>

@@ -19,7 +19,8 @@ The UI: Helen's design (see `docs/design/`) running on live API data. Browser-on
   validates stored and shared profiles.
 - `playlist.ts` — parses CSV/JSON/TXT exports; matches rows via MusicBrainz search.
 - `types.ts` — `EntityType` (`'artist' | 'song'`) and `Selection` (what the details drawer shows).
-- `model.ts` — display helpers: colours, born/formed labels, album-count text, link names, role names.
+- `model.ts` — display helpers: colours, born/formed labels, album-count text, artist cover
+  (`artistCover`), the "First 6 of 18 studio albums" note, link names, role names.
 - `genres.ts` — genres you can add in About Me, grouped by family (MusicBrainz genre names).
 - `styles.css` → `product.css` → `integration.css` — global CSS, loaded in that order by
   `app/layout.tsx`. Helen's two files define the look; put new states in `integration.css`.

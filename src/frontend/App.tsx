@@ -13,14 +13,14 @@ import { formatDuration, partitionGenres } from '@/lib/types';
 import { artistDetails, collaborators, searchArtists, searchSongs, songDetails, topTrack } from './api';
 import { buildGraph, songArtistPair } from './graph';
 import type { GraphInput } from './graph';
-import { artistSubtitle, capitalize, firstRelease, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, ROLE_LABELS, roleText, songArtists, studioAlbumText, yearOf } from './model';
+import { albumSampleNote, artistCover, artistSubtitle, capitalize, coverForRelease, firstRelease, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, ROLE_LABELS, roleText, songArtists, studioAlbumText, yearOf } from './model';
 import { albumSnapshot, artistSnapshot, readStoredProfile, songSnapshot, storeProfile } from './profile';
 import type { MusicProfile } from './profile';
 import { buildPath, buildProfileShareUrl, buildShareUrl, comparisonFor, parseRoute, ROLE_FILTERS } from './routing';
 import type { Comparison, Route } from './routing';
 import type { EntityType, Selection } from './types';
 import { useAsync } from './useAsync';
-import { ArtistAvatar, AlbumCover } from './components/Artwork';
+import { ArtistAvatar, ArtistPicture, AlbumCover } from './components/Artwork';
 import { AboutMe, useTaste } from './components/AboutMe';
 import { ConnectionGraph } from './components/ConnectionGraph';
 import { ComparisonDetails } from './components/ComparisonDetails';
@@ -30,8 +30,9 @@ type Details = ArtistDetails | RecordingDetails;
 const loadDetails = (kind: EntityType, id: string): Promise<Details> => (kind === 'artist' ? artistDetails(id) : songDetails(id));
 const nameOf = (d?: Details) => (d ? ('title' in d ? d.title : d.name) : '');
 
-function MiniArtist({ artist, onClick, subtitle }: { artist: { id: string; name: string }; onClick: () => void; subtitle?: string }) {
-  return <button className="mini-entity" onClick={onClick}><ArtistAvatar artist={artist} size="sm" /><span><strong>{artist.name}</strong>{subtitle && <small>{subtitle}</small>}</span><ArrowUpRight size={15} /></button>;
+// `picture` loads the artist's details for a cover; leave it off for long or speculative lists.
+function MiniArtist({ artist, onClick, subtitle, picture = true }: { artist: { id: string; name: string }; onClick: () => void; subtitle?: string; picture?: boolean }) {
+  return <button className="mini-entity" onClick={onClick}>{picture ? <ArtistPicture artist={artist} size="sm" /> : <ArtistAvatar artist={artist} size="sm" />}<span><strong>{artist.name}</strong>{subtitle && <small>{subtitle}</small>}</span><ArrowUpRight size={15} /></button>;
 }
 function Segment({ value, onChange }: { value: EntityType; onChange: (v: EntityType) => void }) {
   return <div className="compare-switch" role="group" aria-label="Comparison type"><button aria-pressed={value === 'song'} className={value === 'song' ? 'selected' : ''} onClick={() => onChange('song')}><Music2 size={17} /> 2 Songs</button><button aria-pressed={value === 'artist'} className={value === 'artist' ? 'selected' : ''} onClick={() => onChange('artist')}><Users size={17} /> 2 Artists</button></div>;
@@ -69,11 +70,11 @@ function DetailDrawer({ selected, onClose, onSelect, profile, onProfileChange, o
       const labels = lifeSpanLabels(a.type);
       const albums = recentAlbums(a.discography?.representative ?? []);
       return <>
-        <div className="drawer-hero"><ArtistAvatar artist={a} size="lg" /><h2>{a.name}</h2><p>{artistSubtitle(a)}</p><div className="chip-row">{a.genres.slice(0, 5).map(g => <span className="chip" key={g.name}>{capitalize(g.name)}</span>)}</div></div>
+        <div className="drawer-hero"><ArtistAvatar artist={{ ...a, artUrl: artistCover(a) }} size="lg" /><h2>{a.name}</h2><p>{artistSubtitle(a)}</p><div className="chip-row">{a.genres.slice(0, 5).map(g => <span className="chip" key={g.name}>{capitalize(g.name)}</span>)}</div></div>
         {a.disambiguation && <p className="drawer-description">{a.disambiguation}</p>}
         <div className="drawer-actions">{heart(profile.artists.some(x => x.id === a.id), () => toggle.artist(artistSnapshot(a)))}<button className="secondary-button" onClick={() => onCompare('artist', a.id)}><GitCompareArrows size={15} /> Compare</button></div>
         <div className="drawer-stats"><div><small>{labels.begin}</small><strong>{a.lifeSpan.begin || '—'}</strong></div><div><small>From</small><strong>{a.area || a.country || '—'}</strong></div><div><small>Studio albums</small><strong>{studioAlbumText(a)}</strong></div><div><small>Rating</small><strong>{a.rating ? `${a.rating.value.toFixed(1)} / 5 (${a.rating.votes})` : '—'}</strong></div></div>
-        <section className="drawer-section"><div className="drawer-section-heading"><h3>Studio albums</h3><span>newest first</span></div>{albums.length ? albums.map(al => { const snap = albumSnapshot(al, a); const added = profile.albums.some(x => x.id === al.id); return <div className="album-row" key={al.id}><a className="mini-entity" href={musicBrainzUrl('release-group', al.id)} target="_blank" rel="noreferrer"><AlbumCover cover={al} size="sm" /><span><strong>{al.title}</strong><small>{al.year || 'Year unknown'}</small></span><ArrowUpRight size={15} /></a><button className="icon-button" aria-pressed={added} aria-label={`${added ? 'Remove' : 'Add'} ${al.title} ${added ? 'from' : 'to'} your taste`} onClick={() => toggle.album(snap)}><Heart size={15} fill={added ? 'currentColor' : 'none'} /></button></div>; }) : <p>No studio albums listed on MusicBrainz.</p>}</section>
+        <section className="drawer-section"><div className="drawer-section-heading"><h3>Studio albums</h3><span>{albumSampleNote(a) || 'newest first'}</span></div>{albums.length ? albums.map(al => { const snap = albumSnapshot(al, a); const added = profile.albums.some(x => x.id === al.id); return <div className="album-row" key={al.id}><a className="mini-entity" href={musicBrainzUrl('release-group', al.id)} target="_blank" rel="noreferrer"><AlbumCover cover={al} size="sm" /><span><strong>{al.title}</strong><small>{al.year || 'Year unknown'}</small></span><ArrowUpRight size={15} /></a><button className="icon-button" aria-pressed={added} aria-label={`${added ? 'Remove' : 'Add'} ${al.title} ${added ? 'from' : 'to'} your taste`} onClick={() => toggle.album(snap)}><Heart size={15} fill={added ? 'currentColor' : 'none'} /></button></div>; }) : <p>No studio albums listed on MusicBrainz.</p>}</section>
         {!!a.links.length && <section className="drawer-section"><div className="drawer-section-heading"><h3>Listen & learn more</h3></div><div className="link-pills">{uniqueLinks(a.links).map(link => <a key={link.url} href={link.url} target="_blank" rel="noreferrer">{linkLabel(link)} ↗</a>)}</div></section>}
       </>;
     }
@@ -113,10 +114,10 @@ function SearchChooser({ type, value, display, other, label, onChange }: { type:
   }, [open, q, key, type]);
   const items = found.key === key ? (found.items ?? []).filter(x => x.id !== other) : [];
   const searching = q.length >= 2 && found.key !== key;
-  const visual = display ? ('title' in display ? <AlbumCover cover={{ id: display.id, artUrl: display.representative?.artUrl }} size="sm" /> : <ArtistAvatar artist={display} size="sm" />) : <Music2 />;
+  const visual = display ? ('title' in display ? <AlbumCover cover={{ id: display.id, artUrl: display.representative?.artUrl }} size="sm" /> : <ArtistAvatar artist={{ ...display, artUrl: artistCover(display) }} size="sm" />) : <Music2 />;
   return <div className="chooser" ref={popRef}><span className="field-label">{label}</span><button className={`chooser-button ${open ? 'open' : ''}`} aria-expanded={open} onClick={() => { setOpen(!open); setQuery(''); }}>{visual}<strong>{display ? nameOf(display) : 'Loading…'}</strong><ChevronDown size={16} /></button>
     {open && <div className="chooser-popover"><label className="chooser-search"><Search size={17} /><input aria-label={`Search ${type}s`} autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder={type === 'song' ? 'Search songs on MusicBrainz…' : 'Search artists on MusicBrainz…'} /></label><div className="chooser-results">
-      {items.map(item => { const song = 'title' in item ? item : null; const release = song ? firstRelease(song) : undefined; return <button key={item.id} className="chooser-option" onClick={() => { onChange(item.id); setOpen(false); }}>{song ? <AlbumCover cover={{ id: song.id }} size="sm" /> : <ArtistAvatar artist={item as Artist} size="sm" />}<span><strong>{song ? song.title : (item as Artist).name}</strong><small>{song ? [songArtists(song), release?.title, yearOf(release?.date)].filter(Boolean).join(' · ') : (item as Artist).disambiguation || artistSubtitle(item as Artist)}</small></span>{value === item.id && <Check size={16} />}</button>; })}
+      {items.map(item => { const song = 'title' in item ? item : null; const release = song ? firstRelease(song) : undefined; return <button key={item.id} className="chooser-option" onClick={() => { onChange(item.id); setOpen(false); }}>{song ? <AlbumCover cover={{ id: song.id, artUrl: coverForRelease(release?.id) }} size="sm" /> : <ArtistAvatar artist={item as Artist} size="sm" />}<span><strong>{song ? song.title : (item as Artist).name}</strong><small>{song ? [songArtists(song), release?.title, yearOf(release?.date)].filter(Boolean).join(' · ') : (item as Artist).disambiguation || artistSubtitle(item as Artist)}</small></span>{value === item.id && <Check size={16} />}</button>; })}
       {q.length < 2 && <p className="no-match">Type at least 2 letters.</p>}
       {searching && <p className="no-match">Searching MusicBrainz…</p>}
       {found.key === key && found.error && <p className="no-match error-text">{found.error}</p>}
@@ -132,7 +133,7 @@ function SelectedCard({ kind, index, state, onDetails }: { kind: EntityType; ind
   if (!d) return <div className="selected-card is-loading" aria-busy="true"><span className="skeleton-art" /><span className="selected-card-info">{tag}<span className="skeleton-lines"><span /><span /></span></span></div>;
   const song = 'title' in d ? d : null, artist = song ? null : (d as ArtistDetails);
   const subtitle = song ? [songArtists(song), song.representative?.title, yearOf(song.firstReleaseDate)].filter(Boolean).join(' · ') : [artist!.genres.slice(0, 3).map(g => capitalize(g.name)).join(' · '), artist!.area || artist!.country].filter(Boolean).join(' · ') || artistSubtitle(artist!);
-  return <button className="selected-card" onClick={() => onDetails({ type: kind, id: d.id })}>{song ? <AlbumCover cover={{ id: song.id, artUrl: song.representative?.artUrl }} size="lg" /> : <ArtistAvatar artist={artist!} size="lg" />}<span className="selected-card-info">{tag}<strong>{nameOf(d)}</strong><small>{subtitle}</small><span className="selected-details">View {kind === 'artist' ? 'details & albums' : 'song details'} <ArrowUpRight size={14} /></span></span></button>;
+  return <button className="selected-card" onClick={() => onDetails({ type: kind, id: d.id })}>{song ? <AlbumCover cover={{ id: song.id, artUrl: song.representative?.artUrl }} size="lg" /> : <ArtistAvatar artist={{ ...artist!, artUrl: artistCover(artist!) }} size="lg" />}<span className="selected-card-info">{tag}<strong>{nameOf(d)}</strong><small>{subtitle}</small><span className="selected-details">View {kind === 'artist' ? 'details & albums' : 'song details'} <ArrowUpRight size={14} /></span></span></button>;
 }
 
 function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissNote }: { comparison: Comparison; onComparison: (c: Comparison) => void; onRole: (role: string) => void; onDetails: (s: Selection) => void; note: string; onDismissNote: () => void }) {
@@ -196,7 +197,7 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
           {insight('03', 'Factual connection path', pathText || (collabPending ? 'Reading album credits…' : 'No documented path between these two songs in the albums we scanned.'))}
         </>}
       </section>
-        <section className="panel quick-peek"><span className="overline">GO DEEPER</span><h3>The people behind the music</h3><p>Click an artist in the web or choose one below to see their albums, links, and genres.</p>{people.map(p => <MiniArtist key={p.id} artist={p} onClick={() => onDetails({ type: 'artist', id: p.id })} />)}{mutual.slice(0, 3).map(c => <MiniArtist key={c.id} artist={c} subtitle={`Worked with both · ${roleText([...new Set([...c.roles.a, ...c.roles.b])])}`} onClick={() => onDetails({ type: 'artist', id: c.id })} />)}</section>
+        <section className="panel quick-peek"><span className="overline">GO DEEPER</span><h3>The people behind the music</h3><p>Click an artist in the web or choose one below to see their albums, links, and genres.</p>{people.map(p => <MiniArtist key={p.id} artist={p} onClick={() => onDetails({ type: 'artist', id: p.id })} />)}{mutual.slice(0, 3).map(c => <MiniArtist key={c.id} artist={c} picture={false} subtitle={`Worked with both · ${roleText([...new Set([...c.roles.a, ...c.roles.b])])}`} onClick={() => onDetails({ type: 'artist', id: c.id })} />)}</section>
       </aside></div>
   </div>;
 }

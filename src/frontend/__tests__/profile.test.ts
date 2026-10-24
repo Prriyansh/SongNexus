@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
 import { albumSnapshot, artistSnapshot, emptyProfile, parseProfile, readStoredProfile, songSnapshot, storeProfile } from '../profile';
-import { killBill, phoebe, phoebeDetails, PHOEBE, PUNISHER } from './fixtures';
+import { killBill, oliviaDetails, phoebe, phoebeDetails, PHOEBE, PUNISHER, SOUR_ART } from './fixtures';
 
 describe('snapshots', () => {
   it('keeps what About Me needs from an artist search result', () => {
-    expect(artistSnapshot(phoebe)).toEqual({ id: PHOEBE, name: 'Phoebe Bridgers', subtitle: 'Person · US' });
+    expect(artistSnapshot(phoebe)).toEqual({ id: PHOEBE, name: 'Phoebe Bridgers', subtitle: 'Person · US', artUrl: null });
+  });
+
+  it('remembers an artist’s album cover when saved from their details', () => {
+    expect(artistSnapshot(oliviaDetails).artUrl).toBe(SOUR_ART);
   });
 
   it('uses the earliest release of a song for album, year and cover art', () => {
@@ -43,6 +47,13 @@ describe('parseProfile', () => {
   it('only keeps Cover Art Archive images, so a shared link cannot load arbitrary URLs', () => {
     const song = { ...songSnapshot(killBill), artUrl: 'https://tracker.example/pixel.gif' };
     expect(parseProfile({ ...valid, songs: [song] })!.songs[0].artUrl).toBeNull();
+    const artist = { ...artistSnapshot(phoebe), artUrl: 'https://tracker.example/pixel.gif' };
+    expect(parseProfile({ ...valid, artists: [artist] })!.artists[0].artUrl).toBeNull();
+    expect(parseProfile({ ...valid, artists: [{ ...artist, artUrl: SOUR_ART }] })!.artists[0].artUrl).toBe(SOUR_ART);
+  });
+
+  it('accepts artists saved before covers were stored', () => {
+    expect(parseProfile({ ...valid, artists: [{ id: PHOEBE, name: 'Phoebe Bridgers', subtitle: '' }] })!.artists[0].artUrl).toBeNull();
   });
 
   it('caps list sizes and string lengths', () => {

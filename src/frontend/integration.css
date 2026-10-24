@@ -48,3 +48,13 @@ a.inline-link { text-decoration: none; }
   .selection-heading { flex-direction: column; align-items: flex-start; }
   .main-content footer span + span { display: block; margin-top: 6px; }
 }
+
+/* Album covers in the comparison table, like the earlier prototype's representative albums. */
+.album-strip { display: flex; flex-wrap: wrap; gap: 12px; }
+.album-thumb { display: flex; flex-direction: column; gap: 6px; width: 76px; color: #dfd7df; text-decoration: none; font-size: 11px; line-height: 1.35; }
+.album-thumb .album-cover { width: 76px; height: 76px; border-radius: 6px; }
+.album-thumb > span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.album-thumb small { display: block; margin-top: 2px; }
+.album-thumb:hover { color: #fff; }
+.album-thumb:hover .album-cover { outline: 2px solid #c96c7b; outline-offset: 2px; }
+@media (max-width: 650px) { .album-thumb, .album-thumb .album-cover { width: 56px; } .album-thumb .album-cover { height: 56px; } }
