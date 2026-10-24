@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 export function Modal({ children, onClose, label, drawer = false }: { children: ReactNode; onClose: () => void; label: string; drawer?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
-  close.current = onClose;
+  useEffect(() => { close.current = onClose; });
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;

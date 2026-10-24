@@ -1,24 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { ArrowLeft, Expand, Minus, Plus, RotateCcw, X } from 'lucide-react';
-import { getArtist, getSong, makeCompareGraph } from '../data';
-import type { EntityType, GenreFilter, GraphEdge } from '../data';
+import { buildGraph } from '../graph';
+import type { GraphInput } from '../graph';
 import { graphEdgeKey, graphFit, routeGraphEdges } from '../graph-layout';
+import type { GraphEdge } from '../graph-layout';
+import { ROLE_LABELS } from '../model';
 import type { Selection } from '../types';
 import { ArtistAvatar, AlbumCover } from './Artwork';
 
-export function ConnectionGraph({ kind, left, right, filter, onSelect }: { kind: EntityType; left: string; right: string; filter: GenreFilter; onSelect: (s: Selection) => void }) {
+// The parent keys this component by the comparison, so a new pair starts with a fresh view.
+export function ConnectionGraph({ input, status, onSelect }: { input: GraphInput; status?: string; onSelect: (s: Selection) => void }) {
+  const { kind, role } = input;
+  const left = input.a.id;
   const [expanded, setExpanded] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEdgeKey, setSelectedEdgeKey] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [hoveredEdgeKey, setHoveredEdgeKey] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
   const [viewport, setViewport] = useState({ width: 720, height: 520 });
   const canvas = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
-  const graph = useMemo(() => makeCompareGraph(kind, left, right, filter, expanded, viewport.width < 500), [kind, left, right, filter, expanded, viewport.width < 500]);
+  const narrow = viewport.width < 500;
+  const graph = useMemo(() => buildGraph(input, expanded, narrow), [input, expanded, narrow]);
   const routed = useMemo(() => routeGraphEdges(graph), [graph]);
   const lookup = useMemo(() => new Map(graph.nodes.map(n => [n.id, n])), [graph]);
   const selectedEdge = graph.edges.find(e => graphEdgeKey(e) === selectedEdgeKey);
@@ -33,8 +37,17 @@ export function ConnectionGraph({ kind, left, right, filter, onSelect }: { kind:
   }
   const focusing = highlighted.size > 0;
   const fit = graphFit(graph.width, graph.height, viewport.width, viewport.height);
+  // Zoom and pan belong to one graph at one size: new discoveries and responsive layouts re-fit,
+  // while selection or the details drawer leave the view alone.
+  const [view, setView] = useState<{ graph: object | null; width: number; height: number; zoom: number; pan: { x: number; y: number } }>({ graph: null, width: 0, height: 0, zoom: 1, pan: { x: 0, y: 0 } });
+  const fresh = view.graph === graph && view.width === viewport.width && view.height === viewport.height;
+  const zoom = fresh ? view.zoom : 1;
+  const pan = fresh ? view.pan : { x: 0, y: 0 };
+  const saveView = (next: { zoom?: number; pan?: { x: number; y: number } }) => setView({ graph, ...viewport, zoom, pan, ...next });
+  const setZoom = (update: (z: number) => number) => saveView({ zoom: update(zoom) });
+  const setPan = (next: { x: number; y: number } | ((p: { x: number; y: number }) => { x: number; y: number })) => saveView({ pan: typeof next === 'function' ? next(pan) : next });
+  const resetView = () => saveView({ zoom: 1, pan: { x: 0, y: 0 } });
   const scale = fit * zoom;
-  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
   const clearSelection = () => { setSelectedId(null); setSelectedEdgeKey(null); };
   useEffect(() => {
     const element = canvas.current;
@@ -45,17 +58,9 @@ export function ConnectionGraph({ kind, left, right, filter, onSelect }: { kind:
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  useEffect(() => {
-    setExpanded([]); clearSelection(); setHoveredId(null); setHoveredEdgeKey(null); resetView();
-  }, [kind, left, right, filter]);
-  // Fit new discoveries and responsive layouts, without resetting the view when
-  // selection or the details drawer changes.
-  useEffect(resetView, [graph, viewport.width, viewport.height]);
   const selectNode = (id: string) => { setSelectedId(id); setSelectedEdgeKey(null); };
   const selectEdge = (edge: GraphEdge) => { setSelectedEdgeKey(graphEdgeKey(edge)); setSelectedId(null); };
   const selectedNode = selectedId ? lookup.get(selectedId) : undefined;
-  const activeArtist = selectedNode?.entityType === 'artist' ? getArtist(selectedNode.id) : undefined;
-  const activeSong = selectedNode?.entityType === 'song' ? getSong(selectedNode.id) : undefined;
   const canExpand = !!selectedId && graph.expandable.includes(selectedId);
   const edgeDescription = (edge: GraphEdge) => `${edge.category === 'similarity' ? 'Musical similarity · calculated' : 'Factual connection'}: ${lookup.get(edge.from)?.label} and ${lookup.get(edge.to)?.label}. ${edge.label}. ${edge.detail || ''}`;
   const hoveredRoute = routed.find(r => graphEdgeKey(r.edge) === hoveredEdgeKey);
@@ -99,14 +104,14 @@ export function ConnectionGraph({ kind, left, right, filter, onSelect }: { kind:
         </svg>
         {graph.nodes.map(node => {
           const primary = node.role === 'Comparison anchor';
-          const contributor = node.entityType === 'artist' && getArtist(node.id)?.kind === 'contributor';
-          const subtitle = node.entityType === 'song' ? getArtist(getSong(node.id)!.artistId)?.name : contributor ? 'Contributor' : 'Artist';
+          const contributor = !!node.contributor;
+          const subtitle = node.subtitle;
           return <button key={node.id} className={`graph-node ${node.entityType === 'song' ? 'is-song' : ''} ${contributor ? 'is-contributor' : ''} ${primary ? 'is-primary' : ''} ${selectedId === node.id ? 'is-selected' : ''} ${focusing && !highlighted.has(node.id) ? 'is-dimmed' : ''}`}
             style={{ left: node.x, top: node.y }} onClick={() => selectNode(node.id)}
             onPointerEnter={() => { setHoveredId(node.id); setHoveredEdgeKey(null); }} onPointerLeave={() => setHoveredId(null)}
             onFocus={() => { setHoveredId(node.id); setHoveredEdgeKey(null); }} onBlur={() => setHoveredId(null)}
             aria-pressed={selectedId === node.id} aria-label={`${node.label}, ${primary ? `comparison ${node.id === left ? 'one' : 'two'}` : subtitle}. Select node`} title={`${node.label} · ${subtitle}`}>
-            <span className="graph-node-visual">{node.entityType === 'song' ? <AlbumCover song={getSong(node.id)!}/> : <ArtistAvatar artist={getArtist(node.id)!}/>}{primary && <span className="graph-anchor-index">{node.id === left ? '1' : '2'}</span>}</span>
+            <span className="graph-node-visual">{node.entityType === 'song' ? <AlbumCover cover={{ id: node.id, artUrl: node.artUrl }}/> : <ArtistAvatar artist={{ id: node.id, name: node.label }}/>}{primary && <span className="graph-anchor-index">{node.id === left ? '1' : '2'}</span>}</span>
             <strong>{node.label}</strong><small>{subtitle}</small>
           </button>;
         })}
@@ -114,12 +119,13 @@ export function ConnectionGraph({ kind, left, right, filter, onSelect }: { kind:
       {hoveredRoute && <div className="graph-edge-tooltip" role="tooltip" style={tooltipPosition}><small>{hoveredRoute.edge.category === 'similarity' ? 'Musical similarity · calculated' : 'Factual connection'}</small><strong>{hoveredRoute.edge.label}</strong><span>{lookup.get(hoveredRoute.edge.from)?.label} ↔ {lookup.get(hoveredRoute.edge.to)?.label}</span><em>Select connection for details</em></div>}
       <div className="graph-controls"><button className="icon-button" aria-label="Zoom in" disabled={zoom >= 2.4} onClick={() => setZoom(z => Math.min(2.4, z + .2))}><Plus size={17}/></button><span>{Math.round(zoom * 100)}%</span><button className="icon-button" aria-label="Zoom out" disabled={zoom <= .6} onClick={() => setZoom(z => Math.max(.6, z - .2))}><Minus size={17}/></button><button className="icon-button" aria-label="Reset graph view" title="Fit and center graph" onClick={resetView}><Expand size={16}/></button></div>
     </div>
-    {selectedNode && <div className="graph-selection"><div><strong>{selectedNode.label}</strong><p>{activeArtist?.description || `${activeSong?.album} · ${getArtist(activeSong?.artistId || '')?.name}`}</p>{canExpand && <small>More connections available</small>}</div><button className="text-cta" onClick={() => onSelect({ type: selectedNode.entityType, id: selectedNode.id })}>View details <ArrowLeft className="reverse-arrow" size={14}/></button><button className="secondary-button" disabled={!canExpand} onClick={() => setExpanded(p => [...p, selectedNode.id])}><Plus size={14}/> Show more</button><button className="icon-button" aria-label="Clear node selection" onClick={clearSelection}><X size={16}/></button></div>}
+    {selectedNode && <div className="graph-selection"><div><strong>{selectedNode.label}</strong><p>{selectedNode.subtitle}</p>{canExpand && <small>{selectedNode.entityType === 'artist' && selectedNode.contributor ? 'Show the songs that connect them' : 'More collaborators available'}</small>}</div><button className="text-cta" onClick={() => onSelect({ type: selectedNode.entityType, id: selectedNode.id })}>View details <ArrowLeft className="reverse-arrow" size={14}/></button><button className="secondary-button" disabled={!canExpand} onClick={() => setExpanded(p => [...p, selectedNode.id])}><Plus size={14}/> Show more</button><button className="icon-button" aria-label="Clear node selection" onClick={clearSelection}><X size={16}/></button></div>}
     {selectedEdge && <div className="graph-selection graph-edge-selection"><div><small className="graph-relationship-category">{selectedEdge.category === 'similarity' ? 'Musical similarity · calculated from metadata' : 'Factual connection · documented relationship'}</small><strong>{lookup.get(selectedEdge.from)?.label} <span aria-hidden="true">↔</span> {lookup.get(selectedEdge.to)?.label}</strong>
       {(selectedEdge.relationships || [selectedEdge]).map((record, i) => <div className="graph-relationship-detail" key={record.relationshipId || i}><b>{record.label}</b><p>{record.detail}</p>{!!record.sourceUrls?.length && <div className="graph-sources">{record.sourceUrls.map((url, index) => <a href={url} key={url} target="_blank" rel="noreferrer">Source {index + 1}</a>)}</div>}</div>)}
     </div><button className="icon-button" aria-label="Clear connection selection" onClick={clearSelection}><X size={16}/></button></div>}
     <div className="graph-foot"><span className="graph-hint">Select a node or connection to explore</span><button className="text-cta" onClick={() => { setExpanded([]); clearSelection(); resetView(); }}><RotateCcw size={13}/> Initial comparison</button></div>
-    {filter !== 'All genres' && <p className="filter-caption">Showing {filter} connections. Your two comparison anchors{kind === 'artist' ? ' and credited contributor identities' : ''} stay visible.</p>}
-    {graph.edges.length === 0 && <p className="filter-caption">{filter === 'All genres' ? 'No connections in this catalog.' : 'No connections match this genre. Try All genres.'}</p>}
+    {status && <p className="filter-caption" role="status">{status}</p>}
+    {role !== 'all' && <p className="filter-caption">Showing collaborators credited for {ROLE_LABELS[role]?.toLowerCase() || role}. Your two {kind === 'artist' ? 'artists' : 'songs'} stay visible.</p>}
+    {!status && graph.edges.length === 0 && <p className="filter-caption">{role === 'all' ? 'No documented connections found in the albums we scanned.' : 'No collaborators match this role. Try All roles.'}</p>}
   </div>;
 }
