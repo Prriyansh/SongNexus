@@ -100,3 +100,15 @@ layer ([`src/lib/musicbrainz.ts`](../src/lib/musicbrainz.ts)) mitigates this wit
 > by provider + a shared response cache). That adds a dependency and a small
 > amount of latency/cost, so it is recommended only if rate-limit errors persist
 > in production.
+
+## Hosting
+
+The app deploys to Vercel as-is (see the README). Notes for a public deployment:
+
+- Keep Next.js patched. 16.4.0 had critical advisories (remote code execution); `npm audit
+  --omit=dev` should report nothing before deploying.
+- `/api/musicbrainz/collaborators` sets `maxDuration = 60` because a cold scan takes ~10 s.
+- Serverless instances don't share the in-memory cache or throttle (see above), and Vercel's
+  outbound IPs are shared with other projects, so MusicBrainz may occasionally answer 503. The
+  routes retry, and the UI shows "Try again" if that isn't enough.
+- No environment variables are needed.

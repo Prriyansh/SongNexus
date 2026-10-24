@@ -23,6 +23,20 @@ Then open <http://localhost:3000>.
 | `/compare/songs` | Explore: compare two songs |
 | `/prototype` | The earlier HTML prototype |
 
+## Share it (deploy to Vercel)
+
+The app needs a server (its API routes call MusicBrainz), so share it by deploying it. Vercel's
+free plan works with no configuration and no API keys:
+
+1. Sign in at [vercel.com](https://vercel.com) with GitHub.
+2. **Add New → Project**, import `Prriyansh/SongNexus`, keep the detected defaults
+   (framework Next.js, root directory `./`), and click **Deploy**.
+3. Share the `https://<project>.vercel.app` link it gives you.
+
+Every push to `main` redeploys that link, and pull requests get their own preview links. The
+in-app **Share** button builds links on whatever domain the app is served from, so comparison
+and About Me links work as soon as it's deployed.
+
 ## Repository layout
 
 ```
