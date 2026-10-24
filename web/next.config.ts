@@ -4,16 +4,17 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
-  // Serve the team's static SongNexus frontend (public/song-nexus.html) at the
-  // root, same-origin as the /api/musicbrainz/* routes so the HTML's relative
-  // API calls resolve. The Next app is the API/backend; its React page UI is
-  // intentionally not used as the frontend.
+  // The React app (src/frontend, Helen's design) is a single client page at "/". Its other URLs
+  // map onto that page, which reads the path itself, so links and refreshes work:
+  //   /about, /about/manual, and shareable /compare/artists?artistA=…&artistB=… links.
+  // The earlier HTML prototype stays reachable at /prototype.
   async rewrites() {
     return {
       beforeFiles: [
-        { source: "/", destination: "/song-nexus.html" },
-        // Shareable comparison links, e.g. /compare/artists?artistA=…&artistB=…
-        { source: "/compare/:mode(artists|songs)", destination: "/song-nexus.html" },
+        { source: "/about", destination: "/" },
+        { source: "/about/manual", destination: "/" },
+        { source: "/compare/:mode(artists|songs)", destination: "/" },
+        { source: "/prototype", destination: "/song-nexus.html" },
       ],
       afterFiles: [],
       fallback: [],

@@ -1,30 +1,25 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+// Helen's stylesheets, in her order: base styles, then product overrides, then integration states.
+import "@/frontend/styles.css";
+import "@/frontend/product.css";
+import "@/frontend/integration.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SongNexus · Music Discovery Lab",
-  description:
-    "Compare real songs and artists and explore their documented connections using MusicBrainz metadata.",
+  title: "Song Nexus",
+  description: "Compare songs and artists and explore their documented connections using MusicBrainz.",
 };
+
+export const viewport: Viewport = { themeColor: "#09090d" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en">
+      <body className={inter.className}>
+        <div id="root">{children}</div>
+      </body>
     </html>
   );
 }
