@@ -1,8 +1,8 @@
 # Song Nexus design handoff (Helen)
 
-> **Integrated (Oct 2026).** The source files described below now live in `web/src/frontend/` and
+> **Integrated (Oct 2026).** The source files described below now live in `src/frontend/` and
 > run inside the Next.js app, backed by the team's MusicBrainz API routes instead of the
-> `src/data.ts` module this guide describes. See `web/README.md` → *Frontend*. This guide and the
+> `src/data.ts` module this guide describes. See `docs/architecture.md` → *Frontend*. This guide and the
 > screenshots are kept as the original design reference; file paths below refer to the handoff.
 
 This folder contains the React/TypeScript appearance and interaction layer for Song Nexus. It includes 19 source/configuration files and five visual reference screenshots. The dataset, data-processing modules, generated build, dependencies, and original tests were deliberately excluded.
