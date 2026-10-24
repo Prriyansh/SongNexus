@@ -1,8 +1,12 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Song Nexus architecture
+
+How the app is put together: the frontend, the data sources, and how we stay within
+MusicBrainz's rate limit. For setup, see the [README](../README.md).
 
 ## Frontend
 
-The app is Helen's React design (`src/frontend/`), rendered as a single client page at `/` and
+The app is Helen's React design ([`src/frontend/`](../src/frontend/), original handoff in
+[`docs/design/`](design/)), rendered as a single client page at `/` and
 served by the same Next.js server as the API routes. Everything it shows comes from those routes;
 it never calls MusicBrainz or Deezer directly.
 
@@ -26,6 +30,7 @@ it never calls MusicBrainz or Deezer directly.
   (producer, mixing, featured…) rather than genres.
 - Tests: unit tests per module in `src/frontend/__tests__/`, and
   `app.integration.test.tsx`, which renders the whole app in jsdom against a mocked API.
+  Server-side tests are in `src/lib/__tests__/`.
 
 ## SongNexus comparison data
 
@@ -78,7 +83,7 @@ MusicBrainz path — and would still not provide audio features for a new app.
 ## Rate limiting & caching (serverless caveat)
 
 MusicBrainz asks clients to average ≤ 1 request/second per IP. The integration
-layer (`src/lib/musicbrainz.ts`) mitigates this with:
+layer ([`src/lib/musicbrainz.ts`](../src/lib/musicbrainz.ts)) mitigates this with:
 
 - client-side debouncing and request cancellation;
 - a short-lived response cache with **stale-while-revalidate** (serves cached
@@ -95,42 +100,3 @@ layer (`src/lib/musicbrainz.ts`) mitigates this with:
 > by provider + a shared response cache). That adds a dependency and a small
 > amount of latency/cost, so it is recommended only if rate-limit errors persist
 > in production.
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-The screens live in `src/frontend/` and auto-update as you edit them. Checks:
-
-```bash
-npm test           # unit + integration tests (Vitest)
-npm run lint
-npm run typecheck
-```
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
