@@ -1,9 +1,9 @@
-# Song Nexus frontend appearance: backend integration guide
+# Song Nexus design handoff (Helen)
 
-> **Integrated (Oct 2026).** These files now live in `web/src/frontend/` and run inside the Next.js
-> app, backed by the team's MusicBrainz API routes instead of the `src/data.ts` module described
-> below. See `web/README.md` → *Frontend*. This guide and the screenshots are kept as the design
-> reference.
+> **Integrated (Oct 2026).** The source files described below now live in `web/src/frontend/` and
+> run inside the Next.js app, backed by the team's MusicBrainz API routes instead of the
+> `src/data.ts` module this guide describes. See `web/README.md` → *Frontend*. This guide and the
+> screenshots are kept as the original design reference; file paths below refer to the handoff.
 
 This folder contains the React/TypeScript appearance and interaction layer for Song Nexus. It includes 19 source/configuration files and five visual reference screenshots. The dataset, data-processing modules, generated build, dependencies, and original tests were deliberately excluded.
 
@@ -45,17 +45,17 @@ The HTTP client, API base URL, authentication, remote loading/error states, cach
 | `src/components/ConnectionGraph.tsx` | Interactive nodes/edges, zoom/pan, expansion and source details | Consumes a synchronous, fully resolved `ComparisonGraph`. |
 | `src/components/Modal.tsx` | Portal dialogs/drawers, focus handling, Escape and scroll locking | Uses `document.body` and `#root`; preserve the mount convention or update it deliberately. |
 | `src/components/PlaylistUpload.tsx` | File selection/drop, preview, provider labels and import action | No remote upload, OAuth, or streaming-service connection is implemented. |
-| `images_for_reference/` | Five screenshots | Design references only; no application module imports these PNGs. |
+| `screenshots/` | Five screenshots | Design references only; no application module imports these PNGs. |
 
 ### Reference screenshots
 
 | Image | What it shows |
 | --- | --- |
-| [Image_20261023171259_57_34.png](images_for_reference/Image_20261023171259_57_34.png) | About Me: heading, add/upload actions, artist/genre/album columns. |
-| [Image_20261023171324_58_34.png](images_for_reference/Image_20261023171324_58_34.png) | About Me: lower cards and selected-song list. |
-| [Image_20261023171359_59_34.png](images_for_reference/Image_20261023171359_59_34.png) | Explore: song/artist switch, comparison selectors and selected cards. |
-| [Image_20261023171412_60_34.png](images_for_reference/Image_20261023171412_60_34.png) | Explore: side-by-side metadata, credits and similarity explanation. |
-| [Image_20261023171426_61_34.png](images_for_reference/Image_20261023171426_61_34.png) | Explore: connection graph, insight panel and related-artist cards. |
+| [about-me.png](screenshots/about-me.png) | About Me: heading, add/upload actions, artist/genre/album columns. |
+| [about-me-songs.png](screenshots/about-me-songs.png) | About Me: lower cards and selected-song list. |
+| [explore-select.png](screenshots/explore-select.png) | Explore: song/artist switch, comparison selectors and selected cards. |
+| [explore-side-by-side.png](screenshots/explore-side-by-side.png) | Explore: side-by-side metadata, credits and similarity explanation. |
+| [explore-graph.png](screenshots/explore-graph.png) | Explore: connection graph, insight panel and related-artist cards. |
 
 Screenshots show the previous sample content. Use them to check composition and interaction placement; production records and cover availability will differ.
 
