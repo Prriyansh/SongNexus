@@ -8,7 +8,7 @@ import {
   type Artist,
   type Genre,
   type Song,
-} from "./types";
+} from "../types";
 
 const song = (over: Partial<Song> = {}): Song => ({
   id: "s1",

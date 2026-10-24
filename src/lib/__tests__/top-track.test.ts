@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { __clearCache, UpstreamError } from "./musicbrainz";
-import { findTopTrack } from "./top-track";
+import { __clearCache, UpstreamError } from "../musicbrainz";
+import { findTopTrack } from "../top-track";
 
 const ARTIST = { id: "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa", name: "Radiohead" };
 type FetchMock = (url: RequestInfo | URL, init?: RequestInit) => Promise<Response>;

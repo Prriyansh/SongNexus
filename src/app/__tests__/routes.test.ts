@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import config from "../../next.config";
+import config from "../../../next.config";
 
 // The React app is one client page at "/"; these rewrites let its other URLs load it directly.
 describe("next.config rewrites", () => {

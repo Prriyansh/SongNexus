@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 // Next rewrite. These tests guard that the comparison feature stays integrated
 // into that design and keeps all MusicBrainz work on the server.
 const html = readFileSync(
-  fileURLToPath(new URL("../../public/song-nexus.html", import.meta.url)),
+  fileURLToPath(new URL("../../../public/song-nexus.html", import.meta.url)),
   "utf8"
 );
 const compareScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]

@@ -8,7 +8,7 @@ import {
   parseCollaboratorParams,
   releaseRecordings,
   ValidationError,
-} from "./musicbrainz";
+} from "../musicbrainz";
 
 const A = "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa";
 const B = "bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb";

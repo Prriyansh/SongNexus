@@ -15,7 +15,7 @@ import {
   ValidationError,
   type DetailsParams,
   type SearchParams,
-} from "./musicbrainz";
+} from "../musicbrainz";
 
 // --- Sample payloads mirroring real MusicBrainz responses -------------------
 
