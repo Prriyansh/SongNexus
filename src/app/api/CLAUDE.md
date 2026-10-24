@@ -29,5 +29,5 @@ Pattern for every handler:
 `recording:"vampire" AND artist:"Olivia Rodrigo"`.
 
 Collaborators is slow when cold (it reads each artist's 3 most recent studio albums, about
-10 s for two big artists) and cached afterwards. The header comment in
-`musicbrainz/collaborators/route.ts` still says "one request per artist"; that's outdated.
+10 s for two big artists) and cached afterwards. Its route exports `maxDuration = 60` so
+serverless hosts such as Vercel don't time it out; `src/app/__tests__/api-config.test.ts` checks it.

@@ -7,7 +7,11 @@ import {
 } from "@/lib/musicbrainz";
 
 // People credited on recordings by both artists (producers, features, mixers, performers).
-// One MusicBrainz request per artist, cached, so it runs after the main comparison renders.
+// Reads each artist's most recent studio albums (one MusicBrainz request per album, ~1/s), so a
+// cold comparison takes ~10 s; results are cached and the UI loads this after the main cards.
+// Allow time for that on serverless hosts whose default function timeout is shorter.
+export const maxDuration = 60;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
