@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Song Compare</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span>Song Compare</div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <main>
+    <section class="pickers">
+      <div class="picker" data-slot="a">
+        <label>Song A</label>
+        <input type="text" placeholder="Search a song or artist" autocomplete="off">
+        <ul class="suggest" hidden></ul>
+        <div class="chosen" hidden></div>
+      </div>
+      <div class="picker" data-slot="b">
+        <label>Song B</label>
+        <input type="text" placeholder="Search a song or artist" autocomplete="off">
+        <ul class="suggest" hidden></ul>
+        <div class="chosen" hidden></div>
+      </div>
+      <button id="go" class="primary" disabled>Compare</button>
+    </section>
+
+    <p id="error" class="error" hidden></p>
+    <p id="empty" class="muted">Pick two songs to see how they compare.</p>
+
+    <div id="result" hidden>
+      <section class="hero card">
+        <div class="score"><span id="overall">0</span><small>% match</small></div>
+        <div class="hero-side">
+          <div class="mini"><span>Sound</span><div class="track"><i id="barAudio"></i></div><b id="valAudio"></b></div>
+          <div class="mini"><span>Lyrics</span><div class="track"><i id="barLyric"></i></div><b id="valLyric"></b></div>
+          <ul id="reasons" class="reasons"></ul>
+        </div>
+      </section>
+
+      <section class="card"><h2>Sound</h2><div id="sound"></div></section>
+      <section class="card"><h2>Structure</h2><table id="structure"></table></section>
+      <section class="card"><h2>Shared credits</h2><div id="credits"></div></section>
+      <section class="card"><h2>Lyrics</h2><div id="lyrics"></div></section>
+      <section class="card"><h2>More songs that sound like these</h2><div id="more"></div></section>
+    </div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
