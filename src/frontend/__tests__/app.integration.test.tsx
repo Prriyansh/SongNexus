@@ -50,6 +50,7 @@ beforeEach(async () => {
   window.scrollTo = vi.fn() as typeof window.scrollTo;
   localStorage.clear();
   App = (await import('../App')).default;
+  (await import('../api')).retryPolicy.delayMs = 0;
 });
 afterEach(async () => {
   await act(async () => root?.unmount());
@@ -167,8 +168,15 @@ describe('Explore: artists', () => {
     expect(document.querySelector('.selected-cards')!.textContent).toContain('Phoebe Bridgers');
   });
 
-  it('shows the API error and recovers on “Try again”', async () => {
+  it('retries a busy MusicBrainz once without showing an error', async () => {
     failures[`/api/musicbrainz/details:${TAYLOR}`] = 1;
+    await render('/compare/artists');
+    expect(text()).not.toContain('MusicBrainz is busy right now.');
+    expect(document.querySelector('.selected-cards')!.textContent).toContain('Taylor Swift');
+  });
+
+  it('shows the API error and recovers on “Try again”', async () => {
+    failures[`/api/musicbrainz/details:${TAYLOR}`] = 2; // the request and its automatic retry
     await render('/compare/artists');
     expect(text()).toContain('MusicBrainz is busy right now.');
     await click(buttons().find(b => b.textContent === 'Try again')!);

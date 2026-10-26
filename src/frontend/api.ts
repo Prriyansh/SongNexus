@@ -11,7 +11,21 @@ export class ApiError extends Error {
   }
 }
 
+/** MusicBrainz sometimes answers "busy"; retryable errors get one more try before the user sees them. */
+export const retryPolicy = { delayMs: 1500 };
+
 async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+  try {
+    return await getJsonOnce<T>(url, signal);
+  } catch (error) {
+    if (!(error instanceof ApiError) || !error.retryable || signal?.aborted) throw error;
+    await new Promise(resolve => setTimeout(resolve, retryPolicy.delayMs));
+    if (signal?.aborted) throw error;
+    return getJsonOnce<T>(url, signal);
+  }
+}
+
+async function getJsonOnce<T>(url: string, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, { signal });
