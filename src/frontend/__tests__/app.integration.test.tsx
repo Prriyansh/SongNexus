@@ -312,39 +312,53 @@ describe('About Me', () => {
 describe('Explore: songs, sound and lyrics', () => {
   const songs = `/compare/songs?songA=${VAMPIRE}&songB=${OPHELIA}`;
 
-  it('adds tempo, key, lyrics mood and the sound match to the song comparison', async () => {
+  it('leads with the sound and lyrics analysis; MusicBrainz details come after it', async () => {
     await render(songs);
     expect(called('/api/sound?aTitle=vampire&aArtist=Olivia+Rodrigo&bTitle=The+Fate+of+Ophelia&bArtist=Taylor+Swift')).toBe(true);
-    const table = document.querySelector('.comparison-details')!.textContent!;
-    expect(table).toContain('Tempo138 BPM128 BPM');
-    expect(table).toContain('Musical keyA# majorF major');
-    expect(table).toContain('Time signature4/4Unknown');
-    expect(table).toContain('Sadness · negative');
-    expect(table).toContain('71%overall match');
-    expect(table).toContain('Keys are compatible (closely related key).');
-    expect(text()).toContain('71% overall match: sound 74%, lyrics 66%.');
+    const analysis = document.querySelector('.song-analysis')!;
+    const release = document.querySelector('.comparison-details:not(.structure-panel)')!;
+    expect(analysis.compareDocumentPosition(release) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(release.textContent).toContain('07 / MORE ABOUT THESE SONGS');
+    expect(release.textContent).toContain('Released');
+    expect(document.querySelector('.selection-panel')!.textContent).toContain('Search the song library for the full sound and lyrics analysis');
   });
 
-  it('shows the sound profile panel with paired bars and lyric scores', async () => {
+  it('shows how alike the songs are, with the reasons and what they share', async () => {
     await render(songs);
-    const panel = [...document.querySelectorAll('.audio-panel')].find(p => p.textContent?.includes('Beyond the credits'))!;
-    expect(panel.textContent).toContain('Energy43 / 68');
-    expect(panel.textContent).toContain('Themes90%');
-    expect(panel.textContent).toContain('Matched to these songs by title and artist');
+    const match = document.querySelector('.match-panel')!.textContent!;
+    expect(match).toContain('71%overall match');
+    expect(match).toContain('Sound74%');
+    expect(match).toContain('Lyrics66%');
+    expect(match).toContain('Keys are compatible (closely related key).');
+    expect(match).toContain('Genre: Pop');
   });
 
-  it('says plainly when a song is not in the sound dataset', async () => {
+  it('shows the sound profile, structure and lyrics side by side', async () => {
+    await render(songs);
+    const text = document.querySelector('.song-analysis')!.textContent!;
+    expect(text).toContain('Energy43 / 68');
+    expect(text).toContain('Tempo138 BPM128 BPM');
+    expect(text).toContain('KeyA# majorF major');
+    expect(text).toContain('Time signature4/4Unknown');
+    expect(text).toContain('Verses / choruses / bridges2 / 3 / 12 / 3 / 1');
+    expect(text).toContain('Keys: closely related key.');
+    expect(text).toContain('Negative (-0.30)');
+    expect(text).toContain('Themes90%');
+    expect(text).toContain('Songs that sound like these');
+  });
+
+  it('says plainly when a song is not in the song library, and keeps the rest', async () => {
     soundReply = { status: 'not-found', missing: ['b'] };
     await render(songs);
-    expect(document.querySelector('.comparison-details')!.textContent).toContain('“The Fate of Ophelia” isn’t in the sound dataset');
-    expect(document.querySelector('.audio-panel')).toBeNull();
-    expect(document.querySelector('.selected-cards')!.textContent).toContain('The Fate of Ophelia'); // the rest still works
+    expect(document.querySelector('.match-panel')!.textContent).toContain('“The Fate of Ophelia” isn’t in the song library (Spotify tracks up to 2022)');
+    expect(document.querySelector('.song-analysis')).toBeNull();
+    expect(document.querySelector('.comparison-details')!.textContent).toContain('Released');
   });
 
   it('explains how to start the sound service when it is not running', async () => {
     soundReply = { status: 'unavailable', hint: 'Start it with: cd song_compare && python backend/app.py' };
     await render(songs);
-    expect(document.querySelector('.comparison-details')!.textContent).toContain('isn’t available right now. Start it with: cd song_compare && python backend/app.py');
+    expect(document.querySelector('.match-panel')!.textContent).toContain('isn’t available right now. Start it with: cd song_compare && python backend/app.py');
   });
 
   it('compares the first song with a similar-sounding one found on MusicBrainz', async () => {

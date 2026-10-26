@@ -13,7 +13,7 @@ import { formatDuration, partitionGenres } from '@/lib/types';
 import { artistDetails, collaborators, searchArtists, searchSongs, searchSoundSongs, songDetails, soundComparison, topTrack } from './api';
 import type { SimilarSong, SoundTrackBrief } from '@/lib/sound';
 import { findRecording } from './resolve';
-import { SoundProfile, SoundsLike } from './components/SoundProfile';
+import { SongAnalysis } from './components/SongAnalysis';
 import { buildGraph, songArtistPair } from './graph';
 import type { GraphInput } from './graph';
 import { albumSampleNote, artistCover, artistSubtitle, capitalize, coverForRelease, firstRelease, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, ROLE_LABELS, roleText, songArtists, studioAlbumText, yearOf } from './model';
@@ -229,16 +229,18 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
   return <div className="explore-page">
     <div className="page-heading"><div><div className="eyebrow"><Sparkles size={14} /> EXPLORE THE MUSIC BEHIND THE MUSIC</div><h1>Find the connection.</h1><p>Compare two tracks or artists, follow their shared connections, and discover the people behind the sound.</p></div><Segment value={kind} onChange={next => onComparison(comparisonFor(next))} /></div>
     {note && <div className="shared-note"><Link2 size={17} /><div><strong>Shared with a note</strong><p>{note}</p></div><button className="icon-button" onClick={onDismissNote} aria-label="Dismiss shared note"><X size={17} /></button></div>}
-    <section className="panel selection-panel"><div className="selection-heading"><div><span className="overline">01 / SELECT MUSIC</span><h2>Choose {kind === 'song' ? 'two songs' : 'two artists'} to compare</h2></div>{kind === 'artist' ? <button className="secondary-button" disabled={!a || !b || top.busy} onClick={() => void compareTopSongs()}><Music2 size={15} /> {top.busy ? 'Finding top songs…' : 'Compare their top songs'}</button> : <span className="mini-caption">Search all of MusicBrainz</span>}</div>
+    <section className="panel selection-panel"><div className="selection-heading"><div><span className="overline">01 / SELECT MUSIC</span><h2>Choose {kind === 'song' ? 'two songs' : 'two artists'} to compare</h2></div>{kind === 'artist' ? <button className="secondary-button" disabled={!a || !b || top.busy} onClick={() => void compareTopSongs()}><Music2 size={15} /> {top.busy ? 'Finding top songs…' : 'Compare their top songs'}</button> : <span className="mini-caption">Search the song library for the full sound and lyrics analysis</span>}</div>
       {top.error && <p className="error-text" role="alert">{top.error}</p>}
       <div className="select-grid"><SearchChooser type={kind} value={left} display={a} other={right} label={kind === 'song' ? 'SONG ONE' : 'ARTIST ONE'} onChange={v => onComparison({ ...comparison, left: v })} /><span className="vs">VS</span><SearchChooser type={kind} value={right} display={b} other={left} label={kind === 'song' ? 'SONG TWO' : 'ARTIST TWO'} onChange={v => onComparison({ ...comparison, right: v })} /></div>
       <div className="selected-cards"><SelectedCard kind={kind} index={0} state={da} onDetails={onDetails} /><SelectedCard kind={kind} index={1} state={db} onDetails={onDetails} /></div>
     </section>
-    <ComparisonDetails kind={kind} a={a} b={b} collab={pair ? collab : null} sound={kind === 'song' ? sound : undefined} role={role} onSelect={onDetails} onCompareSongs={compareSongs} />
-    <div className="content-columns"><section className="panel graph-panel"><div className="graph-heading"><div><span className="overline">02 / CONNECTION WEB</span><h2>How they’re connected</h2><p>Solid lines are credits on MusicBrainz; the dashed line is shared genre tags. Select a person to see the songs that connect them.</p></div><RoleSelect value={role} onChange={onRole} /></div>
+    {/* Songs: the sound and lyrics analysis is the comparison; release details and credits follow. */}
+    {kind === 'song' && (songs ? <SongAnalysis sound={sound} songs={songs} onPickSimilar={song => void compareWithSimilar(song)} busyId={pick.id} pickError={pick.error} /> : <section className="panel match-panel" aria-busy="true"><p className="loading-text">Loading the songs…</p><div className="skeleton-lines"><span /><span /></div></section>)}
+    <ComparisonDetails kind={kind} a={a} b={b} collab={pair ? collab : null} role={role} onSelect={onDetails} onCompareSongs={compareSongs} />
+    <div className="content-columns"><section className="panel graph-panel"><div className="graph-heading"><div><span className="overline">{kind === 'song' ? '08' : '02'} / CONNECTION WEB</span><h2>How they’re connected</h2><p>Solid lines are credits on MusicBrainz; the dashed line is shared genre tags. Select a person to see the songs that connect them.</p></div><RoleSelect value={role} onChange={onRole} /></div>
       {input ? <ConnectionGraph key={`${kind}:${left}:${right}:${role}`} input={input} status={graphStatus} onSelect={onDetails} /> : da.error || db.error ? <LoadError error={(da.error || db.error)!} retry={() => { da.retry(); db.retry(); }} /> : <div className="graph-canvas graph-loading" aria-busy="true"><div className="graph-grid" /><p className="loading-text">Loading from MusicBrainz…</p></div>}
     </section>
-      <aside className="right-column"><section className="panel insights"><div className="section-title"><div><span className="overline">03 / DISCOVER INSIGHTS</span><h3>What connects them?</h3></div><GitCompareArrows size={20} /></div>
+      <aside className="right-column"><section className="panel insights"><div className="section-title"><div><span className="overline">{kind === 'song' ? '09' : '03'} / DISCOVER INSIGHTS</span><h3>What connects them?</h3></div><GitCompareArrows size={20} /></div>
         {kind === 'artist' ? <>
           {insight('01', 'Direct connection', collabPending ? 'Checking album credits…' : collabData && (collabData.direct.bOnA.length || collabData.direct.aOnB.length)
             ? [collabData.direct.bOnA.length ? `${nameOf(b)} is credited on ${nameOf(a)}’s “${collabData.direct.bOnA[0].title}”.` : '', collabData.direct.aOnB.length ? `${nameOf(a)} is credited on ${nameOf(b)}’s “${collabData.direct.aOnB[0].title}”.` : ''].filter(Boolean).join(' ')
@@ -254,11 +256,8 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
           {insight('03', 'Factual connection path', pathText || (collabPending ? 'Reading album credits…' : 'No documented path between these two songs in the albums we scanned.'))}
         </>}
       </section>
-        <section className="panel quick-peek"><span className="overline">GO DEEPER</span><h3>The people behind the music</h3><p>Click an artist in the web or choose one below to see their albums, links, and genres.</p>{people.map(p => <MiniArtist key={p.id} artist={p} onClick={() => onDetails({ type: 'artist', id: p.id })} />)}{mutual.slice(0, 3).map(c => <MiniArtist key={c.id} artist={c} picture={false} subtitle={`Worked with both · ${roleText([...new Set([...c.roles.a, ...c.roles.b])])}`} onClick={() => onDetails({ type: 'artist', id: c.id })} />)}
-          {songs && <SoundsLike sound={sound} titles={[songs[0].title, songs[1].title]} onPick={song => void compareWithSimilar(song)} busyId={pick.id} />}
-          {pick.error && <p className="error-text" role="alert">{pick.error}</p>}</section>
+        <section className="panel quick-peek"><span className="overline">GO DEEPER</span><h3>The people behind the music</h3><p>Click an artist in the web or choose one below to see their albums, links, and genres.</p>{people.map(p => <MiniArtist key={p.id} artist={p} onClick={() => onDetails({ type: 'artist', id: p.id })} />)}{mutual.slice(0, 3).map(c => <MiniArtist key={c.id} artist={c} picture={false} subtitle={`Worked with both · ${roleText([...new Set([...c.roles.a, ...c.roles.b])])}`} onClick={() => onDetails({ type: 'artist', id: c.id })} />)}</section>
       </aside></div>
-    {songs && <SoundProfile sound={sound} songs={songs} />}
   </div>;
 }
 

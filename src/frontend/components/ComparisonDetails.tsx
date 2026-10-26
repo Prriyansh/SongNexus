@@ -4,8 +4,6 @@ import { formatDuration, partitionGenres } from '@/lib/types';
 import { albumSampleNote, capitalize, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, roleText, songArtists, studioAlbumText, yearOf } from '../model';
 import { matchesRole } from '../graph';
 import { AlbumCover } from './Artwork';
-import { MusicalSimilarity, soundRows } from './SoundProfile';
-import type { SoundState } from './SoundProfile';
 import type { Selection } from '../types';
 
 export type Loadable<T> = { data?: T; loading: boolean; error?: Error; retry: () => void };
@@ -57,24 +55,23 @@ export function Collaborators({ state, names, role, current, onSelect, onCompare
   </div>;
 }
 
-export function ComparisonDetails({ kind, a, b, collab, sound, role, onSelect, onCompareSongs }: {
+export function ComparisonDetails({ kind, a, b, collab, role, onSelect, onCompareSongs }: {
   kind: 'artist' | 'song';
   a?: ArtistDetails | RecordingDetails;
   b?: ArtistDetails | RecordingDetails;
   collab: Loadable<CollaboratorComparison> | null;
-  /** Song mode only: tempo, key, lyrics and the sound match, from /api/sound. */
-  sound?: SoundState;
   role: string;
   onSelect: (s: Selection) => void;
   onCompareSongs: (a: TrackRef, b: TrackRef) => void;
 }) {
-  if (!a || !b) return <section className="panel comparison-details" aria-busy="true"><div className="section-title"><div><span className="overline">SIDE BY SIDE</span><h3>Loading from MusicBrainz…</h3></div></div><div className="skeleton-lines"><span/><span/><span/><span/></div></section>;
+  if (!a || !b) return <section className="panel comparison-details" aria-busy="true"><div className="section-title"><div><span className="overline">{kind === 'song' ? '07 / MORE ABOUT THESE SONGS' : 'SIDE BY SIDE'}</span><h3>Loading from MusicBrainz…</h3></div></div><div className="skeleton-lines"><span/><span/><span/><span/></div></section>;
 
   if (kind === 'song') {
     const sa = a as RecordingDetails, sb = b as RecordingDetails;
     const pair = [sa, sb] as const;
     const two = <T,>(f: (s: RecordingDetails) => T) => [f(sa), f(sb)] as [T, T];
-    return <section className="panel comparison-details"><div className="section-title"><div><span className="overline">SIDE BY SIDE</span><h3>Listen for the similarities.</h3></div></div>
+    // Secondary for songs: the sound and lyrics analysis (SongAnalysis) comes first.
+    return <section className="panel comparison-details"><div className="section-title"><div><span className="overline">07 / MORE ABOUT THESE SONGS</span><h3>Release details and credits</h3></div></div>
       <div className="comparison-row comparison-row-heading"><span/>{pair.map(s => <strong key={s.id}>{s.title}</strong>)}</div>
       <Row name="Artist" values={two(s => <div className="inline-credit-list">{s.artists.map(artist => artist.id
         ? <button className="inline-link" key={artist.id} onClick={() => onSelect({ type: 'artist', id: artist.id! })}>{artist.name} ↗</button>
@@ -82,11 +79,10 @@ export function ComparisonDetails({ kind, a, b, collab, sound, role, onSelect, o
       <Row name="Released" values={two(s => s.firstReleaseDate ? <p>{yearOf(s.firstReleaseDate)}<small>{s.firstReleaseDate}</small></p> : null)}/>
       <Row name="Album" values={two(s => s.representative ? <div className="album-strip"><a className="album-thumb" href={musicBrainzUrl('release', s.representative.id)} target="_blank" rel="noreferrer" title={`${s.representative.title} on MusicBrainz`}><AlbumCover cover={s.representative} size="md" /><span>{s.representative.title}{s.representative.year && <small>{s.representative.year}</small>}</span></a></div> : null)}/>
       <Row name="Length" values={two(s => <p>{s.durationMs == null ? '—' : formatDuration(s.durationMs)}</p>)}/>
-      {sound && soundRows(sound).map(([name, left, right]) => <Row key={name} name={name} values={[left, right]}/>)}
       <Row name="Genre / style" values={two(s => { const text = genreText(s.genres, s.tags); return text ? <p>{text}<small>MusicBrainz community tags</small></p> : null; })}/>
       {pair.some(s => s.rating) && <Row name="Rating" values={two(s => s.rating ? <p>{s.rating.value.toFixed(1)} / 5<small>{s.rating.votes} votes</small></p> : null)}/>}
       {pair.some(s => s.links.length) && <Row name="Listen" values={two(s => <Links links={s.links}/>)}/>}
-      {sound ? <MusicalSimilarity sound={sound} titles={[sa.title, sb.title]} sharedGenres={partitionGenres(sa.genres, sb.genres).shared.map(capitalize)}/> : <SharedGenres a={sa} b={sb}/>}
+      <SharedGenres a={sa} b={sb}/>
       {collab && <Collaborators state={collab} names={[songArtists(sa), songArtists(sb)]} role={role} current={[sa.id, sb.id]} onSelect={onSelect} onCompareSongs={onCompareSongs}/>}
     </section>;
   }
