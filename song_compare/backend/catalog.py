@@ -21,6 +21,11 @@ AUDIO_WEIGHTS = {"tempo": 1.5, "energy": 1.5, "danceability": 1.5, "valence": 1.
 PITCH = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 
+def time_signature(value):
+    """Beats per bar. Spotify defines 3-7; the dataset uses 0 and 1 for "unknown"."""
+    return int(value) if pd.notna(value) and 3 <= int(value) <= 7 else None
+
+
 def _fold(s):
     s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9 ]", " ", s)
@@ -104,7 +109,7 @@ class Catalog:
             "explicit": bool(r["explicit"]), "tempo": float(r["tempo"]),
             "key": key, "mode": int(r["mode"]),
             "key_name": f"{PITCH[key]} {'major' if r['mode'] == 1 else 'minor'}" if key is not None else "Unknown",
-            "time_signature": int(r["time_signature"]),
+            "time_signature": time_signature(r["time_signature"]),
             "audio": {c: float(r[c]) for c in AUDIO_COLS},
             "lyrics": r["lyrics_analysis"] if isinstance(r["lyrics_analysis"], dict) else None,
         })

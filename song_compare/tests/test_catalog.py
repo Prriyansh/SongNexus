@@ -30,3 +30,15 @@ def test_detail_is_json_serialisable(catalog):
 def test_missing_data_raises_a_helpful_error(tmp_path):
     with pytest.raises(FileNotFoundError, match="prepare_data.py"):
         Catalog(tmp_path)
+
+
+def test_time_signature_treats_0_and_1_as_unknown():
+    from catalog import time_signature
+    assert [time_signature(v) for v in (0, 1, 3, 4, 5, 7, 8)] == [None, None, 3, 4, 5, 7, None]
+
+
+def test_detail_reports_an_unknown_time_signature_as_null(catalog, monkeypatch):
+    tracks = catalog.tracks.copy()
+    tracks.loc[0, "time_signature"] = 0
+    monkeypatch.setattr(catalog, "tracks", tracks)
+    assert catalog.detail(0)["time_signature"] is None

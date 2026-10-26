@@ -3,6 +3,7 @@ const $ = (s, el = document) => el.querySelector(s);
 const state = { a: null, b: null };
 const pct = x => Math.round(x * 100);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const beats = n => (n ? `${n}/4` : "Unknown");
 const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 async function api(path) {
@@ -67,9 +68,9 @@ $("#go").onclick = run;
 async function run() {
   showError("");
   try {
-    const d = await api(`/api/compare?a=${state.a.id}&b=${state.b.id}`);
+    const d = await api(`/api/compare?a=${encodeURIComponent(state.a.id)}&b=${encodeURIComponent(state.b.id)}`);
     render(d);
-    const [ma, mb] = await Promise.all([api(`/api/similar/${state.a.id}?k=8`), api(`/api/similar/${state.b.id}?k=8`)]);
+    const [ma, mb] = await Promise.all([api(`/api/similar/${encodeURIComponent(state.a.id)}?k=8`), api(`/api/similar/${encodeURIComponent(state.b.id)}?k=8`)]);
     renderMore(d, ma.results, mb.results);
   } catch (e) { showError(e.message); }
 }
@@ -97,7 +98,7 @@ function render(d) {
   const s = d.structure, la = d.a.lyrics?.structure, lb = d.b.lyrics?.structure;
   const row = (k, a, b) => `<tr><th>${k}</th><td>${esc(a)}</td><td>${esc(b)}</td></tr>`;
   let rows = row("Tempo", `${s.tempo.a} BPM`, `${s.tempo.b} BPM`) + row("Key", s.key.a, s.key.b) +
-    row("Time signature", `${s.time_signature.a}/4`, `${s.time_signature.b}/4`) +
+    row("Time signature", beats(s.time_signature.a), beats(s.time_signature.b)) +
     row("Length", mmss(s.duration_sec.a), mmss(s.duration_sec.b));
   if (la && lb) {
     rows += row("Verses / choruses / bridges", `${la.verses} / ${la.choruses} / ${la.bridges}`, `${lb.verses} / ${lb.choruses} / ${lb.bridges}`) +
