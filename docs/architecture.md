@@ -115,3 +115,16 @@ The app deploys to Vercel as-is (see the README). Notes for a public deployment:
 - The repository is public so Vercel's Hobby plan deploys every collaborator's commits (on a
   private repository it only deploys the owner's). Keep secrets out of the repository; there are
   none today, and any future keys belong in Vercel's environment variables.
+
+## Sound & Lyrics service (`song_compare/`)
+
+A separate Python (Flask) service by Ishita. It compares songs using the Spotify tracks
+dataset's audio features (tempo, energy, danceability…) and features derived from Genius
+lyrics (sentiment, themes, LSA/TF-IDF vectors); lyric text itself is never stored. Its catalog
+is keyed by Spotify track ids, not MusicBrainz ids, so it isn't wired into Explore yet.
+
+It serves its own page, which loads the main app's stylesheets so it looks the same. It needs
+pandas/NumPy/SciPy and ~27 MB of data, too large for a Vercel function, so it runs locally (or
+on a separate host). Linking it into the main app (for example matching a MusicBrainz recording
+to a Spotify track by title and artist) is a possible next step.
+
