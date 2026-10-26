@@ -136,6 +136,9 @@ The route always answers with a status (`ok`, `not-found`, `same-track` or `unav
 song missing from the 2022 dataset, or the service not running, only removes the sound rows;
 the rest of the comparison is unaffected.
 
-The service needs pandas/SciPy and ~27 MB of data, too large for a Vercel function. Locally it
-runs on port 5050 (`SONG_COMPARE_URL` defaults to it in development). For the deployed site,
-host it separately and set `SONG_COMPARE_URL` in Vercel.
+Locally it runs on port 5050 (`SONG_COMPARE_URL` defaults to it in development). On Vercel it
+runs as a second project from the same repository, with Root Directory `song_compare`: a
+Python function (`song_compare/index.py`) of about 390 MB (runtime packages + the 26 MB
+catalog), under Vercel's 500 MB limit. The main project's `SONG_COMPARE_URL` points at it. The
+first request after a quiet spell starts Python and loads the catalog, so the main app allows
+it 20 s.

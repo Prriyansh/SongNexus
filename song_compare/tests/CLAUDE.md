@@ -15,6 +15,8 @@ pytest suite. Run `python -m pytest` from `song_compare/` (after `pip install -r
   signatures, missing data.
 - `test_api.py` — every endpoint, `/api/match`, parameter validation (400s, clamping, NaN), no
   page routes, port choice.
+- `test_deploy.py` — serving never imports data-prep packages; runtime requirements stay
+  lean; `index.py` exposes the Flask app with the real catalog; `vercel.json` targets it.
 - `CLAUDE.md` — this guide.
 
 Parse responses with `strict_json()` (rejects NaN/Infinity like a browser). Tests must not

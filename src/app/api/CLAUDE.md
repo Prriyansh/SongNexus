@@ -38,4 +38,6 @@ serverless hosts such as Vercel don't time it out; `src/app/__tests__/api-config
 
 `/api/sound` never fails because the song_compare service is missing: it answers 200 with
 `status: "unavailable"` (plus a `hint` in development), or `"not-found"` when the 2022 dataset
-lacks a song. Its URL is `SONG_COMPARE_URL` (default `http://localhost:5050` in development).
+lacks a song. Its URL is `SONG_COMPARE_URL` (default `http://localhost:5050` in development;
+on Vercel, the song_compare project's URL). It waits up to 20 s per request for a cold service and
+exports `maxDuration = 60`.

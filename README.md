@@ -43,6 +43,18 @@ repositories anyone's commits deploy. If a commit's Vercel check says *"GitHub c
 account for the commit"*, the author's `git config user.email` isn't an email on their GitHub
 account: add it under GitHub → Settings → Emails, or change the git setting to one that is.
 
+### Deploying the sound service on Vercel
+
+The song analysis runs as a second Vercel project from the same repository:
+
+1. In Vercel, **Add New → Project**, import `Prriyansh/SongNexus` again, set **Root Directory**
+   to `song_compare` (Vercel detects Flask) and deploy. Note its URL, e.g.
+   `https://songnexus-sound.vercel.app`.
+2. In the main Song Nexus project, **Settings → Environment Variables**, add
+   `SONG_COMPARE_URL` with that URL (no trailing slash), then redeploy.
+
+The first comparison after a quiet spell takes a few extra seconds while the service starts.
+
 ## Repository layout
 
 ```
@@ -88,7 +100,7 @@ cd song_compare && pip install -r requirements.txt && python backend/app.py   # 
 ```
 
 Without it, everything else works and the comparison says the sound analysis isn't available.
-The deployed site needs `SONG_COMPARE_URL` pointing at a hosted copy of the service.
+On Vercel it's a second project; see [Deploying the sound service](#deploying-the-sound-service-on-vercel).
 
 ## Stack
 
