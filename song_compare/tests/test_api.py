@@ -50,3 +50,36 @@ def test_api_answers_503_without_data(tmp_path):
     response = create_app(tmp_path).test_client().get("/api/stats")
     assert response.status_code == 503
     assert "prepare_data.py" in strict_json(response)["error"]
+
+
+# --- Parameter validation -------------------------------------------------------------------
+
+def test_non_numeric_sizes_are_a_json_400_not_a_crash(client, lyric_ids):
+    for url in ["/api/search?q=love&limit=abc", f"/api/similar/{lyric_ids[0]}?k=abc"]:
+        response = client.get(url)
+        assert response.status_code == 400
+        assert "whole number" in strict_json(response)["error"]
+
+
+def test_sizes_are_clamped(client, catalog, lyric_ids):
+    word = catalog.tracks.track_name.iloc[0].split()[0]
+    assert len(strict_json(client.get(f"/api/search?q={word}&limit=-3"))["results"]) == 1
+    assert len(strict_json(client.get(f"/api/search?q={word}&limit=500"))["results"]) <= 25
+    # A negative k used to scan the whole catalog.
+    assert len(strict_json(client.get(f"/api/similar/{lyric_ids[0]}?k=-1"))["results"]) == 1
+    assert len(strict_json(client.get(f"/api/similar/{lyric_ids[0]}?k=999"))["results"]) == 30
+
+
+def test_w_audio_must_be_a_finite_number(client, lyric_ids):
+    a, b = lyric_ids
+    for bad in ["nan", "inf", "-inf", "abc"]:
+        response = client.get(f"/api/compare?a={a}&b={b}&w_audio={bad}")
+        assert response.status_code == 400, bad
+    audio_only = strict_json(client.get(f"/api/compare?a={a}&b={b}&w_audio=5"))  # clamped to 1
+    assert audio_only["overall"] == audio_only["audio"]["score"]
+
+
+def test_comparing_a_song_with_itself_is_refused(client, lyric_ids):
+    response = client.get(f"/api/compare?a={lyric_ids[0]}&b={lyric_ids[0]}")
+    assert response.status_code == 400
+    assert strict_json(response)["error"] == "Pick two different songs."

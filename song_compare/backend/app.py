@@ -6,6 +6,7 @@ Song Comparison API (Flask).
   GET /api/compare?a=ID&b=ID          full side by side comparison
   GET /api/similar/ID?k=10            songs that sound most like this one
 """
+import math
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -14,6 +15,35 @@ from catalog import Catalog
 import similarity
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
+
+
+class BadRequest(Exception):
+    """A query parameter the API can't use; answered as a JSON 400."""
+
+
+def int_arg(name, default, lo, hi):
+    """Whole-number query parameter, clamped to lo..hi (so ?k=-1 can't scan the whole catalog)."""
+    raw = request.args.get(name, "")
+    if raw == "":
+        return default
+    try:
+        return max(lo, min(int(raw), hi))
+    except ValueError:
+        raise BadRequest(f"{name} must be a whole number.") from None
+
+
+def weight_arg(name, default):
+    """A weight between 0 and 1. NaN and infinity are rejected: they'd produce invalid JSON."""
+    raw = request.args.get(name, "")
+    if raw == "":
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        value = math.nan
+    if not math.isfinite(value):
+        raise BadRequest(f"{name} must be a number between 0 and 1.")
+    return min(max(value, 0.0), 1.0)
 
 
 def create_app(data_dir=None):
@@ -25,6 +55,10 @@ def create_app(data_dir=None):
     except FileNotFoundError as e:
         cat, load_error = None, str(e)
     app.config["CATALOG"] = cat
+
+    @app.errorhandler(BadRequest)
+    def bad_request(error):
+        return jsonify(error=str(error)), 400
 
     @app.before_request
     def need_data():
@@ -46,25 +80,23 @@ def create_app(data_dir=None):
         q = request.args.get("q", "").strip()
         if len(q) < 2:
             return jsonify(results=[])
-        return jsonify(results=cat.search(q, limit=min(int(request.args.get("limit", 8)), 25)))
+        return jsonify(results=cat.search(q, limit=int_arg("limit", 8, 1, 25)))
 
     @app.route("/api/compare")
     def compare():
         a, b = request.args.get("a"), request.args.get("b")
         if not a or not b:
             return jsonify(error="Pass both a and b track ids."), 400
-        try:
-            w = min(max(float(request.args.get("w_audio", 0.6)), 0), 1)
-        except ValueError:
-            return jsonify(error="w_audio must be a number between 0 and 1."), 400
-        result = similarity.compare(cat, a, b, w_audio=w)
+        if a == b:
+            return jsonify(error="Pick two different songs."), 400
+        result = similarity.compare(cat, a, b, w_audio=weight_arg("w_audio", 0.6))
         if result is None:
             return jsonify(error="Unknown track id."), 404
         return jsonify(result)
 
     @app.route("/api/similar/<track_id>")
     def similar(track_id):
-        res = similarity.similar_tracks(cat, track_id, k=min(int(request.args.get("k", 10)), 30))
+        res = similarity.similar_tracks(cat, track_id, k=int_arg("k", 10, 1, 30))
         if res is None:
             return jsonify(error="Unknown track id."), 404
         return jsonify(results=res)
