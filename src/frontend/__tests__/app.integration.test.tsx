@@ -21,6 +21,7 @@ const DETAILS: Record<string, unknown> = {
 const vampireSong: Song = { ...vampireDetails };
 let failures: Record<string, number> = {};
 let soundReply: SoundResult = soundOk;
+let soundSearchReply: unknown = { status: 'unavailable' };
 const fetchMock = vi.fn(async (input: string) => {
   const url = new URL(input, 'http://localhost');
   const q = url.searchParams;
@@ -32,6 +33,7 @@ const fetchMock = vi.fn(async (input: string) => {
     case '/api/musicbrainz/collaborators': return reply({ collaborators: collab });
     case '/api/top-track': return reply({ track: q.get('id') === OLIVIA ? expectationsDetails : patientZeroDetails });
     case '/api/sound': return reply(soundReply);
+    case '/api/sound/search': return reply(soundSearchReply);
     case '/api/musicbrainz/search': {
       const query = q.get('q') ?? '';
       if (q.get('type') === 'artist') return reply({ results: /phoebe/i.test(query) ? [phoebe] : [] });
@@ -48,6 +50,7 @@ beforeEach(async () => {
   vi.resetModules(); // fresh api memo per test
   failures = {};
   soundReply = soundOk;
+  soundSearchReply = { status: 'unavailable' };
   fetchMock.mockClear();
   vi.stubGlobal('fetch', fetchMock);
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
@@ -365,6 +368,39 @@ describe('Explore: songs, sound and lyrics', () => {
   it('does not ask for sound data in artist comparisons', async () => {
     await render('/compare/artists');
     expect(called('/api/sound')).toBe(false);
+  });
+});
+
+describe('Explore: song pickers', () => {
+  const openSongPicker = async (term: string, picker = 1) => {
+    await render(`/compare/songs?songA=${VAMPIRE}&songB=${OPHELIA}`);
+    await click(document.querySelectorAll('.chooser-button')[picker]);
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search songs"]')!, term);
+  };
+
+  it('offers songs from the sound dataset and opens the MusicBrainz version of the pick', async () => {
+    soundSearchReply = { status: 'ok', results: [{ id: 'sp-kb', title: 'Kill Bill', artists: ['SZA'], album: 'SOS', genre: 'r-n-b', has_lyrics: true }] };
+    await openSongPicker('kill bill');
+    expect(called('/api/sound/search?q=kill%20bill&limit=10')).toBe(true);
+    expect(text()).toContain('Songs with full sound and lyrics analysis');
+    await click(button('Kill Bill'));
+    expect(called('q=recording%3A%22Kill%20Bill%22%20AND%20artist%3A%22SZA%22%20AND%20status%3Aofficial')).toBe(true);
+    expect(window.location.search).toBe(`?songA=${VAMPIRE}&songB=${killBill.id}`);
+  });
+
+  it('says so when a dataset song cannot be found on MusicBrainz', async () => {
+    soundSearchReply = { status: 'ok', results: [{ id: 'sp-x', title: 'Obscure Song', artists: ['Nobody'], album: null, genre: null, has_lyrics: false }] };
+    await openSongPicker('obscure');
+    await click(button('Obscure Song'));
+    expect(text()).toContain('Couldn’t find “Obscure Song” on MusicBrainz.');
+    expect(window.location.search).toBe(`?songA=${VAMPIRE}&songB=${OPHELIA}`);
+  });
+
+  it('falls back to MusicBrainz search when the sound service is not running', async () => {
+    await openSongPicker('vampire', 0); // the first picker; the second hides the song already chosen
+    expect(called('/api/musicbrainz/search?type=recording&limit=10&q=vampire')).toBe(true);
+    expect(document.querySelector('.chooser-results')!.textContent).toContain('vampire');
+    expect(text()).toContain('From MusicBrainz. Sound and lyrics analysis isn’t available right now.');
   });
 });
 
