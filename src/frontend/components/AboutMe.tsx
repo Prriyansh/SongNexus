@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties, Dispatch, ReactNode, SetStateAction } from 'react';
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, Disc3, Heart, Music2, Plus, Search, Upload, Users, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Disc3, Music2, Plus, Search, Upload, Users, X } from 'lucide-react';
 import type { Artist, Song } from '@/lib/types';
 import { artistDetails, searchArtists, searchSongs } from '../api';
 import { allGenres, familyOf } from '../genres';
@@ -107,7 +107,7 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
     }));
     setUpload(false); setNotice(`Imported ${songs.length} songs and their artists.`);
   };
-  const empty = (c: Category) => <div className="taste-empty"><Music2 size={24}/>{readOnly ? <p>No {plural(c)} shared.</p> : <><p>A little more you.<br/>Add your first {c} to get started.</p><button className="text-cta" onClick={() => openManual(c)}>Browse {plural(c)} <Plus size={14}/></button></>}</div>;
+  const empty = (c: Category) => <div className="taste-empty"><Music2 size={24}/>{readOnly ? <p>No {plural(c)} shared.</p> : <><p>Add your first {c} to get started.</p><button className="text-cta" onClick={() => openManual(c)}>Browse {plural(c)} <Plus size={14}/></button></>}</div>;
   const hint = category === 'genre' ? '' : q.length < 2
     ? (entries.length ? `Your ${plural(category)}. Search MusicBrainz to add more.` : `Search MusicBrainz for any ${category === 'album' ? 'artist to see their studio albums' : category}.`)
     : category === 'album' && pickedArtist ? `Studio albums by ${pickedArtist.name}, newest first.` : '';
@@ -117,7 +117,7 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
       <button className="back-link" onClick={back}><ArrowLeft size={17}/> Back to About Me</button>
       <div className="page-heading"><div><div className="eyebrow">MAKE IT YOURS</div><h1>Add to your music taste.</h1><p>A favorite artist, an album on repeat, a sound you love. Start anywhere.</p></div><button className="primary-button" onClick={back}><Check size={17}/> Done</button></div>
       <label className="input-search catalog-search"><Search size={20}/><input aria-label="Search music" placeholder={category === 'genre' ? 'Filter genres…' : category === 'album' ? 'Search an artist to see their albums…' : `Search ${plural(category)} on MusicBrainz…`} value={query} onChange={e => { setQuery(e.target.value); setPage(0); setAlbumArtist(null); }}/>{query && <button aria-label="Clear search" onClick={() => { setQuery(''); setPage(0); setAlbumArtist(null); }}><X size={17}/></button>}</label>
-      <div className="catalog-toolbar"><div className="catalog-tabs" role="group" aria-label="Category">{(['artist', 'genre', 'album', 'song'] as Category[]).map(c => <button key={c} aria-pressed={category === c} className={category === c ? 'active' : ''} onClick={() => { setCategory(c); setPage(0); setQuery(''); setAlbumArtist(null); }}>{c === 'artist' ? <Users size={16}/> : c === 'genre' ? <Disc3 size={16}/> : <Music2 size={16}/>} {c[0].toUpperCase() + c.slice(1)}s</button>)}</div><span>{loading ? 'Searching MusicBrainz…' : `${entries.length} entries`} · {selectedCount} selected</span></div>
+      <div className="catalog-toolbar"><div className="catalog-tabs" role="group" aria-label="Category">{(['artist', 'genre', 'album', 'song'] as Category[]).map(c => <button key={c} aria-pressed={category === c} className={category === c ? 'active' : ''} onClick={() => { setCategory(c); setPage(0); setAlbumArtist(null); }}>{c === 'artist' ? <Users size={16}/> : c === 'genre' ? <Disc3 size={16}/> : <Music2 size={16}/>} {c[0].toUpperCase() + c.slice(1)}s</button>)}</div><span>{loading ? 'Searching MusicBrainz…' : `${entries.length} entries`} · {selectedCount} selected</span></div>
       {category === 'album' && q.length >= 2 && results.length > 1 && <div className="artist-picker" role="group" aria-label="Choose an artist">{(results as Artist[]).map(a => <button key={a.id} aria-pressed={pickedArtist?.id === a.id} className={pickedArtist?.id === a.id ? 'active' : ''} onClick={() => { setAlbumArtist({ id: a.id, name: a.name }); setPage(0); }}>{a.name}{a.disambiguation ? <small>{a.disambiguation}</small> : null}</button>)}</div>}
       {hint && <p className="catalog-hint">{hint}</p>}
       {failure && <p className="error-text" role="alert">{failure}</p>}
@@ -127,7 +127,7 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
       {!loading && !failure && q.length >= 2 && !entries.length && <div className="catalog-empty"><Search size={28}/><h3>No matches for “{query}”</h3><p>Try another spelling or switch categories.</p><button className="secondary-button" onClick={() => setQuery('')}>Clear search</button></div>}
       {pages > 1 && <div className="pagination"><span>Page {page + 1} of {pages}</span><button className="secondary-button" disabled={!page} onClick={() => setPage(p => p - 1)}><ChevronLeft size={16}/> Previous</button><button className="secondary-button" disabled={page + 1 >= pages} onClick={() => setPage(p => p + 1)}>Next <ChevronRight size={16}/></button></div>}
     </> : <>
-      <div className="page-heading about-heading"><div><div className="eyebrow"><Heart size={14}/> A LITTLE MORE YOU</div><h1>{readOnly ? 'A taste worth sharing.' : 'Your taste. Your starting point.'}</h1><p>{readOnly ? 'Favorite artists, genres, albums, and songs from this shared profile.' : 'Here’s what we know about your music taste so far.'}</p></div></div>
+      <div className="page-heading about-heading"><div><h1>{readOnly ? 'A taste worth sharing.' : 'Your taste. Your starting point.'}</h1><p>{readOnly ? 'Favorite artists, genres, albums, and songs from this shared profile.' : 'Here’s what we know about your music taste so far.'}</p></div></div>
       {!readOnly && <div className="taste-actions"><button className="add-music-search" onClick={() => openManual()}><Search size={19}/><span>Add an artist, genre, album, or song</span><kbd>+</kbd></button><button className="secondary-button upload-cta" onClick={() => setUpload(true)}><Upload size={17}/> Upload Playlist</button></div>}
       <div className="taste-grid">
         <PreferenceSection title="Artists" count={profile.artists.length} icon={<Users size={18}/>} onAdd={readOnly ? undefined : () => openManual('artist')}><div className="favorite-grid">{profile.artists.map(a => <div className="preference-card" key={a.id}><button className="favorite-item" onClick={() => onSelect({ type: 'artist', id: a.id })}><ArtistPicture artist={a} size="lg"/><strong>{a.name}</strong><small>{a.subtitle}</small></button>{!readOnly && <button className="remove-preference" aria-label={`Remove ${a.name}`} onClick={() => toggle.artist(a)}><X size={13}/></button>}</div>)}{!profile.artists.length && empty('artist')}</div></PreferenceSection>

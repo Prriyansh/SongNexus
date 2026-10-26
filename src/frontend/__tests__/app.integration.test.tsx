@@ -209,6 +209,47 @@ describe('details drawer and sharing', () => {
 });
 
 describe('About Me', () => {
+  it('keeps the search text across all categories and searches the active category', async () => {
+    await render('/about/manual');
+    const input = document.querySelector<HTMLInputElement>('input[aria-label="Search music"]')!;
+    await type(input, '  Phoebe  ');
+
+    await click(button('Albums'));
+    expect(input.value).toBe('  Phoebe  ');
+    await settle(60);
+    expect(called('/api/musicbrainz/search?type=artist&limit=5&q=Phoebe')).toBe(true);
+    expect(document.querySelector('.manual-grid')!.textContent).toContain('Punisher');
+
+    await click(button('Songs'));
+    expect(input.value).toBe('  Phoebe  ');
+    await settle(60);
+    expect(called('/api/musicbrainz/search?type=recording&limit=24&q=Phoebe')).toBe(true);
+    expect(document.querySelector('.catalog-empty')!.textContent).toContain('No matches');
+
+    const searches = fetchMock.mock.calls.length;
+    await click(button('Genres'));
+    expect(input.value).toBe('  Phoebe  ');
+    await settle(60);
+    expect(fetchMock.mock.calls.length).toBe(searches);
+    expect(document.querySelector('.catalog-card')).toBeNull();
+
+    await click(button('Artists'));
+    expect(input.value).toBe('  Phoebe  ');
+    await settle(60);
+    expect(document.querySelector('.manual-grid')!.textContent).toContain('Phoebe Bridgers');
+
+    await click(button('Clear search'));
+    await click(button('Songs'));
+    expect(input.value).toBe('');
+    await type(input, 'vampire');
+    expect(document.querySelector('.manual-grid')!.textContent).toContain('vampire');
+    await click(button('Artists'));
+    expect(input.value).toBe('vampire');
+    await settle(60);
+    expect(called('/api/musicbrainz/search?type=artist&limit=24&q=vampire')).toBe(true);
+    expect(document.querySelector('.catalog-empty')!.textContent).toContain('No matches');
+  });
+
   it('adds an artist from MusicBrainz search and keeps it after Done', async () => {
     await render('/about/manual');
     await type(document.querySelector<HTMLInputElement>('input[aria-label="Search music"]')!, 'Phoebe');
