@@ -138,3 +138,23 @@ export async function compareSound(a: SongName, b: SongName, options: SoundOptio
     throw error;
   }
 }
+
+export type SoundSearch = { status: "ok"; results: SoundTrackBrief[] } | { status: "unavailable" };
+
+/** Searches the sound dataset by title or artist, so pickers offer songs that have the full analysis. */
+export async function searchSound(query: string, limit = 10, options: SoundOptions = {}): Promise<SoundSearch> {
+  const baseUrl = options.baseUrl === undefined ? songCompareUrl() : options.baseUrl;
+  if (!baseUrl) return { status: "unavailable" };
+  try {
+    const response = await (options.fetchImpl ?? fetch)(
+      `${baseUrl}/api/search?q=${encodeURIComponent(query)}&limit=${limit}`,
+      { signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS) }
+    );
+    if (!response.ok) return { status: "unavailable" };
+    const body = (await response.json()) as { results?: SoundTrackBrief[] };
+    return { status: "ok", results: Array.isArray(body.results) ? body.results : [] };
+  } catch {
+    return { status: "unavailable" };
+  }
+}
+

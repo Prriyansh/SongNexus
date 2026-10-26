@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { compareSound, songCompareUrl } from "../sound";
+import { compareSound, searchSound, songCompareUrl } from "../sound";
 import type { SoundComparison } from "../sound";
 
 const BASE = "http://songs.test";
@@ -73,3 +73,20 @@ describe("songCompareUrl", () => {
     expect(songCompareUrl({ NODE_ENV: "production" })).toBeNull();
   });
 });
+
+describe("searchSound", () => {
+  it("searches the dataset by title or artist", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ results: [brief("sp1", "drivers license")] })));
+    expect(await searchSound("drivers", 5, { baseUrl: BASE, fetchImpl: fetchImpl as unknown as typeof fetch })).toEqual({ status: "ok", results: [brief("sp1", "drivers license")] });
+    expect(String((fetchImpl.mock.calls[0] as unknown[])[0])).toBe(`${BASE}/api/search?q=drivers&limit=5`);
+  });
+
+  it("is unavailable without the service, or when it fails", async () => {
+    expect(await searchSound("x", 5, { baseUrl: null })).toEqual({ status: "unavailable" });
+    const down = vi.fn(async () => { throw new TypeError("fetch failed"); });
+    expect(await searchSound("xx", 5, { baseUrl: BASE, fetchImpl: down as unknown as typeof fetch })).toEqual({ status: "unavailable" });
+    const broken = vi.fn(async () => new Response("no", { status: 503 }));
+    expect(await searchSound("xx", 5, { baseUrl: BASE, fetchImpl: broken as unknown as typeof fetch })).toEqual({ status: "unavailable" });
+  });
+});
+
