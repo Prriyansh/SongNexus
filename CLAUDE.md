@@ -28,8 +28,8 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript (strict), Vitest.
 - `src/` — all application code (see `src/CLAUDE.md`).
 - `public/` — static files; `song-nexus.html` is the older prototype at `/prototype`.
 - `docs/` — architecture notes, Helen's design handoff, the first mockup.
-- `song_compare/` — Ishita's Python (Flask) "Sound & Lyrics" service; separate from the Next app
-  and not deployed to Vercel (see `song_compare/CLAUDE.md`).
+- `song_compare/` — Ishita's Python (Flask) API for the sound & lyrics part of Explore's song
+  comparison (via `/api/sound`); deployed as its own Vercel project (see `song_compare/CLAUDE.md`).
 - `.github/` — CI workflow.
 
 ## Working rules

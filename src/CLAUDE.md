@@ -15,7 +15,8 @@
 Each area keeps its tests in its own `__tests__/` folder.
 
 Dependency direction: `app/api` → `lib`; `frontend` → `lib/types.ts` (types and pure helpers
-only). The frontend must never import `lib/musicbrainz.ts` or `lib/top-track.ts`; it talks to
+only, plus `import type` from `lib/sound.ts`). The frontend must never import `lib/musicbrainz.ts`,
+`lib/top-track.ts` or runtime code from `lib/sound.ts`; it talks to
 the server through `frontend/api.ts`.
 
 `lib/types.ts` is the contract between server and UI. Changing it changes both sides; prefer

@@ -64,13 +64,14 @@ export function ComparisonDetails({ kind, a, b, collab, role, onSelect, onCompar
   onSelect: (s: Selection) => void;
   onCompareSongs: (a: TrackRef, b: TrackRef) => void;
 }) {
-  if (!a || !b) return <section className="panel comparison-details" aria-busy="true"><div className="section-title"><div><span className="overline">SIDE BY SIDE</span><h3>Loading from MusicBrainz…</h3></div></div><div className="skeleton-lines"><span/><span/><span/><span/></div></section>;
+  if (!a || !b) return <section className="panel comparison-details" aria-busy="true"><div className="section-title"><div><span className="overline">{kind === 'song' ? '07 / MORE ABOUT THESE SONGS' : 'SIDE BY SIDE'}</span><h3>Loading from MusicBrainz…</h3></div></div><div className="skeleton-lines"><span/><span/><span/><span/></div></section>;
 
   if (kind === 'song') {
     const sa = a as RecordingDetails, sb = b as RecordingDetails;
     const pair = [sa, sb] as const;
     const two = <T,>(f: (s: RecordingDetails) => T) => [f(sa), f(sb)] as [T, T];
-    return <section className="panel comparison-details"><div className="section-title"><div><span className="overline">SIDE BY SIDE</span><h3>Listen for the similarities.</h3></div></div>
+    // Secondary for songs: the sound and lyrics analysis (SongAnalysis) comes first.
+    return <section className="panel comparison-details"><div className="section-title"><div><span className="overline">07 / MORE ABOUT THESE SONGS</span><h3>Release details and credits</h3></div></div>
       <div className="comparison-row comparison-row-heading"><span/>{pair.map(s => <strong key={s.id}>{s.title}</strong>)}</div>
       <Row name="Artist" values={two(s => <div className="inline-credit-list">{s.artists.map(artist => artist.id
         ? <button className="inline-link" key={artist.id} onClick={() => onSelect({ type: 'artist', id: artist.id! })}>{artist.name} ↗</button>
@@ -81,7 +82,6 @@ export function ComparisonDetails({ kind, a, b, collab, role, onSelect, onCompar
       <Row name="Genre / style" values={two(s => { const text = genreText(s.genres, s.tags); return text ? <p>{text}<small>MusicBrainz community tags</small></p> : null; })}/>
       {pair.some(s => s.rating) && <Row name="Rating" values={two(s => s.rating ? <p>{s.rating.value.toFixed(1)} / 5<small>{s.rating.votes} votes</small></p> : null)}/>}
       {pair.some(s => s.links.length) && <Row name="Listen" values={two(s => <Links links={s.links}/>)}/>}
-      <p className="metadata-note">Tempo, key and audio measurements aren’t shown: there’s no open source for them. People credited on each artist’s albums are below.</p>
       <SharedGenres a={sa} b={sb}/>
       {collab && <Collaborators state={collab} names={[songArtists(sa), songArtists(sb)]} role={role} current={[sa.id, sb.id]} onSelect={onSelect} onCompareSongs={onCompareSongs}/>}
     </section>;

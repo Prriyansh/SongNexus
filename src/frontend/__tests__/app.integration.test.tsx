@@ -8,8 +8,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Song } from '@/lib/types';
 import {
   collab, SOUR_ART, EXPECTATIONS, expectationsDetails, killBill, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, PATIENT_ZERO,
-  patientZeroDetails, PHOEBE, phoebe, phoebeDetails, PUNISHER, TAYLOR, taylorDetails, VAMPIRE, vampireDetails,
+  patientZeroDetails, PHOEBE, phoebe, phoebeDetails, PUNISHER, soundOk, TAYLOR, taylorDetails, VAMPIRE, vampireDetails,
 } from './fixtures';
+import type { SoundResult } from '@/lib/sound';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -19,6 +20,8 @@ const DETAILS: Record<string, unknown> = {
 };
 const vampireSong: Song = { ...vampireDetails };
 let failures: Record<string, number> = {};
+let soundReply: SoundResult = soundOk;
+let soundSearchReply: unknown = { status: 'unavailable' };
 const fetchMock = vi.fn(async (input: string) => {
   const url = new URL(input, 'http://localhost');
   const q = url.searchParams;
@@ -29,10 +32,12 @@ const fetchMock = vi.fn(async (input: string) => {
     case '/api/musicbrainz/details': return DETAILS[q.get('id')!] ? reply({ details: DETAILS[q.get('id')!] }) : reply({ error: 'Not found' }, 404);
     case '/api/musicbrainz/collaborators': return reply({ collaborators: collab });
     case '/api/top-track': return reply({ track: q.get('id') === OLIVIA ? expectationsDetails : patientZeroDetails });
+    case '/api/sound': return reply(soundReply);
+    case '/api/sound/search': return reply(soundSearchReply);
     case '/api/musicbrainz/search': {
       const query = q.get('q') ?? '';
       if (q.get('type') === 'artist') return reply({ results: /phoebe/i.test(query) ? [phoebe] : [] });
-      return reply({ results: /vampire/i.test(query) ? [vampireSong] : /Kill Bill/.test(query) ? [killBill] : [] });
+      return reply({ results: /vampire/i.test(query) ? [vampireSong] : /Kill Bill/.test(query) ? [killBill, { ...killBill, id: EXPECTATIONS, title: 'Kill Bill (Live)' }] : [] });
     }
   }
   return reply({ error: 'unknown route' }, 404);
@@ -44,12 +49,15 @@ let App: typeof import('../App').default;
 beforeEach(async () => {
   vi.resetModules(); // fresh api memo per test
   failures = {};
+  soundReply = soundOk;
+  soundSearchReply = { status: 'unavailable' };
   fetchMock.mockClear();
   vi.stubGlobal('fetch', fetchMock);
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
   window.scrollTo = vi.fn() as typeof window.scrollTo;
   localStorage.clear();
   App = (await import('../App')).default;
+  (await import('../api')).retryPolicy.delayMs = 0;
 });
 afterEach(async () => {
   await act(async () => root?.unmount());
@@ -167,8 +175,15 @@ describe('Explore: artists', () => {
     expect(document.querySelector('.selected-cards')!.textContent).toContain('Phoebe Bridgers');
   });
 
-  it('shows the API error and recovers on “Try again”', async () => {
+  it('retries a busy MusicBrainz once without showing an error', async () => {
     failures[`/api/musicbrainz/details:${TAYLOR}`] = 1;
+    await render('/compare/artists');
+    expect(text()).not.toContain('MusicBrainz is busy right now.');
+    expect(document.querySelector('.selected-cards')!.textContent).toContain('Taylor Swift');
+  });
+
+  it('shows the API error and recovers on “Try again”', async () => {
+    failures[`/api/musicbrainz/details:${TAYLOR}`] = 2; // the request and its automatic retry
     await render('/compare/artists');
     expect(text()).toContain('MusicBrainz is busy right now.');
     await click(buttons().find(b => b.textContent === 'Try again')!);
@@ -293,3 +308,113 @@ describe('About Me', () => {
     expect(profile.artists.map((a: { name: string }) => a.name)).toEqual(['Olivia Rodrigo', 'SZA']);
   });
 });
+
+describe('Explore: songs, sound and lyrics', () => {
+  const songs = `/compare/songs?songA=${VAMPIRE}&songB=${OPHELIA}`;
+
+  it('leads with the sound and lyrics analysis; MusicBrainz details come after it', async () => {
+    await render(songs);
+    expect(called('/api/sound?aTitle=vampire&aArtist=Olivia+Rodrigo&bTitle=The+Fate+of+Ophelia&bArtist=Taylor+Swift')).toBe(true);
+    const analysis = document.querySelector('.song-analysis')!;
+    const release = document.querySelector('.comparison-details:not(.structure-panel)')!;
+    expect(analysis.compareDocumentPosition(release) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(release.textContent).toContain('07 / MORE ABOUT THESE SONGS');
+    expect(release.textContent).toContain('Released');
+    expect(document.querySelector('.selection-panel')!.textContent).toContain('Search the song library for the full sound and lyrics analysis');
+  });
+
+  it('shows how alike the songs are, with the reasons and what they share', async () => {
+    await render(songs);
+    const match = document.querySelector('.match-panel')!.textContent!;
+    expect(match).toContain('71%overall match');
+    expect(match).toContain('Sound74%');
+    expect(match).toContain('Lyrics66%');
+    expect(match).toContain('Keys are compatible (closely related key).');
+    expect(match).toContain('Genre: Pop');
+  });
+
+  it('shows the sound profile, structure and lyrics side by side', async () => {
+    await render(songs);
+    const text = document.querySelector('.song-analysis')!.textContent!;
+    expect(text).toContain('Energy43 / 68');
+    expect(text).toContain('Tempo138 BPM128 BPM');
+    expect(text).toContain('KeyA# majorF major');
+    expect(text).toContain('Time signature4/4Unknown');
+    expect(text).toContain('Verses / choruses / bridges2 / 3 / 12 / 3 / 1');
+    expect(text).toContain('Keys: closely related key.');
+    expect(text).toContain('Negative (-0.30)');
+    expect(text).toContain('Themes90%');
+    expect(text).toContain('Songs that sound like these');
+  });
+
+  it('says plainly when a song is not in the song library, and keeps the rest', async () => {
+    soundReply = { status: 'not-found', missing: ['b'] };
+    await render(songs);
+    expect(document.querySelector('.match-panel')!.textContent).toContain('“The Fate of Ophelia” isn’t in the song library (Spotify tracks up to 2022)');
+    expect(document.querySelector('.song-analysis')).toBeNull();
+    expect(document.querySelector('.comparison-details')!.textContent).toContain('Released');
+  });
+
+  it('explains how to start the sound service when it is not running', async () => {
+    soundReply = { status: 'unavailable', hint: 'Start it with: cd song_compare && python backend/app.py' };
+    await render(songs);
+    expect(document.querySelector('.match-panel')!.textContent).toContain('isn’t available right now. Start it with: cd song_compare && python backend/app.py');
+  });
+
+  it('compares the first song with a similar-sounding one found on MusicBrainz', async () => {
+    await render(songs);
+    await click(button('Kill Bill'));
+    expect(called('q=recording%3A%22Kill%20Bill%22%20AND%20artist%3A%22SZA%22%20AND%20status%3Aofficial')).toBe(true);
+    expect(window.location.search).toBe(`?songA=${VAMPIRE}&songB=${killBill.id}`);
+  });
+
+  it('picks the earliest-released MusicBrainz version of a similar song', async () => {
+    const later = { ...killBill, id: PATIENT_ZERO, releases: [{ id: 'cc000000-0000-4000-8000-00000000000b', title: 'Kill Bill (Live)', date: '2024-01-01' }] };
+    const original = { ...killBill, id: EXPECTATIONS, releases: [{ id: 'cc000000-0000-4000-8000-00000000000c', title: 'SOS', date: '2022-12-09' }] };
+    await render(songs);
+    const base = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (input: string) => input.includes('Kill%20Bill') ? new Response(JSON.stringify({ results: [later, original] })) : base(input));
+    await click(button('Kill Bill'));
+    expect(window.location.search).toBe(`?songA=${VAMPIRE}&songB=${EXPECTATIONS}`);
+    fetchMock.mockImplementation(base);
+  });
+
+  it('does not ask for sound data in artist comparisons', async () => {
+    await render('/compare/artists');
+    expect(called('/api/sound')).toBe(false);
+  });
+});
+
+describe('Explore: song pickers', () => {
+  const openSongPicker = async (term: string, picker = 1) => {
+    await render(`/compare/songs?songA=${VAMPIRE}&songB=${OPHELIA}`);
+    await click(document.querySelectorAll('.chooser-button')[picker]);
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search songs"]')!, term);
+  };
+
+  it('offers songs from the sound dataset and opens the MusicBrainz version of the pick', async () => {
+    soundSearchReply = { status: 'ok', results: [{ id: 'sp-kb', title: 'Kill Bill', artists: ['SZA'], album: 'SOS', genre: 'r-n-b', has_lyrics: true }] };
+    await openSongPicker('kill bill');
+    expect(called('/api/sound/search?q=kill%20bill&limit=10')).toBe(true);
+    expect(text()).toContain('Songs with full sound and lyrics analysis');
+    await click(button('Kill Bill'));
+    expect(called('q=recording%3A%22Kill%20Bill%22%20AND%20artist%3A%22SZA%22%20AND%20status%3Aofficial')).toBe(true);
+    expect(window.location.search).toBe(`?songA=${VAMPIRE}&songB=${killBill.id}`);
+  });
+
+  it('says so when a dataset song cannot be found on MusicBrainz', async () => {
+    soundSearchReply = { status: 'ok', results: [{ id: 'sp-x', title: 'Obscure Song', artists: ['Nobody'], album: null, genre: null, has_lyrics: false }] };
+    await openSongPicker('obscure');
+    await click(button('Obscure Song'));
+    expect(text()).toContain('Couldn’t find “Obscure Song” on MusicBrainz.');
+    expect(window.location.search).toBe(`?songA=${VAMPIRE}&songB=${OPHELIA}`);
+  });
+
+  it('falls back to MusicBrainz search when the sound service is not running', async () => {
+    await openSongPicker('vampire', 0); // the first picker; the second hides the song already chosen
+    expect(called('/api/musicbrainz/search?type=recording&limit=10&q=vampire')).toBe(true);
+    expect(document.querySelector('.chooser-results')!.textContent).toContain('vampire');
+    expect(text()).toContain('From MusicBrainz. Sound and lyrics analysis isn’t available right now.');
+  });
+});
+

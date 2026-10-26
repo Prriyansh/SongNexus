@@ -7,9 +7,12 @@ The UI: Helen's design (see `docs/design/`) running on live API data. Browser-on
 
 - `ClientApp.tsx` — loads `App` with `next/dynamic` and `ssr: false`; used by `app/page.tsx`.
 - `App.tsx` — shell (sidebar, top bar, footer), routing state, Explore page, details drawer,
-  share modal, search picker.
-- `api.ts` — the only place that calls the server (`/api/...`). Memoises lookups per id for the
-  page's lifetime and drops failures so "Try again" refetches.
+  share modal, search picker. Song pickers search the sound dataset first (`/api/sound/search`)
+  and open the MusicBrainz version of the pick; without the service they search MusicBrainz.
+  For two songs, Explore shows `SongAnalysis` first, then `ComparisonDetails`, graph, insights.
+- `api.ts` — the only place that calls the server (`/api/...`), including `soundComparison` for
+  song pairs. Memoises lookups per id for the page's lifetime, retries a retryable error
+  (MusicBrainz busy) once after 1.5 s, and drops failures so "Try again" refetches.
 - `useAsync.ts` — load data for a key; `loading` stays true until that key's result arrives.
 - `routing.ts` — URL ↔ state. `/about`, `/about/manual`, `/compare/artists?artistA&artistB`,
   `/compare/songs?songA&songB`, optional `role` and `note`; invalid ids fall back to defaults.
@@ -18,6 +21,8 @@ The UI: Helen's design (see `docs/design/`) running on live API data. Browser-on
 - `profile.ts` — About Me favourites as snapshots in localStorage (`song-nexus-profile`);
   validates stored and shared profiles.
 - `playlist.ts` — parses CSV/JSON/TXT exports; matches rows via MusicBrainz search.
+- `resolve.ts` — `findRecording(title, artist)`: the MusicBrainz recording of a dataset song
+  (earliest official release). Used by the song pickers and the similar-songs list.
 - `types.ts` — `EntityType` (`'artist' | 'song'`) and `Selection` (what the details drawer shows).
 - `model.ts` — display helpers: colours, born/formed labels, album-count text, artist cover
   (`artistCover`), the "First 6 of 18 studio albums" note, link names, role names.

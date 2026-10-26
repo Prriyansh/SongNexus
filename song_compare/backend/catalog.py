@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 
+from text import artist_variants, norm_text
+
 PROCESSED = Path(__file__).resolve().parent.parent / "data" / "processed"
 
 AUDIO_COLS = ["tempo", "energy", "danceability", "valence", "acousticness",
@@ -66,6 +68,10 @@ class Catalog:
 
         # Search index
         self._search = (self.tracks["track_name"].map(_fold) + " " + self.tracks["artists"].map(_fold)).to_numpy().astype(str)
+        # Exact lookup by normalised title, for matching songs from other sources (MusicBrainz).
+        self._by_title = {}
+        for i, title in enumerate(self.tracks["track_name"].map(norm_text)):
+            self._by_title.setdefault(title, []).append(i)
 
     # ------------------------------------------------------------ audio helpers
     def scale(self, col, values):
@@ -87,6 +93,22 @@ class Catalog:
             mask &= np.char.find(self._search, t) >= 0
         hits = self.tracks[mask].sort_values("popularity", ascending=False).head(limit)
         return [self.brief(r) for _, r in hits.iterrows()]
+
+    def find(self, title, artist=""):
+        """
+        The dataset's version of a song named elsewhere: same normalised title (ignoring
+        "(feat. …)", "- Remastered" and the like) and, when given, one of the same artists.
+        Prefers a version with lyric features, then the most popular. None if not found.
+        """
+        rows = self._by_title.get(norm_text(title), [])
+        wanted = set(artist_variants(artist)) if artist else set()
+        if wanted:
+            rows = [i for i in rows
+                    if wanted & {norm_text(a) for a in str(self.tracks.at[i, "artists"]).split(";")}]
+        if not rows:
+            return None
+        best = max(rows, key=lambda i: (self.tracks.at[i, "lyric_row"] >= 0, self.tracks.at[i, "popularity"]))
+        return self.brief(self.tracks.iloc[best])
 
     def index_of(self, track_id):
         m = self.tracks.index[self.tracks["track_id"] == track_id]

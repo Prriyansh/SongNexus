@@ -10,7 +10,10 @@ import {
 } from 'lucide-react';
 import type { Artist, ArtistDetails, RecordingDetails, Song, TrackRef } from '@/lib/types';
 import { formatDuration, partitionGenres } from '@/lib/types';
-import { artistDetails, collaborators, searchArtists, searchSongs, songDetails, topTrack } from './api';
+import { artistDetails, collaborators, searchArtists, searchSongs, searchSoundSongs, songDetails, soundComparison, topTrack } from './api';
+import type { SimilarSong, SoundTrackBrief } from '@/lib/sound';
+import { findRecording } from './resolve';
+import { SongAnalysis } from './components/SongAnalysis';
 import { buildGraph, songArtistPair } from './graph';
 import type { GraphInput } from './graph';
 import { albumSampleNote, artistCover, artistSubtitle, capitalize, coverForRelease, firstRelease, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, ROLE_LABELS, roleText, songArtists, studioAlbumText, yearOf } from './model';
@@ -92,10 +95,18 @@ function DetailDrawer({ selected, onClose, onSelect, profile, onProfileChange, o
   return <Modal drawer onClose={onClose} label={selected.type === 'artist' ? 'Artist details' : 'Song details'}>{top}{body()}{tip}</Modal>;
 }
 
+type ChooserItem = Artist | Song | SoundTrackBrief;
+type ChooserResults = { key: string; items?: ChooserItem[]; source?: 'dataset' | 'musicbrainz'; error?: string };
+const isDatasetSong = (item: ChooserItem): item is SoundTrackBrief => 'has_lyrics' in item;
+
+// Song pickers search the sound dataset first, so picked songs have the full sound and lyrics
+// analysis; a pick is then matched to its MusicBrainz recording. Without the sound service they
+// search MusicBrainz directly. Artist pickers always search MusicBrainz.
 function SearchChooser({ type, value, display, other, label, onChange }: { type: EntityType; value: string; display?: Details; other: string; label: string; onChange: (id: string) => void }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [found, setFound] = useState<{ key: string; items?: (Artist | Song)[]; error?: string }>({ key: '' });
+  const [found, setFound] = useState<ChooserResults>({ key: '' });
+  const [resolving, setResolving] = useState<{ id?: string; error?: string }>({});
   const popRef = useRef<HTMLDivElement>(null);
   useEffect(() => { if (!open) return; const handler = (e: MouseEvent) => { if (popRef.current && !popRef.current.contains(e.target as Node)) setOpen(false); }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler); }, [open]);
   const q = query.trim();
@@ -104,24 +115,51 @@ function SearchChooser({ type, value, display, other, label, onChange }: { type:
   useEffect(() => {
     if (!open || q.length < 2) return;
     const controller = new AbortController();
+    const fail = (error: unknown) => { if (!controller.signal.aborted) setFound({ key, error: error instanceof Error ? error.message : 'Search failed.' }); };
     const timer = window.setTimeout(() => {
-      (type === 'song' ? searchSongs(q, controller.signal, 10) : searchArtists(q, controller.signal, 10)).then(
-        (items: (Artist | Song)[]) => setFound({ key, items }),
-        error => { if (!controller.signal.aborted) setFound({ key, error: error instanceof Error ? error.message : 'Search failed.' }); }
-      );
+      if (type === 'artist') {
+        searchArtists(q, controller.signal, 10).then(items => setFound({ key, items, source: 'musicbrainz' }), fail);
+        return;
+      }
+      searchSoundSongs(q, controller.signal)
+        .catch(() => ({ status: 'unavailable' }) as const) // any failure: fall back to MusicBrainz
+        .then(result => result.status === 'ok'
+          ? setFound({ key, items: result.results, source: 'dataset' })
+          : searchSongs(q, controller.signal, 10).then(items => setFound({ key, items, source: 'musicbrainz' })))
+        .catch(fail);
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [open, q, key, type]);
   const items = found.key === key ? (found.items ?? []).filter(x => x.id !== other) : [];
   const searching = q.length >= 2 && found.key !== key;
+  const where = type === 'song' && found.source !== 'musicbrainz' ? 'the song library' : 'MusicBrainz';
+
+  const pick = async (item: ChooserItem) => {
+    if (!isDatasetSong(item)) { onChange(item.id); setOpen(false); return; }
+    setResolving({ id: item.id });
+    try {
+      const recording = await findRecording(item.title, item.artists[0] ?? '');
+      if (!recording) { setResolving({ error: `Couldn’t find “${item.title}” on MusicBrainz.` }); return; }
+      setResolving({});
+      onChange(recording.id);
+      setOpen(false);
+    } catch (e) { setResolving({ error: e instanceof Error ? e.message : 'Search failed.' }); }
+  };
+  const option = (item: ChooserItem) => {
+    if (isDatasetSong(item)) return <><AlbumCover cover={{ id: item.id }} size="sm" /><span><strong>{item.title}</strong><small>{[item.artists.join(', '), item.album, item.genre && capitalize(item.genre)].filter(Boolean).join(' · ')}</small></span>{resolving.id === item.id && <small className="chooser-busy">Opening…</small>}</>;
+    if ('title' in item) { const release = firstRelease(item); return <><AlbumCover cover={{ id: item.id, artUrl: coverForRelease(release?.id) }} size="sm" /><span><strong>{item.title}</strong><small>{[songArtists(item), release?.title, yearOf(release?.date)].filter(Boolean).join(' · ')}</small></span>{value === item.id && <Check size={16} />}</>; }
+    return <><ArtistAvatar artist={item} size="sm" /><span><strong>{item.name}</strong><small>{item.disambiguation || artistSubtitle(item)}</small></span>{value === item.id && <Check size={16} />}</>;
+  };
   const visual = display ? ('title' in display ? <AlbumCover cover={{ id: display.id, artUrl: display.representative?.artUrl }} size="sm" /> : <ArtistAvatar artist={{ ...display, artUrl: artistCover(display) }} size="sm" />) : <Music2 />;
-  return <div className="chooser" ref={popRef}><span className="field-label">{label}</span><button className={`chooser-button ${open ? 'open' : ''}`} aria-expanded={open} onClick={() => { setOpen(!open); setQuery(''); }}>{visual}<strong>{display ? nameOf(display) : 'Loading…'}</strong><ChevronDown size={16} /></button>
-    {open && <div className="chooser-popover"><label className="chooser-search"><Search size={17} /><input aria-label={`Search ${type}s`} autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder={type === 'song' ? 'Search songs on MusicBrainz…' : 'Search artists on MusicBrainz…'} /></label><div className="chooser-results">
-      {items.map(item => { const song = 'title' in item ? item : null; const release = song ? firstRelease(song) : undefined; return <button key={item.id} className="chooser-option" onClick={() => { onChange(item.id); setOpen(false); }}>{song ? <AlbumCover cover={{ id: song.id, artUrl: coverForRelease(release?.id) }} size="sm" /> : <ArtistAvatar artist={item as Artist} size="sm" />}<span><strong>{song ? song.title : (item as Artist).name}</strong><small>{song ? [songArtists(song), release?.title, yearOf(release?.date)].filter(Boolean).join(' · ') : (item as Artist).disambiguation || artistSubtitle(item as Artist)}</small></span>{value === item.id && <Check size={16} />}</button>; })}
+  return <div className="chooser" ref={popRef}><span className="field-label">{label}</span><button className={`chooser-button ${open ? 'open' : ''}`} aria-expanded={open} onClick={() => { setOpen(!open); setQuery(''); setResolving({}); }}>{visual}<strong>{display ? nameOf(display) : 'Loading…'}</strong><ChevronDown size={16} /></button>
+    {open && <div className="chooser-popover"><label className="chooser-search"><Search size={17} /><input aria-label={`Search ${type}s`} autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder={type === 'song' ? 'Search songs or artists…' : 'Search artists on MusicBrainz…'} /></label><div className="chooser-results">
+      {items.map(item => <button key={item.id} className="chooser-option" disabled={!!resolving.id} onClick={() => void pick(item)}>{option(item)}</button>)}
       {q.length < 2 && <p className="no-match">Type at least 2 letters.</p>}
-      {searching && <p className="no-match">Searching MusicBrainz…</p>}
+      {searching && <p className="no-match">Searching {where}…</p>}
       {found.key === key && found.error && <p className="no-match error-text">{found.error}</p>}
-      {found.key === key && !found.error && !items.length && <p className="no-match">No matches on MusicBrainz.</p>}
+      {resolving.error && <p className="no-match error-text" role="alert">{resolving.error}</p>}
+      {found.key === key && !found.error && !items.length && <p className="no-match">No matches in {where}.</p>}
+      {type === 'song' && found.key === key && !!items.length && <p className="chooser-note">{found.source === 'dataset' ? 'Songs with full sound and lyrics analysis (Spotify tracks up to 2022).' : 'From MusicBrainz. Sound and lyrics analysis isn’t available right now.'}</p>}
     </div></div>}
   </div>;
 }
@@ -149,6 +187,22 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
   const input = useMemo(() => (a && b ? ({ kind, a, b, collab: collabData, role } as GraphInput) : null), [kind, a, b, collabData, role]);
   const base = useMemo(() => (input ? buildGraph(input, [], false) : null), [input]);
   const [top, setTop] = useState<{ busy: boolean; error?: string }>({ busy: false });
+  // Song pairs also get sound and lyrics: tempo, key, mood, a match score and similar-sounding songs.
+  const songs = kind === 'song' && a && b ? [a as RecordingDetails, b as RecordingDetails] as [RecordingDetails, RecordingDetails] : null;
+  const sound = useAsync(songs ? `sound:${songs[0].id}:${songs[1].id}` : null, () => soundComparison(songs![0], songs![1]));
+  const soundResult = sound.data?.status === 'ok' ? sound.data.comparison : null;
+  const [pick, setPick] = useState<{ id?: string; error?: string }>({});
+  // A similar-sounding song comes from the Spotify dataset; find it on MusicBrainz to compare it.
+  const compareWithSimilar = async (song: SimilarSong) => {
+    const row = { title: song.title, artist: song.artists[0] ?? '' };
+    setPick({ id: song.id });
+    try {
+      const found = await findRecording(row.title, row.artist);
+      if (!found) { setPick({ error: `Couldn’t find “${song.title}” on MusicBrainz.` }); return; }
+      setPick({});
+      onComparison(comparisonFor('song', left, found.id));
+    } catch (e) { setPick({ error: e instanceof Error ? e.message : 'Search failed.' }); }
+  };
 
   const compareSongs = (ta: TrackRef, tb: TrackRef) => onComparison(comparisonFor('song', ta.id, tb.id));
   const compareTopSongs = async () => {
@@ -175,16 +229,18 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
   return <div className="explore-page">
     <div className="page-heading"><div><div className="eyebrow"><Sparkles size={14} /> EXPLORE THE MUSIC BEHIND THE MUSIC</div><h1>Find the connection.</h1><p>Compare two tracks or artists, follow their shared connections, and discover the people behind the sound.</p></div><Segment value={kind} onChange={next => onComparison(comparisonFor(next))} /></div>
     {note && <div className="shared-note"><Link2 size={17} /><div><strong>Shared with a note</strong><p>{note}</p></div><button className="icon-button" onClick={onDismissNote} aria-label="Dismiss shared note"><X size={17} /></button></div>}
-    <section className="panel selection-panel"><div className="selection-heading"><div><span className="overline">01 / SELECT MUSIC</span><h2>Choose {kind === 'song' ? 'two songs' : 'two artists'} to compare</h2></div>{kind === 'artist' ? <button className="secondary-button" disabled={!a || !b || top.busy} onClick={() => void compareTopSongs()}><Music2 size={15} /> {top.busy ? 'Finding top songs…' : 'Compare their top songs'}</button> : <span className="mini-caption">Search all of MusicBrainz</span>}</div>
+    <section className="panel selection-panel"><div className="selection-heading"><div><span className="overline">01 / SELECT MUSIC</span><h2>Choose {kind === 'song' ? 'two songs' : 'two artists'} to compare</h2></div>{kind === 'artist' ? <button className="secondary-button" disabled={!a || !b || top.busy} onClick={() => void compareTopSongs()}><Music2 size={15} /> {top.busy ? 'Finding top songs…' : 'Compare their top songs'}</button> : <span className="mini-caption">Search the song library for the full sound and lyrics analysis</span>}</div>
       {top.error && <p className="error-text" role="alert">{top.error}</p>}
       <div className="select-grid"><SearchChooser type={kind} value={left} display={a} other={right} label={kind === 'song' ? 'SONG ONE' : 'ARTIST ONE'} onChange={v => onComparison({ ...comparison, left: v })} /><span className="vs">VS</span><SearchChooser type={kind} value={right} display={b} other={left} label={kind === 'song' ? 'SONG TWO' : 'ARTIST TWO'} onChange={v => onComparison({ ...comparison, right: v })} /></div>
       <div className="selected-cards"><SelectedCard kind={kind} index={0} state={da} onDetails={onDetails} /><SelectedCard kind={kind} index={1} state={db} onDetails={onDetails} /></div>
     </section>
+    {/* Songs: the sound and lyrics analysis is the comparison; release details and credits follow. */}
+    {kind === 'song' && (songs ? <SongAnalysis sound={sound} songs={songs} onPickSimilar={song => void compareWithSimilar(song)} busyId={pick.id} pickError={pick.error} /> : <section className="panel match-panel" aria-busy="true"><p className="loading-text">Loading the songs…</p><div className="skeleton-lines"><span /><span /></div></section>)}
     <ComparisonDetails kind={kind} a={a} b={b} collab={pair ? collab : null} role={role} onSelect={onDetails} onCompareSongs={compareSongs} />
-    <div className="content-columns"><section className="panel graph-panel"><div className="graph-heading"><div><span className="overline">02 / CONNECTION WEB</span><h2>How they’re connected</h2><p>Solid lines are credits on MusicBrainz; the dashed line is shared genre tags. Select a person to see the songs that connect them.</p></div><RoleSelect value={role} onChange={onRole} /></div>
+    <div className="content-columns"><section className="panel graph-panel"><div className="graph-heading"><div><span className="overline">{kind === 'song' ? '08' : '02'} / CONNECTION WEB</span><h2>How they’re connected</h2><p>Solid lines are credits on MusicBrainz; the dashed line is shared genre tags. Select a person to see the songs that connect them.</p></div><RoleSelect value={role} onChange={onRole} /></div>
       {input ? <ConnectionGraph key={`${kind}:${left}:${right}:${role}`} input={input} status={graphStatus} onSelect={onDetails} /> : da.error || db.error ? <LoadError error={(da.error || db.error)!} retry={() => { da.retry(); db.retry(); }} /> : <div className="graph-canvas graph-loading" aria-busy="true"><div className="graph-grid" /><p className="loading-text">Loading from MusicBrainz…</p></div>}
     </section>
-      <aside className="right-column"><section className="panel insights"><div className="section-title"><div><span className="overline">03 / DISCOVER INSIGHTS</span><h3>What connects them?</h3></div><GitCompareArrows size={20} /></div>
+      <aside className="right-column"><section className="panel insights"><div className="section-title"><div><span className="overline">{kind === 'song' ? '09' : '03'} / DISCOVER INSIGHTS</span><h3>What connects them?</h3></div><GitCompareArrows size={20} /></div>
         {kind === 'artist' ? <>
           {insight('01', 'Direct connection', collabPending ? 'Checking album credits…' : collabData && (collabData.direct.bOnA.length || collabData.direct.aOnB.length)
             ? [collabData.direct.bOnA.length ? `${nameOf(b)} is credited on ${nameOf(a)}’s “${collabData.direct.bOnA[0].title}”.` : '', collabData.direct.aOnB.length ? `${nameOf(a)} is credited on ${nameOf(b)}’s “${collabData.direct.aOnB[0].title}”.` : ''].filter(Boolean).join(' ')
@@ -193,7 +249,10 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
           {insight('03', 'Genre overlap', sharedGenres.length ? sharedGenres.slice(0, 5).join(', ') : 'Their MusicBrainz genre tags don’t overlap. Follow the web to see where they meet.')}
         </> : <>
           {insight('01', 'Shared credited artists', a && b ? ((a as RecordingDetails).artists.filter(x => x.id && (b as RecordingDetails).artists.some(y => y.id === x.id)).map(x => x.name).join(', ') || 'Different artists. The web shows who worked with both.') : 'Loading…')}
-          {insight('02', 'Genre overlap', sharedGenres.length ? sharedGenres.slice(0, 5).join(', ') : 'No genre tags in common on MusicBrainz.')}
+          {insight('02', 'Musical similarity · calculated', soundResult
+            ? `${Math.round(soundResult.overall * 100)}% overall match: sound ${Math.round(soundResult.audio.score * 100)}%, lyrics ${soundResult.lyrics ? `${Math.round(soundResult.lyrics.score * 100)}%` : 'not matched'}.${sharedGenres.length ? ` Shared genres: ${sharedGenres.slice(0, 3).join(', ')}.` : ''}`
+            : sound.loading ? 'Measuring their sound and lyrics…'
+            : sharedGenres.length ? `Shared genres: ${sharedGenres.slice(0, 5).join(', ')}.` : 'No genre tags in common on MusicBrainz.')}
           {insight('03', 'Factual connection path', pathText || (collabPending ? 'Reading album credits…' : 'No documented path between these two songs in the albums we scanned.'))}
         </>}
       </section>
@@ -270,7 +329,7 @@ function App() {
     <div className="page-column"><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setMenuOpen(true)} aria-label="Open navigation"><Menu size={23} /></button><button className="header-wordmark" onClick={() => navigate('about')} aria-label="Song Nexus home"><Music2 size={21} /> SONG NEXUS<span></span></button><ChevronRight size={15} /><strong>{page === 'about' ? 'About Me' : 'Explore'}</strong></div><div className="topbar-right"><button className="top-share" aria-label="Share" onClick={() => setShareOpen(true)}><Share2 size={17} /><span>Share</span></button></div></header>
       <main className="main-content">{page === 'about' ? <>{shared && <div className="shared-note"><CircleUserRound size={20} /><div><strong>Shared About Me</strong><p>{note || 'You’re viewing a shared music taste profile.'}</p></div><button className="secondary-button" onClick={() => navigate('about')}>View my About Me</button></div>}<AboutMe key={shared ? 'shared' : 'own'} onSelect={setDetail} profile={shared || profile} onProfileChange={setProfile} readOnly={!!shared} manual={route.manual} onManual={open => go({ ...route, manual: open, profile: undefined, note: '' }, { scroll: false })} /></>
         : <Explore comparison={comparison} onComparison={updateComparison} onRole={role => go({ ...route, comparison: { ...comparison, role } }, { replace: true, scroll: false })} onDetails={setDetail} note={note} onDismissNote={() => go({ ...route, note: '' }, { replace: true, scroll: false })} />}
-        <footer><span>SONG NEXUS</span><span>Data from <a href="https://musicbrainz.org" target="_blank" rel="noreferrer">MusicBrainz</a> and the <a href="https://coverartarchive.org" target="_blank" rel="noreferrer">Cover Art Archive</a>; top songs ranked by Deezer.</span></footer></main>
+        <footer><span>SONG NEXUS</span><span>Data from <a href="https://musicbrainz.org" target="_blank" rel="noreferrer">MusicBrainz</a> and the <a href="https://coverartarchive.org" target="_blank" rel="noreferrer">Cover Art Archive</a>; top songs ranked by Deezer; sound from the <a href="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset" target="_blank" rel="noreferrer">Spotify tracks dataset</a> and Genius lyrics.</span></footer></main>
     </div>{detail && <DetailDrawer selected={detail} onClose={() => setDetail(null)} onSelect={setDetail} profile={profile} onProfileChange={setProfile} onCompare={compareFrom} />}{shareOpen && <ShareModal route={route} profile={shared || profile} onClose={() => setShareOpen(false)} />}</div>;
 }
 export default App;

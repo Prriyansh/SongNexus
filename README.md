@@ -43,6 +43,18 @@ repositories anyone's commits deploy. If a commit's Vercel check says *"GitHub c
 account for the commit"*, the author's `git config user.email` isn't an email on their GitHub
 account: add it under GitHub → Settings → Emails, or change the git setting to one that is.
 
+### Deploying the sound service on Vercel
+
+The song analysis runs as a second Vercel project from the same repository:
+
+1. In Vercel, **Add New → Project**, import `Prriyansh/SongNexus` again, set **Root Directory**
+   to `song_compare` (Vercel detects Flask) and deploy. Note its URL, e.g.
+   `https://songnexus-sound.vercel.app`.
+2. In the main Song Nexus project, **Settings → Environment Variables**, add
+   `SONG_COMPARE_URL` with that URL (no trailing slash), then redeploy.
+
+The first comparison after a quiet spell takes a few extra seconds while the service starts.
+
 ## Repository layout
 
 ```
@@ -52,7 +64,7 @@ SongNexus/
 │   ├── frontend/       the UI (Helen's design) and its client-side logic
 │   └── lib/            MusicBrainz + Deezer integration (rate limits, caching, mapping)
 ├── public/             static files; song-nexus.html is the prototype served at /prototype
-├── song_compare/       Sound & Lyrics: a Python service comparing songs on audio + lyrics
+├── song_compare/       Python API for the sound & lyrics part of song comparisons
 ├── docs/
 │   ├── architecture.md data sources, caching, API and frontend details
 │   ├── design/         Helen's design handoff and reference screenshots
@@ -75,15 +87,20 @@ npm run build       # production build
 
 CI runs all four on every push to `main` and on pull requests, plus the `song_compare` tests.
 
-## Sound & Lyrics (song_compare)
+## Sound & lyrics in song comparisons (song_compare)
 
-A separate Python service that compares two songs on Spotify audio features and lyric analysis.
-It runs on its own port and links back to the main app. It isn't part of the Vercel deployment.
-See [song_compare/README.md](song_compare/README.md):
+Comparing two songs in Explore is mainly Ishita's sound and lyrics analysis: how alike the songs
+are and why, their sound profile, structure (tempo, key, sections), lyrics (mood, themes) and
+songs that sound alike. Song pickers search its library of ~76k songs, so picks have the full
+analysis. MusicBrainz release details and credits follow. The analysis comes from a separate
+Python API in [song_compare/](song_compare/README.md); run it next to the app:
 
 ```bash
 cd song_compare && pip install -r requirements.txt && python backend/app.py   # http://localhost:5050
 ```
+
+Without it, everything else works and the comparison says the sound analysis isn't available.
+On Vercel it's a second project; see [Deploying the sound service](#deploying-the-sound-service-on-vercel).
 
 ## Stack
 

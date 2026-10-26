@@ -1,0 +1,6 @@
+# Rebuilding data/processed with prepare_data.py (and make_demo_data.py).
+-r requirements.txt
+scikit-learn>=1.9,<2
+vaderSentiment>=3.3.2,<4
+# Only for `prepare_data.py --hf` (streams the Genius lyrics from Hugging Face):
+#   pip install datasets

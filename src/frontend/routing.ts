@@ -9,10 +9,11 @@ export type Page = 'about' | 'explore';
 export type Comparison = { kind: EntityType; left: string; right: string; role?: string };
 export type Route = { page: Page; manual: boolean; comparison: Comparison; note: string; profile?: MusicProfile };
 
-// Defaults with real shared credits on MusicBrainz (both mixed by Serban Ghenea).
+// Defaults: Olivia Rodrigo and Taylor Swift share credits on MusicBrainz (both mixed by Serban
+// Ghenea), and both songs are in the sound & lyrics dataset, so every section has data.
 export const examples: Record<EntityType, [string, string]> = {
   artist: ['6925db17-f35e-42f3-a4eb-84ee6bf5d4b0', '20244d07-534f-4eff-b4d4-930878889970'], // Olivia Rodrigo, Taylor Swift
-  song: ['0c846a8e-debd-4a63-bb93-6c57f5178b45', '8670a098-6ab7-4e18-8ac0-0ec7259151f8'], // vampire, The Fate of Ophelia
+  song: ['143f1c88-f47f-4f37-b25d-614c74269dea', 'c3fe7791-0a91-4f0a-a89b-b056f38d3cde'], // drivers license, Blank Space
 };
 
 export const ROLE_FILTERS = ['all', 'producer', 'featured', 'mixing', 'engineering', 'vocals', 'instruments', 'programming'];

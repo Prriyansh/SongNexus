@@ -9,6 +9,8 @@ Thin route handlers over `src/lib`. Each one validates input, calls the lib, and
   - `musicbrainz/details/route.ts` — artist / recording lookup
   - `musicbrainz/collaborators/route.ts` — shared collaborators of two artists
   - `top-track/route.ts` — an artist's top song (Deezer rank → MusicBrainz recording)
+  - `sound/route.ts` — sound & lyrics comparison of two songs from the song_compare service
+  - `sound/search/route.ts` — songs in the sound dataset, for the song pickers
 
 ## Routes
 
@@ -18,6 +20,8 @@ Thin route handlers over `src/lib`. Each one validates input, calls the lib, and
 | `GET /api/musicbrainz/details` | `type`, `id` (MBID) | `{ details }` (ArtistDetails \| RecordingDetails) | 10 min |
 | `GET /api/musicbrainz/collaborators` | `a`, `b` (two different artist MBIDs) | `{ collaborators }` | 10 min |
 | `GET /api/top-track` | `id` (artist MBID), `name` | `{ track }` (or `null`) | 1 h |
+| `GET /api/sound/search` | `q` (2–200 chars), `limit` (≤25) | `{ status: "ok", results }` or `{ status: "unavailable" }` | 1 h (`no-store` when unavailable) |
+| `GET /api/sound` | `aTitle`, `bTitle` (required), `aArtist`, `bArtist` | `{ status, comparison?, similar?, missing?, hint? }` | 1 h (`no-store` when unavailable) |
 
 Pattern for every handler:
 
@@ -31,3 +35,9 @@ Pattern for every handler:
 Collaborators is slow when cold (it reads each artist's 3 most recent studio albums, about
 10 s for two big artists) and cached afterwards. Its route exports `maxDuration = 60` so
 serverless hosts such as Vercel don't time it out; `src/app/__tests__/api-config.test.ts` checks it.
+
+`/api/sound` never fails because the song_compare service is missing: it answers 200 with
+`status: "unavailable"` (plus a `hint` in development), or `"not-found"` when the 2022 dataset
+lacks a song. Its URL is `SONG_COMPARE_URL` (default `http://localhost:5050` in development;
+on Vercel, the song_compare project's URL). It waits up to 20 s per request for a cold service and
+exports `maxDuration = 60`.

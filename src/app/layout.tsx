@@ -17,7 +17,9 @@ export const viewport: Viewport = { themeColor: "#09090d" };
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      {/* Browser extensions and embedded browsers add attributes to <body> (e.g. style="isolation: isolate")
+          before React loads; don't report those as hydration mismatches. */}
+      <body className={inter.className} suppressHydrationWarning>
         <div id="root">{children}</div>
       </body>
     </html>

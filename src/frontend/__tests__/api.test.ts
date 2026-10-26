@@ -12,6 +12,7 @@ beforeEach(async () => {
   fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
   api = await import('../api');
+  api.retryPolicy.delayMs = 0;
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -33,17 +34,30 @@ describe('api client', () => {
     expect(fetchMock.mock.calls[0][0]).toBe(`/api/musicbrainz/details?type=artist&id=${ARTIST_ID}`);
   });
 
-  it('surfaces the route error message and retries after a failure', async () => {
+  it('retries a busy (retryable) error once before giving up', async () => {
     fetchMock.mockReturnValueOnce(json({ error: 'MusicBrainz is busy right now.', retryable: true }, 503));
-    const failure = api.songDetails(ARTIST_ID);
-    await expect(failure).rejects.toMatchObject({ name: 'ApiError', message: 'MusicBrainz is busy right now.', retryable: true });
     fetchMock.mockReturnValueOnce(json({ details: { id: 'ok' } }));
     await expect(api.songDetails(ARTIST_ID)).resolves.toEqual({ id: 'ok' });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('surfaces the route error after the retry fails, and refetches on the next call', async () => {
+    const busy = () => json({ error: 'MusicBrainz is busy right now.', retryable: true }, 503);
+    fetchMock.mockReturnValueOnce(busy()).mockReturnValueOnce(busy());
+    await expect(api.songDetails(ARTIST_ID)).rejects.toMatchObject({ name: 'ApiError', message: 'MusicBrainz is busy right now.', retryable: true });
+    fetchMock.mockReturnValueOnce(json({ details: { id: 'ok' } }));
+    await expect(api.songDetails(ARTIST_ID)).resolves.toEqual({ id: 'ok' });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not retry errors that will not change (bad input, not found)', async () => {
+    fetchMock.mockReturnValueOnce(json({ error: 'Query param "id" must be a MusicBrainz UUID.' }, 400));
+    await expect(api.artistDetails('bad')).rejects.toMatchObject({ retryable: false });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('reports network failures as retryable and passes aborts through', async () => {
-    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch')).mockRejectedValueOnce(new TypeError('Failed to fetch'));
     await expect(api.collaborators('a', 'b')).rejects.toMatchObject({ retryable: true, message: expect.stringMatching(/Could not reach/) });
     const abort = Object.assign(new Error('aborted'), { name: 'AbortError' });
     fetchMock.mockRejectedValueOnce(abort);

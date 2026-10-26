@@ -40,25 +40,14 @@ def test_similar(client, lyric_ids):
     assert client.get("/api/similar/nope").status_code == 404
 
 
-def test_frontend_is_served_with_the_main_apps_stylesheets(client):
-    page = client.get("/").get_data(as_text=True)
-    assert "Sound &amp; Lyrics" in page or "Sound & Lyrics" in page
-    for name in ("styles.css", "product.css", "integration.css"):
-        assert f'href="/nexus/{name}"' in page
-        response = client.get(f"/nexus/{name}")
-        assert response.status_code == 200 and response.mimetype == "text/css"
-    assert ".app-shell" in client.get("/nexus/styles.css").get_data(as_text=True)
+def test_root_lists_the_endpoints(client):
+    body = strict_json(client.get("/"))
+    assert body["service"] == "song_compare" and "/api/match?title=&artist=" in body["endpoints"]
 
 
-def test_only_the_shared_stylesheets_are_exposed(client):
-    for path in ("/nexus/api.ts", "/nexus/App.tsx", "/nexus/..%2Fapi.ts", "/nexus/../lib/musicbrainz.ts"):
+def test_there_is_no_standalone_page_any_more(client):
+    for path in ("/index.html", "/app.js", "/nexus/styles.css", "/config.js"):
         assert client.get(path).status_code == 404, path
-
-
-def test_config_points_the_sidebar_at_the_main_app(client):
-    response = client.get("/config.js")
-    assert response.mimetype == "text/javascript"
-    assert response.get_data(as_text=True).startswith("window.NEXUS_URL = ")
 
 
 def test_api_answers_503_without_data(tmp_path):
@@ -107,3 +96,16 @@ def test_port_defaults_to_5050_and_respects_PORT():
     assert port_from_env({"PORT": "8080"}) == 8080
     assert port_from_env({"PORT": "abc"}) == 5050
     assert port_from_env({"PORT": "70000"}) == 5050
+
+
+def test_match_finds_the_dataset_version_of_a_song(client, catalog):
+    row = catalog.tracks.iloc[0]
+    body = strict_json(client.get("/api/match", query_string={"title": row["track_name"], "artist": row["artists"].split(";")[0]}))
+    assert body["track"]["id"] == row["track_id"]
+
+
+def test_match_errors(client):
+    assert client.get("/api/match").status_code == 400
+    assert client.get("/api/match", query_string={"title": "x" * 201}).status_code == 400
+    response = client.get("/api/match", query_string={"title": "Not a song in this data"})
+    assert response.status_code == 404 and strict_json(response)["error"] == "Not in the dataset."

@@ -1,8 +1,10 @@
-# Song Compare (Sound & Lyrics)
+# Song Compare (sound & lyrics)
 
 Compares two songs on how they sound (Spotify audio features), their structure, shared credits
 and their lyrics (sentiment, themes, meaning), and finds more songs that sound alike. A Python
-(Flask) service with its own page, styled like the main Song Nexus app. Built by Ishita.
+(Flask) API built by Ishita. Its analysis is the main part of Explore's two-song comparison in
+the main app (how alike the songs are, sound profile, structure, lyrics, similar songs), and
+the song pickers search its library; it has no page of its own.
 
 ## Run it
 
@@ -16,9 +18,21 @@ pip install -r requirements.txt
 python backend/app.py
 ```
 
-Open <http://localhost:5050>. Port 5000 is avoided because macOS uses it for AirPlay; set `PORT`
-to use another. The sidebar links to the main app at `NEXUS_URL` (default
-`http://localhost:3000`), and the page loads the main app's stylesheets from `../src/frontend`.
+`requirements.txt` is what the API needs to run. To rebuild the data, install
+`requirements-prepare.txt`; for the tests, `requirements-dev.txt`.
+
+It listens on <http://localhost:5050> (port 5000 is avoided because macOS uses it for AirPlay;
+set `PORT` to use another). Then run the main app (`npm run dev` at the repository root) and
+compare two songs in Explore. The main app finds this service at `SONG_COMPARE_URL`, which
+defaults to `http://localhost:5050` in development. Without it, Explore still works and says
+the sound analysis isn't available.
+
+## Deploy on Vercel
+
+It runs as its own Vercel project from this repository: create a project with **Root Directory**
+`song_compare`. Vercel detects Flask, installs `requirements.txt` (runtime packages only, about
+364 MB) and serves `index.py` with the committed catalog (26 MB), under the 500 MB function
+limit. Then set `SONG_COMPARE_URL` in the main Song Nexus project to this project's URL.
 
 ## API
 
@@ -26,6 +40,7 @@ to use another. The sidebar links to the main app at `NEXUS_URL` (default
 | --- | --- |
 | `GET /api/stats` | catalog size and lyric match rate |
 | `GET /api/search?q=&limit=` | songs by title or artist (`limit` 1–25) |
+| `GET /api/match?title=&artist=` | the dataset's version of a named song (how Explore maps MusicBrainz songs) |
 | `GET /api/compare?a=&b=&w_audio=` | full comparison; `w_audio` (0–1) weights sound vs lyrics |
 | `GET /api/similar/<id>?k=` | songs that sound most alike (`k` 1–30) |
 
@@ -40,7 +55,7 @@ Bad parameters get a JSON 400; unknown ids a 404; missing data a 503.
 2. Lyrics: [Genius lyrics on Hugging Face](https://huggingface.co/datasets/theelderemo/genius-lyrics-cleaned).
    Either download the parquet files into `data/raw/genius/`, or stream them with `--hf`
    (`pip install datasets` first).
-3. Build:
+3. Install `pip install -r requirements-prepare.txt`, then build:
 
 ```bash
 python prepare_data.py --spotify data/raw/dataset.csv --genius data/raw/genius

@@ -11,9 +11,12 @@ pytest suite. Run `python -m pytest` from `song_compare/` (after `pip install -r
   Parquet/JSON (no pickle), lyric text is never stored.
 - `test_similarity.py` — tempo folding, key relations, shared credits, score bounds, audio-only
   fallback, similar songs.
-- `test_catalog.py` — loading, scaling, search, JSON-safe details, time signatures, missing data.
-- `test_api.py` — every endpoint, parameter validation (400s, clamping, NaN), the shared
-  stylesheets route, port choice.
+- `test_catalog.py` — loading, scaling, search, `find` by title/artist, JSON-safe details, time
+  signatures, missing data.
+- `test_api.py` — every endpoint, `/api/match`, parameter validation (400s, clamping, NaN), no
+  page routes, port choice.
+- `test_deploy.py` — serving never imports data-prep packages; runtime requirements stay
+  lean; `index.py` exposes the Flask app with the real catalog; `vercel.json` targets it.
 - `CLAUDE.md` — this guide.
 
 Parse responses with `strict_json()` (rejects NaN/Infinity like a browser). Tests must not

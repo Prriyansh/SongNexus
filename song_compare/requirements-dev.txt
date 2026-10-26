@@ -1,2 +1,3 @@
--r requirements.txt
+# Tests build a demo catalog with prepare_data.py, so they need the prepare dependencies too.
+-r requirements-prepare.txt
 pytest

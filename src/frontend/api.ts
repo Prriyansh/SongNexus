@@ -1,6 +1,7 @@
 // Browser-side client for our own Next.js API routes. The page never calls MusicBrainz or
 // Deezer directly; the routes handle rate limits, retries and server caching.
 import type { Artist, ArtistDetails, CollaboratorComparison, RecordingDetails, Song, TopTrack } from '@/lib/types';
+import type { SoundResult, SoundSearch } from '@/lib/sound';
 
 export class ApiError extends Error {
   retryable: boolean;
@@ -11,7 +12,21 @@ export class ApiError extends Error {
   }
 }
 
+/** MusicBrainz sometimes answers "busy"; retryable errors get one more try before the user sees them. */
+export const retryPolicy = { delayMs: 1500 };
+
 async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+  try {
+    return await getJsonOnce<T>(url, signal);
+  } catch (error) {
+    if (!(error instanceof ApiError) || !error.retryable || signal?.aborted) throw error;
+    await new Promise(resolve => setTimeout(resolve, retryPolicy.delayMs));
+    if (signal?.aborted) throw error;
+    return getJsonOnce<T>(url, signal);
+  }
+}
+
+async function getJsonOnce<T>(url: string, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, { signal });
@@ -56,3 +71,18 @@ export const collaborators = (a: string, b: string) =>
 /** The artist's most popular song (ranked by Deezer) as a MusicBrainz recording, or null. */
 export const topTrack = (id: string, name: string) =>
   once(`top:${id}`, () => getJson<{ track: TopTrack | null }>(`/api/top-track?id=${id}&name=${encodeURIComponent(name)}`).then(r => r.track));
+
+/**
+ * Sound and lyric comparison of two songs (Spotify audio features + lyric analysis), matched by
+ * title and lead artist. Resolves with a status; "unavailable" when the service isn't running.
+ */
+export const soundComparison = (a: RecordingDetails, b: RecordingDetails) =>
+  once(`sound:${a.id}:${b.id}`, () => {
+    const q = new URLSearchParams({ aTitle: a.title, aArtist: a.artists[0]?.name ?? '', bTitle: b.title, bArtist: b.artists[0]?.name ?? '' });
+    return getJson<SoundResult>(`/api/sound?${q}`);
+  });
+
+/** Songs in the sound dataset (full analysis available); "unavailable" when the service is down. */
+export const searchSoundSongs = (query: string, signal?: AbortSignal, limit = 10) =>
+  getJson<SoundSearch>(`/api/sound/search?q=${encodeURIComponent(query)}&limit=${limit}`, signal);
+

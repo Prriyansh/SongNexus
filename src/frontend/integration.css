@@ -58,3 +58,37 @@ a.inline-link { text-decoration: none; }
 .album-thumb:hover { color: #fff; }
 .album-thumb:hover .album-cover { outline: 2px solid #c96c7b; outline-offset: 2px; }
 @media (max-width: 650px) { .album-thumb, .album-thumb .album-cover { width: 56px; } .album-thumb .album-cover { height: 56px; } }
+
+/* Song comparisons: similar-song captions in the analysis. */
+.sounds-like-caption { display: block; margin-top: 14px; }
+.quick-peek .mini-entity:disabled { opacity: .6; cursor: progress; }
+.chooser-note { font-size: 10px; color: var(--muted); margin: 8px 6px 2px; line-height: 1.5; }
+.chooser-busy { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.chooser-option:disabled { cursor: progress; }
+
+/* Song comparisons lead with the sound & lyrics analysis (SongAnalysis). */
+.song-analysis { display: flex; flex-direction: column; gap: 18px; margin-bottom: 18px; }
+.song-analysis .content-columns { margin: 0; align-items: stretch; }
+.song-analysis .audio-panel { margin-top: 0; }
+.match-panel { padding: 24px; margin-bottom: 18px; }
+.song-analysis .match-panel { margin-bottom: 0; }
+.match-hero { display: grid; grid-template-columns: auto minmax(180px, 260px) 1fr; gap: 28px; align-items: start; }
+.match-score { display: flex; flex-direction: column; }
+.match-score strong { font-size: 72px; font-weight: 700; letter-spacing: -3px; line-height: 1; color: var(--white); }
+.match-score span { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.match-scores .audio-row { grid-template-columns: 1fr; gap: 6px; margin-bottom: 14px; }
+.match-scores small { font-size: 10px; }
+.match-reasons .insight-block { padding: 10px 0; }
+.match-reasons .insight-block:first-child { border-top: 0; padding-top: 0; }
+.match-reasons .insight-block p { margin: 4px 0 0; font-size: 12px; color: #dfd7df; }
+.match-shared { justify-content: flex-start; margin-top: 16px; }
+.structure-panel { margin-bottom: 0; }
+.similar-panel { padding: 23px; }
+.analysis-missing { font-size: 13px; color: #dfd7df; margin: 4px 0 0; }
+.lyric-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 14px; }
+.lyric-sides strong { font-size: 12px; }
+.lyric-sides .chip-row { justify-content: flex-start; margin-top: 8px; }
+@media (max-width: 1000px) { .match-hero { grid-template-columns: auto 1fr; } .match-reasons { grid-column: 1 / -1; } }
+@media (max-width: 650px) { .match-hero { grid-template-columns: 1fr; } .match-score strong { font-size: 56px; } .lyric-sides { grid-template-columns: 1fr; } }
+.song-analysis .content-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .song-analysis .content-columns { grid-template-columns: 1fr; } }
