@@ -107,3 +107,16 @@ def test_port_defaults_to_5050_and_respects_PORT():
     assert port_from_env({"PORT": "8080"}) == 8080
     assert port_from_env({"PORT": "abc"}) == 5050
     assert port_from_env({"PORT": "70000"}) == 5050
+
+
+def test_match_finds_the_dataset_version_of_a_song(client, catalog):
+    row = catalog.tracks.iloc[0]
+    body = strict_json(client.get("/api/match", query_string={"title": row["track_name"], "artist": row["artists"].split(";")[0]}))
+    assert body["track"]["id"] == row["track_id"]
+
+
+def test_match_errors(client):
+    assert client.get("/api/match").status_code == 400
+    assert client.get("/api/match", query_string={"title": "x" * 201}).status_code == 400
+    response = client.get("/api/match", query_string={"title": "Not a song in this data"})
+    assert response.status_code == 404 and strict_json(response)["error"] == "Not in the dataset."

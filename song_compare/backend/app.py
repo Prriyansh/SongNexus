@@ -3,6 +3,7 @@ Song Comparison API (Flask).
 
   GET /api/stats                      dataset size and cross dataset match rate
   GET /api/search?q=text              find songs by title or artist
+  GET /api/match?title=&artist=       the dataset's version of a named song (for MusicBrainz ids)
   GET /api/compare?a=ID&b=ID          full side by side comparison
   GET /api/similar/ID?k=10            songs that sound most like this one
 """
@@ -99,6 +100,16 @@ def create_app(data_dir=None):
         if len(q) < 2:
             return jsonify(results=[])
         return jsonify(results=cat.search(q, limit=int_arg("limit", 8, 1, 25)))
+
+    @app.route("/api/match")
+    def match():
+        title, artist = request.args.get("title", "").strip(), request.args.get("artist", "").strip()
+        if not title or len(title) > 200 or len(artist) > 200:
+            return jsonify(error="Pass a title (and optionally an artist), up to 200 characters each."), 400
+        track = cat.find(title, artist)
+        if track is None:
+            return jsonify(error="Not in the dataset."), 404
+        return jsonify(track=track)
 
     @app.route("/api/compare")
     def compare():
