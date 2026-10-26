@@ -3,6 +3,10 @@ import { compareSound } from "@/lib/sound";
 
 const field = (params: URLSearchParams, name: string) => (params.get(name) ?? "").trim();
 
+// Two rounds of requests to the song_compare service, each allowed SOUND_TIMEOUT_MS when it's
+// starting up, so give the route room beyond some hosts' default function timeout.
+export const maxDuration = 60;
+
 // GET /api/sound?aTitle=&aArtist=&bTitle=&bArtist=
 // Sound and lyric comparison of two songs from the song_compare service. Always answers 200
 // with a status ("ok" | "not-found" | "same-track" | "unavailable") unless the input is invalid,

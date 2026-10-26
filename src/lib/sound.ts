@@ -75,7 +75,11 @@ export type SoundResult =
 export type SongName = { title: string; artist: string };
 
 const DEV_URL = "http://localhost:5050";
-const TIMEOUT_MS = 8_000;
+/**
+ * Per request to the service. Hosted as a serverless function, its first request after a quiet
+ * spell starts Python and loads the catalog, so allow well beyond its usual ~1 s.
+ */
+export const SOUND_TIMEOUT_MS = 20_000;
 const SIMILAR_PER_SONG = 4;
 
 /** The service's base URL: SONG_COMPARE_URL, or its default local port in development. */
@@ -95,7 +99,7 @@ export async function compareSound(a: SongName, b: SongName, options: SoundOptio
   const baseUrl = options.baseUrl === undefined ? songCompareUrl() : options.baseUrl;
   if (!baseUrl) return { status: "unavailable" };
   const fetchImpl = options.fetchImpl ?? fetch;
-  const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
+  const timeoutMs = options.timeoutMs ?? SOUND_TIMEOUT_MS;
 
   // null for a 404 ("not in the dataset"); throws Unavailable for anything else that went wrong.
   const get = async <T>(path: string): Promise<T | null> => {
@@ -148,7 +152,7 @@ export async function searchSound(query: string, limit = 10, options: SoundOptio
   try {
     const response = await (options.fetchImpl ?? fetch)(
       `${baseUrl}/api/search?q=${encodeURIComponent(query)}&limit=${limit}`,
-      { signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS) }
+      { signal: AbortSignal.timeout(options.timeoutMs ?? SOUND_TIMEOUT_MS) }
     );
     if (!response.ok) return { status: "unavailable" };
     const body = (await response.json()) as { results?: SoundTrackBrief[] };
