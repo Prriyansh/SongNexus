@@ -23,7 +23,6 @@ import sys
 import unicodedata
 from pathlib import Path
 
-import joblib
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
@@ -183,6 +182,14 @@ def build(spotify, found, n_components=100):
     return tracks, bounds
 
 
+def save(tracks, bounds):
+    """Writes the catalog as Parquet (lyric features as JSON text) and the bounds as JSON."""
+    out = tracks.copy()
+    out["lyrics_analysis"] = out["lyrics_analysis"].map(lambda f: json.dumps(f) if isinstance(f, dict) else None)
+    out.to_parquet(OUT / "tracks.parquet", index=False)
+    (OUT / "audio_bounds.json").write_text(json.dumps(bounds, indent=2))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--spotify", required=True)
@@ -205,8 +212,7 @@ def main():
         "unmatched_examples": spotify.loc[~spotify.index.isin(found.keys()), ["track_name", "artists"]]
                                       .head(15).to_dict("records"),
     }
-    tracks.to_pickle(OUT / "tracks.pkl")
-    joblib.dump(bounds, OUT / "audio_bounds.joblib")
+    save(tracks, bounds)
     (OUT / "match_report.json").write_text(json.dumps(report, indent=2))
     print(f"Saved {n_total:,} songs. {n_lyr:,} have lyrics ({report['match_rate']:.1%} match rate).")
 

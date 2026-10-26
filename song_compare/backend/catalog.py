@@ -1,9 +1,9 @@
 """Loads the processed data once and answers search / lookup questions."""
+import json
 import re
 import unicodedata
 from pathlib import Path
 
-import joblib
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
@@ -28,15 +28,19 @@ def _fold(s):
 
 class Catalog:
     def __init__(self):
-        if not (PROCESSED / "tracks.pkl").exists():
+        # Parquet + JSON rather than pickle/joblib: loading them can't run code, and they don't
+        # depend on the pandas version that wrote them.
+        if not (PROCESSED / "tracks.parquet").exists():
             raise FileNotFoundError(
                 "No processed data found. Run prepare_data.py first (or make_demo_data.py for a demo).")
-        self.tracks = pd.read_pickle(PROCESSED / "tracks.pkl").reset_index(drop=True)
-        self.bounds = joblib.load(PROCESSED / "audio_bounds.joblib")
+        self.tracks = pd.read_parquet(PROCESSED / "tracks.parquet").reset_index(drop=True)
+        # Lyric features are stored as JSON text (one object per song, or null).
+        self.tracks["lyrics_analysis"] = self.tracks["lyrics_analysis"].map(
+            lambda s: json.loads(s) if isinstance(s, str) else None)
+        self.bounds = json.loads((PROCESSED / "audio_bounds.json").read_text())
         self.report = {}
         rp = PROCESSED / "match_report.json"
         if rp.exists():
-            import json
             self.report = json.loads(rp.read_text())
 
         # Scale each audio feature to 0..1 using robust (1st to 99th percentile) bounds,

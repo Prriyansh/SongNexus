@@ -3,7 +3,6 @@ pandas
 numpy
 scipy
 scikit-learn
-joblib
 pyarrow
 vaderSentiment
 datasets
