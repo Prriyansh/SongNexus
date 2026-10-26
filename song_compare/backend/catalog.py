@@ -27,19 +27,20 @@ def _fold(s):
 
 
 class Catalog:
-    def __init__(self):
+    def __init__(self, data_dir=PROCESSED):
+        data_dir = Path(data_dir)
         # Parquet + JSON rather than pickle/joblib: loading them can't run code, and they don't
         # depend on the pandas version that wrote them.
-        if not (PROCESSED / "tracks.parquet").exists():
+        if not (data_dir / "tracks.parquet").exists():
             raise FileNotFoundError(
                 "No processed data found. Run prepare_data.py first (or make_demo_data.py for a demo).")
-        self.tracks = pd.read_parquet(PROCESSED / "tracks.parquet").reset_index(drop=True)
+        self.tracks = pd.read_parquet(data_dir / "tracks.parquet").reset_index(drop=True)
         # Lyric features are stored as JSON text (one object per song, or null).
         self.tracks["lyrics_analysis"] = self.tracks["lyrics_analysis"].map(
             lambda s: json.loads(s) if isinstance(s, str) else None)
-        self.bounds = json.loads((PROCESSED / "audio_bounds.json").read_text())
+        self.bounds = json.loads((data_dir / "audio_bounds.json").read_text())
         self.report = {}
-        rp = PROCESSED / "match_report.json"
+        rp = data_dir / "match_report.json"
         if rp.exists():
             self.report = json.loads(rp.read_text())
 
@@ -48,8 +49,8 @@ class Catalog:
         self.weights = np.array([AUDIO_WEIGHTS[c] for c in AUDIO_COLS], dtype="float32")
         self.audio = np.stack([self.scale(c, self.tracks[c].to_numpy(dtype="float32")) for c in AUDIO_COLS], axis=1)
 
-        self.tfidf = sp.load_npz(PROCESSED / "tfidf.npz") if (PROCESSED / "tfidf.npz").exists() else None
-        self.lsa = np.load(PROCESSED / "lsa.npy") if (PROCESSED / "lsa.npy").exists() else None
+        self.tfidf = sp.load_npz(data_dir / "tfidf.npz") if (data_dir / "tfidf.npz").exists() else None
+        self.lsa = np.load(data_dir / "lsa.npy") if (data_dir / "lsa.npy").exists() else None
 
         # Calibration: the typical (median) distance between two random songs.
         # We use it later so that a score of 50% means "about as different as a random pair".

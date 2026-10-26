@@ -141,8 +141,9 @@ def match_lyrics(spotify, genius_iter):
 
 
 # ---------------------------------------------------------------- features
-def build(spotify, found, n_components=100):
-    OUT.mkdir(parents=True, exist_ok=True)
+def build(spotify, found, n_components=100, out=OUT):
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
     spotify = spotify.copy()
     spotify["lyric_row"] = -1
     spotify["lyrics_analysis"] = None
@@ -157,7 +158,7 @@ def build(spotify, found, n_components=100):
         texts.append(clean)
         rows.append(idx)
 
-    tfidf_path, lsa_path = OUT / "tfidf.npz", OUT / "lsa.npy"
+    tfidf_path, lsa_path = out / "tfidf.npz", out / "lsa.npy"
     if texts:
         # TF IDF: weights words by how distinctive they are. Cosine similarity of
         # these vectors measures shared vocabulary.
@@ -182,12 +183,34 @@ def build(spotify, found, n_components=100):
     return tracks, bounds
 
 
-def save(tracks, bounds):
+def save(tracks, bounds, out=OUT):
     """Writes the catalog as Parquet (lyric features as JSON text) and the bounds as JSON."""
-    out = tracks.copy()
-    out["lyrics_analysis"] = out["lyrics_analysis"].map(lambda f: json.dumps(f) if isinstance(f, dict) else None)
-    out.to_parquet(OUT / "tracks.parquet", index=False)
-    (OUT / "audio_bounds.json").write_text(json.dumps(bounds, indent=2))
+    out = Path(out)
+    table = tracks.copy()
+    table["lyrics_analysis"] = table["lyrics_analysis"].map(lambda f: json.dumps(f) if isinstance(f, dict) else None)
+    table.to_parquet(out / "tracks.parquet", index=False)
+    (out / "audio_bounds.json").write_text(json.dumps(bounds, indent=2))
+
+
+def prepare(spotify_path, genius_path=None, hf=False, out=OUT):
+    """Runs the whole pipeline into `out` and returns the match report."""
+    spotify = load_spotify(spotify_path)
+    print("Matching Genius lyrics (title + artist)...")
+    found = match_lyrics(spotify, iter_genius(genius_path, hf))
+    tracks, bounds = build(spotify, found, out=out)
+
+    n_total, n_lyr = len(tracks), int((tracks.lyric_row >= 0).sum())
+    report = {
+        "spotify_unique_songs": n_total,
+        "matched_with_lyrics": n_lyr,
+        "match_rate": round(n_lyr / n_total, 4) if n_total else 0,
+        "unmatched_examples": spotify.loc[~spotify.index.isin(found.keys()), ["track_name", "artists"]]
+                                      .head(15).to_dict("records"),
+    }
+    save(tracks, bounds, out)
+    (Path(out) / "match_report.json").write_text(json.dumps(report, indent=2))
+    print(f"Saved {n_total:,} songs. {n_lyr:,} have lyrics ({report['match_rate']:.1%} match rate).")
+    return report
 
 
 def main():
@@ -199,22 +222,7 @@ def main():
     if not args.genius and not args.hf:
         ap.error("pass --genius PATH or --hf")
 
-    spotify = load_spotify(args.spotify)
-    print("Matching Genius lyrics (title + artist)...")
-    found = match_lyrics(spotify, iter_genius(args.genius, args.hf))
-    tracks, bounds = build(spotify, found)
-
-    n_total, n_lyr = len(tracks), int((tracks.lyric_row >= 0).sum())
-    report = {
-        "spotify_unique_songs": n_total,
-        "matched_with_lyrics": n_lyr,
-        "match_rate": round(n_lyr / n_total, 4) if n_total else 0,
-        "unmatched_examples": spotify.loc[~spotify.index.isin(found.keys()), ["track_name", "artists"]]
-                                      .head(15).to_dict("records"),
-    }
-    save(tracks, bounds)
-    (OUT / "match_report.json").write_text(json.dumps(report, indent=2))
-    print(f"Saved {n_total:,} songs. {n_lyr:,} have lyrics ({report['match_rate']:.1%} match rate).")
+    prepare(args.spotify, args.genius, args.hf)
 
 
 if __name__ == "__main__":
