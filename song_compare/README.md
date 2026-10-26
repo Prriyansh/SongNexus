@@ -21,7 +21,7 @@ It prints and saves the match rate (data/processed/match_report.json).
 
 ## 3. Run
     python backend/app.py
-Open http://localhost:5000
+Open http://localhost:5050 (set `PORT` to use another port; 5000 is taken by AirPlay on macOS)
 
 ## No data yet? Try the demo
     python make_demo_data.py

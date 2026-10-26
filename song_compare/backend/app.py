@@ -7,6 +7,7 @@ Song Comparison API (Flask).
   GET /api/similar/ID?k=10            songs that sound most like this one
 """
 import math
+import os
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -104,5 +105,15 @@ def create_app(data_dir=None):
     return app
 
 
+# Not 5000: macOS uses that port for AirPlay Receiver, so the server couldn't start on a Mac.
+DEFAULT_PORT = 5050
+
+
+def port_from_env(env=os.environ):
+    """The port to listen on: $PORT if it's a valid port number, otherwise 5050."""
+    value = env.get("PORT", "")
+    return int(value) if value.isdigit() and 0 < int(value) < 65536 else DEFAULT_PORT
+
+
 if __name__ == "__main__":
-    create_app().run(debug=False, port=5000)
+    create_app().run(debug=False, port=port_from_env())

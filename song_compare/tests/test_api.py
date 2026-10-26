@@ -83,3 +83,11 @@ def test_comparing_a_song_with_itself_is_refused(client, lyric_ids):
     response = client.get(f"/api/compare?a={lyric_ids[0]}&b={lyric_ids[0]}")
     assert response.status_code == 400
     assert strict_json(response)["error"] == "Pick two different songs."
+
+
+def test_port_defaults_to_5050_and_respects_PORT():
+    from app import port_from_env
+    assert port_from_env({}) == 5050
+    assert port_from_env({"PORT": "8080"}) == 8080
+    assert port_from_env({"PORT": "abc"}) == 5050
+    assert port_from_env({"PORT": "70000"}) == 5050
