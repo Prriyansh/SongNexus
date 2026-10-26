@@ -12,7 +12,7 @@ import type { Artist, ArtistDetails, RecordingDetails, Song, TrackRef } from '@/
 import { formatDuration, partitionGenres } from '@/lib/types';
 import { artistDetails, collaborators, searchArtists, searchSongs, songDetails, soundComparison, topTrack } from './api';
 import type { SimilarSong } from '@/lib/sound';
-import { matchQuery, pickMatch } from './playlist';
+import { findRecording } from './resolve';
 import { SoundProfile, SoundsLike } from './components/SoundProfile';
 import { buildGraph, songArtistPair } from './graph';
 import type { GraphInput } from './graph';
@@ -162,10 +162,7 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
     const row = { title: song.title, artist: song.artists[0] ?? '' };
     setPick({ id: song.id });
     try {
-      // Several MusicBrainz recordings share a title (live, remixes, compilations); the one with the
-      // earliest dated release is usually the original.
-      const matches = (await searchSongs(`${matchQuery(row)} AND status:official`, undefined, 15)).filter(song => pickMatch(row, [song]));
-      const found = matches.sort((x, y) => (firstRelease(x)?.date || '9999').localeCompare(firstRelease(y)?.date || '9999'))[0];
+      const found = await findRecording(row.title, row.artist);
       if (!found) { setPick({ error: `Couldn’t find “${song.title}” on MusicBrainz.` }); return; }
       setPick({});
       onComparison(comparisonFor('song', left, found.id));
