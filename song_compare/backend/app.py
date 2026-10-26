@@ -6,6 +6,7 @@ Song Comparison API (Flask).
   GET /api/compare?a=ID&b=ID          full side by side comparison
   GET /api/similar/ID?k=10            songs that sound most like this one
 """
+import json
 import math
 import os
 from pathlib import Path
@@ -16,6 +17,11 @@ from catalog import Catalog
 import similarity
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
+# The main Song Nexus app's stylesheets (src/frontend), served as-is so this page shares its look.
+NEXUS_STYLES = Path(__file__).resolve().parents[2] / "src" / "frontend"
+NEXUS_STYLESHEETS = ("styles.css", "product.css", "integration.css")
+# Where the sidebar links to the rest of the app; set NEXUS_URL to the deployed site.
+NEXUS_URL = os.environ.get("NEXUS_URL", "http://localhost:3000").rstrip("/")
 
 
 class BadRequest(Exception):
@@ -69,6 +75,17 @@ def create_app(data_dir=None):
     @app.route("/")
     def index():
         return send_from_directory(FRONTEND, "index.html")
+
+    @app.route("/nexus/<name>")
+    def nexus_stylesheet(name):
+        # Only these three files; anything else (including ../ paths) is a 404.
+        if name not in NEXUS_STYLESHEETS:
+            return jsonify(error="Not found."), 404
+        return send_from_directory(NEXUS_STYLES, name, mimetype="text/css")
+
+    @app.route("/config.js")
+    def config_js():
+        return app.response_class(f"window.NEXUS_URL = {json.dumps(NEXUS_URL)};\n", mimetype="text/javascript")
 
     @app.route("/api/stats")
     def stats():

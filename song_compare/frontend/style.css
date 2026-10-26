@@ -1,104 +1,28 @@
-/* Dark, flat, red accent: a nod to YouTube Music. */
-:root {
-  --bg: #030303;
-  --surface: #181818;
-  --surface2: #272727;
-  --text: #ffffff;
-  --muted: #aaaaaa;
-  --red: #ff0033;
-  --line: #303030;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font-family: Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px;
-}
-.topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  height: 64px; padding: 0 24px; border-bottom: 1px solid var(--line); position: sticky; top: 0;
-  background: var(--bg); z-index: 5;
-}
-.brand { font-size: 20px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
-.dot { width: 22px; height: 22px; border-radius: 50%; background: var(--red); position: relative; display: inline-block; }
-.dot::after { content: ""; position: absolute; left: 8px; top: 6px; border-left: 8px solid #fff; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
-.stats { color: var(--muted); font-size: 13px; }
+/* Song Compare uses the main app's stylesheets (served at /nexus/*.css). Only what this page
+   needs on top of them lives here. */
+a.brand, a.nav-option, a.header-wordmark { text-decoration: none; }
+.nav-option svg, .brand-mark svg, .header-wordmark svg { flex-shrink: 0; }
+[data-icon] { display: inline-flex; align-items: center; }
+.left-column { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.audio-panel { margin-top: 0; }
 
-main { max-width: 1000px; margin: 0 auto; padding: 24px 20px 80px; }
-.muted { color: var(--muted); }
-.error { color: #ff6b6b; }
+/* Overall match, shown at the top of the insights panel */
+.match-score { display: flex; align-items: baseline; gap: 8px; margin: 4px 0 14px; }
+.match-score strong { font-size: 54px; font-weight: 700; letter-spacing: -2px; line-height: 1; color: var(--white); }
+.match-score small { font-size: 12px; color: var(--muted); }
+.score-bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+.score-bars .audio-row { grid-template-columns: 70px 1fr 40px; margin: 0; }
+.score-bars .audio-bar { height: 6px; }
+.score-bars b { font-size: 12px; text-align: right; }
+.reason-list { margin: 6px 0 0; padding-left: 16px; font-size: 11px; line-height: 1.7; color: var(--muted); }
 
-.pickers { display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: end; margin-bottom: 24px; }
-.picker { position: relative; }
-.picker label { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
-input[type=text] {
-  width: 100%; height: 44px; border-radius: 22px; border: 1px solid transparent; background: var(--surface2);
-  color: var(--text); padding: 0 18px; font-size: 15px; outline: none;
-}
-input[type=text]:focus { border-color: #555; }
-.suggest { position: absolute; left: 0; right: 0; top: 76px; list-style: none; margin: 0; padding: 6px; background: var(--surface2); border-radius: 12px; z-index: 4; max-height: 340px; overflow: auto; box-shadow: 0 8px 24px rgba(0,0,0,.6); }
-.suggest li { padding: 8px 12px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; }
-.suggest li:hover { background: #3a3a3a; }
-.suggest small { color: var(--muted); }
-.chosen { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+/* Lyrics mood/themes side by side */
+.lyric-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 14px; }
+.lyric-sides strong { font-size: 12px; }
+.lyric-sides .chip-row { justify-content: flex-start; margin-top: 8px; }
 
-.thumb { width: 48px; height: 48px; border-radius: 4px; background: #333; display: grid; place-items: center; font-weight: 500; font-size: 20px; flex: none; }
-.picker[data-slot=a] .thumb { background: var(--red); }
-.chosen b { display: block; }
-.chosen small { color: var(--muted); }
-.chosen .x { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 20px; cursor: pointer; }
+/* Chooser in "nothing picked yet" state */
+.chooser-button .placeholder { color: var(--muted); font-weight: 500; }
+.chooser-option .album-cover { flex-shrink: 0; }
 
-button.primary { height: 44px; padding: 0 28px; border: 0; border-radius: 22px; background: #fff; color: #000; font-weight: 500; font-size: 15px; cursor: pointer; }
-button.primary:disabled { background: #333; color: #777; cursor: default; }
-
-.card { background: var(--surface); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
-.card h2 { margin: 0 0 16px; font-size: 18px; font-weight: 500; }
-
-.hero { display: flex; gap: 32px; align-items: center; }
-.score { font-size: 72px; font-weight: 500; line-height: 1; min-width: 190px; }
-.score small { font-size: 18px; color: var(--muted); margin-left: 6px; }
-.hero-side { flex: 1; }
-.mini { display: grid; grid-template-columns: 56px 1fr 48px; align-items: center; gap: 12px; margin-bottom: 8px; color: var(--muted); }
-.mini b { color: var(--text); font-weight: 500; text-align: right; }
-.track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
-.track i { display: block; height: 100%; background: var(--red); border-radius: 3px; width: 0; transition: width .5s; }
-.reasons { margin: 14px 0 0; padding-left: 18px; line-height: 1.7; }
-
-.legend { display: flex; gap: 20px; color: var(--muted); font-size: 13px; margin-bottom: 12px; }
-.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
-.frow { display: grid; grid-template-columns: 120px 1fr 90px; gap: 14px; align-items: center; margin-bottom: 14px; }
-.frow .name { color: var(--muted); text-transform: capitalize; }
-.bars .track { margin: 3px 0; }
-.bars .a i { background: var(--red); }
-.bars .b i { background: #fff; }
-.frow .nums { text-align: right; font-size: 13px; color: var(--muted); }
-
-table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 10px 0; border-bottom: 1px solid var(--line); }
-th { color: var(--muted); font-weight: 400; width: 34%; }
-tr:last-child th, tr:last-child td { border-bottom: 0; }
-thead th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
-.note { color: var(--muted); font-size: 13px; margin-top: 10px; }
-
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 12px; }
-.chip { background: var(--surface2); border-radius: 16px; padding: 6px 14px; font-size: 13px; }
-.chip.hot { background: var(--red); }
-
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.sub { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 6px; }
-
-.rail { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px; }
-.rail h3 { margin: 0 0 10px; font-size: 14px; color: var(--muted); font-weight: 400; }
-.cards { display: flex; gap: 12px; }
-.song { width: 150px; flex: none; cursor: pointer; }
-.song .thumb { width: 150px; height: 150px; border-radius: 6px; font-size: 40px; }
-.song b { display: block; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-.song small { color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.song:hover .thumb { outline: 2px solid #fff; }
-
-@media (max-width: 760px) {
-  .pickers { grid-template-columns: 1fr; }
-  .hero { flex-direction: column; align-items: flex-start; }
-  .two { grid-template-columns: 1fr; }
-  .frow { grid-template-columns: 90px 1fr; }
-  .frow .nums { display: none; }
-}
+@media (max-width: 650px) { .lyric-sides { grid-template-columns: 1fr; } }

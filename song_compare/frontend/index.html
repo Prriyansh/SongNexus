@@ -3,52 +3,87 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Song Compare</title>
+  <meta name="theme-color" content="#09090d">
+  <title>Sound & Lyrics · Song Nexus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <!-- The main app's stylesheets (src/frontend), in its order, then this page's additions. -->
+  <link rel="stylesheet" href="/nexus/styles.css">
+  <link rel="stylesheet" href="/nexus/product.css">
+  <link rel="stylesheet" href="/nexus/integration.css">
   <link rel="stylesheet" href="style.css">
+  <script src="/config.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><span class="dot"></span>Song Compare</div>
-    <div class="stats" id="stats"></div>
-  </header>
-
-  <main>
-    <section class="pickers">
-      <div class="picker" data-slot="a">
-        <label>Song A</label>
-        <input type="text" placeholder="Search a song or artist" autocomplete="off">
-        <ul class="suggest" hidden></ul>
-        <div class="chosen" hidden></div>
+<div id="root">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" data-nexus="/about" aria-label="Song Nexus home"><span class="brand-mark" data-icon="music" data-size="28"></span><span><strong>SONG NEXUS</strong></span></a>
+      <div class="sidebar-navigation">
+        <span class="nav-caption">YOUR WORKSPACE</span>
+        <nav aria-label="Main navigation">
+          <a class="nav-option" data-nexus="/about" aria-label="About Me"><span data-icon="user" data-size="22"></span><span>About Me</span></a>
+          <a class="nav-option" data-nexus="/compare/artists" aria-label="Explore"><span data-icon="compass" data-size="22"></span><span>Explore</span></a>
+          <a class="nav-option active" href="/" aria-current="page" aria-label="Sound and lyrics"><span data-icon="wave" data-size="22"></span><span>Sound &amp; Lyrics</span><span class="nav-track"></span></a>
+        </nav>
       </div>
-      <div class="picker" data-slot="b">
-        <label>Song B</label>
-        <input type="text" placeholder="Search a song or artist" autocomplete="off">
-        <ul class="suggest" hidden></ul>
-        <div class="chosen" hidden></div>
-      </div>
-      <button id="go" class="primary" disabled>Compare</button>
-    </section>
+      <div class="sidebar-bottom"><div class="sidebar-status"><span class="status-dot"></span>SPOTIFY + GENIUS<span>v2.0</span></div></div>
+    </aside>
 
-    <p id="error" class="error" hidden></p>
-    <p id="empty" class="muted">Pick two songs to see how they compare.</p>
-
-    <div id="result" hidden>
-      <section class="hero card">
-        <div class="score"><span id="overall">0</span><small>% match</small></div>
-        <div class="hero-side">
-          <div class="mini"><span>Sound</span><div class="track"><i id="barAudio"></i></div><b id="valAudio"></b></div>
-          <div class="mini"><span>Lyrics</span><div class="track"><i id="barLyric"></i></div><b id="valLyric"></b></div>
-          <ul id="reasons" class="reasons"></ul>
+    <div class="page-column">
+      <header class="topbar">
+        <div class="topbar-left">
+          <a class="header-wordmark" data-nexus="/about"><span data-icon="music" data-size="21"></span> SONG NEXUS<span></span></a>
+          <span data-icon="chevron-right" data-size="15"></span><strong>Sound &amp; Lyrics</strong>
         </div>
-      </section>
+        <div class="topbar-right"><span class="mini-caption" id="stats"></span></div>
+      </header>
 
-      <section class="card"><h2>Sound</h2><div id="sound"></div></section>
-      <section class="card"><h2>Structure</h2><table id="structure"></table></section>
-      <section class="card"><h2>Shared credits</h2><div id="credits"></div></section>
-      <section class="card"><h2>Lyrics</h2><div id="lyrics"></div></section>
-      <section class="card"><h2>More songs that sound like these</h2><div id="more"></div></section>
+      <main class="main-content">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow"><span data-icon="sparkles" data-size="14"></span> COMPARE HOW TWO SONGS SOUND</div>
+            <h1>Hear the difference.</h1>
+            <p>Pick two songs to compare their sound, structure and lyrics, then find more songs that sound like them.</p>
+          </div>
+        </div>
+
+        <section class="panel selection-panel">
+          <div class="selection-heading">
+            <div><span class="overline">01 / SELECT MUSIC</span><h2>Choose two songs to compare</h2></div>
+            <button id="go" class="primary-button" disabled><span data-icon="compare" data-size="16"></span> Compare</button>
+          </div>
+          <div class="select-grid">
+            <div class="chooser" data-slot="a"></div>
+            <span class="vs">VS</span>
+            <div class="chooser" data-slot="b"></div>
+          </div>
+          <div class="selected-cards" id="cards" hidden></div>
+        </section>
+
+        <p id="error" class="error-text" role="alert" hidden></p>
+        <p id="empty" class="loading-text">Pick two songs to see how they compare.</p>
+
+        <div id="result" hidden>
+          <section class="panel comparison-details" id="details"></section>
+          <div class="content-columns">
+            <div class="left-column">
+              <section class="panel audio-panel" id="sound"></section>
+              <section class="panel audio-panel" id="lyrics"></section>
+            </div>
+            <aside class="right-column">
+              <section class="panel insights" id="insights"></section>
+              <section class="panel quick-peek" id="more"></section>
+            </aside>
+          </div>
+        </div>
+
+        <footer><span>SONG NEXUS</span><span>Audio features from the <a href="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset" target="_blank" rel="noreferrer">Spotify tracks dataset</a>; lyric figures computed from Genius lyrics, which aren't stored or shown.</span></footer>
+      </main>
     </div>
-  </main>
-  <script src="app.js"></script>
+  </div>
+</div>
+<script src="app.js"></script>
 </body>
 </html>

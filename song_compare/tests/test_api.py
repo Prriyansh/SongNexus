@@ -40,9 +40,25 @@ def test_similar(client, lyric_ids):
     assert client.get("/api/similar/nope").status_code == 404
 
 
-def test_frontend_is_served(client):
-    response = client.get("/")
-    assert response.status_code == 200 and b"Song Compare" in response.data
+def test_frontend_is_served_with_the_main_apps_stylesheets(client):
+    page = client.get("/").get_data(as_text=True)
+    assert "Sound &amp; Lyrics" in page or "Sound & Lyrics" in page
+    for name in ("styles.css", "product.css", "integration.css"):
+        assert f'href="/nexus/{name}"' in page
+        response = client.get(f"/nexus/{name}")
+        assert response.status_code == 200 and response.mimetype == "text/css"
+    assert ".app-shell" in client.get("/nexus/styles.css").get_data(as_text=True)
+
+
+def test_only_the_shared_stylesheets_are_exposed(client):
+    for path in ("/nexus/api.ts", "/nexus/App.tsx", "/nexus/..%2Fapi.ts", "/nexus/../lib/musicbrainz.ts"):
+        assert client.get(path).status_code == 404, path
+
+
+def test_config_points_the_sidebar_at_the_main_app(client):
+    response = client.get("/config.js")
+    assert response.mimetype == "text/javascript"
+    assert response.get_data(as_text=True).startswith("window.NEXUS_URL = ")
 
 
 def test_api_answers_503_without_data(tmp_path):
