@@ -1,8 +1,11 @@
-flask
-pandas
-numpy
-scipy
-scikit-learn
-pyarrow
-vaderSentiment
-datasets
+# Song Compare: the API (backend/) and the data preparation (prepare_data.py).
+# Lower bounds are the versions the test suite runs with (Python 3.12).
+flask>=3.1,<4
+pandas>=3.1,<4
+numpy>=2.5,<3
+scipy>=1.18,<2
+pyarrow>=26
+scikit-learn>=1.9,<2
+vaderSentiment>=3.3.2,<4
+# Only needed for `prepare_data.py --hf` (streams the Genius lyrics from Hugging Face):
+#   pip install datasets

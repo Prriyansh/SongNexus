@@ -40,8 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# python (song_compare/)
 __pycache__/
 *.pyc
-.env
 .venv/
-.DS_Store
+.pytest_cache/
+# raw datasets are downloaded, not committed (see song_compare/README.md)
+song_compare/data/raw/
