@@ -118,8 +118,11 @@ The app deploys to Vercel as-is (see the README). Notes for a public deployment:
 
 ## Sound and lyrics in song comparisons (`song_compare/`)
 
-Explore's two-song comparison combines two sources. MusicBrainz supplies credits, releases,
-genres and collaborators. A separate Python (Flask) API by Ishita supplies the sound and lyrics:
+A two-song comparison in Explore is mainly Ishita's sound and lyrics analysis, shown first; the
+MusicBrainz release details, credits and connection web follow as secondary information. Song
+pickers search her dataset (`/api/sound/search`) so picks have the full analysis, then open the
+pick's MusicBrainz recording (`src/frontend/resolve.ts`). The analysis comes from a separate
+Python (Flask) API by Ishita:
 Spotify audio features (tempo, key, energy, danceability…) from the Spotify tracks dataset, and
 features derived from Genius lyrics (sentiment, themes, LSA/TF-IDF vectors; the lyric text is
 never stored).

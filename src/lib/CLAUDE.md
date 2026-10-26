@@ -16,7 +16,7 @@ Server-side integration layer. Everything that knows about MusicBrainz or Deezer
   MusicBrainz recording. Deezer is used for ranking only; no Deezer numbers are shown.
 - `sound.ts` — client for the song_compare Python API: matches two songs by title and artist,
   then fetches the comparison and similar songs; returns a status (`ok`, `not-found`,
-  `same-track`, `unavailable`). Also the TypeScript types for that API's JSON (keep them in sync
+  `same-track`, `unavailable`). `searchSound` searches its dataset for the song pickers. Also the TypeScript types for that API's JSON (keep them in sync
   with `song_compare/backend`). `SONG_COMPARE_URL` sets the service URL.
 - `CLAUDE.md` — this guide.
 

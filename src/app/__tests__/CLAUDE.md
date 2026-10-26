@@ -9,7 +9,8 @@ Tests for the Next.js wiring. Run with `npm test` from the repository root.
   not rewritten.
 - `layout.test.tsx` — the root layout keeps `suppressHydrationWarning` on `<body>` (extensions
   inject attributes there before React loads).
-- `sound-route.test.ts` — `/api/sound` input validation, caching and the development hint.
+- `sound-route.test.ts` — `/api/sound` and `/api/sound/search`: input validation, caching and
+  the development hint.
 - `api-config.test.ts` — the collaborators route allows enough time (`maxDuration`) for a cold scan.
 - `CLAUDE.md` — this guide.
 

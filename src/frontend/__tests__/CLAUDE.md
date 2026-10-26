@@ -11,6 +11,7 @@ Vitest tests for the frontend. Run with `npm test` from the repository root.
 - `profile.test.ts` — snapshots, profile validation (ids, image hosts, caps), localStorage (jsdom).
 - `playlist.test.ts` — CSV/JSON/TXT parsing, MusicBrainz query building, title/artist matching.
 - `model.test.ts` — display helpers and the genre list.
+- `resolve.test.ts` — `findRecording`'s query and its choice between versions of a song.
 - `graph.test.ts` — connection web for artists and songs: paths, roles, expansion, layout bounds.
 - `app.integration.test.tsx` — renders the whole `App` in jsdom with `fetch` mocked by URL
   (search, details, collaborators, top-track) and drives it like a user.

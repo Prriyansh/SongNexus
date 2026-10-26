@@ -77,10 +77,11 @@ CI runs all four on every push to `main` and on pull requests, plus the `song_co
 
 ## Sound & lyrics in song comparisons (song_compare)
 
-Comparing two songs in Explore also shows their tempo, key, lyric mood, a sound-and-lyrics
-match score, a sound profile and songs that sound alike. That data comes from a separate Python
-API in [song_compare/](song_compare/README.md) (Spotify audio features + lyric analysis). Run it
-next to the app:
+Comparing two songs in Explore is mainly Ishita's sound and lyrics analysis: how alike the songs
+are and why, their sound profile, structure (tempo, key, sections), lyrics (mood, themes) and
+songs that sound alike. Song pickers search its library of ~76k songs, so picks have the full
+analysis. MusicBrainz release details and credits follow. The analysis comes from a separate
+Python API in [song_compare/](song_compare/README.md); run it next to the app:
 
 ```bash
 cd song_compare && pip install -r requirements.txt && python backend/app.py   # http://localhost:5050

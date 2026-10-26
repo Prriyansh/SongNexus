@@ -2,9 +2,9 @@
 
 Compares two songs on how they sound (Spotify audio features), their structure, shared credits
 and their lyrics (sentiment, themes, meaning), and finds more songs that sound alike. A Python
-(Flask) API built by Ishita. Its results appear in Explore's two-song comparison in the main
-app (tempo, key, lyric mood, the match score, the sound profile and similar songs); it has no
-page of its own.
+(Flask) API built by Ishita. Its analysis is the main part of Explore's two-song comparison in
+the main app (how alike the songs are, sound profile, structure, lyrics, similar songs), and
+the song pickers search its library; it has no page of its own.
 
 ## Run it
 
