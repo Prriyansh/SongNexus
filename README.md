@@ -37,6 +37,12 @@ Every push to `main` redeploys that link, and pull requests get their own previe
 in-app **Share** button builds links on whatever domain the app is served from, so comparison
 and About Me links work as soon as it's deployed.
 
+**Deploying teammates' commits.** The repository is public because Vercel's free (Hobby) plan
+only deploys commits by the project owner when the repository is private; for public
+repositories anyone's commits deploy. If a commit's Vercel check says *"GitHub couldn't verify an
+account for the commit"*, the author's `git config user.email` isn't an email on their GitHub
+account: add it under GitHub → Settings → Emails, or change the git setting to one that is.
+
 ## Repository layout
 
 ```

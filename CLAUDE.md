@@ -40,6 +40,8 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript (strict), Vitest.
   API returns rather than changing the API to fit a screen, unless asked.
 - Only show data a source actually provides. No invented popularity numbers, audio features or
   placeholder facts; label calculated "insights" as calculated.
+- The repository is **public** (so Vercel deploys every teammate's commits). Never commit
+  secrets, `.env` files or copyrighted data such as lyrics; keys go in Vercel's environment variables.
 - MusicBrainz allows about 1 request/second. Never call it from the browser; go through the API
   routes, which throttle and cache.
 - Next 16 differs from older versions: route `params`/`searchParams` are Promises,

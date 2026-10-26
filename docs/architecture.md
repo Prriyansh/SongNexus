@@ -112,3 +112,6 @@ The app deploys to Vercel as-is (see the README). Notes for a public deployment:
   outbound IPs are shared with other projects, so MusicBrainz may occasionally answer 503. The
   routes retry, and the UI shows "Try again" if that isn't enough.
 - No environment variables are needed.
+- The repository is public so Vercel's Hobby plan deploys every collaborator's commits (on a
+  private repository it only deploys the owner's). Keep secrets out of the repository; there are
+  none today, and any future keys belong in Vercel's environment variables.
