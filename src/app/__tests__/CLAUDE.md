@@ -7,6 +7,9 @@ Tests for the Next.js wiring. Run with `npm test` from the repository root.
 - `routes.test.ts` — checks the rewrites in `next.config.ts`: `/about`, `/about/manual` and
   `/compare/(artists|songs)` load the app page, `/prototype` serves the old HTML, and `/` is
   not rewritten.
+- `layout.test.tsx` — the root layout keeps `suppressHydrationWarning` on `<body>` (extensions
+  inject attributes there before React loads).
+- `sound-route.test.ts` — `/api/sound` input validation, caching and the development hint.
 - `api-config.test.ts` — the collaborators route allows enough time (`maxDuration`) for a cold scan.
 - `CLAUDE.md` — this guide.
 

@@ -116,15 +116,23 @@ The app deploys to Vercel as-is (see the README). Notes for a public deployment:
   private repository it only deploys the owner's). Keep secrets out of the repository; there are
   none today, and any future keys belong in Vercel's environment variables.
 
-## Sound & Lyrics service (`song_compare/`)
+## Sound and lyrics in song comparisons (`song_compare/`)
 
-A separate Python (Flask) service by Ishita. It compares songs using the Spotify tracks
-dataset's audio features (tempo, energy, danceability…) and features derived from Genius
-lyrics (sentiment, themes, LSA/TF-IDF vectors); lyric text itself is never stored. Its catalog
-is keyed by Spotify track ids, not MusicBrainz ids, so it isn't wired into Explore yet.
+Explore's two-song comparison combines two sources. MusicBrainz supplies credits, releases,
+genres and collaborators. A separate Python (Flask) API by Ishita supplies the sound and lyrics:
+Spotify audio features (tempo, key, energy, danceability…) from the Spotify tracks dataset, and
+features derived from Genius lyrics (sentiment, themes, LSA/TF-IDF vectors; the lyric text is
+never stored).
 
-It serves its own page, which loads the main app's stylesheets so it looks the same. It needs
-pandas/NumPy/SciPy and ~27 MB of data, too large for a Vercel function, so it runs locally (or
-on a separate host). Linking it into the main app (for example matching a MusicBrainz recording
-to a Spotify track by title and artist) is a possible next step.
+The browser calls `/api/sound`, and `src/lib/sound.ts` calls the Python API:
+1. `/api/match`, once per song: the dataset is keyed by Spotify id, so songs are matched by
+   title and lead artist.
+2. `/api/compare` and `/api/similar`.
 
+The route always answers with a status (`ok`, `not-found`, `same-track` or `unavailable`), so a
+song missing from the 2022 dataset, or the service not running, only removes the sound rows;
+the rest of the comparison is unaffected.
+
+The service needs pandas/SciPy and ~27 MB of data, too large for a Vercel function. Locally it
+runs on port 5050 (`SONG_COMPARE_URL` defaults to it in development). For the deployed site,
+host it separately and set `SONG_COMPARE_URL` in Vercel.

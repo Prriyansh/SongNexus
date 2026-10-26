@@ -1,8 +1,9 @@
 # song_compare/
 
-Song Compare ("Sound & Lyrics"): Ishita's Python (Flask) service that compares two songs on
-audio features, structure, credits and lyric analysis. Separate from the Next.js app (it isn't
-deployed to Vercel); its page reuses the main app's stylesheets so it looks the same.
+Song Compare: Ishita's Python (Flask) API that compares two songs on audio features,
+structure, credits and lyric analysis. It has no UI: Explore's two-song comparison in the
+Next.js app shows its data via `src/app/api/sound` → `src/lib/sound.ts` → this API. It isn't
+deployed to Vercel (pandas/SciPy and ~27 MB of data are too big for a function).
 
 ## Files at this level
 
@@ -20,8 +21,7 @@ deployed to Vercel); its page reuses the main app's stylesheets so it looks the 
 
 ## Folders
 
-- `backend/` — the Flask app and the comparison maths.
-- `frontend/` — the page (plain HTML/CSS/JS, no build step).
+- `backend/` — the Flask API and the comparison maths.
 - `data/` — `processed/` is committed; `raw/` is git-ignored.
 - `tests/` — pytest suite.
 
@@ -31,3 +31,4 @@ deployed to Vercel); its page reuses the main app's stylesheets so it looks the 
 - Keep processed data in Parquet/JSON/NumPy formats; don't reintroduce pickle or joblib
   (loading them can run code).
 - Every API parameter is validated; errors are JSON with a 4xx status, never an HTML 500.
+- The JSON shapes are mirrored by the TypeScript types in `src/lib/sound.ts`; change both together.

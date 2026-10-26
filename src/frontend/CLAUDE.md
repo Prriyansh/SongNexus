@@ -8,8 +8,9 @@ The UI: Helen's design (see `docs/design/`) running on live API data. Browser-on
 - `ClientApp.tsx` — loads `App` with `next/dynamic` and `ssr: false`; used by `app/page.tsx`.
 - `App.tsx` — shell (sidebar, top bar, footer), routing state, Explore page, details drawer,
   share modal, search picker.
-- `api.ts` — the only place that calls the server (`/api/...`). Memoises lookups per id for the
-  page's lifetime and drops failures so "Try again" refetches.
+- `api.ts` — the only place that calls the server (`/api/...`), including `soundComparison` for
+  song pairs. Memoises lookups per id for the page's lifetime, retries a retryable error
+  (MusicBrainz busy) once after 1.5 s, and drops failures so "Try again" refetches.
 - `useAsync.ts` — load data for a key; `loading` stays true until that key's result arrives.
 - `routing.ts` — URL ↔ state. `/about`, `/about/manual`, `/compare/artists?artistA&artistB`,
   `/compare/songs?songA&songB`, optional `role` and `note`; invalid ids fall back to defaults.

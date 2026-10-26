@@ -52,7 +52,7 @@ SongNexus/
 │   ├── frontend/       the UI (Helen's design) and its client-side logic
 │   └── lib/            MusicBrainz + Deezer integration (rate limits, caching, mapping)
 ├── public/             static files; song-nexus.html is the prototype served at /prototype
-├── song_compare/       Sound & Lyrics: a Python service comparing songs on audio + lyrics
+├── song_compare/       Python API for the sound & lyrics part of song comparisons
 ├── docs/
 │   ├── architecture.md data sources, caching, API and frontend details
 │   ├── design/         Helen's design handoff and reference screenshots
@@ -75,15 +75,19 @@ npm run build       # production build
 
 CI runs all four on every push to `main` and on pull requests, plus the `song_compare` tests.
 
-## Sound & Lyrics (song_compare)
+## Sound & lyrics in song comparisons (song_compare)
 
-A separate Python service that compares two songs on Spotify audio features and lyric analysis.
-It runs on its own port and links back to the main app. It isn't part of the Vercel deployment.
-See [song_compare/README.md](song_compare/README.md):
+Comparing two songs in Explore also shows their tempo, key, lyric mood, a sound-and-lyrics
+match score, a sound profile and songs that sound alike. That data comes from a separate Python
+API in [song_compare/](song_compare/README.md) (Spotify audio features + lyric analysis). Run it
+next to the app:
 
 ```bash
 cd song_compare && pip install -r requirements.txt && python backend/app.py   # http://localhost:5050
 ```
+
+Without it, everything else works and the comparison says the sound analysis isn't available.
+The deployed site needs `SONG_COMPARE_URL` pointing at a hosted copy of the service.
 
 ## Stack
 
