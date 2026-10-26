@@ -1,5 +1,6 @@
 // API payloads shaped exactly like our routes' responses (src/lib/types.ts), for frontend tests.
 import type { Artist, ArtistDetails, CollaboratorComparison, RecordingDetails, Song } from '@/lib/types';
+import type { SoundResult, SoundTrack } from '@/lib/sound';
 import { examples } from '../routing';
 
 export const OLIVIA = examples.artist[0];
@@ -83,3 +84,26 @@ export const killBill: Song = {
   artists: [{ id: 'dd000000-0000-4000-8000-000000000001', name: 'SZA' }], tags: [],
   releases: [{ id: 'cc000000-0000-4000-8000-000000000009', title: 'SOS', date: '2022-12-09' }, { id: 'cc000000-0000-4000-8000-00000000000a', title: 'Hits 2023', date: '2023-05-01' }],
 };
+
+// /api/sound for the default song pair (Spotify dataset ids, not MusicBrainz ids).
+const soundTrack = (id: string, title: string, artist: string, energy: number): SoundTrack => ({
+  id, title, artists: [artist], album: `${title} album`, genre: 'pop', has_lyrics: true, popularity: 80, duration_ms: 220_000,
+  explicit: false, tempo: 144, key: 10, mode: 1, key_name: 'A# major', time_signature: 4,
+  audio: { tempo: 144, energy, danceability: 0.58, valence: 0.13, acousticness: 0.72, loudness: -8.8, speechiness: 0.06, instrumentalness: 0, liveness: 0.1 },
+  lyrics: { sentiment: { compound: -0.3, positive_share: 0.1, negative_share: 0.4 }, emotions: {}, top_emotion: 'sadness', themes: {}, top_themes: ['heartbreak', 'romance'],
+    structure: { verses: 2, choruses: 3, bridges: 1, has_intro: false, has_outro: true, sections_total: 7, lines: 40, words: 300, repetition: 0.3, lexical_diversity: 0.4 } },
+});
+export const soundOk: SoundResult = {
+  status: 'ok',
+  comparison: {
+    a: soundTrack('sp-a', 'vampire', 'Olivia Rodrigo', 0.43), b: soundTrack('sp-b', 'The Fate of Ophelia', 'Taylor Swift', 0.68),
+    overall: 0.71, audio: { score: 0.74, distance: 0.2, per_feature: {} as never },
+    lyrics: { score: 0.66, semantic: 0.5, vocabulary: 0.1, themes: 0.9, sentiment: 0.95, shared_themes: ['heartbreak'], emotion_a: 'sadness', emotion_b: 'sadness' },
+    credits: { artists: [], same_album: false, same_genre: true, genre: 'pop', album: null },
+    structure: { tempo: { a: 138, b: 128, half_double_match: false }, key: { a: 'A# major', b: 'F major', relation: 'closely related key' },
+      time_signature: { a: 4, b: null }, duration_sec: { a: 220, b: 226 } },
+    reasons: ['Keys are compatible (closely related key).', 'Both lean toward sadness.'],
+  },
+  similar: { a: [{ id: 'sp-sim', title: 'Kill Bill', artists: ['SZA'], album: 'SOS', genre: 'pop', has_lyrics: true, score: 0.93, shares_artist: false }], b: [] },
+};
+

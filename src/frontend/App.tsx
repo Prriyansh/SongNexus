@@ -10,7 +10,10 @@ import {
 } from 'lucide-react';
 import type { Artist, ArtistDetails, RecordingDetails, Song, TrackRef } from '@/lib/types';
 import { formatDuration, partitionGenres } from '@/lib/types';
-import { artistDetails, collaborators, searchArtists, searchSongs, songDetails, topTrack } from './api';
+import { artistDetails, collaborators, searchArtists, searchSongs, songDetails, soundComparison, topTrack } from './api';
+import type { SimilarSong } from '@/lib/sound';
+import { matchQuery, pickMatch } from './playlist';
+import { SoundProfile, SoundsLike } from './components/SoundProfile';
 import { buildGraph, songArtistPair } from './graph';
 import type { GraphInput } from './graph';
 import { albumSampleNote, artistCover, artistSubtitle, capitalize, coverForRelease, firstRelease, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, ROLE_LABELS, roleText, songArtists, studioAlbumText, yearOf } from './model';
@@ -149,6 +152,25 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
   const input = useMemo(() => (a && b ? ({ kind, a, b, collab: collabData, role } as GraphInput) : null), [kind, a, b, collabData, role]);
   const base = useMemo(() => (input ? buildGraph(input, [], false) : null), [input]);
   const [top, setTop] = useState<{ busy: boolean; error?: string }>({ busy: false });
+  // Song pairs also get sound and lyrics: tempo, key, mood, a match score and similar-sounding songs.
+  const songs = kind === 'song' && a && b ? [a as RecordingDetails, b as RecordingDetails] as [RecordingDetails, RecordingDetails] : null;
+  const sound = useAsync(songs ? `sound:${songs[0].id}:${songs[1].id}` : null, () => soundComparison(songs![0], songs![1]));
+  const soundResult = sound.data?.status === 'ok' ? sound.data.comparison : null;
+  const [pick, setPick] = useState<{ id?: string; error?: string }>({});
+  // A similar-sounding song comes from the Spotify dataset; find it on MusicBrainz to compare it.
+  const compareWithSimilar = async (song: SimilarSong) => {
+    const row = { title: song.title, artist: song.artists[0] ?? '' };
+    setPick({ id: song.id });
+    try {
+      // Several MusicBrainz recordings share a title (live, remixes, compilations); the one with the
+      // earliest dated release is usually the original.
+      const matches = (await searchSongs(`${matchQuery(row)} AND status:official`, undefined, 15)).filter(song => pickMatch(row, [song]));
+      const found = matches.sort((x, y) => (firstRelease(x)?.date || '9999').localeCompare(firstRelease(y)?.date || '9999'))[0];
+      if (!found) { setPick({ error: `Couldn’t find “${song.title}” on MusicBrainz.` }); return; }
+      setPick({});
+      onComparison(comparisonFor('song', left, found.id));
+    } catch (e) { setPick({ error: e instanceof Error ? e.message : 'Search failed.' }); }
+  };
 
   const compareSongs = (ta: TrackRef, tb: TrackRef) => onComparison(comparisonFor('song', ta.id, tb.id));
   const compareTopSongs = async () => {
@@ -180,7 +202,7 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
       <div className="select-grid"><SearchChooser type={kind} value={left} display={a} other={right} label={kind === 'song' ? 'SONG ONE' : 'ARTIST ONE'} onChange={v => onComparison({ ...comparison, left: v })} /><span className="vs">VS</span><SearchChooser type={kind} value={right} display={b} other={left} label={kind === 'song' ? 'SONG TWO' : 'ARTIST TWO'} onChange={v => onComparison({ ...comparison, right: v })} /></div>
       <div className="selected-cards"><SelectedCard kind={kind} index={0} state={da} onDetails={onDetails} /><SelectedCard kind={kind} index={1} state={db} onDetails={onDetails} /></div>
     </section>
-    <ComparisonDetails kind={kind} a={a} b={b} collab={pair ? collab : null} role={role} onSelect={onDetails} onCompareSongs={compareSongs} />
+    <ComparisonDetails kind={kind} a={a} b={b} collab={pair ? collab : null} sound={kind === 'song' ? sound : undefined} role={role} onSelect={onDetails} onCompareSongs={compareSongs} />
     <div className="content-columns"><section className="panel graph-panel"><div className="graph-heading"><div><span className="overline">02 / CONNECTION WEB</span><h2>How they’re connected</h2><p>Solid lines are credits on MusicBrainz; the dashed line is shared genre tags. Select a person to see the songs that connect them.</p></div><RoleSelect value={role} onChange={onRole} /></div>
       {input ? <ConnectionGraph key={`${kind}:${left}:${right}:${role}`} input={input} status={graphStatus} onSelect={onDetails} /> : da.error || db.error ? <LoadError error={(da.error || db.error)!} retry={() => { da.retry(); db.retry(); }} /> : <div className="graph-canvas graph-loading" aria-busy="true"><div className="graph-grid" /><p className="loading-text">Loading from MusicBrainz…</p></div>}
     </section>
@@ -193,12 +215,18 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
           {insight('03', 'Genre overlap', sharedGenres.length ? sharedGenres.slice(0, 5).join(', ') : 'Their MusicBrainz genre tags don’t overlap. Follow the web to see where they meet.')}
         </> : <>
           {insight('01', 'Shared credited artists', a && b ? ((a as RecordingDetails).artists.filter(x => x.id && (b as RecordingDetails).artists.some(y => y.id === x.id)).map(x => x.name).join(', ') || 'Different artists. The web shows who worked with both.') : 'Loading…')}
-          {insight('02', 'Genre overlap', sharedGenres.length ? sharedGenres.slice(0, 5).join(', ') : 'No genre tags in common on MusicBrainz.')}
+          {insight('02', 'Musical similarity · calculated', soundResult
+            ? `${Math.round(soundResult.overall * 100)}% overall match: sound ${Math.round(soundResult.audio.score * 100)}%, lyrics ${soundResult.lyrics ? `${Math.round(soundResult.lyrics.score * 100)}%` : 'not matched'}.${sharedGenres.length ? ` Shared genres: ${sharedGenres.slice(0, 3).join(', ')}.` : ''}`
+            : sound.loading ? 'Measuring their sound and lyrics…'
+            : sharedGenres.length ? `Shared genres: ${sharedGenres.slice(0, 5).join(', ')}.` : 'No genre tags in common on MusicBrainz.')}
           {insight('03', 'Factual connection path', pathText || (collabPending ? 'Reading album credits…' : 'No documented path between these two songs in the albums we scanned.'))}
         </>}
       </section>
-        <section className="panel quick-peek"><span className="overline">GO DEEPER</span><h3>The people behind the music</h3><p>Click an artist in the web or choose one below to see their albums, links, and genres.</p>{people.map(p => <MiniArtist key={p.id} artist={p} onClick={() => onDetails({ type: 'artist', id: p.id })} />)}{mutual.slice(0, 3).map(c => <MiniArtist key={c.id} artist={c} picture={false} subtitle={`Worked with both · ${roleText([...new Set([...c.roles.a, ...c.roles.b])])}`} onClick={() => onDetails({ type: 'artist', id: c.id })} />)}</section>
+        <section className="panel quick-peek"><span className="overline">GO DEEPER</span><h3>The people behind the music</h3><p>Click an artist in the web or choose one below to see their albums, links, and genres.</p>{people.map(p => <MiniArtist key={p.id} artist={p} onClick={() => onDetails({ type: 'artist', id: p.id })} />)}{mutual.slice(0, 3).map(c => <MiniArtist key={c.id} artist={c} picture={false} subtitle={`Worked with both · ${roleText([...new Set([...c.roles.a, ...c.roles.b])])}`} onClick={() => onDetails({ type: 'artist', id: c.id })} />)}
+          {songs && <SoundsLike sound={sound} titles={[songs[0].title, songs[1].title]} onPick={song => void compareWithSimilar(song)} busyId={pick.id} />}
+          {pick.error && <p className="error-text" role="alert">{pick.error}</p>}</section>
       </aside></div>
+    {songs && <SoundProfile sound={sound} songs={songs} />}
   </div>;
 }
 
@@ -270,7 +298,7 @@ function App() {
     <div className="page-column"><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setMenuOpen(true)} aria-label="Open navigation"><Menu size={23} /></button><button className="header-wordmark" onClick={() => navigate('about')} aria-label="Song Nexus home"><Music2 size={21} /> SONG NEXUS<span></span></button><ChevronRight size={15} /><strong>{page === 'about' ? 'About Me' : 'Explore'}</strong></div><div className="topbar-right"><button className="top-share" aria-label="Share" onClick={() => setShareOpen(true)}><Share2 size={17} /><span>Share</span></button></div></header>
       <main className="main-content">{page === 'about' ? <>{shared && <div className="shared-note"><CircleUserRound size={20} /><div><strong>Shared About Me</strong><p>{note || 'You’re viewing a shared music taste profile.'}</p></div><button className="secondary-button" onClick={() => navigate('about')}>View my About Me</button></div>}<AboutMe key={shared ? 'shared' : 'own'} onSelect={setDetail} profile={shared || profile} onProfileChange={setProfile} readOnly={!!shared} manual={route.manual} onManual={open => go({ ...route, manual: open, profile: undefined, note: '' }, { scroll: false })} /></>
         : <Explore comparison={comparison} onComparison={updateComparison} onRole={role => go({ ...route, comparison: { ...comparison, role } }, { replace: true, scroll: false })} onDetails={setDetail} note={note} onDismissNote={() => go({ ...route, note: '' }, { replace: true, scroll: false })} />}
-        <footer><span>SONG NEXUS</span><span>Data from <a href="https://musicbrainz.org" target="_blank" rel="noreferrer">MusicBrainz</a> and the <a href="https://coverartarchive.org" target="_blank" rel="noreferrer">Cover Art Archive</a>; top songs ranked by Deezer.</span></footer></main>
+        <footer><span>SONG NEXUS</span><span>Data from <a href="https://musicbrainz.org" target="_blank" rel="noreferrer">MusicBrainz</a> and the <a href="https://coverartarchive.org" target="_blank" rel="noreferrer">Cover Art Archive</a>; top songs ranked by Deezer; sound from the <a href="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset" target="_blank" rel="noreferrer">Spotify tracks dataset</a> and Genius lyrics.</span></footer></main>
     </div>{detail && <DetailDrawer selected={detail} onClose={() => setDetail(null)} onSelect={setDetail} profile={profile} onProfileChange={setProfile} onCompare={compareFrom} />}{shareOpen && <ShareModal route={route} profile={shared || profile} onClose={() => setShareOpen(false)} />}</div>;
 }
 export default App;

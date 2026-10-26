@@ -1,6 +1,7 @@
 // Browser-side client for our own Next.js API routes. The page never calls MusicBrainz or
 // Deezer directly; the routes handle rate limits, retries and server caching.
 import type { Artist, ArtistDetails, CollaboratorComparison, RecordingDetails, Song, TopTrack } from '@/lib/types';
+import type { SoundResult } from '@/lib/sound';
 
 export class ApiError extends Error {
   retryable: boolean;
@@ -70,3 +71,13 @@ export const collaborators = (a: string, b: string) =>
 /** The artist's most popular song (ranked by Deezer) as a MusicBrainz recording, or null. */
 export const topTrack = (id: string, name: string) =>
   once(`top:${id}`, () => getJson<{ track: TopTrack | null }>(`/api/top-track?id=${id}&name=${encodeURIComponent(name)}`).then(r => r.track));
+
+/**
+ * Sound and lyric comparison of two songs (Spotify audio features + lyric analysis), matched by
+ * title and lead artist. Resolves with a status; "unavailable" when the service isn't running.
+ */
+export const soundComparison = (a: RecordingDetails, b: RecordingDetails) =>
+  once(`sound:${a.id}:${b.id}`, () => {
+    const q = new URLSearchParams({ aTitle: a.title, aArtist: a.artists[0]?.name ?? '', bTitle: b.title, bArtist: b.artists[0]?.name ?? '' });
+    return getJson<SoundResult>(`/api/sound?${q}`);
+  });

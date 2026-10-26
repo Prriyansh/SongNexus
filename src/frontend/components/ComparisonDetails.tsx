@@ -4,6 +4,8 @@ import { formatDuration, partitionGenres } from '@/lib/types';
 import { albumSampleNote, capitalize, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, roleText, songArtists, studioAlbumText, yearOf } from '../model';
 import { matchesRole } from '../graph';
 import { AlbumCover } from './Artwork';
+import { MusicalSimilarity, soundRows } from './SoundProfile';
+import type { SoundState } from './SoundProfile';
 import type { Selection } from '../types';
 
 export type Loadable<T> = { data?: T; loading: boolean; error?: Error; retry: () => void };
@@ -55,11 +57,13 @@ export function Collaborators({ state, names, role, current, onSelect, onCompare
   </div>;
 }
 
-export function ComparisonDetails({ kind, a, b, collab, role, onSelect, onCompareSongs }: {
+export function ComparisonDetails({ kind, a, b, collab, sound, role, onSelect, onCompareSongs }: {
   kind: 'artist' | 'song';
   a?: ArtistDetails | RecordingDetails;
   b?: ArtistDetails | RecordingDetails;
   collab: Loadable<CollaboratorComparison> | null;
+  /** Song mode only: tempo, key, lyrics and the sound match, from /api/sound. */
+  sound?: SoundState;
   role: string;
   onSelect: (s: Selection) => void;
   onCompareSongs: (a: TrackRef, b: TrackRef) => void;
@@ -78,11 +82,11 @@ export function ComparisonDetails({ kind, a, b, collab, role, onSelect, onCompar
       <Row name="Released" values={two(s => s.firstReleaseDate ? <p>{yearOf(s.firstReleaseDate)}<small>{s.firstReleaseDate}</small></p> : null)}/>
       <Row name="Album" values={two(s => s.representative ? <div className="album-strip"><a className="album-thumb" href={musicBrainzUrl('release', s.representative.id)} target="_blank" rel="noreferrer" title={`${s.representative.title} on MusicBrainz`}><AlbumCover cover={s.representative} size="md" /><span>{s.representative.title}{s.representative.year && <small>{s.representative.year}</small>}</span></a></div> : null)}/>
       <Row name="Length" values={two(s => <p>{s.durationMs == null ? '—' : formatDuration(s.durationMs)}</p>)}/>
+      {sound && soundRows(sound).map(([name, left, right]) => <Row key={name} name={name} values={[left, right]}/>)}
       <Row name="Genre / style" values={two(s => { const text = genreText(s.genres, s.tags); return text ? <p>{text}<small>MusicBrainz community tags</small></p> : null; })}/>
       {pair.some(s => s.rating) && <Row name="Rating" values={two(s => s.rating ? <p>{s.rating.value.toFixed(1)} / 5<small>{s.rating.votes} votes</small></p> : null)}/>}
       {pair.some(s => s.links.length) && <Row name="Listen" values={two(s => <Links links={s.links}/>)}/>}
-      <p className="metadata-note">Tempo, key and audio measurements aren’t shown: there’s no open source for them. People credited on each artist’s albums are below.</p>
-      <SharedGenres a={sa} b={sb}/>
+      {sound ? <MusicalSimilarity sound={sound} titles={[sa.title, sb.title]} sharedGenres={partitionGenres(sa.genres, sb.genres).shared.map(capitalize)}/> : <SharedGenres a={sa} b={sb}/>}
       {collab && <Collaborators state={collab} names={[songArtists(sa), songArtists(sb)]} role={role} current={[sa.id, sb.id]} onSelect={onSelect} onCompareSongs={onCompareSongs}/>}
     </section>;
   }

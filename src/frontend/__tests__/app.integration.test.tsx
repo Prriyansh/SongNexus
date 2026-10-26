@@ -8,8 +8,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Song } from '@/lib/types';
 import {
   collab, SOUR_ART, EXPECTATIONS, expectationsDetails, killBill, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, PATIENT_ZERO,
-  patientZeroDetails, PHOEBE, phoebe, phoebeDetails, PUNISHER, TAYLOR, taylorDetails, VAMPIRE, vampireDetails,
+  patientZeroDetails, PHOEBE, phoebe, phoebeDetails, PUNISHER, soundOk, TAYLOR, taylorDetails, VAMPIRE, vampireDetails,
 } from './fixtures';
+import type { SoundResult } from '@/lib/sound';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -19,6 +20,7 @@ const DETAILS: Record<string, unknown> = {
 };
 const vampireSong: Song = { ...vampireDetails };
 let failures: Record<string, number> = {};
+let soundReply: SoundResult = soundOk;
 const fetchMock = vi.fn(async (input: string) => {
   const url = new URL(input, 'http://localhost');
   const q = url.searchParams;
@@ -29,10 +31,11 @@ const fetchMock = vi.fn(async (input: string) => {
     case '/api/musicbrainz/details': return DETAILS[q.get('id')!] ? reply({ details: DETAILS[q.get('id')!] }) : reply({ error: 'Not found' }, 404);
     case '/api/musicbrainz/collaborators': return reply({ collaborators: collab });
     case '/api/top-track': return reply({ track: q.get('id') === OLIVIA ? expectationsDetails : patientZeroDetails });
+    case '/api/sound': return reply(soundReply);
     case '/api/musicbrainz/search': {
       const query = q.get('q') ?? '';
       if (q.get('type') === 'artist') return reply({ results: /phoebe/i.test(query) ? [phoebe] : [] });
-      return reply({ results: /vampire/i.test(query) ? [vampireSong] : /Kill Bill/.test(query) ? [killBill] : [] });
+      return reply({ results: /vampire/i.test(query) ? [vampireSong] : /Kill Bill/.test(query) ? [killBill, { ...killBill, id: EXPECTATIONS, title: 'Kill Bill (Live)' }] : [] });
     }
   }
   return reply({ error: 'unknown route' }, 404);
@@ -44,6 +47,7 @@ let App: typeof import('../App').default;
 beforeEach(async () => {
   vi.resetModules(); // fresh api memo per test
   failures = {};
+  soundReply = soundOk;
   fetchMock.mockClear();
   vi.stubGlobal('fetch', fetchMock);
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
@@ -301,3 +305,66 @@ describe('About Me', () => {
     expect(profile.artists.map((a: { name: string }) => a.name)).toEqual(['Olivia Rodrigo', 'SZA']);
   });
 });
+
+describe('Explore: songs, sound and lyrics', () => {
+  const songs = `/compare/songs?songA=${VAMPIRE}&songB=${OPHELIA}`;
+
+  it('adds tempo, key, lyrics mood and the sound match to the song comparison', async () => {
+    await render(songs);
+    expect(called('/api/sound?aTitle=vampire&aArtist=Olivia+Rodrigo&bTitle=The+Fate+of+Ophelia&bArtist=Taylor+Swift')).toBe(true);
+    const table = document.querySelector('.comparison-details')!.textContent!;
+    expect(table).toContain('Tempo138 BPM128 BPM');
+    expect(table).toContain('Musical keyA# majorF major');
+    expect(table).toContain('Time signature4/4Unknown');
+    expect(table).toContain('Sadness · negative');
+    expect(table).toContain('71%overall match');
+    expect(table).toContain('Keys are compatible (closely related key).');
+    expect(text()).toContain('71% overall match: sound 74%, lyrics 66%.');
+  });
+
+  it('shows the sound profile panel with paired bars and lyric scores', async () => {
+    await render(songs);
+    const panel = [...document.querySelectorAll('.audio-panel')].find(p => p.textContent?.includes('Beyond the credits'))!;
+    expect(panel.textContent).toContain('Energy43 / 68');
+    expect(panel.textContent).toContain('Themes90%');
+    expect(panel.textContent).toContain('Matched to these songs by title and artist');
+  });
+
+  it('says plainly when a song is not in the sound dataset', async () => {
+    soundReply = { status: 'not-found', missing: ['b'] };
+    await render(songs);
+    expect(document.querySelector('.comparison-details')!.textContent).toContain('“The Fate of Ophelia” isn’t in the sound dataset');
+    expect(document.querySelector('.audio-panel')).toBeNull();
+    expect(document.querySelector('.selected-cards')!.textContent).toContain('The Fate of Ophelia'); // the rest still works
+  });
+
+  it('explains how to start the sound service when it is not running', async () => {
+    soundReply = { status: 'unavailable', hint: 'Start it with: cd song_compare && python backend/app.py' };
+    await render(songs);
+    expect(document.querySelector('.comparison-details')!.textContent).toContain('isn’t available right now. Start it with: cd song_compare && python backend/app.py');
+  });
+
+  it('compares the first song with a similar-sounding one found on MusicBrainz', async () => {
+    await render(songs);
+    await click(button('Kill Bill'));
+    expect(called('q=recording%3A%22Kill%20Bill%22%20AND%20artist%3A%22SZA%22%20AND%20status%3Aofficial')).toBe(true);
+    expect(window.location.search).toBe(`?songA=${VAMPIRE}&songB=${killBill.id}`);
+  });
+
+  it('picks the earliest-released MusicBrainz version of a similar song', async () => {
+    const later = { ...killBill, id: PATIENT_ZERO, releases: [{ id: 'cc000000-0000-4000-8000-00000000000b', title: 'Kill Bill (Live)', date: '2024-01-01' }] };
+    const original = { ...killBill, id: EXPECTATIONS, releases: [{ id: 'cc000000-0000-4000-8000-00000000000c', title: 'SOS', date: '2022-12-09' }] };
+    await render(songs);
+    const base = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (input: string) => input.includes('Kill%20Bill') ? new Response(JSON.stringify({ results: [later, original] })) : base(input));
+    await click(button('Kill Bill'));
+    expect(window.location.search).toBe(`?songA=${VAMPIRE}&songB=${EXPECTATIONS}`);
+    fetchMock.mockImplementation(base);
+  });
+
+  it('does not ask for sound data in artist comparisons', async () => {
+    await render('/compare/artists');
+    expect(called('/api/sound')).toBe(false);
+  });
+});
+
