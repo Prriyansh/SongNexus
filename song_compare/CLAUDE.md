@@ -1,7 +1,8 @@
 # song_compare/
 
 Song Compare: Ishita's Python (Flask) API that compares two songs on audio features,
-structure, credits and lyric analysis. It has no UI of its own; its analysis is the main part
+structure, credits and lyric analysis. Its standalone Sound & Lyrics UI is in `frontend/`,
+served at `/` with sidebar links back to the main app (`NEXUS_URL`). Its analysis is also the main part
 of Explore's two-song comparison in the Next.js app (`src/frontend/components/SongAnalysis.tsx`),
 via `src/app/api/sound` → `src/lib/sound.ts` → this API. Its `/api/search` powers the song pickers. On
 Vercel it's its own project (Root Directory `song_compare`) running `index.py` as a Python

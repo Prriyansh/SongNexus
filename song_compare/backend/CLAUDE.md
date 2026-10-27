@@ -5,7 +5,8 @@ The Flask service. Run with `python backend/app.py` from `song_compare/`.
 ## Files at this level
 
 - `app.py` — `create_app(data_dir=None)` builds the API: loads the catalog once and serves
-  `/` (lists endpoints), `/api/stats`, `/api/search`, `/api/match` (find a song by title and
+  `/` (standalone Sound & Lyrics page), `/config.js` (main app address), `/nexus/<name>`
+  (allowlisted shared stylesheets), `/api/stats`, `/api/search`, `/api/match` (find a song by title and
   artist; used by the main app), `/api/compare` and `/api/similar/<id>`. `int_arg`/`weight_arg`
   validate and clamp parameters (bad input → JSON 400). Port: `$PORT` or 5050.
 - `catalog.py` — `Catalog(data_dir)` loads `tracks.parquet`, `audio_bounds.json`, `tfidf.npz`,

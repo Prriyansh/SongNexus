@@ -40,14 +40,31 @@ def test_similar(client, lyric_ids):
     assert client.get("/api/similar/nope").status_code == 404
 
 
-def test_root_lists_the_endpoints(client):
-    body = strict_json(client.get("/"))
-    assert body["service"] == "song_compare" and "/api/match?title=&artist=" in body["endpoints"]
+def test_standalone_page_and_assets_are_served(client):
+    response = client.get("/")
+    assert response.status_code == 200 and response.mimetype == "text/html"
+    page = response.get_data(as_text=True)
+    assert "Hear the difference." in page
+    assert 'data-nexus="/about"' in page and 'data-nexus="/compare/artists"' in page
+    for path in ("/index.html", "/app.js", "/style.css"):
+        assert client.get(path).status_code == 200, path
+    for name in ("styles.css", "product.css", "integration.css"):
+        assert f'href="/nexus/{name}"' in page
+        style = client.get(f"/nexus/{name}")
+        assert style.status_code == 200 and style.mimetype == "text/css"
 
 
-def test_there_is_no_standalone_page_any_more(client):
-    for path in ("/index.html", "/app.js", "/nexus/styles.css", "/config.js"):
+def test_only_shared_stylesheets_are_exposed(client):
+    for path in ("/nexus/App.tsx", "/nexus/api.ts", "/nexus/..%2Fapi.ts"):
         assert client.get(path).status_code == 404, path
+
+
+def test_sidebar_links_use_the_main_app_address(client, monkeypatch):
+    response = client.get("/config.js")
+    assert response.mimetype == "text/javascript"
+    assert "http://localhost:3000" in response.get_data(as_text=True)
+    monkeypatch.setenv("NEXUS_URL", "https://nexus.example/")
+    assert client.get("/config.js").get_data(as_text=True) == 'window.NEXUS_URL = "https://nexus.example";\n'
 
 
 def test_api_answers_503_without_data(tmp_path):

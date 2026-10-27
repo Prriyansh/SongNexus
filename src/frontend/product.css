@@ -9,7 +9,8 @@
 .brand strong { font-family:inherit; font-size:14px; }
 .brand small { font-size:7px; letter-spacing:1px; }
 .sidebar-navigation { margin-top:33px; }
-.nav-option { border-radius:8px; padding:14px 13px; font-size:13px; font-weight:550; }
+.nav-option { border-radius:8px; padding:14px 13px; font-size:13px; font-weight:550; text-decoration:none; }
+.nav-option:focus-visible { outline:2px solid #ff6b83; outline-offset:2px; }
 .nav-option.active { background:#272125; }
 .nav-track { right:-14px; }
 .nav-caption { font-size:9px; letter-spacing:1.2px; }

@@ -1,6 +1,6 @@
 """
-Song Comparison API (Flask). Explore's two-song comparison in the Next.js app calls it through
-/api/sound; it has no page of its own.
+Song Comparison page and API (Flask). The standalone Sound & Lyrics page lives at /;
+Explore's two-song comparison also calls the API through Next.js /api/sound.
 
   GET /api/stats                      dataset size and cross dataset match rate
   GET /api/search?q=text              find songs by title or artist
@@ -8,13 +8,19 @@ Song Comparison API (Flask). Explore's two-song comparison in the Next.js app ca
   GET /api/compare?a=ID&b=ID          full side by side comparison
   GET /api/similar/ID?k=10            songs that sound most like this one
 """
+import json
 import math
 import os
+from pathlib import Path
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 
 from catalog import Catalog
 import similarity
+
+FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
+NEXUS_STYLES = Path(__file__).resolve().parents[2] / "src" / "frontend"
+NEXUS_STYLESHEETS = ("styles.css", "product.css", "integration.css")
 
 
 class BadRequest(Exception):
@@ -48,7 +54,7 @@ def weight_arg(name, default):
 
 def create_app(data_dir=None):
     """Builds the app. The catalog loads once here; tests pass a small demo catalog's folder."""
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder=str(FRONTEND), static_url_path="")
     try:
         cat = Catalog(data_dir) if data_dir else Catalog()
         load_error = None
@@ -67,8 +73,18 @@ def create_app(data_dir=None):
 
     @app.route("/")
     def index():
-        return jsonify(service="song_compare", endpoints=[
-            "/api/stats", "/api/search?q=", "/api/match?title=&artist=", "/api/compare?a=&b=", "/api/similar/<id>?k="])
+        return send_from_directory(FRONTEND, "index.html")
+
+    @app.route("/nexus/<name>")
+    def nexus_stylesheet(name):
+        if name not in NEXUS_STYLESHEETS:
+            return jsonify(error="Not found."), 404
+        return send_from_directory(NEXUS_STYLES, name, mimetype="text/css")
+
+    @app.route("/config.js")
+    def config_js():
+        nexus_url = os.environ.get("NEXUS_URL", "http://localhost:3000").rstrip("/")
+        return app.response_class(f"window.NEXUS_URL = {json.dumps(nexus_url)};\n", mimetype="text/javascript")
 
     @app.route("/api/stats")
     def stats():
