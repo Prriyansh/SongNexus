@@ -4,7 +4,10 @@ Compares two songs on how they sound (Spotify audio features), their structure, 
 and their lyrics (sentiment, themes, meaning), and finds more songs that sound alike. A Python
 (Flask) API built by Ishita. Its analysis is the main part of Explore's two-song comparison in
 the main app (how alike the songs are, sound profile, structure, lyrics, similar songs), and
-the song pickers search its library; it has no page of its own.
+the song pickers search its library. It also serves a separate **Sound & Lyrics** page at
+<http://localhost:5050> with its original song pickers and comparison layout. The main app's
+sidebar links here; this page's sidebar links back to About Me and Explore. Set `NEXUS_URL`
+on the Flask service to change the main app address (default `http://localhost:3000`).
 
 ## Run it
 

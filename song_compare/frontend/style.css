@@ -1,0 +1,28 @@
+/* Song Compare uses the main app's stylesheets (served at /nexus/*.css). Only what this page
+   needs on top of them lives here. */
+a.brand, a.nav-option, a.header-wordmark { text-decoration: none; }
+.nav-option svg, .brand-mark svg, .header-wordmark svg { flex-shrink: 0; }
+[data-icon] { display: inline-flex; align-items: center; }
+.left-column { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.audio-panel { margin-top: 0; }
+
+/* Overall match, shown at the top of the insights panel */
+.match-score { display: flex; align-items: baseline; gap: 8px; margin: 4px 0 14px; }
+.match-score strong { font-size: 54px; font-weight: 700; letter-spacing: -2px; line-height: 1; color: var(--white); }
+.match-score small { font-size: 12px; color: var(--muted); }
+.score-bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+.score-bars .audio-row { grid-template-columns: 70px 1fr 40px; margin: 0; }
+.score-bars .audio-bar { height: 6px; }
+.score-bars b { font-size: 12px; text-align: right; }
+.reason-list { margin: 6px 0 0; padding-left: 16px; font-size: 11px; line-height: 1.7; color: var(--muted); }
+
+/* Lyrics mood/themes side by side */
+.lyric-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 14px; }
+.lyric-sides strong { font-size: 12px; }
+.lyric-sides .chip-row { justify-content: flex-start; margin-top: 8px; }
+
+/* Chooser in "nothing picked yet" state */
+.chooser-button .placeholder { color: var(--muted); font-weight: 500; }
+.chooser-option .album-cover { flex-shrink: 0; }
+
+@media (max-width: 650px) { .lyric-sides { grid-template-columns: 1fr; } }

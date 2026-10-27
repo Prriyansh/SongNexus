@@ -13,8 +13,8 @@ pytest suite. Run `python -m pytest` from `song_compare/` (after `pip install -r
   fallback, similar songs.
 - `test_catalog.py` — loading, scaling, search, `find` by title/artist, JSON-safe details, time
   signatures, missing data.
-- `test_api.py` — every endpoint, `/api/match`, parameter validation (400s, clamping, NaN), no
-  page routes, port choice.
+- `test_api.py` — every endpoint, `/api/match`, parameter validation (400s, clamping, NaN),
+  standalone page/assets, shared stylesheet allowlist, sidebar address, port choice.
 - `test_deploy.py` — serving never imports data-prep packages; runtime requirements stay
   lean; `index.py` exposes the Flask app with the real catalog; `vercel.json` targets it.
 - `CLAUDE.md` — this guide.

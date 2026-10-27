@@ -16,6 +16,11 @@ npm run dev
 
 Then open <http://localhost:3000>.
 
+Explore keeps its **2 Songs** and **2 Artists** tabs. The sidebar's **Sound & Lyrics** link
+opens the separate comparison page at <http://localhost:5050>, whose sidebar links back to
+About Me and Explore. Set `NEXT_PUBLIC_SOUND_LYRICS_URL` before starting or building Next.js
+and `NEXUS_URL` for Flask if the two frontends use different addresses.
+
 | URL | What it shows |
 | --- | --- |
 | `/` or `/about` | About Me: your favourite artists, genres, albums and songs |

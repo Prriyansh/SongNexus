@@ -312,6 +312,27 @@ describe('About Me', () => {
 describe('Explore: songs, sound and lyrics', () => {
   const songs = `/compare/songs?songA=${VAMPIRE}&songB=${OPHELIA}`;
 
+  it('keeps 2 Songs under Explore and links separately to Sound & Lyrics', async () => {
+    await render(songs);
+    expect(document.querySelector('.song-analysis')).not.toBeNull();
+    expect(button('2 Songs').getAttribute('aria-pressed')).toBe('true');
+    expect(button('Explore').getAttribute('aria-current')).toBe('page');
+    expect(document.querySelector('.topbar-left > strong')?.textContent).toBe('Explore');
+    const soundLink = document.querySelector<HTMLAnchorElement>('nav a.nav-option')!;
+    expect(soundLink.getAttribute('aria-label')).toBe('Sound & Lyrics');
+    expect(soundLink.href).toBe('http://localhost:5050/');
+    expect(soundLink.hasAttribute('aria-current')).toBe(false);
+
+    await click(button('About Me'));
+    expect(window.location.pathname).toBe('/about');
+    await click(button('Explore'));
+    expect(window.location.pathname + window.location.search).toBe(songs);
+    expect(button('2 Songs').getAttribute('aria-pressed')).toBe('true');
+    await click(button('2 Artists'));
+    expect(window.location.pathname).toBe('/compare/artists');
+    expect(button('Explore').getAttribute('aria-current')).toBe('page');
+  });
+
   it('leads with the sound and lyrics analysis; MusicBrainz details come after it', async () => {
     await render(songs);
     expect(called('/api/sound?aTitle=vampire&aArtist=Olivia+Rodrigo&bTitle=The+Fate+of+Ophelia&bArtist=Taylor+Swift')).toBe(true);
