@@ -312,16 +312,13 @@ describe('About Me', () => {
 describe('Explore: songs, sound and lyrics', () => {
   const songs = `/compare/songs?songA=${VAMPIRE}&songB=${OPHELIA}`;
 
-  it('keeps 2 Songs under Explore and links separately to Sound & Lyrics', async () => {
+  it('keeps song comparisons under Explore with only About Me and Explore in the sidebar', async () => {
     await render(songs);
     expect(document.querySelector('.song-analysis')).not.toBeNull();
     expect(button('2 Songs').getAttribute('aria-pressed')).toBe('true');
     expect(button('Explore').getAttribute('aria-current')).toBe('page');
     expect(document.querySelector('.topbar-left > strong')?.textContent).toBe('Explore');
-    const soundLink = document.querySelector<HTMLAnchorElement>('nav a.nav-option')!;
-    expect(soundLink.getAttribute('aria-label')).toBe('Sound & Lyrics');
-    expect(soundLink.href).toBe('http://localhost:5050/');
-    expect(soundLink.hasAttribute('aria-current')).toBe(false);
+    expect(Array.from(document.querySelectorAll('nav[aria-label="Main navigation"] .nav-option'), item => item.textContent)).toEqual(['About Me', 'Explore']);
 
     await click(button('About Me'));
     expect(window.location.pathname).toBe('/about');
