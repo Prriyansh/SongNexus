@@ -72,7 +72,26 @@ export type ArtistDetails = Artist & {
   /** Null when the album browse failed; the rest of the details are still usable. */
   discography: Discography | null;
   links: LinkRef[];
+  relationships?: ArtistRelationship[];
 };
+
+export type ArtistRelationship = {
+  artist: Artist;
+  type: string;
+  direction?: string;
+  begin?: string;
+  end?: string;
+  ended?: boolean;
+};
+
+export type DiscoveryReason = {
+  kind: 'genre' | 'country' | 'era' | 'label' | 'member' | 'band' | 'shared-member' | 'collaborator';
+  text: string;
+  sourceUrl: string;
+  relatedTo: string;
+};
+export type RelatedArtist = Artist & { reasons: DiscoveryReason[] };
+export type ArtistNeighborhood = { artist: ArtistDetails; artists: RelatedArtist[]; failed: string[] };
 
 export type RecordingDetails = Song & {
   genres: Genre[];

@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
       beforeFiles: [
         { source: "/about", destination: "/" },
         { source: "/about/manual", destination: "/" },
+        { source: "/connections", destination: "/" },
         { source: "/compare/:mode(artists|songs)", destination: "/" },
         { source: "/prototype", destination: "/song-nexus.html" },
       ],

@@ -14,6 +14,7 @@ it never calls MusicBrainz or Deezer directly.
 | --- | --- |
 | `/`, `/about` | About Me: favourite artists, genres, albums and songs |
 | `/about/manual` | Add to your taste (MusicBrainz search; albums come from an artist's studio discography) |
+| `/connections?mode=comparison&artistA=&artistB=&song=` | Connection Web: two artists with genre-distance discovery; `mode=search` starts from the selected song |
 | `/compare/artists?artistA=&artistB=` | Explore: two artists, side by side, connection web, insights |
 | `/compare/songs?songA=&songB=` | Explore: two songs |
 | `/about?profile=…` | A shared About Me snapshot (read-only) |
@@ -22,6 +23,39 @@ it never calls MusicBrainz or Deezer directly.
 - `api.ts` is the browser client for our routes; `useAsync.ts` loads data per key.
 - `graph.ts` turns the collaborators response into the connection web; Helen's `graph-layout.ts`
   places and routes it. Solid lines are credits; the dashed line is shared genre tags.
+- `connection-web.ts` builds the dedicated Connection Web map, using an editorial genre topology
+  to choose intermediate search neighborhoods and fit a wider scope for distant selections.
+  Only the documented credit path has edges; similar discovery artists remain unlinked.
+  Detail zoom adds more artists around the pointer (map center for zoom buttons), including
+  neighborhoods of surrounding artists. `useWebDiscovery.ts` retains every loaded ID up to a
+  fixed capacity, while `artist-neighborhood.ts` combines genre/subgenre, country, album era,
+  release-label credits, memberships, former bands and shared members. Candidates carry catalog
+  evidence, and multi-signal matches rank first. Partial requests can be retried.
+  `web-detail.ts` assigns stable, nested detail tiers to world-space cells and their overview parents.
+  Overview representatives favor different styles; continuous opacity reveals finer tiers. Existing tiers are
+  preserved when catalog data arrives. Pan only translates these points and culls beyond an
+  offscreen buffer, so it cannot replace interior artists. Path nodes are always retained.
+  The toolbar counts artists inside the viewport, excluding buffered and other offscreen points.
+  `ConnectionWebCanvas.tsx` handles fixed-size cards on a scattered 2D canvas, pointer-centered
+  scroll zoom, drag/keyboard panning, reset, and details. `web-navigation.ts` projects avatar centers
+  and inverts both pan and zoom for discovery focus. Retained artist distances scale with camera zoom;
+  avatars and labels keep their pixel sizes. Camera motion is animated around the pointer or map
+  center, and lines and grid use the same scale. Append-only placement preserves world coordinates;
+  finer discoveries use spacing appropriate to their discovery zoom. Loading/status messages overlay the canvas
+  so their appearance cannot resize it. Neighborhood queries use the existing throttled transport.
+  Drag presentation defers catalog updates until release; camera input is coalesced into animation
+  frames and applied with a composited transform. Pointer cancellation, capture loss and blur end
+  the gesture cleanly. An avatar drag suppresses its trailing click; an ordinary click opens details.
+  The `is-connection-web` shell state bounds this destination to `100dvh`, prevents document
+  scrolling, removes its page footer, and lets the canvas flex between compact chrome and a
+  fixed selection dock. The other destinations retain normal document flow. See the
+  [viewport navigation prompt and verification plan](connection-web-flat-navigation.md).
+  See [the implementation prompt and plan](connection-web-plan.md) for the interaction brief.
+  See the [discovery data prompt](connection-web-progressive-discovery.md) and the current
+  [zoom-dependent detail prompt](connection-web-level-of-detail.md).
+  The current pan behavior and verification procedure are in the [pan UX plan and prompts](connection-web-pan-ux.md).
+  The current geometry and fading behavior are in the [spatial zoom plan and prompts](connection-web-spatial-zoom.md).
+  The directional pan pad and visible drag/zoom instruction hint have been removed.
 - `profile.ts` keeps About Me in localStorage (there are no accounts yet). Shared profile links
   are validated, and only Cover Art Archive images are allowed in them.
 - `playlist.ts` reads CSV/JSON/TXT playlist exports in the browser and matches the first 50

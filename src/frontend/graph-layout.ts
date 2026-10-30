@@ -10,6 +10,11 @@ export interface GraphNode {
   role?: string; // 'Comparison anchor' for the two selected nodes.
   contributor?: boolean;
   artUrl?: string | null;
+  discoveryAnchor?: string;
+  discoveryGenre?: string;
+  discoveryFocus?: { x: number; y: number };
+  discoveryZoom?: number;
+  detail?: string;
 }
 
 export interface GraphEdge {

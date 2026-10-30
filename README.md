@@ -16,7 +16,18 @@ npm run dev
 
 Then open <http://localhost:3000>.
 
-The sidebar contains **About Me** and **Explore**. Explore keeps its **2 Songs** and **2 Artists**
+The sidebar contains **About Me**, **Connection Web**, and **Explore**. Connection Web provides a
+single-song Search mode and a two-artist Comparison mode, with clickable artist details and a
+map whose initial artist selection follows genre distance. Drag to pan across the scattered map,
+and scroll to spread points apart and reveal finer detail, or zoom out to bring them together in a varied overview.
+Artist spacing, documented lines and the grid share the same zoom scale; detail fades between levels.
+The displayed set changes with zoom; discoveries and their positions stay cached for later detail.
+Panning moves stable artist points without reselecting those already in view.
+Drag and keyboard panning remain available without an on-screen directional pad or instruction hint.
+Matches can share genre/subgenre, country, album era, release labels, members or former bands.
+Avatars keep their size, and lines show only documented connections. No legend is shown.
+Connection Web fills the viewport: the document stays fixed while navigation happens inside the map.
+Explore keeps its **2 Songs** and **2 Artists**
 tabs, with sound and lyrics analysis included in **2 Songs**. The standalone comparison page
 remains available at <http://localhost:5050>, with sidebar links back to About Me and Explore.
 Set `NEXUS_URL` for Flask if the main app uses a different address.
@@ -24,6 +35,7 @@ Set `NEXUS_URL` for Flask if the main app uses a different address.
 | URL | What it shows |
 | --- | --- |
 | `/` or `/about` | About Me: your favourite artists, genres, albums and songs |
+| `/connections` | Connection Web: artist connections and single-song discovery |
 | `/compare/artists` | Explore: compare two artists (defaults to Olivia Rodrigo and Taylor Swift) |
 | `/compare/songs` | Explore: compare two songs |
 | `/prototype` | The earlier HTML prototype |

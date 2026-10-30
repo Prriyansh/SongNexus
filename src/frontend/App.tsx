@@ -1,31 +1,33 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import {
-  ArrowUpRight, Check, ChevronDown, ChevronRight,
+  ArrowUpRight, Check, ChevronDown, ChevronRight, Network,
   CircleUserRound, Compass, Copy, Filter, GitCompareArrows,
-  Heart, Info, Link2, Menu, Music2, Search, Share2,
+  Heart, Info, Link2, Menu, Music2, Share2,
   Sparkles, Users, X
 } from 'lucide-react';
-import type { Artist, ArtistDetails, RecordingDetails, Song, TrackRef } from '@/lib/types';
+import type { ArtistDetails, RecordingDetails, TrackRef } from '@/lib/types';
 import { formatDuration, partitionGenres } from '@/lib/types';
-import { artistDetails, collaborators, searchArtists, searchSongs, searchSoundSongs, songDetails, soundComparison, topTrack } from './api';
-import type { SimilarSong, SoundTrackBrief } from '@/lib/sound';
+import { artistDetails, collaborators, songDetails, soundComparison, topTrack } from './api';
+import type { SimilarSong } from '@/lib/sound';
 import { findRecording } from './resolve';
+import { SearchChooser } from './components/SearchChooser';
 import { SongAnalysis } from './components/SongAnalysis';
 import { buildGraph, songArtistPair } from './graph';
 import type { GraphInput } from './graph';
-import { albumSampleNote, artistCover, artistSubtitle, capitalize, coverForRelease, firstRelease, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, ROLE_LABELS, roleText, songArtists, studioAlbumText, yearOf } from './model';
+import { albumSampleNote, artistCover, artistSubtitle, capitalize, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, ROLE_LABELS, roleText, songArtists, studioAlbumText, yearOf } from './model';
 import { albumSnapshot, artistSnapshot, readStoredProfile, songSnapshot, storeProfile } from './profile';
 import type { MusicProfile } from './profile';
-import { buildPath, buildProfileShareUrl, buildShareUrl, comparisonFor, parseRoute, ROLE_FILTERS } from './routing';
+import { buildPath, buildProfileShareUrl, buildShareUrl, comparisonFor, defaultWeb, parseRoute, ROLE_FILTERS } from './routing';
 import type { Comparison, Route } from './routing';
 import type { EntityType, Selection } from './types';
 import { useAsync } from './useAsync';
 import { ArtistAvatar, ArtistPicture, AlbumCover } from './components/Artwork';
 import { AboutMe, useTaste } from './components/AboutMe';
 import { ConnectionGraph } from './components/ConnectionGraph';
+import { ConnectionWeb } from './components/ConnectionWeb';
 import { ComparisonDetails } from './components/ComparisonDetails';
 import { Modal } from './components/Modal';
 
@@ -93,75 +95,6 @@ function DetailDrawer({ selected, onClose, onSelect, profile, onProfileChange, o
     </>;
   };
   return <Modal drawer onClose={onClose} label={selected.type === 'artist' ? 'Artist details' : 'Song details'}>{top}{body()}{tip}</Modal>;
-}
-
-type ChooserItem = Artist | Song | SoundTrackBrief;
-type ChooserResults = { key: string; items?: ChooserItem[]; source?: 'dataset' | 'musicbrainz'; error?: string };
-const isDatasetSong = (item: ChooserItem): item is SoundTrackBrief => 'has_lyrics' in item;
-
-// Song pickers search the sound dataset first, so picked songs have the full sound and lyrics
-// analysis; a pick is then matched to its MusicBrainz recording. Without the sound service they
-// search MusicBrainz directly. Artist pickers always search MusicBrainz.
-function SearchChooser({ type, value, display, other, label, onChange }: { type: EntityType; value: string; display?: Details; other: string; label: string; onChange: (id: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const [found, setFound] = useState<ChooserResults>({ key: '' });
-  const [resolving, setResolving] = useState<{ id?: string; error?: string }>({});
-  const popRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (!open) return; const handler = (e: MouseEvent) => { if (popRef.current && !popRef.current.contains(e.target as Node)) setOpen(false); }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler); }, [open]);
-  const q = query.trim();
-  const key = `${type}:${q}`;
-  // 300 ms debounce; typing again cancels the request in flight.
-  useEffect(() => {
-    if (!open || q.length < 2) return;
-    const controller = new AbortController();
-    const fail = (error: unknown) => { if (!controller.signal.aborted) setFound({ key, error: error instanceof Error ? error.message : 'Search failed.' }); };
-    const timer = window.setTimeout(() => {
-      if (type === 'artist') {
-        searchArtists(q, controller.signal, 10).then(items => setFound({ key, items, source: 'musicbrainz' }), fail);
-        return;
-      }
-      searchSoundSongs(q, controller.signal)
-        .catch(() => ({ status: 'unavailable' }) as const) // any failure: fall back to MusicBrainz
-        .then(result => result.status === 'ok'
-          ? setFound({ key, items: result.results, source: 'dataset' })
-          : searchSongs(q, controller.signal, 10).then(items => setFound({ key, items, source: 'musicbrainz' })))
-        .catch(fail);
-    }, 300);
-    return () => { clearTimeout(timer); controller.abort(); };
-  }, [open, q, key, type]);
-  const items = found.key === key ? (found.items ?? []).filter(x => x.id !== other) : [];
-  const searching = q.length >= 2 && found.key !== key;
-  const where = type === 'song' && found.source !== 'musicbrainz' ? 'the song library' : 'MusicBrainz';
-
-  const pick = async (item: ChooserItem) => {
-    if (!isDatasetSong(item)) { onChange(item.id); setOpen(false); return; }
-    setResolving({ id: item.id });
-    try {
-      const recording = await findRecording(item.title, item.artists[0] ?? '');
-      if (!recording) { setResolving({ error: `Couldn’t find “${item.title}” on MusicBrainz.` }); return; }
-      setResolving({});
-      onChange(recording.id);
-      setOpen(false);
-    } catch (e) { setResolving({ error: e instanceof Error ? e.message : 'Search failed.' }); }
-  };
-  const option = (item: ChooserItem) => {
-    if (isDatasetSong(item)) return <><AlbumCover cover={{ id: item.id }} size="sm" /><span><strong>{item.title}</strong><small>{[item.artists.join(', '), item.album, item.genre && capitalize(item.genre)].filter(Boolean).join(' · ')}</small></span>{resolving.id === item.id && <small className="chooser-busy">Opening…</small>}</>;
-    if ('title' in item) { const release = firstRelease(item); return <><AlbumCover cover={{ id: item.id, artUrl: coverForRelease(release?.id) }} size="sm" /><span><strong>{item.title}</strong><small>{[songArtists(item), release?.title, yearOf(release?.date)].filter(Boolean).join(' · ')}</small></span>{value === item.id && <Check size={16} />}</>; }
-    return <><ArtistAvatar artist={item} size="sm" /><span><strong>{item.name}</strong><small>{item.disambiguation || artistSubtitle(item)}</small></span>{value === item.id && <Check size={16} />}</>;
-  };
-  const visual = display ? ('title' in display ? <AlbumCover cover={{ id: display.id, artUrl: display.representative?.artUrl }} size="sm" /> : <ArtistAvatar artist={{ ...display, artUrl: artistCover(display) }} size="sm" />) : <Music2 />;
-  return <div className="chooser" ref={popRef}><span className="field-label">{label}</span><button className={`chooser-button ${open ? 'open' : ''}`} aria-expanded={open} onClick={() => { setOpen(!open); setQuery(''); setResolving({}); }}>{visual}<strong>{display ? nameOf(display) : 'Loading…'}</strong><ChevronDown size={16} /></button>
-    {open && <div className="chooser-popover"><label className="chooser-search"><Search size={17} /><input aria-label={`Search ${type}s`} autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder={type === 'song' ? 'Search songs or artists…' : 'Search artists on MusicBrainz…'} /></label><div className="chooser-results">
-      {items.map(item => <button key={item.id} className="chooser-option" disabled={!!resolving.id} onClick={() => void pick(item)}>{option(item)}</button>)}
-      {q.length < 2 && <p className="no-match">Type at least 2 letters.</p>}
-      {searching && <p className="no-match">Searching {where}…</p>}
-      {found.key === key && found.error && <p className="no-match error-text">{found.error}</p>}
-      {resolving.error && <p className="no-match error-text" role="alert">{resolving.error}</p>}
-      {found.key === key && !found.error && !items.length && <p className="no-match">No matches in {where}.</p>}
-      {type === 'song' && found.key === key && !!items.length && <p className="chooser-note">{found.source === 'dataset' ? 'Songs with full sound and lyrics analysis (Spotify tracks up to 2022).' : 'From MusicBrainz. Sound and lyrics analysis isn’t available right now.'}</p>}
-    </div></div>}
-  </div>;
 }
 
 function SelectedCard({ kind, index, state, onDetails }: { kind: EntityType; index: number; state: ReturnType<typeof useAsync<Details>>; onDetails: (s: Selection) => void }) {
@@ -265,16 +198,21 @@ function ShareModal({ route, profile, onClose }: { route: Route; profile: MusicP
   const [note, setNote] = useState(''); const [copied, setCopied] = useState(false); const [copyError, setCopyError] = useState(false);
   const sharingProfile = route.page === 'about';
   const { comparison } = route;
-  const left = useAsync<Details>(sharingProfile ? null : `${comparison.kind}:${comparison.left}`, () => loadDetails(comparison.kind, comparison.left));
-  const right = useAsync<Details>(sharingProfile ? null : `${comparison.kind}:${comparison.right}`, () => loadDetails(comparison.kind, comparison.right));
-  const url = sharingProfile ? buildProfileShareUrl(window.location.origin, profile, note) : buildShareUrl(window.location.origin, comparison, note);
+  const web = route.web ?? defaultWeb();
+  const webSearch = route.page === 'connections' && web.mode === 'search';
+  const kind = route.page === 'connections' ? webSearch ? 'song' : 'artist' : comparison.kind;
+  const first = route.page === 'connections' ? webSearch ? web.song : web.left : comparison.left;
+  const second = route.page === 'connections' ? web.right : comparison.right;
+  const left = useAsync<Details>(sharingProfile ? null : `${kind}:${first}`, () => loadDetails(kind, first));
+  const right = useAsync<Details>(sharingProfile || webSearch ? null : `${kind}:${second}`, () => loadDetails(kind, second));
+  const url = sharingProfile ? buildProfileShareUrl(window.location.origin, profile, note) : route.page === 'connections' ? new URL(buildPath('connections', comparison, note, false, web), window.location.origin).href : buildShareUrl(window.location.origin, comparison, note);
   const copy = async () => { try { await navigator.clipboard.writeText(url); setCopied(true); } catch { const el = document.createElement('textarea'); el.value = url; document.body.appendChild(el); el.select(); const success = document.execCommand('copy'); setCopied(success); setCopyError(!success); el.remove(); } };
   return <Modal onClose={onClose} label={sharingProfile ? 'Share music profile' : 'Share music comparison'}>
     <div className="modal-heading"><div className="overline">{sharingProfile ? 'SHARE YOUR MUSIC TASTE' : 'SHARE A DISCOVERY'}</div><button className="icon-button" onClick={onClose} aria-label="Close share"><X size={19} /></button></div>
     <div className="share-emblem"><Share2 size={23} /></div>
     <h2>{sharingProfile ? 'Share your About Me.' : 'Pass the connection along.'}</h2>
-    <p className="share-pair">{sharingProfile ? `${profile.artists.length} artists · ${profile.genres.length} genres · ${profile.albums.length} albums · ${profile.songs.length} songs` : `${nameOf(left.data) || '…'} ↔ ${nameOf(right.data) || '…'}`}</p>
-    <p>{sharingProfile ? 'Copy a snapshot of your favorite artists, genres, albums, and songs. Anyone with the link can view it.' : 'Copy a link to this comparison and its role filter.'}</p>
+    <p className="share-pair">{sharingProfile ? `${profile.artists.length} artists · ${profile.genres.length} genres · ${profile.albums.length} albums · ${profile.songs.length} songs` : webSearch ? `“${nameOf(left.data) || '…'}” · Connection Web` : `${nameOf(left.data) || '…'} ↔ ${nameOf(right.data) || '…'}`}</p>
+    <p>{sharingProfile ? 'Copy a snapshot of your favorite artists, genres, albums, and songs. Anyone with the link can view it.' : route.page === 'connections' ? 'Copy a link to this Connection Web and its selected music.' : 'Copy a link to this comparison and its role filter.'}</p>
     <label className="field-label" htmlFor="share-note">OPTIONAL MESSAGE</label><textarea id="share-note" maxLength={300} value={note} onChange={e => { setNote(e.target.value); setCopied(false); }} placeholder={sharingProfile ? 'A little about my music taste...' : 'This is why these two sound so familiar...'} />
     <label className="field-label" htmlFor="share-url">LINK</label><input id="share-url" readOnly value={url} onFocus={e => e.currentTarget.select()} />
     {copyError && <p className="error-text" role="alert">Copy was unavailable. Select the link above and copy it manually.</p>}
@@ -285,6 +223,7 @@ function ShareModal({ route, profile, onClose }: { route: Route; profile: MusicP
 
 function App() {
   const [route, setRoute] = useState<Route>(() => parseRoute(window.location.pathname, window.location.search));
+  const [web, setWeb] = useState(() => route.web ?? defaultWeb());
   const [profile, setProfile] = useState(readStoredProfile);
   useEffect(() => { storeProfile(profile); }, [profile]);
   const [detail, setDetail] = useState<Selection | null>(null);
@@ -299,25 +238,30 @@ function App() {
   }, [menuOpen]);
   // A bare /compare/artists link gets the default pair written into the URL, so it can be shared.
   useEffect(() => {
-    if (route.page !== 'explore') return;
-    const path = buildPath('explore', route.comparison, route.note);
+    if (route.page === 'about') return;
+    const path = buildPath(route.page, route.comparison, route.note, false, route.web);
     if (window.location.pathname + window.location.search !== path) window.history.replaceState(null, '', path);
     // Only on first load; later changes go through go().
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Back/forward restore the page and comparison from the URL.
   useEffect(() => {
-    const handle = () => { setRoute(current => parseRoute(window.location.pathname, window.location.search, current.comparison)); setDetail(null); setShareOpen(false); setMenuOpen(false); };
+    const handle = () => {
+      const next = parseRoute(window.location.pathname, window.location.search);
+      setRoute(current => next.page === 'about' || next.page === 'connections' ? { ...next, comparison: current.comparison } : next);
+      if (next.web) setWeb(next.web);
+      setDetail(null); setShareOpen(false); setMenuOpen(false);
+    };
     window.addEventListener('popstate', handle);
     return () => window.removeEventListener('popstate', handle);
   }, []);
   const go = (next: Route, { replace = false, scroll = true } = {}) => {
-    const path = buildPath(next.page, next.comparison, next.note, next.manual);
+    const path = buildPath(next.page, next.comparison, next.note, next.manual, next.web ?? web);
     if (replace) window.history.replaceState(null, '', path); else window.history.pushState(null, '', path);
-    setRoute(next); setDetail(null); setShareOpen(false); setMenuOpen(false);
+    setRoute(next); if (next.web) setWeb(next.web); setDetail(null); setShareOpen(false); setMenuOpen(false);
     if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  const navigate = (p: Route['page']) => go({ page: p, manual: false, comparison, note: '' });
+  const navigate = (p: Route['page']) => go({ page: p, manual: false, comparison, web, note: '' });
   const updateComparison = (next: Comparison) => go({ page: 'explore', manual: false, comparison: next, note: '' }, { scroll: false });
   const compareFrom = (kind: EntityType, id: string) => {
     const keep = comparison.kind === kind ? (comparison.left !== id ? comparison.left : comparison.right) : undefined;
@@ -325,11 +269,11 @@ function App() {
   };
   const shared = page === 'about' ? route.profile : undefined;
 
-  return <div className="app-shell"><div className={`sidebar-backdrop ${menuOpen ? 'visible' : ''}`} onClick={() => setMenuOpen(false)} /><aside className={`sidebar ${menuOpen ? 'open' : ''}`}><button className="brand" onClick={() => navigate('about')} aria-label="Song Nexus home"><span className="brand-mark"><Music2 size={28} strokeWidth={2.5} /></span><span><strong>SONG NEXUS</strong></span></button><div className="sidebar-navigation"><span className="nav-caption">YOUR WORKSPACE</span><nav aria-label="Main navigation"><button className={`nav-option ${page === 'about' ? 'active' : ''}`} aria-label="About Me" aria-current={page === 'about' ? 'page' : undefined} onClick={() => navigate('about')}><CircleUserRound size={22} /><span>About Me</span>{page === 'about' && <span className="nav-track" />}</button><button className={`nav-option ${page === 'explore' ? 'active' : ''}`} aria-label="Explore" aria-current={page === 'explore' ? 'page' : undefined} onClick={() => navigate('explore')}><Compass size={22} /><span>Explore</span>{page === 'explore' && <span className="nav-track" />}</button></nav></div><div className="sidebar-bottom"><div className="sidebar-status"><span className="status-dot" />MUSICBRAINZ<span>v2.0</span></div></div></aside>
-    <div className="page-column"><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setMenuOpen(true)} aria-label="Open navigation"><Menu size={23} /></button><button className="header-wordmark" onClick={() => navigate('about')} aria-label="Song Nexus home"><Music2 size={21} /> SONG NEXUS<span></span></button><ChevronRight size={15} /><strong>{page === 'about' ? 'About Me' : 'Explore'}</strong></div><div className="topbar-right"><button className="top-share" aria-label="Share" onClick={() => setShareOpen(true)}><Share2 size={17} /><span>Share</span></button></div></header>
-      <main className="main-content">{page === 'about' ? <>{shared && <div className="shared-note"><CircleUserRound size={20} /><div><strong>Shared About Me</strong><p>{note || 'You’re viewing a shared music taste profile.'}</p></div><button className="secondary-button" onClick={() => navigate('about')}>View my About Me</button></div>}<AboutMe key={shared ? 'shared' : 'own'} onSelect={setDetail} profile={shared || profile} onProfileChange={setProfile} readOnly={!!shared} manual={route.manual} onManual={open => go({ ...route, manual: open, profile: undefined, note: '' }, { scroll: false })} /></>
-        : <Explore comparison={comparison} onComparison={updateComparison} onRole={role => go({ ...route, comparison: { ...comparison, role } }, { replace: true, scroll: false })} onDetails={setDetail} note={note} onDismissNote={() => go({ ...route, note: '' }, { replace: true, scroll: false })} />}
-        <footer><span>SONG NEXUS</span><span>Data from <a href="https://musicbrainz.org" target="_blank" rel="noreferrer">MusicBrainz</a> and the <a href="https://coverartarchive.org" target="_blank" rel="noreferrer">Cover Art Archive</a>; top songs ranked by Deezer; sound from the <a href="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset" target="_blank" rel="noreferrer">Spotify tracks dataset</a> and Genius lyrics.</span></footer></main>
-    </div>{detail && <DetailDrawer selected={detail} onClose={() => setDetail(null)} onSelect={setDetail} profile={profile} onProfileChange={setProfile} onCompare={compareFrom} />}{shareOpen && <ShareModal route={route} profile={shared || profile} onClose={() => setShareOpen(false)} />}</div>;
+  return <div className={`app-shell ${page === 'connections' ? 'is-connection-web' : ''}`}><div className={`sidebar-backdrop ${menuOpen ? 'visible' : ''}`} onClick={() => setMenuOpen(false)} /><aside className={`sidebar ${menuOpen ? 'open' : ''}`}><button className="brand" onClick={() => navigate('about')} aria-label="Song Nexus home"><span className="brand-mark"><Music2 size={28} strokeWidth={2.5} /></span><span><strong>SONG NEXUS</strong></span></button><div className="sidebar-navigation"><span className="nav-caption">YOUR WORKSPACE</span><nav aria-label="Main navigation"><button className={`nav-option ${page === 'about' ? 'active' : ''}`} aria-label="About Me" aria-current={page === 'about' ? 'page' : undefined} onClick={() => navigate('about')}><CircleUserRound size={22} /><span>About Me</span>{page === 'about' && <span className="nav-track" />}</button><button className={`nav-option ${page === 'connections' ? 'active' : ''}`} aria-label="Connection Web" aria-current={page === 'connections' ? 'page' : undefined} onClick={() => navigate('connections')}><Network size={22} /><span>Connection Web</span>{page === 'connections' && <span className="nav-track" />}</button><button className={`nav-option ${page === 'explore' ? 'active' : ''}`} aria-label="Explore" aria-current={page === 'explore' ? 'page' : undefined} onClick={() => navigate('explore')}><Compass size={22} /><span>Explore</span>{page === 'explore' && <span className="nav-track" />}</button></nav></div><div className="sidebar-bottom"><div className="sidebar-status"><span className="status-dot" />MUSICBRAINZ<span>v2.0</span></div></div></aside>
+    <div className="page-column"><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setMenuOpen(true)} aria-label="Open navigation"><Menu size={23} /></button><button className="header-wordmark" onClick={() => navigate('about')} aria-label="Song Nexus home"><Music2 size={21} /> SONG NEXUS<span></span></button><ChevronRight size={15} /><strong>{page === 'about' ? 'About Me' : page === 'connections' ? 'Connection Web' : 'Explore'}</strong></div><div className="topbar-right"><button className="top-share" aria-label="Share" onClick={() => setShareOpen(true)}><Share2 size={17} /><span>Share</span></button></div></header>
+      <main className={`main-content ${page === 'connections' ? 'web-main-content' : ''}`}>{page === 'about' ? <>{shared && <div className="shared-note"><CircleUserRound size={20} /><div><strong>Shared About Me</strong><p>{note || 'You’re viewing a shared music taste profile.'}</p></div><button className="secondary-button" onClick={() => navigate('about')}>View my About Me</button></div>}<AboutMe key={shared ? 'shared' : 'own'} onSelect={setDetail} profile={shared || profile} onProfileChange={setProfile} readOnly={!!shared} manual={route.manual} onManual={open => go({ ...route, manual: open, profile: undefined, note: '' }, { scroll: false })} /></>
+        : page === 'connections' ? <ConnectionWeb selection={web} onChange={next => go({ ...route, web: next, note: '' }, { scroll: false })} onSelect={setDetail} note={note} /> : <Explore comparison={comparison} onComparison={updateComparison} onRole={role => go({ ...route, comparison: { ...comparison, role } }, { replace: true, scroll: false })} onDetails={setDetail} note={note} onDismissNote={() => go({ ...route, note: '' }, { replace: true, scroll: false })} />}
+        {page !== 'connections' && <footer><span>SONG NEXUS</span><span>Data from <a href="https://musicbrainz.org" target="_blank" rel="noreferrer">MusicBrainz</a> and the <a href="https://coverartarchive.org" target="_blank" rel="noreferrer">Cover Art Archive</a>; top songs ranked by Deezer; sound from the <a href="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset" target="_blank" rel="noreferrer">Spotify tracks dataset</a> and Genius lyrics.</span></footer>}</main>
+    </div>{detail && <DetailDrawer selected={detail} onClose={() => setDetail(null)} onSelect={setDetail} profile={profile} onProfileChange={setProfile} onCompare={compareFrom} />}{shareOpen && <ShareModal route={{ ...route, web }} profile={shared || profile} onClose={() => setShareOpen(false)} />}</div>;
 }
 export default App;

@@ -1,7 +1,8 @@
 // Browser-side client for our own Next.js API routes. The page never calls MusicBrainz or
 // Deezer directly; the routes handle rate limits, retries and server caching.
-import type { Artist, ArtistDetails, CollaboratorComparison, RecordingDetails, Song, TopTrack } from '@/lib/types';
+import type { Artist, ArtistDetails, ArtistNeighborhood, CollaboratorComparison, RecordingDetails, Song, TopTrack } from '@/lib/types';
 import type { SoundResult, SoundSearch } from '@/lib/sound';
+import type { DiscoveryArtist } from './connection-web';
 
 export class ApiError extends Error {
   retryable: boolean;
@@ -58,11 +59,36 @@ const search = <T>(type: 'artist' | 'recording', query: string, signal?: AbortSi
 export const searchArtists = (query: string, signal?: AbortSignal, limit?: number) => search<Artist>('artist', query, signal, limit);
 export const searchSongs = (query: string, signal?: AbortSignal, limit?: number) => search<Song>('recording', query, signal, limit);
 
+/** A bounded search per style, preserving partial results when one neighborhood fails. */
+export function discoverWebArtists(journey: string[], focus: string[][] = []) {
+  const key = `web:${JSON.stringify([journey, focus])}`;
+  return once(key, async () => {
+    const results = await Promise.allSettled(journey.map(genre => {
+      const secondary = focus.find(tags => tags.includes(genre))?.find(tag => tag !== genre);
+      const query = [genre, ...(secondary ? [secondary] : [])].map(tag => `tag:"${tag.replace(/["\\]/g, '')}"`).join(' AND ');
+      return once(`web-query:${query}`, () => searchArtists(query, undefined, 16)
+        .then(artists => artists.filter(artist => !artist.tags.some(tag => tag.toLowerCase().includes('special purpose')) && !/^(various artists|\[unknown\]|\[no artist\])$/i.test(artist.name))
+          .map(artist => ({ ...artist, neighborhood: genre } as DiscoveryArtist))));
+    }));
+    const failed = results.flatMap((r, i) => r.status === 'rejected' ? [journey[i]] : []);
+    const artists = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+    // Partial failures must be retried by the explicit retry button, rather than cached forever.
+    if (failed.length) memo.delete(key);
+    return { artists, failed };
+  });
+}
+
 export const artistDetails = (id: string) =>
   once(`artist:${id}`, () => getJson<{ details: ArtistDetails }>(`/api/musicbrainz/details?type=artist&id=${id}`).then(r => r.details));
 
 export const songDetails = (id: string) =>
   once(`song:${id}`, () => getJson<{ details: RecordingDetails }>(`/api/musicbrainz/details?type=recording&id=${id}`).then(r => r.details));
+
+export const artistNeighborhood = (id: string): Promise<ArtistNeighborhood> => once(`neighborhood:${id}`, async () => {
+  const result = await getJson<{ neighborhood: ArtistNeighborhood }>(`/api/musicbrainz/neighborhood?id=${id}`);
+  if (result.neighborhood.failed.length) memo.delete(`neighborhood:${id}`);
+  return result.neighborhood;
+});
 
 /** Collaborators shared by two artists. A first scan of two big catalogues takes ~10 s. */
 export const collaborators = (a: string, b: string) =>

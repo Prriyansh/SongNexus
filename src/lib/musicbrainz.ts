@@ -118,7 +118,11 @@ type RawRelation = {
   type?: unknown;
   "target-type"?: unknown;
   url?: RawRelationUrl | null;
-  artist?: { id?: unknown; name?: unknown } | null;
+  artist?: RawArtist | null;
+  direction?: unknown;
+  begin?: unknown;
+  end?: unknown;
+  ended?: unknown;
 };
 
 type RawReleaseGroup = {
@@ -332,6 +336,11 @@ export function mapDiscography(browse: RawAlbumBrowse | null | undefined): Disco
 
 /** Maps an artist lookup plus its album browse (null when the browse failed). */
 export function mapArtistDetails(raw: RawArtist, albums: RawAlbumBrowse | null = null): ArtistDetails {
+  const relationships = (raw.relations ?? []).flatMap(relation => relation.artist && UUID_RE.test(str(relation.artist.id)) ? [{
+    artist: mapArtist(relation.artist), type: str(relation.type), direction: optionalStr(relation.direction),
+    begin: optionalStr(relation.begin), end: optionalStr(relation.end),
+    ended: typeof relation.ended === 'boolean' ? relation.ended : undefined,
+  }] : []);
   return {
     ...mapArtist(raw),
     gender: str(raw.gender),
@@ -340,6 +349,7 @@ export function mapArtistDetails(raw: RawArtist, albums: RawAlbumBrowse | null =
     rating: mapRating(raw.rating),
     links: mapLinks(raw.relations),
     discography: mapDiscography(albums),
+    ...(relationships.length ? { relationships } : {}),
   };
 }
 
@@ -750,7 +760,7 @@ function buildLookupUrl({ type, id }: DetailsParams): string {
   // Artist lookups skip release-groups: they're capped at 25 there. Albums come from a browse.
   const inc =
     type === "artist"
-      ? "genres+tags+ratings+url-rels"
+      ? "genres+tags+ratings+url-rels+artist-rels"
       : "genres+tags+ratings+artist-credits+releases+release-groups+url-rels";
   return `${MB_BASE}/${type}/${id}?inc=${inc}&fmt=json`;
 }
@@ -771,6 +781,14 @@ export async function searchMusicBrainz(
     const payload = await fetchJson(buildSearchUrl(input), options);
     return extractResults(input.type, payload);
   });
+}
+
+/** Server-only neighborhood requests share the existing cache, throttle and retry policy. */
+export function musicBrainzContext<T>(path: string, params: Record<string, string>, options: RequestOptions = {}): Promise<T> {
+  const query = new URLSearchParams({ ...params, fmt: 'json' });
+  const url = `${MB_BASE}/${path}?${query}`;
+  return withCache(`context:${url}`, params.query ? SEARCH_TTL_MS : LOOKUP_TTL_MS, options.useCache ?? true,
+    async () => await fetchJson(url, options) as T);
 }
 
 /** Looks up a single artist/recording and returns the enriched comparison data. */
