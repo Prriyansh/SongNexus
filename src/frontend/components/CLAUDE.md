@@ -28,3 +28,6 @@ React components for Helen's screens. Markup and class names follow her design; 
 
 Components take data and callbacks as props; fetching happens through `../api.ts` (via
 `useAsync` or event handlers), never with `fetch` directly.
+
+- `ArtistInsightsPanel.tsx` — bio, awards, labels, audience and shared facts on a two-artist comparison.
+- `TasteWeb.tsx` — the My playlist option and the Friends page.

@@ -7,7 +7,7 @@ import { graphEdgeKey, graphFit, routeGraphEdges } from '../graph-layout';
 import type { GraphEdge } from '../graph-layout';
 import { ROLE_LABELS } from '../model';
 import type { Selection } from '../types';
-import { ArtistAvatar, AlbumCover } from './Artwork';
+import { ArtistAvatar, ArtistPicture, AlbumCover } from './Artwork';
 
 // The parent keys this component by the comparison, so a new pair starts with a fresh view.
 export function ConnectionGraph({ input, status, onSelect }: { input: GraphInput; status?: string; onSelect: (s: Selection) => void }) {
@@ -70,7 +70,7 @@ export function ConnectionGraph({ input, status, onSelect }: { input: GraphInput
   } : undefined;
 
   return <div className="relationship-graph">
-    <div ref={canvas} className="graph-canvas" tabIndex={0} aria-label="Connection web. Drag the background to pan, or use arrow keys. Select a node to explore, or a connection for relationship details." onKeyDown={e => {
+    <div ref={canvas} className="graph-canvas" style={{ height: Math.max(520, Math.min(860, graph.height + 60)) }} tabIndex={0} aria-label="Connection web. Drag the background to pan, or use arrow keys. Select a node to explore, or a connection for relationship details." onKeyDown={e => {
       if (e.key === 'Escape') { clearSelection(); setHoveredId(null); setHoveredEdgeKey(null); }
       if (e.target !== e.currentTarget) return;
       const move: Record<string, [number, number]> = { ArrowLeft: [30, 0], ArrowRight: [-30, 0], ArrowUp: [0, 30], ArrowDown: [0, -30] };
@@ -92,7 +92,7 @@ export function ConnectionGraph({ input, status, onSelect }: { input: GraphInput
             const key = graphEdgeKey(edge);
             const active = activeEdge ? key === activeEdgeKey : !!focusId && (edge.from === focusId || edge.to === focusId);
             return <g key={key} className={`graph-link ${edge.category === 'similarity' ? 'is-similarity' : 'is-factual'} ${edge.onPath ? 'is-path' : ''} ${active ? 'is-active' : ''} ${focusing && !active ? 'is-dimmed' : ''}`}>
-              <path className="graph-link-line" d={d} fill="none" strokeDasharray={edge.category === 'similarity' ? '5 6' : undefined} vectorEffect="non-scaling-stroke"/>
+              <path className="graph-link-line" d={d} fill="none" strokeDasharray={edge.category === 'similarity' ? '5 6' : edge.writingOnly ? '2 5' : undefined} vectorEffect="non-scaling-stroke"/>
               <path className="graph-link-hit" data-graph-edge={key} d={d} fill="none" stroke="transparent" strokeWidth={14} vectorEffect="non-scaling-stroke" role="button" tabIndex={0} aria-label={edgeDescription(edge)} aria-pressed={selectedEdgeKey === key}
                 onPointerEnter={() => { setHoveredEdgeKey(key); setHoveredId(null); }} onPointerLeave={() => setHoveredEdgeKey(null)}
                 onFocus={() => { setHoveredEdgeKey(key); setHoveredId(null); }} onBlur={() => setHoveredEdgeKey(null)}
@@ -111,7 +111,7 @@ export function ConnectionGraph({ input, status, onSelect }: { input: GraphInput
             onPointerEnter={() => { setHoveredId(node.id); setHoveredEdgeKey(null); }} onPointerLeave={() => setHoveredId(null)}
             onFocus={() => { setHoveredId(node.id); setHoveredEdgeKey(null); }} onBlur={() => setHoveredId(null)}
             aria-pressed={selectedId === node.id} aria-label={`${node.label}, ${primary ? `comparison ${node.id === left ? 'one' : 'two'}` : subtitle}. Select node`} title={`${node.label} · ${subtitle}`}>
-            <span className="graph-node-visual">{node.entityType === 'song' ? <AlbumCover cover={{ id: node.id, artUrl: node.artUrl }}/> : <ArtistAvatar artist={{ id: node.id, name: node.label, artUrl: node.artUrl }}/>}{primary && <span className="graph-anchor-index">{node.id === left ? '1' : '2'}</span>}</span>
+            <span className="graph-node-visual">{node.entityType === 'song' ? <AlbumCover cover={{ id: node.id, artUrl: node.artUrl }}/> : contributor ? <ArtistPicture artist={{ id: node.id, name: node.label }}/> : <ArtistAvatar artist={{ id: node.id, name: node.label, artUrl: node.artUrl }}/>}{primary && <span className="graph-anchor-index">{node.id === left ? '1' : '2'}</span>}</span>
             <strong>{node.label}</strong><small>{subtitle}</small>
           </button>;
         })}

@@ -62,6 +62,8 @@ export type Discography = {
   lastYear: string;
   /** Up to a handful of representative studio albums, oldest first. */
   representative: ReleaseRef[];
+  /** Titles of the studio albums read, so other sources can pick albums over singles. */
+  studioTitles?: string[];
 };
 
 export type ArtistDetails = Artist & {
@@ -73,7 +75,11 @@ export type ArtistDetails = Artist & {
   discography: Discography | null;
   links: LinkRef[];
   relationships?: ArtistRelationship[];
+  /** This artist's ids elsewhere, from MusicBrainz's own url links, so other sources match exactly. */
+  externalIds?: ExternalIds;
 };
+
+export type ExternalIds = { wikidata?: string; discogs?: string; genius?: string };
 
 export type ArtistRelationship = {
   artist: Artist;
@@ -83,15 +89,6 @@ export type ArtistRelationship = {
   end?: string;
   ended?: boolean;
 };
-
-export type DiscoveryReason = {
-  kind: 'genre' | 'country' | 'era' | 'label' | 'member' | 'band' | 'shared-member' | 'collaborator';
-  text: string;
-  sourceUrl: string;
-  relatedTo: string;
-};
-export type RelatedArtist = Artist & { reasons: DiscoveryReason[] };
-export type ArtistNeighborhood = { artist: ArtistDetails; artists: RelatedArtist[]; failed: string[] };
 
 export type RecordingDetails = Song & {
   genres: Genre[];
@@ -116,20 +113,179 @@ export type Collaborator = {
   trackCount: { a: number; b: number };
   /** A few of those recordings per artist. */
   tracks: { a: TrackRef[]; b: TrackRef[] };
+  /** First and last year of the albums crediting them, per artist; null when undated. */
+  years?: { a: YearSpan | null; b: YearSpan | null };
 };
+
+export type YearSpan = { first: string; last: string };
 
 /**
  * What a collaborator scan covered: the artist's most recent studio albums (unit "albums"), or,
  * for artists without studio albums, one page of their recordings (unit "recordings").
  */
-export type Coverage = { scanned: number; total: number; unit: "albums" | "recordings" };
+export type Coverage = {
+  scanned: number;
+  total: number;
+  unit: "albums" | "recordings";
+  /** True when time ran out or a request failed before the scan finished; asking again continues it. */
+  partial?: boolean;
+};
 
 export type CollaboratorComparison = {
   mutual: Collaborator[];
-  /** Recordings where one artist is credited on the other's catalogue. */
+  /** Recordings where one artist performed or worked on the other's catalogue. */
   direct: { bOnA: TrackRef[]; aOnB: TrackRef[] };
+  /**
+   * Recordings where one artist's only credit is as a songwriter. These can come from a sample or
+   * interpolation of an older song, so they don't by themselves mean the two worked together.
+   */
+  writing?: { bOnA: TrackRef[]; aOnB: TrackRef[] };
   /** How much of each catalogue was scanned. */
   coverage: { a: Coverage; b: Coverage };
+};
+
+// --- Credits from sources other than MusicBrainz ------------------------------
+
+export type CreditSource = "genius" | "discogs";
+
+/** Where a credit was found: a song or release page anyone can open to check it. */
+export type CreditEvidence = { title: string; url: string; year: string };
+
+/** Someone one source credits on both artists' work. Ids only compare within that source. */
+export type SourcedCollaborator = {
+  source: CreditSource;
+  id: string;
+  name: string;
+  url: string;
+  roles: { a: string[]; b: string[] };
+  count: { a: number; b: number };
+  evidence: { a: CreditEvidence[]; b: CreditEvidence[] };
+};
+
+/**
+ * What happened with one source. "no-key": no token is configured. "no-match": the artist couldn't
+ * be identified there with confidence. "partial": time ran out or some requests failed.
+ */
+export type SourceReport = {
+  source: string;
+  status: "ok" | "partial" | "no-key" | "no-match" | "failed";
+  scanned?: { a: number; b: number };
+  unit?: "albums" | "songs";
+};
+
+export type MoreCredits = {
+  collaborators: SourcedCollaborator[];
+  /** Work where one source credits one artist on the other's release or song. */
+  direct: (CreditEvidence & { source: CreditSource })[];
+  sources: SourceReport[];
+};
+
+// --- Facts about one artist from reference sources ------------------------------
+
+export type WikiLabelled = { id: string; name: string; year: string };
+
+export type ArtistFacts = {
+  wikidataUrl: string;
+  description: string;
+  /** First year of activity, as Wikidata records it. */
+  activeFrom: string;
+  awards: WikiLabelled[];
+  nominations: WikiLabelled[];
+  labels: WikiLabelled[];
+  wikipedia: { url: string; extract: string; imageUrl: string | null } | null;
+};
+
+export type ArtistAudience = {
+  listenBrainz: { listeners: number; listens: number; url: string } | null;
+  lastFm: { listeners: number; plays: number; url: string } | null;
+};
+
+export type ArtistInsight = { id: string; facts: ArtistFacts | null; audience: ArtistAudience };
+
+export type SimilarArtist = { name: string; mbid: string | null; url: string };
+
+export type ArtistInsights = {
+  a: ArtistInsight;
+  b: ArtistInsight;
+  shared: {
+    awards: WikiLabelled[];
+    labels: WikiLabelled[];
+    /** Artists Last.fm lists as similar to both. Listener similarity, never a collaboration. */
+    similarArtists: SimilarArtist[];
+  };
+  sources: SourceReport[];
+};
+
+// --- What's similar to an artist or song, for the Connection Web ------------------
+
+export type SimilarReason = {
+  /** listeners: played in the same sessions. related: listed by Deezer. style: shared tags. sound: calculated audio match. */
+  kind: "listeners" | "related" | "style" | "sound";
+  text: string;
+  sourceUrl?: string;
+};
+
+export type SimilarNode = {
+  kind: "artist" | "song";
+  id: string;
+  name: string;
+  subtitle: string;
+  artist?: string;
+  imageUrl: string | null;
+  /** 0–1, relative to the closest match on this map. Calculated, and drives the distance from the center. */
+  similarity: number;
+  /** Order to show them in when there isn't room for all. */
+  rank: number;
+  listeners: number | null;
+  reasons: SimilarReason[];
+};
+
+/** "listeners": the two are played in the same sessions. "performed": the artist performs the song. */
+export type SimilarLink = { from: string; to: string; kind: "listeners" | "performed" };
+
+export type SimilarWeb = {
+  center: SimilarNode;
+  artists: SimilarNode[];
+  songs: SimilarNode[];
+  links: SimilarLink[];
+  sources: SourceReport[];
+  /** The songs the similar songs were found from. */
+  seedSongs: string[];
+};
+
+// --- A map from one playlist, or a playlist and a friend's -----------------------
+
+export type PlaylistSong = { title: string; artist: string };
+export type TasteRequest = { mine: PlaylistSong[]; friend?: PlaylistSong[]; friendName?: string };
+
+/**
+ * mine / theirs: on one playlist only. shared: on both. for-me: on the friend's playlist, and close to
+ * what I play. for-them: the reverse. new: on neither, and similar to what's there.
+ */
+export type TasteGroup = "mine" | "theirs" | "shared" | "for-me" | "for-them" | "new";
+
+export type TasteNode = {
+  kind: "artist" | "song";
+  id: string;
+  name: string;
+  subtitle: string;
+  artist?: string;
+  /** MusicBrainz id when known, so it can be opened and explored. */
+  mbid: string | null;
+  imageUrl: string | null;
+  group: TasteGroup;
+  /** Songs on the playlists, or how many of the playlists' artists point to it. */
+  weight: number;
+  reasons: SimilarReason[];
+};
+
+export type TasteLink = { from: string; to: string; kind: "contains" | "similar" | "recommended" };
+
+export type TasteMap = {
+  nodes: TasteNode[];
+  links: TasteLink[];
+  stats: { mineSongs: number; mineArtists: number; friendSongs: number; friendArtists: number; sharedArtists: number; sharedSongs: number; similarLinks: number };
+  sources: SourceReport[];
 };
 
 /** An artist's most popular track (ranked by Deezer), matched to a MusicBrainz recording. */

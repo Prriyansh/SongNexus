@@ -10,11 +10,6 @@ export interface GraphNode {
   role?: string; // 'Comparison anchor' for the two selected nodes.
   contributor?: boolean;
   artUrl?: string | null;
-  discoveryAnchor?: string;
-  discoveryGenre?: string;
-  discoveryFocus?: { x: number; y: number };
-  discoveryZoom?: number;
-  detail?: string;
 }
 
 export interface GraphEdge {
@@ -27,6 +22,8 @@ export interface GraphEdge {
   sourceUrls?: string[];
   score?: number;
   onPath?: boolean;
+  /** A songwriting credit alone: true, but not evidence the two worked together. */
+  writingOnly?: boolean;
   relationships?: GraphEdge[]; // Underlying records for a grouped visible edge.
 }
 
@@ -76,47 +73,51 @@ export function presentEdges(records: GraphEdge[], anchors: string[], path: stri
   return [...chosen.values()];
 }
 
-// A horizontal factual spine with balanced satellite rows; narrow containers
-// use the same structure vertically. All coordinates are world-space pixels.
+// Columns from left to right along the factual path, with everyone else stacked in the column
+// between the people they connect. All coordinates are world-space pixels.
 export function layoutComparison(nodes: GraphNode[], edges: GraphEdge[], anchors: string[], path: string[], narrow = false): Omit<ComparisonGraph, 'expandable'> {
   const spine = path.length ? path : anchors;
-  const slots = Math.max(spine.length, nodes.length > 6 ? (narrow ? 3 : 4) : 2);
-  const pitchX = narrow ? 116 : 150, pitchY = 146;
+  const pitchX = narrow ? 128 : 230, pitchY = 124;
   const nodeWidth = narrow ? 104 : 124;
-  const positions = new Map<string, [number, number]>();
-  const owner = new Map<string, number>();
-  spine.forEach((id, i) => {
-    const slot = Math.round(i * (slots - 1) / Math.max(1, spine.length - 1));
-    positions.set(id, narrow ? [0, slot] : [slot, 0]); owner.set(id, slot);
-  });
-  // Assign satellites to their closest factual spine node, using similarity
-  // only when no visible factual route exists.
+  const column = new Map<string, number>();
+  // Two anchors with people to place leave a column free between them.
+  const stride = spine.length === 2 && nodes.length > 2 ? 2 : 1;
+  spine.forEach((id, i) => column.set(id, i * stride));
   for (const category of ['factual', 'similarity']) {
     let changed = true;
     while (changed) {
       changed = false;
-      for (const edge of edges) if (edge.category === category) {
-        for (const [a, b] of [[edge.from, edge.to], [edge.to, edge.from]]) if (owner.has(a) && !owner.has(b)) { owner.set(b, owner.get(a)!); changed = true; }
+      for (const node of nodes) if (!column.has(node.id)) {
+        const linked = edges.filter(e => e.category === category && (e.from === node.id || e.to === node.id))
+          .flatMap(e => column.get(e.from === node.id ? e.to : e.from) ?? []);
+        if (linked.length) { column.set(node.id, Math.round(linked.reduce((sum, c) => sum + c, 0) / linked.length)); changed = true; }
       }
     }
   }
-  const occupied = new Set([...positions.values()].map(p => p.join(',')));
-  for (const node of nodes) if (!positions.has(node.id)) {
-    const desired = owner.get(node.id) ?? (slots - 1) / 2;
-    const options: { x: number; y: number; cost: number }[] = [];
-    for (let depth = 1; depth <= nodes.length; depth++) for (const side of [-1, 1]) for (let slot = 0; slot < slots; slot++) {
-      const [x, y] = narrow ? [side * depth, slot] : [slot, side * depth];
-      if (!occupied.has(`${x},${y}`)) options.push({ x, y, cost: (depth - 1) * slots + Math.abs(slot - desired) + (side === 1 ? .05 : 0) });
-    }
-    options.sort((a, b) => a.cost - b.cost || a.y - b.y || a.x - b.x);
-    const { x, y } = options[0]; positions.set(node.id, [x, y]); occupied.add(`${x},${y}`);
+  const columns = Math.max(...column.values(), 0);
+  // Stack each column outward from the middle row, keeping the path itself straight.
+  const rows = new Map<string, number>();
+  const used = new Map<number, number>();
+  for (const id of spine) rows.set(id, 0);
+  for (const node of nodes) if (!rows.has(node.id)) {
+    const c = column.get(node.id) ?? Math.round(columns / 2);
+    column.set(node.id, c);
+    const taken = (used.get(c) ?? 0) + 1;
+    used.set(c, taken);
+    const hasMiddle = spine.some(id => column.get(id) === c);
+    const slot = hasMiddle ? taken : taken - 1;
+    rows.set(node.id, slot % 2 ? -(slot + 1) / 2 : slot / 2);
   }
-  const xs = [...positions.values()].map(p => p[0]), ys = [...positions.values()].map(p => p[1]);
-  const minX = Math.min(...xs), minY = Math.min(...ys);
-  const marginX = nodeWidth / 2 + 24, marginY = 82;
-  const width = (Math.max(...xs) - minX) * pitchX + marginX * 2;
-  const height = (Math.max(...ys) - minY) * pitchY + marginY * 2;
-  return { nodes: nodes.map(node => { const [x, y] = positions.get(node.id)!; return { ...node, x: marginX + (x - minX) * pitchX, y: marginY + (y - minY) * pitchY }; }), edges, width, height, nodeWidth };
+  const allRows = [...rows.values()];
+  const minRow = Math.min(...allRows), maxRow = Math.max(...allRows);
+  const marginX = nodeWidth / 2 + 24, marginY = 96;
+  return {
+    nodes: nodes.map(node => ({ ...node, x: marginX + column.get(node.id)! * pitchX, y: marginY + (rows.get(node.id)! - minRow) * pitchY })),
+    edges,
+    width: columns * pitchX + marginX * 2,
+    height: (maxRow - minRow) * pitchY + marginY * 2,
+    nodeWidth,
+  };
 }
 
 export function graphFit(width: number, height: number, viewportWidth: number, viewportHeight: number) {
@@ -124,79 +125,39 @@ export function graphFit(width: number, height: number, viewportWidth: number, v
 }
 
 type Point = { x: number; y: number };
-type Segment = { a: Point; b: Point };
 export interface RoutedEdge { edge: GraphEdge; d: string; midpoint: Point; points: Point[]; }
 
-// Orthogonal routing uses the gaps between node cards. This also protects the
-// labels, rather than only avoiding the smaller artwork circles.
+const CARD_HALF_HEIGHT = 62;
+const cubicMidpoint = (a: Point, c1: Point, c2: Point, b: Point): Point => ({ x: (a.x + 3 * c1.x + 3 * c2.x + b.x) / 8, y: (a.y + 3 * c1.y + 3 * c2.y + b.y) / 8 });
+
+// Curves from card edge to card edge. Neighbouring columns never cross a card; a line that skips a
+// column arcs over the top (credits) or under the bottom (shared genres) of the whole graph.
 export function routeGraphEdges(graph: Omit<ComparisonGraph, 'expandable'>): RoutedEdge[] {
-  const boxes = graph.nodes.map(n => ({ id: n.id, left: n.x - graph.nodeWidth / 2 - 8, right: n.x + graph.nodeWidth / 2 + 8, top: n.y - 64, bottom: n.y + 64, x: n.x, y: n.y }));
-  const xs = [...new Set([12, graph.width - 12, ...boxes.flatMap(b => [b.left, b.x, b.right])])].sort((a, b) => a - b);
-  const ys = [...new Set([12, graph.height - 12, ...boxes.flatMap(b => [b.top, b.y, b.bottom])])].sort((a, b) => a - b);
-  const points = xs.flatMap(x => ys.map(y => ({ x, y })));
-  const inside = (p: Point) => boxes.some(b => p.x > b.left && p.x < b.right && p.y > b.top && p.y < b.bottom);
-  const blocked = points.map(inside);
-  const clear = (a: Point, b: Point) => !boxes.some(box => a.x === b.x
-    ? a.x > box.left && a.x < box.right && Math.max(a.y, b.y) > box.top && Math.min(a.y, b.y) < box.bottom
-    : a.y > box.top && a.y < box.bottom && Math.max(a.x, b.x) > box.left && Math.min(a.x, b.x) < box.right);
-  const neighbors = points.map((p, i) => {
-    if (blocked[i]) return [];
-    return [i - ys.length, i + ys.length, ...(i % ys.length ? [i - 1] : []), ...(i % ys.length < ys.length - 1 ? [i + 1] : [])]
-      .filter(j => j >= 0 && j < points.length && !blocked[j] && clear(p, points[j]));
-  });
-  const used: Segment[] = [];
-  const result: RoutedEdge[] = [];
+  const half = graph.nodeWidth / 2;
+  const lookup = new Map(graph.nodes.map(n => [n.id, n]));
+  const xs = [...new Set(graph.nodes.map(n => n.x))].sort((a, b) => a - b);
+  const pitch = xs.length > 1 ? xs[1] - xs[0] : 0;
   const sorted = [...graph.edges].sort((a, b) => Number(!!b.onPath) - Number(!!a.onPath) || Number(a.category === 'similarity') - Number(b.category === 'similarity'));
-  for (const edge of sorted) {
-    const from = boxes.find(b => b.id === edge.from)!, to = boxes.find(b => b.id === edge.to)!;
-    const parallel = result.filter(r => pairKey(r.edge.from, r.edge.to) === pairKey(edge.from, edge.to)).flatMap(r => r.points.slice(1).map((b, i) => ({ a: r.points[i], b })));
-    const ports = (b: typeof from) => [[b.left, b.y], [b.right, b.y], [b.x, b.top], [b.x, b.bottom]].map(([x, y]) => xs.indexOf(x) * ys.length + ys.indexOf(y));
-    const goals = new Set(ports(to));
-    const distance = new Map<number, number>(), previous = new Map<number, number>();
-    // State includes arrival direction so turns can be penalized consistently.
-    const queue: { state: number; cost: number }[] = ports(from).map(i => ({ state: i * 3, cost: 0 }));
-    queue.forEach(q => distance.set(q.state, 0));
-    let finish: number | undefined;
-    while (queue.length) {
-      queue.sort((a, b) => b.cost - a.cost);
-      const current = queue.pop()!;
-      if (current.cost !== distance.get(current.state)) continue;
-      const i = Math.floor(current.state / 3), direction = current.state % 3;
-      if (goals.has(i)) { finish = current.state; break; }
-      for (const j of neighbors[i]) {
-        const a = points[i], b = points[j], nextDirection = a.x === b.x ? 1 : 2;
-        const interference = [...used, ...parallel].reduce((cost, s) => {
-          const vertical = a.x === b.x, otherVertical = s.a.x === s.b.x;
-          if (vertical === otherVertical) {
-            const overlap = vertical ? a.x === s.a.x && Math.max(Math.min(a.y, b.y), Math.min(s.a.y, s.b.y)) < Math.min(Math.max(a.y, b.y), Math.max(s.a.y, s.b.y))
-              : a.y === s.a.y && Math.max(Math.min(a.x, b.x), Math.min(s.a.x, s.b.x)) < Math.min(Math.max(a.x, b.x), Math.max(s.a.x, s.b.x));
-            // Parallel categories must remain independently visible/selectable.
-            return cost + (overlap ? (parallel.includes(s) ? 600 : 16) : 0);
-          }
-          const v = vertical ? { a, b } : s, h = vertical ? s : { a, b };
-          return cost + (v.a.x > Math.min(h.a.x, h.b.x) && v.a.x < Math.max(h.a.x, h.b.x) && h.a.y > Math.min(v.a.y, v.b.y) && h.a.y < Math.max(v.a.y, v.b.y) ? 32 : 0);
-        }, 0);
-        const cost = current.cost + Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + (direction && direction !== nextDirection ? 18 : 0) + interference;
-        const state = j * 3 + nextDirection;
-        if (cost < (distance.get(state) ?? Infinity)) { distance.set(state, cost); previous.set(state, current.state); queue.push({ state, cost }); }
-      }
+  return sorted.flatMap(edge => {
+    const from = lookup.get(edge.from), to = lookup.get(edge.to);
+    if (!from || !to) return [];
+    const [left, right] = from.x <= to.x ? [from, to] : [to, from];
+    const curve = (a: Point, c1: Point, c2: Point, b: Point): RoutedEdge =>
+      ({ edge, d: `M ${a.x} ${a.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${b.x} ${b.y}`, midpoint: cubicMidpoint(a, c1, c2, b), points: [a, b] });
+    if (left.x === right.x) {
+      // Same column: bow out to the side.
+      const x = left.x + half, bow = x + 34;
+      return [curve({ x, y: left.y }, { x: bow, y: left.y }, { x: bow, y: right.y }, { x, y: right.y })];
     }
-    if (finish === undefined) continue; // No off-canvas fallback through labels.
-    const route: Point[] = [];
-    for (let state: number | undefined = finish; state !== undefined; state = previous.get(state)) route.unshift(points[Math.floor(state / 3)]);
-    for (let i = 1; i < route.length; i++) used.push({ a: route[i - 1], b: route[i] });
-    // Collinear grid points collapse to a short, gently rounded SVG path.
-    const corners = route.filter((p, i) => !i || i === route.length - 1 || (route[i - 1].x === p.x) !== (p.x === route[i + 1].x));
-    let d = `M ${corners[0].x} ${corners[0].y}`;
-    for (let i = 1; i < corners.length; i++) {
-      const p = corners[i], before = corners[i - 1], after = corners[i + 1];
-      if (!after) { d += ` L ${p.x} ${p.y}`; continue; }
-      const r = Math.min(8, Math.hypot(p.x - before.x, p.y - before.y) / 2, Math.hypot(after.x - p.x, after.y - p.y) / 2);
-      const approach = { x: p.x + Math.sign(before.x - p.x) * r, y: p.y + Math.sign(before.y - p.y) * r };
-      const exit = { x: p.x + Math.sign(after.x - p.x) * r, y: p.y + Math.sign(after.y - p.y) * r };
-      d += ` L ${approach.x} ${approach.y} Q ${p.x} ${p.y} ${exit.x} ${exit.y}`;
+    if (right.x - left.x > pitch * 1.5) {
+      const over = edge.category !== 'similarity';
+      const edgeY = over ? 14 : graph.height - 14;
+      const sign = over ? -1 : 1;
+      const a = { x: left.x, y: left.y + sign * CARD_HALF_HEIGHT }, b = { x: right.x, y: right.y + sign * CARD_HALF_HEIGHT };
+      return [curve(a, { x: left.x, y: edgeY }, { x: right.x, y: edgeY }, b)];
     }
-    result.push({ edge, d, midpoint: route[Math.floor(route.length / 2)], points: route });
-  }
-  return result;
+    const a = { x: left.x + half, y: left.y }, b = { x: right.x - half, y: right.y };
+    const bend = (b.x - a.x) / 2;
+    return [curve(a, { x: a.x + bend, y: a.y }, { x: b.x - bend, y: b.y }, b)];
+  });
 }

@@ -35,6 +35,13 @@ export function songArtistPair(a: RecordingDetails, b: RecordingDetails): [Named
   return [{ id: pa.id, name: pa.name }, { id: pb.id, name: pb.name }];
 }
 
+/** One artist has a songwriting credit on the other's song. True, but not proof they worked together. */
+const writingEdge = (tracks: readonly TrackRef[], host: Named, guest: Named): GraphEdge => ({
+  from: host.id, to: guest.id, category: 'factual', label: 'Songwriting credit', writingOnly: true, relationshipId: `writing:${host.id}`,
+  detail: `${guest.name} has a songwriting credit on ${host.name}’s ${titles([...tracks])}. A writing credit can come from a sample or interpolation of an older song, so it doesn’t by itself mean they worked together.`,
+  sourceUrls: trackUrls([...tracks]),
+});
+
 /** Adds the collaborators linking artists a and b; returns what's visible and what can expand. */
 function addCollaborators(nodes: GraphNode[], records: GraphEdge[], a: Named, b: Named, collab: CollaboratorComparison, role: string, expanded: string[], moreFrom: string[]) {
   const mutual = collab.mutual.filter(c => matchesRole(c, role));
@@ -55,6 +62,14 @@ function addCollaborators(nodes: GraphNode[], records: GraphEdge[], a: Named, b:
       }
     }
   }
+  // Worked on both artists' records, rather than only holding a writing credit, makes the stronger link.
+  const hands = (roles: string[]) => roles.some(r => r !== 'songwriting');
+  const first = shown.find(c => hands(c.roles.a) && hands(c.roles.b)) ?? shown[0];
+  if (role === 'all' || role === 'songwriting') {
+    for (const [tracks, host, guest] of [[collab.writing?.bOnA ?? [], a, b], [collab.writing?.aOnB ?? [], b, a]] as const) {
+      if (tracks.length) records.push(writingEdge(tracks, host, guest));
+    }
+  }
   let direct = false;
   if (role === 'all' || role === 'featured') {
     for (const [tracks, host, guest] of [[collab.direct.bOnA, a, b], [collab.direct.aOnB, b, a]] as const) {
@@ -65,7 +80,7 @@ function addCollaborators(nodes: GraphNode[], records: GraphEdge[], a: Named, b:
   }
   return {
     direct,
-    first: shown[0],
+    first,
     expandable: [...(mutual.length > shown.length ? moreFrom : []), ...shown.filter(c => !expanded.includes(c.id)).map(c => c.id)],
   };
 }

@@ -1,5 +1,5 @@
 // API payloads shaped exactly like our routes' responses (src/lib/types.ts), for frontend tests.
-import type { Artist, ArtistDetails, CollaboratorComparison, RecordingDetails, Song } from '@/lib/types';
+import type { Artist, ArtistDetails, CollaboratorComparison, RecordingDetails, SimilarNode, SimilarWeb, Song } from '@/lib/types';
 import type { SoundResult, SoundTrack } from '@/lib/sound';
 import { examples } from '../routing';
 
@@ -107,3 +107,17 @@ export const soundOk: SoundResult = {
   similar: { a: [{ id: 'sp-sim', title: 'Kill Bill', artists: ['SZA'], album: 'SOS', genre: 'pop', has_lyrics: true, score: 0.93, shares_artist: false }], b: [] },
 };
 
+const similarArtist = (id: string, name: string, similarity: number, rank: number): SimilarNode => ({
+  kind: 'artist', id, name, subtitle: 'pop', imageUrl: null, similarity, rank, listeners: 1200,
+  reasons: [{ kind: 'listeners', text: `People who play Olivia Rodrigo often play ${name} in the same listening sessions.`, sourceUrl: `https://listenbrainz.org/artist/${id}` }, { kind: 'style', text: 'Both tagged pop on MusicBrainz.' }],
+});
+
+export const similarWeb: SimilarWeb = {
+  center: { kind: 'artist', id: OLIVIA, name: 'Olivia Rodrigo', subtitle: 'pop', imageUrl: null, similarity: 1, rank: 0, listeners: 18915, reasons: [] },
+  artists: [similarArtist(TAYLOR, 'Taylor Swift', .97, 0), similarArtist(PHOEBE, 'Phoebe Bridgers', .4, 1)],
+  songs: [{ kind: 'song', id: OPHELIA, name: 'The Fate of Ophelia', subtitle: 'Taylor Swift', artist: 'Taylor Swift', imageUrl: null, similarity: .8, rank: 0, listeners: null,
+    reasons: [{ kind: 'listeners', text: 'People who play “vampire” by Olivia Rodrigo often play this in the same listening sessions.' }] }],
+  links: [{ from: TAYLOR, to: OPHELIA, kind: 'performed' }, { from: TAYLOR, to: PHOEBE, kind: 'listeners' }],
+  sources: [{ source: 'ListenBrainz', status: 'ok' }, { source: 'Deezer', status: 'ok' }],
+  seedSongs: ['vampire'],
+};

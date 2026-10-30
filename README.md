@@ -16,18 +16,21 @@ npm run dev
 
 Then open <http://localhost:3000>.
 
-The sidebar contains **About Me**, **Connection Web**, and **Explore**. Connection Web provides a
-single-song Search mode and a two-artist Comparison mode, with clickable artist details and a
-map whose initial artist selection follows genre distance. Drag to pan across the scattered map,
-and scroll to spread points apart and reveal finer detail, or zoom out to bring them together in a varied overview.
-Artist spacing, documented lines and the grid share the same zoom scale; detail fades between levels.
-The displayed set changes with zoom; discoveries and their positions stay cached for later detail.
-Panning moves stable artist points without reselecting those already in view.
-Drag and keyboard panning remain available without an on-screen directional pad or instruction hint.
-Matches can share genre/subgenre, country, album era, release labels, members or former bands.
-Avatars keep their size, and lines show only documented connections. No legend is shown.
-Connection Web fills the viewport: the document stays fixed while navigation happens inside the map.
-Explore keeps its **2 Songs** and **2 Artists**
+Everything runs without keys. These optional environment variables (in `.env.local`, or Vercel's
+settings) add more to the two-artist comparison; each page says which sources were checked.
+
+| Variable | Adds | Without it |
+| --- | --- | --- |
+| `GENIUS_ACCESS_TOKEN` | Song-level producers and writers from Genius | Genius is skipped |
+| `DISCOGS_TOKEN` | A higher Discogs rate limit (60 requests a minute, not 25), so more albums per scan | Discogs still runs, more slowly |
+| `LASTFM_API_KEY` | Last.fm listeners and artists similar to both | Last.fm is skipped |
+| `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`) | Short friend codes when deployed: rooms are stored in Redis for a week | In production, Friends falls back to a long link holding the playlist. In development, rooms live in memory |
+
+The sidebar contains **About Me**, **Connection Web**, **Friends** and **Explore**. Connection Web
+starts from an artist, a song or your playlist, and maps what's similar: closer means more similar,
+calculated from listening data, and selecting anything says why it's there. Friends puts two playlists on
+one map, joined with a 6-character code, with colors for yours, theirs, what you share and what each of
+you should try. Explore compares two artists or songs in depth, including credits. Explore keeps its **2 Songs** and **2 Artists**
 tabs, with sound and lyrics analysis included in **2 Songs**. The standalone comparison page
 remains available at <http://localhost:5050>, with sidebar links back to About Me and Explore.
 Set `NEXUS_URL` for Flask if the main app uses a different address.
@@ -35,7 +38,8 @@ Set `NEXUS_URL` for Flask if the main app uses a different address.
 | URL | What it shows |
 | --- | --- |
 | `/` or `/about` | About Me: your favourite artists, genres, albums and songs |
-| `/connections` | Connection Web: artist connections and single-song discovery |
+| `/connections` | Connection Web: similar artists and songs from an artist, a song or your playlist |
+| `/friends` | Friends: compare playlists with a friend using a short code (`/friends?code=ABC234`) |
 | `/compare/artists` | Explore: compare two artists (defaults to Olivia Rodrigo and Taylor Swift) |
 | `/compare/songs` | Explore: compare two songs |
 | `/prototype` | The earlier HTML prototype |
@@ -122,5 +126,6 @@ On Vercel it's a second project; see [Deploying the sound service](#deploying-th
 ## Stack
 
 Next.js 16 (App Router), React 19, TypeScript, Vitest. Data: MusicBrainz and the Cover Art
-Archive, with Deezer used only to rank an artist's top song. See
+Archive, with Deezer used only to rank an artist's top song. Two-artist comparisons add Wikidata,
+Wikipedia, ListenBrainz, Discogs, and with keys Genius and Last.fm. See
 [docs/architecture.md](docs/architecture.md) for how it fits together.

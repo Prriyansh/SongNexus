@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildGraph, matchesRole, songArtistPair } from '../graph';
 import type { GraphInput } from '../graph';
+import { routeGraphEdges } from '../graph-layout';
 import type { GraphEdge } from '../graph-layout';
 import { BRYCE, SOUR_ART, collab, MAKING_THE_BED, NIGRO, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, SERBAN, TAYLOR, taylorDetails, VAMPIRE, vampireDetails } from './fixtures';
 
@@ -40,6 +41,34 @@ describe('buildGraph: artists', () => {
     expect(graph.path).toEqual([OLIVIA, TAYLOR]);
     const edge = factual(graph).find(e => e.from === OLIVIA && e.to === TAYLOR)!;
     expect(edge.detail).toBe('Taylor Swift is credited on Olivia Rodrigo’s “vampire”.');
+  });
+
+  it('keeps a songwriting credit off the path, and says what it is', () => {
+    const writing = { bOnA: [{ id: VAMPIRE, title: 'vampire' }], aOnB: [] };
+    const graph = buildGraph(artists({ collab: { ...collab, writing } }), [], false);
+    expect(graph.path).toEqual([OLIVIA, SERBAN, TAYLOR]);
+    const edge = factual(graph).find(e => e.writingOnly)!;
+    expect(edge.onPath).toBe(false);
+    expect(edge.label).toBe('Songwriting credit');
+  });
+
+  it('routes the path through someone who worked on both, over someone who only wrote', () => {
+    const writerFirst = { ...collab.mutual[0], id: 'ee000000-0000-4000-8000-000000000001', name: 'Writer Only', roles: { a: ['songwriting'], b: ['songwriting'] }, trackCount: { a: 50, b: 50 } };
+    const graph = buildGraph(artists({ collab: { ...collab, mutual: [writerFirst, ...collab.mutual] } }), [], false);
+    expect(graph.path).toEqual([OLIVIA, SERBAN, TAYLOR]);
+  });
+
+  it('routes every line from card edge to card edge, with no card in the way', () => {
+    const graph = buildGraph(artists(), [], false);
+    const routes = routeGraphEdges(graph);
+    expect(routes).toHaveLength(graph.edges.length);
+    const similar = routes.find(r => r.edge.category === 'similarity')!;
+    expect(similar.midpoint.y).toBeGreaterThan(Math.max(...graph.nodes.map(n => n.y)));
+    const left = graph.nodes.find(n => n.id === OLIVIA)!, right = graph.nodes.find(n => n.id === TAYLOR)!;
+    for (const person of [SERBAN, BRYCE, NIGRO]) {
+      const node = graph.nodes.find(n => n.id === person)!;
+      expect(node.x).toBeGreaterThan(left.x); expect(node.x).toBeLessThan(right.x);
+    }
   });
 
   it('adds a dashed similarity edge for shared genres only', () => {

@@ -72,6 +72,31 @@ describe("indexCredits", () => {
   });
 });
 
+describe("the credits a scan reads", () => {
+  const WRITER = "ffffffff-6666-4666-8666-ffffffffffff";
+  const track = (id: string, title: string, relations: object[] = []) => ({ "artist-credit": [credit(A, "Artist A")], recording: { id, title, relations } });
+
+  it("applies an album-wide credit to every track", () => {
+    const people = index({ relations: [rel("producer", PRODUCER, "Pat Producer")], media: [{ tracks: [track("r1", "One"), track("r2", "Two")] }] }, A).people;
+    expect([...people.get(PRODUCER)!.tracks.values()]).toEqual(["One", "Two"]);
+  });
+
+  it("reads songwriters from the work a recording performs", () => {
+    const performance = { type: "performance", "target-type": "work", work: { relations: [rel("writer", WRITER, "Wren Writer"), rel("publishing", MIXER, "Some Publisher"), rel("composer", A, "Artist A")] } };
+    const people = index({ media: [{ tracks: [track("r1", "One", [performance])] }] }, A).people;
+    expect([...people.get(WRITER)!.roles]).toEqual(["songwriting"]);
+    expect(people.has(MIXER)).toBe(false);
+    expect(people.has(A)).toBe(false);
+  });
+
+  it("counts a song once when editions hold different recordings of it", () => {
+    const edition = (id: string) => ({ media: [{ tracks: [track(id, "One (feat. Someone)", [rel("mix", MIXER, "Max Mixer")])] }] });
+    const recordings = [edition("r1"), edition("r2")].flatMap(releaseRecordings);
+    const people = indexCredits(recordings, A, { scanned: 1, total: 1, unit: "albums" }).people;
+    expect(people.get(MIXER)!.tracks.size).toBe(1);
+  });
+});
+
 describe("compareCredits", () => {
   const result = compareCredits(index(releaseA, A), index(releaseB, B), A, B);
 
@@ -87,6 +112,25 @@ describe("compareCredits", () => {
   it("reports direct links between the two artists", () => {
     expect(result.direct).toEqual({ bOnA: [{ id: "ra2", title: "Duet" }], aOnB: [] });
     expect(result.mutual.some((c) => c.id === B)).toBe(false);
+  });
+});
+
+describe("compareCredits: writing credits", () => {
+  const writer = (id: string, name: string) => ({ type: "performance", "target-type": "work", work: { relations: [rel("composer", id, name)] } });
+  const track = (id: string, title: string, relations: object[]) => ({ "artist-credit": [credit(A, "Artist A")], recording: { id, title, relations } });
+
+  it("doesn't call a writing credit alone a direct link, but does report it", () => {
+    const a = index({ media: [{ tracks: [track("w1", "Borrowed", [writer(B, "Artist B")])] }] }, A);
+    const result = compareCredits(a, index({ media: [] }, B), A, B);
+    expect(result.direct).toEqual({ bOnA: [], aOnB: [] });
+    expect(result.writing).toEqual({ bOnA: [{ id: "w1", title: "Borrowed" }], aOnB: [] });
+  });
+
+  it("counts them as direct once they also worked on the track", () => {
+    const a = index({ media: [{ tracks: [track("w1", "Together", [writer(B, "Artist B"), rel("vocal", B, "Artist B")])] }] }, A);
+    const result = compareCredits(a, index({ media: [] }, B), A, B);
+    expect(result.direct.bOnA).toEqual([{ id: "w1", title: "Together" }]);
+    expect(result.writing?.bOnA).toEqual([]);
   });
 });
 
@@ -128,6 +172,51 @@ describe("compareCollaborators", () => {
     expect(urls.some((u) => u.includes(RG(2)))).toBe(false); // live album skipped
     expect(result.coverage.a).toEqual({ scanned: 1, total: 1, unit: "albums" });
     expect(result.mutual.map((c) => c.id).sort()).toEqual([MIXER, PRODUCER].sort());
+  });
+});
+
+describe("scanning many albums", () => {
+  afterEach(() => __clearCache());
+  const RG = (n: number) => `00000000-0000-4000-8000-0000000000${String(n).padStart(2, "0")}`;
+  const browse = (count: number) => ({
+    "release-group-count": count,
+    "release-groups": Array.from({ length: count }, (_, i) => ({ id: RG(i), title: `Album ${i}`, "primary-type": "Album", "secondary-types": [], "first-release-date": `20${String(10 + i)}` })),
+  });
+  const album = { releases: [{ media: [{ tracks: [{ "artist-credit": [credit(A, "Artist A")], recording: { id: "r", title: "Song", relations: [rel("producer", PRODUCER, "Pat Producer")] } }] }] }] };
+  const opts = { throttleMs: 0, useCache: false };
+
+  it("reads every studio album, newest first, and asks for several editions with songwriters", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async (input) => ok(String(input).includes("/release-group?") ? browse(5) : album));
+    const result = await compareCollaborators({ a: A, b: B }, { ...opts, fetchImpl });
+    const urls = fetchImpl.mock.calls.map((c) => String(c[0])).filter((u) => u.includes("/release?"));
+    expect(urls).toHaveLength(10);
+    expect(urls[0]).toContain(RG(4));
+    expect(urls[0]).toContain("work-level-rels");
+    expect(urls[0]).toContain("limit=5");
+    expect(result.coverage.a).toEqual({ scanned: 5, total: 5, unit: "albums" });
+    expect(result.mutual[0].years).toEqual({ a: { first: "2010", last: "2014" }, b: { first: "2010", last: "2014" } });
+  });
+
+  it("reports a partial scan when time runs out, and keeps what it read", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async (input) => ok(String(input).includes("/release-group?") ? browse(5) : album));
+    const result = await compareCollaborators({ a: A, b: B }, { ...opts, fetchImpl, scanBudgetMs: -1 });
+    expect(result.coverage.a).toEqual({ scanned: 1, total: 5, unit: "albums", partial: true });
+    expect(result.mutual).toHaveLength(1);
+  });
+
+  it("keeps earlier albums when a later one fails", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async (input) => {
+      const url = String(input);
+      if (url.includes("/release-group?")) return ok(browse(3));
+      return url.includes(RG(1)) ? ({ ok: false, status: 500 } as Response) : ok(album);
+    });
+    const result = await compareCollaborators({ a: A, b: B }, { ...opts, fetchImpl });
+    expect(result.coverage.a).toEqual({ scanned: 1, total: 3, unit: "albums", partial: true });
+  });
+
+  it("fails when not even the first album can be read", async () => {
+    const fetchImpl = vi.fn<FetchMock>(async (input) => String(input).includes("/release-group?") ? ok(browse(3)) : ({ ok: false, status: 500 } as Response));
+    await expect(compareCollaborators({ a: A, b: B }, { ...opts, fetchImpl })).rejects.toThrow("MusicBrainz returned an error");
   });
 });
 

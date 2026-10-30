@@ -11,6 +11,7 @@ describe("next.config rewrites", () => {
       "/about": "/",
       "/about/manual": "/",
       "/connections": "/",
+      "/friends": "/",
       "/compare/:mode(artists|songs)": "/",
       "/prototype": "/song-nexus.html",
     });
