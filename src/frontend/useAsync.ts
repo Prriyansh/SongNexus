@@ -21,6 +21,7 @@ export function useAsync<T>(key: string | null, load: () => Promise<T>) {
   const current = key !== null && state.key === key;
   return {
     data: current ? state.data : undefined,
+    previousData: state.data,
     error: current ? state.error : undefined,
     loading: key !== null && !current,
     retry: () => { setState({ key: null }); setAttempt(n => n + 1); },

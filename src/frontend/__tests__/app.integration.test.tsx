@@ -5,7 +5,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Song } from '@/lib/types';
+import type { ArtistDetails, Song } from '@/lib/types';
 import {
   collab, SOUR_ART, EXPECTATIONS, expectationsDetails, killBill, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, PATIENT_ZERO,
   patientZeroDetails, PHOEBE, phoebe, phoebeDetails, PUNISHER, soundOk, TAYLOR, taylorDetails, VAMPIRE, vampireDetails,
@@ -22,7 +22,7 @@ const vampireSong: Song = { ...vampireDetails };
 let failures: Record<string, number> = {};
 let soundReply: SoundResult = soundOk;
 let soundSearchReply: unknown = { status: 'unavailable' };
-const fetchMock = vi.fn(async (input: string) => {
+const defaultFetch = async (input: string) => {
   const url = new URL(input, 'http://localhost');
   const q = url.searchParams;
   const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
@@ -31,6 +31,15 @@ const fetchMock = vi.fn(async (input: string) => {
   switch (url.pathname) {
     case '/api/musicbrainz/details': return DETAILS[q.get('id')!] ? reply({ details: DETAILS[q.get('id')!] }) : reply({ error: 'Not found' }, 404);
     case '/api/musicbrainz/collaborators': return reply({ collaborators: collab });
+    case '/api/musicbrainz/neighborhood': {
+      const id = q.get('id')!;
+      const artist = (DETAILS[id] ?? { ...oliviaDetails, id }) as ArtistDetails;
+      const seed = [...id].reduce((sum, c) => (sum * 31 + c.charCodeAt(0)) % 100000, 0) * 100;
+      return reply({ neighborhood: { artist, failed: [], artists: Array.from({ length: 40 }, (_, i) => ({ ...phoebe,
+        id: `dc000000-0000-4000-8000-${String(seed + i + 1).padStart(12, '0')}`, name: `Nearby musician ${i}`, tags: ['pop'],
+        reasons: [{ kind: 'country', text: 'Also from US', sourceUrl: `https://musicbrainz.org/artist/${id}`, relatedTo: id }],
+      })) } });
+    }
     case '/api/top-track': return reply({ track: q.get('id') === OLIVIA ? expectationsDetails : patientZeroDetails });
     case '/api/sound': return reply(soundReply);
     case '/api/sound/search': return reply(soundSearchReply);
@@ -41,7 +50,8 @@ const fetchMock = vi.fn(async (input: string) => {
     }
   }
   return reply({ error: 'unknown route' }, 404);
-});
+};
+const fetchMock = vi.fn(defaultFetch);
 
 let root: Root | null = null;
 let App: typeof import('../App').default;
@@ -51,9 +61,13 @@ beforeEach(async () => {
   failures = {};
   soundReply = soundOk;
   soundSearchReply = { status: 'unavailable' };
-  fetchMock.mockClear();
+  fetchMock.mockReset();
+  fetchMock.mockImplementation(defaultFetch);
   vi.stubGlobal('fetch', fetchMock);
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => setTimeout(() => callback(performance.now()), 0));
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id));
+  vi.stubGlobal('matchMedia', () => ({ matches: true }));
   window.scrollTo = vi.fn() as typeof window.scrollTo;
   localStorage.clear();
   App = (await import('../App')).default;
@@ -93,6 +107,8 @@ async function type(input: HTMLInputElement | HTMLTextAreaElement, value: string
   await settle(120); // past the 300 ms search debounce
 }
 const called = (part: string) => fetchMock.mock.calls.some(([url]) => String(url).includes(part));
+const visibleWebArtists = () => [...document.querySelectorAll<HTMLElement>('.web-artist[data-in-viewport="true"]')];
+const webPan = () => { const match = document.querySelector<HTMLElement>('.web-world')!.style.transform.match(/translate3d\(([-\d.]+)px, ([-\d.]+)px/)!; return { x: Number(match[1]), y: Number(match[2]) }; };
 const stored = () => JSON.parse(localStorage.getItem('song-nexus-profile') || 'null');
 
 describe('Explore: artists', () => {
@@ -223,6 +239,183 @@ describe('details drawer and sharing', () => {
   });
 });
 
+describe('Connection Web workspace', () => {
+  it('uses a viewport workspace only on Connection Web and keeps its lock after closing details', async () => {
+    await render('/connections');
+    expect(document.querySelector('.app-shell.is-connection-web')).not.toBeNull();
+    expect(document.querySelector('main footer')).toBeNull();
+    expect(document.querySelector('.web-page-heading p')).toBeNull();
+    await click(button('View artist: Olivia Rodrigo'));
+    await click(button('Close details'));
+    expect(document.querySelector('.app-shell.is-connection-web')).not.toBeNull();
+    await click(button('About Me'));
+    expect(document.querySelector('.app-shell.is-connection-web')).toBeNull();
+    expect(document.querySelector('main footer')).not.toBeNull();
+    await click(button('Explore'));
+    expect(document.querySelector('.app-shell.is-connection-web')).toBeNull();
+    await click(button('Connection Web'));
+    expect(document.querySelector('.app-shell.is-connection-web')).not.toBeNull();
+    await click(document.querySelector('.web-mode button')!);
+    expect(document.querySelector('.app-shell.is-connection-web')).not.toBeNull();
+    expect(document.querySelector('main footer')).toBeNull();
+  });
+
+  it('pans freely and scrolls to zoom without losing the camera when discovery updates', async () => {
+    await render('/connections');
+    const canvas = document.querySelector<HTMLElement>('.web-map')!;
+    const initial = webPan();
+    await act(async () => {
+      canvas.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 50, clientY: 50 }));
+      canvas.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 170, clientY: 105 }));
+      canvas.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 170, clientY: 105 }));
+    });
+    await settle();
+    expect(webPan()).toEqual({ x: initial.x + 120, y: initial.y + 55 });
+    const wheel = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 120, clientX: 90, clientY: 70 });
+    await act(async () => { canvas.dispatchEvent(wheel); });
+    expect(wheel.defaultPrevented).toBe(true);
+    const scrolled = webPan();
+    await settle(40);
+    expect(document.querySelector('output[aria-label="Map zoom"]')?.textContent).not.toBe('100%');
+    expect(webPan()).toEqual(scrolled);
+    await act(async () => { canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); });
+    expect(webPan().x).toBeCloseTo(scrolled.x - 40);
+    await click(button('Fit connection map'));
+    expect(webPan()).toEqual(initial);
+  });
+
+  it('shows a sparse varied overview and denser local detail without changing card size or adding a legend', async () => {
+    const base = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (input: string) => {
+      const query = new URL(input, 'http://localhost').searchParams.get('q') ?? '';
+      const genre = query.match(/^tag:"([^"]+)"/)?.[1];
+      return genre ? new Response(JSON.stringify({ results: Array.from({ length: 5 }, (_, i) => ({ ...phoebe, id: `discovery-${genre}-${i}`, name: `${genre} musician ${i}`, tags: [genre] })) })) : base(input);
+    });
+    await render('/connections');
+    const initial = visibleWebArtists().map(n => n.getAttribute('aria-label'));
+    const pairDistance = () => { const pair = [...document.querySelectorAll<HTMLElement>('.web-artist.anchor')]; return Math.hypot(parseFloat(pair[0].style.left) - parseFloat(pair[1].style.left), parseFloat(pair[0].style.top) - parseFloat(pair[1].style.top)); };
+    const initialDistance = pairDistance();
+    await click(button('Zoom in'));
+    const close = visibleWebArtists().map(n => n.getAttribute('aria-label'));
+    expect(close.length).toBeGreaterThan(initial.length);
+    for (const name of initial) expect([...document.querySelectorAll('.web-artist')].map(n => n.getAttribute('aria-label'))).toContain(name);
+    expect(document.querySelector('output[aria-label="Map zoom"]')?.textContent).toBe('135%');
+    expect(pairDistance() / initialDistance).toBeCloseTo(1.35);
+    expect(document.querySelector<HTMLElement>('.web-world')!.style.transform).not.toContain('scale');
+    await click(button('Zoom out'));
+    await click(button('Zoom out'));
+    const wide = visibleWebArtists().map(n => n.getAttribute('aria-label'));
+    expect(wide.some(name => !initial.includes(name))).toBe(true);
+    expect(wide.length).toBeLessThan(close.length);
+    expect(wide.length).toBeLessThanOrEqual(10); // Stable regional representatives plus the documented path.
+    const widePositions = new Map([...document.querySelectorAll<HTMLElement>('.web-artist')].map(n => [n.dataset.artistId, `${n.dataset.worldX}:${n.dataset.worldY}`]));
+    await click(button('Zoom in'));
+    await click(button('Zoom in'));
+    const restored = visibleWebArtists();
+    expect(restored.length).toBeGreaterThan(wide.length);
+    for (const node of restored) {
+      const old = widePositions.get(node.dataset.artistId);
+      if (old) expect(`${node.dataset.worldX}:${node.dataset.worldY}`).toBe(old);
+    }
+    expect(document.querySelector('.web-live-label small')?.textContent).toBe(`${restored.length} artists`);
+    expect(document.querySelectorAll('.web-line')).toHaveLength(2);
+    expect(document.querySelector('.web-legend')).toBeNull();
+    expect(document.querySelector('.web-map-navigation')).toBeNull();
+    expect(document.querySelector('.web-pan-hint')).toBeNull();
+    expect(document.querySelector('.web-dock-label')).toBeNull();
+    expect(text()).not.toContain('Musical neighborhood');
+    expect(text()).not.toContain('Across genres');
+    await click(document.querySelector('.web-mode button')!);
+    expect(document.querySelector('.web-map-status')).toBeNull();
+    expect(text()).not.toContain('Explore the song’s performers and their genre neighborhood.');
+    fetchMock.mockImplementation(base);
+  });
+
+  it('expands the context artist nearest the scroll pointer and preserves every existing position', async () => {
+    await render('/connections');
+    await click(button('Zoom in'));
+    const context = visibleWebArtists().find(n => n.getAttribute('aria-label')?.startsWith('View artist: Nearby musician'))!;
+    const canvas = document.querySelector<HTMLElement>('.web-map')!;
+    const before = new Map([...document.querySelectorAll<HTMLElement>('.web-artist')].map(n => [n.dataset.artistId, `${n.dataset.worldX}:${n.dataset.worldY}`]));
+    const pan = webPan();
+    await act(async () => { canvas.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -120,
+      clientX: parseFloat(context.style.left) + pan.x, clientY: parseFloat(context.style.top) - (context.classList.contains('anchor') ? 22 : 25) + pan.y })); });
+    await settle(40);
+    expect(called(`/api/musicbrainz/neighborhood?id=${context.dataset.artistId}`)).toBe(true);
+    for (const node of document.querySelectorAll<HTMLElement>('.web-artist')) {
+      const old = before.get(node.dataset.artistId);
+      if (old) expect(`${node.dataset.worldX}:${node.dataset.worldY}`).toBe(old);
+    }
+    expect(document.querySelectorAll('.web-artist').length).toBeGreaterThan(before.size);
+    expect(document.querySelector('.web-legend')).toBeNull();
+  });
+
+  it('opens from navigation, shows the selected pair, and opens artist details immediately', async () => {
+    await render('/about');
+    await click(button('Connection Web'));
+    expect(window.location.pathname).toBe('/connections');
+    expect(button('Connection Web').getAttribute('aria-current')).toBe('page');
+    expect(document.querySelector('.web-map-heading')?.textContent).toContain('Olivia Rodrigo');
+    await click(button('View artist: Olivia Rodrigo'));
+    expect(document.querySelector('[role="dialog"]')?.getAttribute('aria-label')).toBe('Artist details');
+    expect(document.querySelector('.detail-drawer')?.textContent).toContain('Born');
+    expect(document.querySelector('.detail-drawer')?.textContent).toContain('GUTS');
+  });
+
+  it('switches to one-song search and preserves each mode’s choices across navigation', async () => {
+    await render(`/connections?artistA=${PHOEBE}&artistB=${TAYLOR}`);
+    await click(document.querySelector('.web-mode button')!);
+    expect(window.location.search).toContain('mode=search');
+    expect(document.querySelectorAll('.web-selection-dock .chooser')).toHaveLength(1);
+    expect(document.querySelector('.web-map-heading')?.textContent).toContain('vampire');
+    expect(button('View artist: Olivia Rodrigo')).toBeTruthy();
+    await click(button('About Me'));
+    await click(button('Connection Web'));
+    expect(window.location.search).toContain('mode=search');
+    await click(document.querySelectorAll('.web-mode button')[1]);
+    expect(document.querySelector('.web-map-heading')?.textContent).toContain('Phoebe Bridgers');
+    expect(document.querySelectorAll('.web-selection-dock .chooser')).toHaveLength(2);
+  });
+
+  it('searches for a replacement artist, swaps the pair, and shares the current web', async () => {
+    await render('/connections');
+    await click(document.querySelector('.web-selection-dock .chooser-button')!);
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search artists"]')!, 'Phoebe');
+    await click(document.querySelector('.chooser-option')!);
+    expect(window.location.search).toContain(`artistA=${PHOEBE}`);
+    await click(button('Swap artists'));
+    expect(window.location.search).toContain(`artistA=${TAYLOR}`);
+    expect(window.location.search).toContain(`artistB=${PHOEBE}`);
+    await click(button('Share'));
+    const url = new URL(document.querySelector<HTMLInputElement>('#share-url')!.value);
+    expect(url.pathname).toBe('/connections');
+    expect(url.searchParams.get('artistB')).toBe(PHOEBE);
+  });
+
+  it('zooms and fits the map, and restores the mode using browser back', async () => {
+    await render('/connections');
+    const initial = document.querySelector('output[aria-label="Map zoom"]')!.textContent;
+    await click(button('Zoom in'));
+    expect(document.querySelector('output[aria-label="Map zoom"]')!.textContent).not.toBe(initial);
+    await click(button('Fit connection map'));
+    expect(document.querySelector('output[aria-label="Map zoom"]')!.textContent).toBe(initial);
+    await click(document.querySelector('.web-mode button')!);
+    await act(async () => { window.history.back(); await new Promise(r => setTimeout(r, 30)); });
+    await settle();
+    expect(document.querySelectorAll('.web-mode button')[1].getAttribute('aria-pressed')).toBe('true');
+    expect(document.querySelector('.web-map-heading')?.textContent).toContain('Taylor Swift');
+  });
+
+  it('keeps the map usable when discovery fails, and retries the failed lookup', async () => {
+    failures['/api/musicbrainz/search:'] = 2;
+    await render('/connections');
+    expect(document.querySelector('.web-map-status')?.textContent).toContain('couldn’t be loaded');
+    expect(button('View artist: Olivia Rodrigo')).toBeTruthy();
+    await click(button('Try again'));
+    expect(document.querySelector('.web-map-status')?.textContent).toContain('Credit path');
+  });
+});
+
 describe('About Me', () => {
   it('keeps the search text across all categories and searches the active category', async () => {
     await render('/about/manual');
@@ -312,13 +505,13 @@ describe('About Me', () => {
 describe('Explore: songs, sound and lyrics', () => {
   const songs = `/compare/songs?songA=${VAMPIRE}&songB=${OPHELIA}`;
 
-  it('keeps song comparisons under Explore with only About Me and Explore in the sidebar', async () => {
+  it('keeps song comparisons under Explore alongside the separate Connection Web destination', async () => {
     await render(songs);
     expect(document.querySelector('.song-analysis')).not.toBeNull();
     expect(button('2 Songs').getAttribute('aria-pressed')).toBe('true');
     expect(button('Explore').getAttribute('aria-current')).toBe('page');
     expect(document.querySelector('.topbar-left > strong')?.textContent).toBe('Explore');
-    expect(Array.from(document.querySelectorAll('nav[aria-label="Main navigation"] .nav-option'), item => item.textContent)).toEqual(['About Me', 'Explore']);
+    expect(Array.from(document.querySelectorAll('nav[aria-label="Main navigation"] .nav-option'), item => item.textContent)).toEqual(['About Me', 'Connection Web', 'Explore']);
 
     await click(button('About Me'));
     expect(window.location.pathname).toBe('/about');
