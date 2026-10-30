@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { focusArtistAt, initialWebCamera, interpolateWebZoom, MAX_WEB_ZOOM, MIN_WEB_ZOOM, projectWebPoint, scopeForZoom, webArtistCenter, webScreenToWorld, worldToWebScreen, zoomForScope, zoomWebCamera } from '../web-navigation';
+import { initialWebCamera, interpolateWebZoom, MAX_WEB_ZOOM, MIN_WEB_ZOOM, webArtistCenter, webScreenToWorld, worldToWebScreen, zoomWebCamera } from '../web-navigation';
 
 describe('Connection Web camera', () => {
   it('keeps the world point under the scroll pointer fixed', () => {
@@ -15,19 +15,10 @@ describe('Connection Web camera', () => {
   it('limits the camera while retaining both close and wide exploration scopes', () => {
     expect(zoomWebCamera(initialWebCamera(), 100, { x: 0, y: 0 }).zoom).toBe(MAX_WEB_ZOOM);
     expect(zoomWebCamera(initialWebCamera(), .001, { x: 0, y: 0 }).zoom).toBe(MIN_WEB_ZOOM);
-    for (const scope of [-1, 0, 1, 2]) expect(scopeForZoom(zoomForScope(scope))).toBe(scope);
   });
 
-  it('projects point positions without changing artist-card dimensions', () => {
-    const point = { x: 300, y: 200 }, center = { x: 400, y: 250 };
-    expect(projectWebPoint(point, center, 1)).toEqual(point);
-    expect(projectWebPoint(point, center, 1.5)).toEqual({ x: 250, y: 175 });
-  });
-
-  it('resolves discovery focus through both zoom and pan', () => {
+  it('converts between world and screen through both zoom and pan', () => {
     const camera = { x: 115, y: -44, zoom: 2 };
-    const focus = focusArtistAt([{ id: 'anchor', x: 100, y: 100 }, { id: 'context', x: 300, y: 240 }], { x: 715, y: 392 }, camera);
-    expect(focus).toEqual({ artistId: 'context', x: 300, y: 218 });
     expect(worldToWebScreen(webScreenToWorld({ x: 715, y: 392 }, camera), camera)).toEqual({ x: 715, y: 392 });
   });
 

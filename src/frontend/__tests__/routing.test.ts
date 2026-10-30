@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPath, buildProfileShareUrl, buildShareUrl, comparisonFor, examples, parseRoute } from '../routing';
+import { buildPath, buildProfileShareUrl, buildShareUrl, comparisonFor, examples, parseRoute, defaultWeb } from '../routing';
 import { emptyProfile } from '../profile';
 import { OLIVIA, PHOEBE, TAYLOR, VAMPIRE } from './fixtures';
 
@@ -83,5 +83,23 @@ describe('buildPath', () => {
     expect(profileUrl.pathname).toBe('/about');
     expect(JSON.parse(profileUrl.searchParams.get('profile')!).genres).toEqual(['folk']);
     expect(profileUrl.searchParams.get('note')).toBe('mine');
+  });
+
+  it('keeps one artist and one song for the Connection Web, and round-trips them', () => {
+    const web = { mode: 'song' as const, artist: PHOEBE, song: VAMPIRE };
+    const url = new URL(buildPath('connections', comparisonFor('song'), 'a note', false, web), 'http://localhost');
+    const route = parseRoute(url.pathname, url.search);
+    expect(route.page).toBe('connections');
+    expect(route.web).toEqual(web);
+    expect(route.note).toBe('a note');
+  });
+
+  it('opens old two-artist and search links as the new artist and song views', () => {
+    expect(parseRoute('/connections', `?mode=comparison&artistA=${PHOEBE}&artistB=${TAYLOR}`).web).toMatchObject({ mode: 'artist', artist: PHOEBE });
+    expect(parseRoute('/connections', `?mode=search&song=${VAMPIRE}`).web).toMatchObject({ mode: 'song', song: VAMPIRE });
+  });
+
+  it('falls back to the defaults for bad ids and modes', () => {
+    expect(parseRoute('/connections', '?mode=nope&artist=bad&song=bad').web).toEqual(defaultWeb());
   });
 });

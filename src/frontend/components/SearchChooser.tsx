@@ -18,7 +18,7 @@ const isDatasetSong = (item: ChooserItem): item is SoundTrackBrief => 'has_lyric
 // Song pickers search the sound dataset first, so picked songs have the full sound and lyrics
 // analysis; a pick is then matched to its MusicBrainz recording. Without the sound service they
 // search MusicBrainz directly. Artist pickers always search MusicBrainz.
-export function SearchChooser({ type, value, display, other, label, onChange }: { type: EntityType; value: string; display?: Details; other: string; label: string; onChange: (id: string) => void }) {
+export function SearchChooser({ type, value, display, displayName, other, label, onChange }: { type: EntityType; value: string; display?: Details; displayName?: string; other: string; label: string; onChange: (id: string) => void }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [found, setFound] = useState<ChooserResults>({ key: '' });
@@ -67,7 +67,7 @@ export function SearchChooser({ type, value, display, other, label, onChange }: 
     return <><ArtistAvatar artist={item} size="sm" /><span><strong>{item.name}</strong><small>{item.disambiguation || artistSubtitle(item)}</small></span>{value === item.id && <Check size={16} />}</>;
   };
   const visual = display ? ('title' in display ? <AlbumCover cover={{ id: display.id, artUrl: display.representative?.artUrl }} size="sm" /> : <ArtistAvatar artist={{ ...display, artUrl: artistCover(display) }} size="sm" />) : <Music2 />;
-  return <div className="chooser" ref={popRef} onKeyDown={e => { if (e.key === 'Escape' && open) { e.stopPropagation(); setOpen(false); popRef.current?.querySelector('button')?.focus(); } }}><span className="field-label">{label}</span><button className={`chooser-button ${open ? 'open' : ''}`} aria-expanded={open} onClick={() => { setOpen(!open); setQuery(''); setResolving({}); }}>{visual}<strong>{display ? nameOf(display) : 'Loading…'}</strong><ChevronDown size={16} /></button>
+  return <div className="chooser" ref={popRef} onKeyDown={e => { if (e.key === 'Escape' && open) { e.stopPropagation(); setOpen(false); popRef.current?.querySelector('button')?.focus(); } }}><span className="field-label">{label}</span><button className={`chooser-button ${open ? 'open' : ''}`} aria-expanded={open} onClick={() => { setOpen(!open); setQuery(''); setResolving({}); }}>{visual}<strong>{display ? nameOf(display) : displayName ?? 'Loading…'}</strong><ChevronDown size={16} /></button>
     {open && <div className="chooser-popover"><label className="chooser-search"><Search size={17} /><input aria-label={`Search ${type}s`} autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder={type === 'song' ? 'Search songs or artists…' : 'Search artists on MusicBrainz…'} /></label><div className="chooser-results">
       {items.map(item => <button key={item.id} className="chooser-option" disabled={!!resolving.id} onClick={() => void pick(item)}>{option(item)}</button>)}
       {q.length < 2 && <p className="no-match">Type at least 2 letters.</p>}

@@ -23,39 +23,11 @@ it never calls MusicBrainz or Deezer directly.
 - `api.ts` is the browser client for our routes; `useAsync.ts` loads data per key.
 - `graph.ts` turns the collaborators response into the connection web; Helen's `graph-layout.ts`
   places and routes it. Solid lines are credits; the dashed line is shared genre tags.
-- `connection-web.ts` builds the dedicated Connection Web map, using an editorial genre topology
-  to choose intermediate search neighborhoods and fit a wider scope for distant selections.
-  Only the documented credit path has edges; similar discovery artists remain unlinked.
-  Detail zoom adds more artists around the pointer (map center for zoom buttons), including
-  neighborhoods of surrounding artists. `useWebDiscovery.ts` retains every loaded ID up to a
-  fixed capacity, while `artist-neighborhood.ts` combines genre/subgenre, country, album era,
-  release-label credits, memberships, former bands and shared members. Candidates carry catalog
-  evidence, and multi-signal matches rank first. Partial requests can be retried.
-  `web-detail.ts` assigns stable, nested detail tiers to world-space cells and their overview parents.
-  Overview representatives favor different styles; continuous opacity reveals finer tiers. Existing tiers are
-  preserved when catalog data arrives. Pan only translates these points and culls beyond an
-  offscreen buffer, so it cannot replace interior artists. Path nodes are always retained.
-  The toolbar counts artists inside the viewport, excluding buffered and other offscreen points.
-  `ConnectionWebCanvas.tsx` handles fixed-size cards on a scattered 2D canvas, pointer-centered
-  scroll zoom, drag/keyboard panning, reset, and details. `web-navigation.ts` projects avatar centers
-  and inverts both pan and zoom for discovery focus. Retained artist distances scale with camera zoom;
-  avatars and labels keep their pixel sizes. Camera motion is animated around the pointer or map
-  center, and lines and grid use the same scale. Append-only placement preserves world coordinates;
-  finer discoveries use spacing appropriate to their discovery zoom. Loading/status messages overlay the canvas
-  so their appearance cannot resize it. Neighborhood queries use the existing throttled transport.
-  Drag presentation defers catalog updates until release; camera input is coalesced into animation
-  frames and applied with a composited transform. Pointer cancellation, capture loss and blur end
-  the gesture cleanly. An avatar drag suppresses its trailing click; an ordinary click opens details.
-  The `is-connection-web` shell state bounds this destination to `100dvh`, prevents document
-  scrolling, removes its page footer, and lets the canvas flex between compact chrome and a
-  fixed selection dock. The other destinations retain normal document flow. See the
-  [viewport navigation prompt and verification plan](connection-web-flat-navigation.md).
-  See [the implementation prompt and plan](connection-web-plan.md) for the interaction brief.
-  See the [discovery data prompt](connection-web-progressive-discovery.md) and the current
-  [zoom-dependent detail prompt](connection-web-level-of-detail.md).
-  The current pan behavior and verification procedure are in the [pan UX plan and prompts](connection-web-pan-ux.md).
-  The current geometry and fading behavior are in the [spatial zoom plan and prompts](connection-web-spatial-zoom.md).
-  The directional pan pad and visible drag/zoom instruction hint have been removed.
+- **Connection Web** (`components/ConnectionWeb.tsx`, `similar-web.ts`) starts from one artist, one song or a playlist. `/api/similar` (`src/lib/similar.ts`) combines ListenBrainz session data (`labs.api.listenbrainz.org`, by MusicBrainz id) with Deezer's related artists, top songs and photos, shared MusicBrainz tags, and, when `song_compare` is running, a calculated sound match. Distance from the center comes from `similarity`, which is relative to the closest match on that map. Lines mean "similar" or "performs this song", never a credit: credits belong to Explore. ListenBrainz's labs endpoints are unversioned, so they could change without notice.
+- **My playlist** (`components/TasteWeb.tsx`, `taste.ts`) sends the songs to `/api/taste` (`src/lib/taste.ts`), which isn't stored, and keeps them in localStorage.
+- **Friends** (`/friends`) uses rooms (`src/lib/rooms.ts`, `/api/rooms`): a 6-character code holds both playlists for a week in Redis, or in memory in development. The code is the only key, so anyone holding it can read both playlists; there's no rate limit on guessing yet. A room takes one friend. Without Redis in production, the page falls back to a long link holding the playlist after the `#`, which never reaches the server.
+- `ConnectionWebCanvas.tsx` is the shared map: camera, panning, zoom and explanation cards. It draws whatever nodes, edges and actions it's given.
+- The earlier `docs/connection-web-*.md` prompts describe the two-artist map this replaced; they're kept for history.
 - `profile.ts` keeps About Me in localStorage (there are no accounts yet). Shared profile links
   are validated, and only Cover Art Archive images are allowed in them.
 - `playlist.ts` reads CSV/JSON/TXT playlist exports in the browser and matches the first 50
@@ -92,10 +64,22 @@ SongNexus compares two songs or two artists using real catalogue metadata.
   (live, compilations…); when an artist has more than 100 albums the studio count is shown as
   a lower bound ("12+").
 - **Mutual collaborators** (`/api/musicbrainz/collaborators?a=&b=`) — people credited on both
-  artists' recordings: producers, featured artists, mixers/engineers, vocalists and players.
-  Reads the full credits of each artist's 3 most recent studio albums (one request per album,
-  cached), so a cold comparison takes ~10 s; it loads after the main cards. Songwriting credits
-  live on MusicBrainz *works* and aren't included.
+  artists' recordings: producers, songwriters, featured artists, mixers/engineers, vocalists and
+  players. Reads up to 25 studio albums per artist, newest first (one request per album, combining
+  up to 5 editions and including album-wide credits and songwriters from *works*). Each artist's scan
+  gets 20 s; albums are cached one by one, and an unfinished scan reports `partial`, so "Scan more
+  albums" continues it. Songs count once per person across editions.
+- **More credits** (`/api/credits?a=&b=`) — Genius (needs `GENIUS_ACCESS_TOKEN`) and Discogs. People
+  are compared by each source's own id, so same-named people stay apart. Artists are found through
+  MusicBrainz's links; Genius falls back to an exact name match, and a near match counts as not found.
+  Matching a person *between* sources goes by name, so the UI says to check the links, and spellings can
+  differ ("Mark Stent" and "Mark “Spike” Stent" appear as two people). Discogs' main releases are often
+  thinly credited for recent digital albums, so it adds more for older catalogues.
+- **Artist insights** (`/api/artist-insights?a=&b=`) — bio and photo (Wikipedia), awards, nominations,
+  labels and start year (Wikidata, through MusicBrainz's link), listener counts (ListenBrainz, and
+  Last.fm with `LASTFM_API_KEY`), and what both share. Wikidata is community-edited and can be
+  incomplete or wrong, so the UI says "listed on Wikidata", links to it, and never presents a total.
+  Last.fm "similar" is labelled as listener similarity, never a collaboration.
 - **Shared genres** — genre tags both artists (or songs) have on MusicBrainz.
 - **Shareable URLs** — `/compare/artists?artistA=<mbid>&artistB=<mbid>` and
   `/compare/songs?songA=<mbid>&songB=<mbid>` open straight into a comparison.
@@ -141,11 +125,11 @@ The app deploys to Vercel as-is (see the README). Notes for a public deployment:
 
 - Keep Next.js patched. 16.4.0 had critical advisories (remote code execution); `npm audit
   --omit=dev` should report nothing before deploying.
-- `/api/musicbrainz/collaborators` sets `maxDuration = 60` because a cold scan takes ~10 s.
+- `/api/musicbrainz/collaborators` sets `maxDuration = 60` because a cold scan can take most of a minute.
 - Serverless instances don't share the in-memory cache or throttle (see above), and Vercel's
   outbound IPs are shared with other projects, so MusicBrainz may occasionally answer 503. The
   routes retry, and the UI shows "Try again" if that isn't enough.
-- No environment variables are needed.
+- No environment variables are required. Optional ones are listed in the README.
 - The repository is public so Vercel's Hobby plan deploys every collaborator's commits (on a
   private repository it only deploys the owner's). Keep secrets out of the repository; there are
   none today, and any future keys belong in Vercel's environment variables.

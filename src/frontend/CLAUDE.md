@@ -46,3 +46,6 @@ The UI: Helen's design (see `docs/design/`) running on live API data. Browser-on
   during render. Derive state from keys (see `useAsync`, the graph's view state) instead.
 - Keep Helen's class names and markup structure so her CSS keeps working.
 - Search inputs debounce 300 ms and abort the previous request.
+
+- `credits.ts` — merges MusicBrainz collaborators with Genius/Discogs and words what each source checked.
+- `similar-web.ts` — layout and lines for the similarity map; `taste.ts` — playlists in links and storage, and the playlist map's layout. `web-navigation.ts` — the map camera.

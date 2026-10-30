@@ -69,6 +69,7 @@ export function studioAlbumText(details: ArtistDetails): string {
 export const ROLE_LABELS: Record<string, string> = {
   featured: 'Featured artist',
   producer: 'Producer',
+  songwriting: 'Songwriting',
   mixing: 'Mixing',
   engineering: 'Engineering',
   programming: 'Programming',

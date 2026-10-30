@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import type { ArtistDetails, Collaborator, CollaboratorComparison, Coverage, RecordingDetails, TrackRef } from '@/lib/types';
+import type { ArtistDetails, Collaborator, CollaboratorComparison, Coverage, MoreCredits, RecordingDetails, SourcedCollaborator, TrackRef, YearSpan } from '@/lib/types';
 import { formatDuration, partitionGenres } from '@/lib/types';
 import { albumSampleNote, capitalize, lifeSpanLabels, linkLabel, uniqueLinks, musicBrainzUrl, recentAlbums, roleText, songArtists, studioAlbumText, yearOf } from '../model';
 import { matchesRole } from '../graph';
 import { AlbumCover } from './Artwork';
+import { mergeSourcedCredits, sourceNote } from '../credits';
 import type { Selection } from '../types';
 
 export type Loadable<T> = { data?: T; loading: boolean; error?: Error; retry: () => void };
@@ -35,31 +36,54 @@ function SharedGenres({ a, b }: { a: { genres: { name: string; count: number }[]
 
 export function coverageText(coverage: { a: Coverage; b: Coverage }, names: [string, string]): string {
   const one = (c: Coverage, name: string) => c.unit === 'albums'
-    ? `${name}’s ${c.scanned === 1 ? 'latest studio album' : `${c.scanned} most recent studio albums`}`
+    ? c.scanned === c.total ? `all ${c.total} of ${name}’s studio albums` : `${name}’s ${c.scanned} most recent of ${c.total} studio albums`
     : `${c.scanned} of ${name}’s recordings`;
   return `Scanned ${one(coverage.a, names[0])} and ${one(coverage.b, names[1])}.`;
 }
 
+const span = (years?: YearSpan | null) => !years ? '' : years.first === years.last ? years.first : `${years.first}–${years.last}`;
+// "Across": someone with several roles didn't necessarily do each of them on every track.
+const tally = (count: number, unit: string, years?: YearSpan | null) => `${count === 1 ? 'on 1' : `across ${count}`} ${unit}${count === 1 ? '' : 's'}${span(years) ? `, ${span(years)}` : ''}`;
+const quoted = (tracks: { title: string }[]) => tracks.slice(0, 3).map(t => `“${t.title}”`).join(', ');
+const SOURCE_NAMES = { genius: 'Genius', discogs: 'Discogs' };
+
+/** Someone only Genius or Discogs credits on both artists; they open that source's page, not the drawer. */
+function SourcedRow({ person, names }: { person: SourcedCollaborator; names: [string, string] }) {
+  const unit = person.source === 'genius' ? 'song' : 'release';
+  const side = (name: string, side: 'a' | 'b') => <small>{name}: {roleText(person.roles[side])} {tally(person.count[side], unit)} · {person.evidence[side].slice(0, 3).map((work, i) => <span key={work.url}>{i > 0 && ', '}<a className="inline-link" href={work.url} target="_blank" rel="noreferrer">{work.title}</a></span>)}</small>;
+  return <div className="collab-row"><a className="inline-link" href={person.url} target="_blank" rel="noreferrer">{person.name} ↗</a>{side(names[0], 'a')}{side(names[1], 'b')}<span className="source-chip">{SOURCE_NAMES[person.source]}</span></div>;
+}
+
 /** Mutual collaborators with the songs that connect them; a song pair opens a song comparison. */
-export function Collaborators({ state, names, role, current, onSelect, onCompareSongs }: { state: Loadable<CollaboratorComparison>; names: [string, string]; role: string; current?: string[]; onSelect: (s: Selection) => void; onCompareSongs: (a: TrackRef, b: TrackRef) => void }) {
-  if (state.loading) return <div className="artist-overlap"><strong>Mutual collaborators · factual credits</strong><p className="loading-text">Reading album credits on MusicBrainz. The first scan of two artists takes about ten seconds.</p><div className="skeleton-lines"><span/><span/><span/></div></div>;
+export function Collaborators({ state, names, role, current, more, onSelect, onCompareSongs }: { state: Loadable<CollaboratorComparison>; names: [string, string]; role: string; current?: string[]; more?: Loadable<MoreCredits>; onSelect: (s: Selection) => void; onCompareSongs: (a: TrackRef, b: TrackRef) => void }) {
+  if (state.loading) return <div className="artist-overlap"><strong>Mutual collaborators · factual credits</strong><p className="loading-text">Reading album credits on MusicBrainz. The first scan of two artists can take up to a minute.</p><div className="skeleton-lines"><span/><span/><span/></div></div>;
   if (state.error || !state.data) return <div className="artist-overlap"><strong>Mutual collaborators · factual credits</strong><p className="error-text" role="alert">{state.error?.message || 'Could not load collaborators.'}</p><button className="secondary-button" onClick={state.retry}>Try again</button></div>;
   const mutual = state.data.mutual.filter((c: Collaborator) => matchesRole(c, role));
+  const merged = mergeSourcedCredits(state.data.mutual, more?.data);
+  const extra = merged.extra.filter(person => role === 'all' || person.roles.a.includes(role) || person.roles.b.includes(role));
+  const partial = state.data.coverage.a.partial || state.data.coverage.b.partial;
   return <div className="artist-overlap"><strong>Mutual collaborators · factual credits</strong>
     {mutual.length ? <div className="collab-list">{mutual.map(c => <div className="collab-row" key={c.id}>
       <button className="inline-link" onClick={() => onSelect({ type: 'artist', id: c.id })}>{c.name} ↗</button>
-      <small>{names[0]}: {roleText(c.roles.a)} · {names[1]}: {roleText(c.roles.b)}</small>
+      <small>{names[0]}: {roleText(c.roles.a)} {tally(c.trackCount.a, 'track', c.years?.a)}{c.tracks.a.length > 0 && ` · ${quoted(c.tracks.a)}`}</small>
+      <small>{names[1]}: {roleText(c.roles.b)} {tally(c.trackCount.b, 'track', c.years?.b)}{c.tracks.b.length > 0 && ` · ${quoted(c.tracks.b)}`}</small>
+      {(merged.confirmed.get(c.id) ?? []).map(source => <a className="source-chip" key={source.source} href={source.url} target="_blank" rel="noreferrer">Also on {SOURCE_NAMES[source.source]} ↗</a>)}
       {c.tracks.a[0] && c.tracks.b[0] && !(current?.includes(c.tracks.a[0].id) && current.includes(c.tracks.b[0].id)) && <button className="text-cta" onClick={() => onCompareSongs(c.tracks.a[0], c.tracks.b[0])}>Compare “{c.tracks.a[0].title}” and “{c.tracks.b[0].title}” →</button>}
     </div>)}</div> : <p>{role === 'all' ? 'No one is credited on both artists’ scanned albums.' : 'No shared collaborators in this role.'}</p>}
-    <small className="coverage-note">{coverageText(state.data.coverage, names)}</small>
+    {extra.length > 0 && <div className="more-credits"><strong>Also credited elsewhere</strong><small>Found on Genius or Discogs but not in the MusicBrainz albums above. Check the links: matches between sources go by name.</small><div className="collab-list">{extra.map(person => <SourcedRow key={`${person.source}:${person.id}`} person={person} names={names} />)}</div></div>}
+    {!!more?.data?.direct.length && <div className="more-credits"><strong>Credited together</strong><div className="inline-credit-list">{more.data.direct.map(work => <a className="inline-link" key={work.url} href={work.url} target="_blank" rel="noreferrer">{work.title}{work.year && ` (${work.year})`} · {SOURCE_NAMES[work.source]} ↗</a>)}</div></div>}
+    {more?.loading && <p className="loading-text">Checking Genius and Discogs for more credits…</p>}
+    <small className="coverage-note">{coverageText(state.data.coverage, names)} {sourceNote(more?.data?.sources, more?.error)}</small>
+    {partial && <button className="secondary-button scan-more" onClick={state.retry}>Scan more albums</button>}
   </div>;
 }
 
-export function ComparisonDetails({ kind, a, b, collab, role, onSelect, onCompareSongs }: {
+export function ComparisonDetails({ kind, a, b, collab, more, role, onSelect, onCompareSongs }: {
   kind: 'artist' | 'song';
   a?: ArtistDetails | RecordingDetails;
   b?: ArtistDetails | RecordingDetails;
   collab: Loadable<CollaboratorComparison> | null;
+  more?: Loadable<MoreCredits>;
   role: string;
   onSelect: (s: Selection) => void;
   onCompareSongs: (a: TrackRef, b: TrackRef) => void;
@@ -100,6 +124,6 @@ export function ComparisonDetails({ kind, a, b, collab, role, onSelect, onCompar
     {pair.some(x => x.rating) && <Row name="Rating" values={two(x => x.rating ? <p>{x.rating.value.toFixed(1)} / 5<small>{x.rating.votes} votes</small></p> : null)}/>}
     {pair.some(x => x.links.length) && <Row name="Links" values={two(x => <Links links={x.links}/>)}/>}
     <SharedGenres a={aa} b={ab}/>
-    {collab && <Collaborators state={collab} names={[aa.name, ab.name]} role={role} onSelect={onSelect} onCompareSongs={onCompareSongs}/>}
+    {collab && <Collaborators state={collab} names={[aa.name, ab.name]} role={role} more={more} onSelect={onSelect} onCompareSongs={onCompareSongs}/>}
   </section>;
 }

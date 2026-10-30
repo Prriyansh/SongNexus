@@ -200,3 +200,77 @@ body:has(.app-shell.is-connection-web) {
   .is-connection-web .web-map>.web-map-status { bottom:8px; }
   .is-connection-web .web-map-controls { bottom:8px; }
 }
+
+/* Similar artists and songs around one selection: closer means more similar. */
+.web-artist.compact { height:88px; gap:2px; }
+.web-artist.compact .web-avatar { padding:3px; }
+.web-artist.compact .web-avatar .artist-avatar,.web-artist.compact .web-avatar .album-cover { width:44px; height:44px; font-size:13px; }
+.web-artist.compact strong { font-size:11px; line-height:13px; }
+.web-artist.compact small { font-size:8px; }
+.web-artist.is-song .web-avatar { border-radius:9px; border-color:#7fb7c9; }
+.web-artist.is-song .web-avatar .album-cover { border-radius:6px; overflow:hidden; display:grid; place-items:center; }
+.web-artist.anchor.is-song .web-avatar .album-cover { width:68px; height:68px; }
+.web-artist.is-artist.compact .web-avatar { border-color:#eaa6b6; }
+.web-artist.is-pinned .web-avatar { box-shadow:0 0 0 4px #ffe2eb40; border-color:#fff; }
+.web-line .web-line-visible { stroke-width:1; }
+.web-line.similarity .web-line-visible { stroke:#bd9caa; opacity:var(--web-line-strength,.3); }
+.web-line.performed .web-line-visible { stroke:#7fb7c9; stroke-width:1.2; opacity:.45; }
+.web-line.neighbour .web-line-visible { stroke:#eaa6b6; stroke-dasharray:3 4; opacity:0; }
+.web-line.is-hovered .web-line-visible { stroke:#fff1f5; stroke-width:1.8; opacity:1; }
+.web-lines .web-line { pointer-events:none; }
+.web-summary { display:flex; flex-wrap:wrap; align-items:center; gap:4px 14px; font-size:11px; color:#c9c6d0; }
+.web-summary > span { display:inline-flex; align-items:center; gap:5px; }
+.web-summary i { width:8px; height:8px; display:inline-block; }
+.dot-artist { background:#eaa6b6; border-radius:50%; } .dot-song { background:#7fb7c9; border-radius:2px; }
+.web-summary-note { color:#8f8a9a; font-size:10px; }
+.web-filter { display:inline-flex; gap:2px; padding:2px; border:1px solid #37353c; border-radius:7px; }
+.web-filter button { padding:3px 9px; font-size:10px; border-radius:5px; background:none; color:#aaa0b6; border:0; cursor:pointer; }
+.web-filter button.active { background:#413039; color:#ffe1e6; }
+.web-info-card { position:absolute; top:12px; right:12px; z-index:6; width:min(310px,calc(100% - 24px)); max-height:calc(100% - 24px); overflow:auto; padding:12px 14px; border:1px solid #3a3c45; border-radius:10px; background:#17181df5; display:flex; flex-direction:column; gap:5px; }
+.web-info-card.is-preview { pointer-events:none; }
+.web-info-card > strong { font-size:14px; color:#fff; padding-right:22px; }
+.web-info-card > small { font-size:11px; color:#c9c6d0; }
+.web-info-meter { display:flex; align-items:center; gap:8px; font-size:10px; color:#eaa6b6; margin-top:2px; }
+.web-info-meter > span { flex:1; height:4px; border-radius:2px; background:#2c2d35; overflow:hidden; }
+.web-info-meter > span > i { display:block; height:100%; background:#eaa6b6; }
+.web-info-card ul { margin:4px 0 0; padding:0 0 0 14px; display:flex; flex-direction:column; gap:4px; }
+.web-info-card li { font-size:11px; line-height:1.4; color:#d8d5de; }
+.web-info-card li a { color:#eda7b5; }
+.web-info-near { font-size:10px; color:#aaa0b6; margin:2px 0 0; }
+.web-info-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.web-info-actions button { font-size:11px; min-height:30px; padding:4px 10px; }
+.web-info-close { position:absolute; top:6px; right:6px; }
+.web-map-note { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); text-align:center; color:#c9c6d0; font-size:12px; z-index:3; max-width:320px; }
+@media(max-width:720px) { .web-summary-note { display:none; } }
+
+/* Playlist maps: colors say whose it is. */
+.web-mode button { white-space:nowrap; }
+.group-mine .web-avatar { border:2px solid #6db3ff !important; }
+.group-theirs .web-avatar { border:2px solid #f5a65b !important; }
+.group-shared .web-avatar { border:2.5px solid #f4e06d !important; box-shadow:0 0 0 4px #f4e06d22; }
+.group-for-me .web-avatar { border:2.5px dashed #f5a65b !important; box-shadow:0 0 0 3px #6db3ff55; }
+.group-for-them .web-avatar { border:2.5px dashed #6db3ff !important; box-shadow:0 0 0 3px #f5a65b55; }
+.group-new .web-avatar { border:2px solid #71d99e !important; }
+.web-line.contains .web-line-visible { stroke:#8f8a9a; opacity:.35; }
+.web-line.similar .web-line-visible { stroke:#c7a5ff; opacity:.5; stroke-dasharray:4 3; stroke-width:1.2; }
+.web-line.recommended .web-line-visible { stroke:#71d99e; opacity:.3; }
+.taste-legend { display:flex; flex-wrap:wrap; gap:4px 12px; font-size:10px; color:#c9c6d0; }
+.taste-legend > span { display:inline-flex; align-items:center; gap:5px; }
+.taste-legend i { width:10px; height:10px; border-radius:50%; display:inline-block; border:2px solid; }
+.taste-legend i.is-line { width:14px; height:0; border-radius:0; border-width:1px 0 0; }
+.taste-stats { display:flex; flex-wrap:wrap; gap:4px 14px; padding:8px 23px; font-size:11px; color:#c9c6d0; border-bottom:1px solid #ffffff0b; }
+.taste-stats strong { color:#fff; }
+.taste-panel-upload { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; padding:24px; overflow:auto; flex:1; min-height:0; }
+.taste-box { display:flex; flex-direction:column; gap:10px; padding:18px; border:1px solid #35353c; border-radius:12px; background:#1c1d23; }
+.taste-box h3 { margin:0; font-size:15px; }
+.taste-box p { margin:0; font-size:12px; color:#c9c6d0; line-height:1.45; }
+.taste-box input[type=text],.taste-box textarea { width:100%; box-sizing:border-box; padding:8px 10px; border-radius:7px; border:1px solid #3a3c45; background:#14151a; color:#fff; font-size:12px; }
+.taste-box textarea { min-height:62px; resize:vertical; font-family:inherit; }
+.taste-box-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.taste-toolbar-actions { display:flex; gap:6px; flex-wrap:wrap; }
+.taste-toolbar-actions button { font-size:11px; min-height:30px; padding:4px 10px; }
+
+.room-box { max-width:520px; margin:0 auto; text-align:center; align-items:center; }
+.room-code { font-size:42px; font-weight:700; letter-spacing:8px; color:#fff; padding:10px 20px; border:1px dashed #5a5c68; border-radius:12px; font-variant-numeric:tabular-nums; user-select:all; }
+.room-waiting { display:flex; align-items:center; gap:7px; color:#aaa0b6; }
+.room-input { text-transform:uppercase; letter-spacing:4px; font-size:18px !important; text-align:center; }
