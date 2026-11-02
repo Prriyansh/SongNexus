@@ -6,8 +6,9 @@ import { parseProfile } from './profile';
 import type { MusicProfile } from './profile';
 
 export type Page = 'about' | 'connections' | 'friends' | 'explore';
-export type WebMode = EntityType | 'playlist';
-export type WebSelection = { mode: WebMode; artist: string; song: string };
+/** comparison: Helen's two-artist Connection Web (left and right); the others start from one artist, song or playlist. */
+export type WebMode = EntityType | 'playlist' | 'comparison';
+export type WebSelection = { mode: WebMode; artist: string; song: string; left: string; right: string };
 export type Comparison = { kind: EntityType; left: string; right: string; role?: string };
 export type Route = { page: Page; manual: boolean; comparison: Comparison; note: string; profile?: MusicProfile; web?: WebSelection };
 
@@ -24,7 +25,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PARAMS: Record<EntityType, [string, string]> = { artist: ['artistA', 'artistB'], song: ['songA', 'songB'] };
 const note = (q: URLSearchParams) => (q.get('note') || '').slice(0, 300);
 
-export const defaultWeb = (): WebSelection => ({ mode: 'artist', artist: examples.artist[0], song: examples.song[0] });
+export const defaultWeb = (): WebSelection => ({ mode: 'artist', artist: examples.artist[0], song: examples.song[0], left: examples.artist[0], right: examples.artist[1] });
 
 /** A valid, distinct pair: unknown ids fall back to the defaults. */
 export function comparisonFor(kind: EntityType, left?: string | null, right?: string | null, role?: string | null): Comparison {
@@ -42,13 +43,15 @@ export function parseRoute(pathname: string, search: string, fallback?: Comparis
   const compare = path.match(/^\/compare\/(artists|songs)$/);
   if (path === '/friends') return { page: 'friends', manual: false, comparison: fallback ?? comparisonFor('artist'), note: note(q) };
   if (path === '/connections') {
-    // Older links used mode=search and artistA, from when this page compared two artists.
+    // Older links used mode=search for a song; artistA alone also opens an artist.
     const artist = q.get('artist') ?? q.get('artistA');
     const song = q.get('song');
+    const pair = comparisonFor('artist', q.get('artistA'), q.get('artistB'));
+    const mode = q.get('mode');
     return { page: 'connections', manual: false, comparison: fallback ?? comparisonFor('artist'), note: note(q),
-      web: { mode: q.get('mode') === 'song' || q.get('mode') === 'search' ? 'song' : q.get('mode') === 'playlist' ? 'playlist' : 'artist',
+      web: { mode: mode === 'song' || mode === 'search' ? 'song' : mode === 'playlist' || mode === 'comparison' ? mode : 'artist',
         artist: artist && UUID.test(artist) ? artist.toLowerCase() : examples.artist[0],
-        song: song && UUID.test(song) ? song.toLowerCase() : examples.song[0] } };
+        song: song && UUID.test(song) ? song.toLowerCase() : examples.song[0], left: pair.left, right: pair.right } };
   }
   if (compare) {
     const kind: EntityType = compare[1] === 'artists' ? 'artist' : 'song';
@@ -70,7 +73,7 @@ export function buildPath(page: Page, comparison: Comparison, noteText = '', man
   if (page === 'about') return manual ? '/about/manual' : '/about';
   if (page === 'friends') return '/friends';
   if (page === 'connections') {
-    const q = new URLSearchParams({ mode: web.mode, artist: web.artist, song: web.song });
+    const q = new URLSearchParams({ mode: web.mode, artist: web.artist, song: web.song, artistA: web.left, artistB: web.right });
     if (noteText) q.set('note', noteText.slice(0, 300));
     return `/connections?${q}`;
   }

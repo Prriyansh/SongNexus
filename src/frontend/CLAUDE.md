@@ -49,3 +49,5 @@ The UI: Helen's design (see `docs/design/`) running on live API data. Browser-on
 
 - `credits.ts` — merges MusicBrainz collaborators with Genius/Discogs and words what each source checked.
 - `similar-web.ts` — layout and lines for the similarity map; `taste.ts` — playlists in links and storage, and the playlist map's layout. `web-navigation.ts` — the map camera.
+- `similar-detail.ts` — Helen's zoom-dependent detail on the similarity map; `useSimilarDiscovery.ts` — artists added on zoom-in (`/api/similar?songs=0`).
+- `connection-web.ts`, `web-detail.ts`, `useWebDiscovery.ts` — Helen's two-artist Comparison mode (credits, genre journey, neighborhood discovery).

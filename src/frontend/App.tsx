@@ -211,17 +211,18 @@ function ShareModal({ route, profile, onClose }: { route: Route; profile: MusicP
   const onFriends = route.page === 'friends';
   const onTaste = onFriends || (onWeb && web.mode === 'playlist');
   const kind: EntityType = onWeb ? (web.mode === 'song' ? 'song' : 'artist') : comparison.kind;
-  const first = onWeb ? (web.mode === 'song' ? web.song : web.artist) : comparison.left;
-  const second = comparison.right;
+  const webPair = onWeb && web.mode === 'comparison';
+  const first = onWeb ? (web.mode === 'song' ? web.song : webPair ? web.left : web.artist) : comparison.left;
+  const second = webPair ? web.right : comparison.right;
   const left = useAsync<Details>(sharingProfile || onTaste ? null : `${kind}:${first}`, () => loadDetails(kind, first));
-  const right = useAsync<Details>(sharingProfile || onWeb ? null : `${kind}:${second}`, () => loadDetails(kind, second));
+  const right = useAsync<Details>(sharingProfile || (onWeb && !webPair) ? null : `${kind}:${second}`, () => loadDetails(kind, second));
   const url = sharingProfile ? buildProfileShareUrl(window.location.origin, profile, note) : onFriends ? window.location.href : route.page === 'connections' ? new URL(buildPath('connections', comparison, note, false, web) + window.location.hash, window.location.origin).href : buildShareUrl(window.location.origin, comparison, note);
   const copy = async () => { try { await navigator.clipboard.writeText(url); setCopied(true); } catch { const el = document.createElement('textarea'); el.value = url; document.body.appendChild(el); el.select(); const success = document.execCommand('copy'); setCopied(success); setCopyError(!success); el.remove(); } };
   return <Modal onClose={onClose} label={sharingProfile ? 'Share music profile' : 'Share music comparison'}>
     <div className="modal-heading"><div className="overline">{sharingProfile ? 'SHARE YOUR MUSIC TASTE' : 'SHARE A DISCOVERY'}</div><button className="icon-button" onClick={onClose} aria-label="Close share"><X size={19} /></button></div>
     <div className="share-emblem"><Share2 size={23} /></div>
     <h2>{sharingProfile ? 'Share your About Me.' : 'Pass the connection along.'}</h2>
-    <p className="share-pair">{sharingProfile ? `${profile.artists.length} artists · ${profile.genres.length} genres · ${profile.albums.length} albums · ${profile.songs.length} songs` : onFriends ? 'Friends' : onTaste ? 'Connection Web' : onWeb ? `${nameOf(left.data) || '…'} · Connection Web` : `${nameOf(left.data) || '…'} ↔ ${nameOf(right.data) || '…'}`}</p>
+    <p className="share-pair">{sharingProfile ? `${profile.artists.length} artists · ${profile.genres.length} genres · ${profile.albums.length} albums · ${profile.songs.length} songs` : onFriends ? 'Friends' : onTaste ? 'Connection Web' : webPair ? `${nameOf(left.data) || '…'} ↔ ${nameOf(right.data) || '…'} · Connection Web` : onWeb ? `${nameOf(left.data) || '…'} · Connection Web` : `${nameOf(left.data) || '…'} ↔ ${nameOf(right.data) || '…'}`}</p>
     <p>{sharingProfile ? 'Copy a snapshot of your favorite artists, genres, albums, and songs. Anyone with the link can view it.' : route.page === 'connections' ? 'Copy a link to this Connection Web and its selected music.' : 'Copy a link to this comparison and its role filter.'}</p>
     <label className="field-label" htmlFor="share-note">OPTIONAL MESSAGE</label><textarea id="share-note" maxLength={300} value={note} onChange={e => { setNote(e.target.value); setCopied(false); }} placeholder={sharingProfile ? 'A little about my music taste...' : 'This is why these two sound so familiar...'} />
     <label className="field-label" htmlFor="share-url">LINK</label><input id="share-url" readOnly value={url} onFocus={e => e.currentTarget.select()} />

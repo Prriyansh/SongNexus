@@ -134,6 +134,18 @@ describe("similarToArtist", () => {
     const web = await similarToArtist(SELF, { fetchImpl: fetchFor({ failLabs: true }), useCache: false, env: {} });
     expect(web.sources[0]).toEqual({ source: "ListenBrainz", status: "failed" });
   });
+
+  it("skips similar songs when asked, for the Connection Web's zoom-in", async () => {
+    details[SELF] = artistDetails(SELF, "Self");
+    search.mockImplementation(async (query: string) => (query.includes("arid:") ? { artists: [{ id: OTHER, name: "Close", tags: [] }] } : { artists: [] }));
+    const fetchImpl = fetchFor();
+    const web = await similarToArtist(SELF, { fetchImpl, useCache: false, env: {} }, { songs: false });
+    expect(web.artists.map((a) => a.name)).toEqual(["Close"]);
+    expect(web.songs).toEqual([]);
+    expect(web.seedSongs).toEqual([]);
+    const urls = fetchImpl.mock.calls.map(([url]) => String(url));
+    expect(urls.some((url) => url.includes("/top") || url.includes("similar-recordings"))).toBe(false);
+  });
 });
 
 describe("similarToSong", () => {

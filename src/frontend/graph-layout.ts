@@ -10,6 +10,12 @@ export interface GraphNode {
   role?: string; // 'Comparison anchor' for the two selected nodes.
   contributor?: boolean;
   artUrl?: string | null;
+  // Connection Web two-artist comparison: where a discovered artist came from and why.
+  discoveryAnchor?: string;
+  discoveryGenre?: string;
+  discoveryFocus?: { x: number; y: number };
+  discoveryZoom?: number;
+  detail?: string;
 }
 
 export interface GraphEdge {

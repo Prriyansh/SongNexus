@@ -10,7 +10,8 @@ Thin route handlers over `src/lib`. Each one validates input, calls the lib, and
   - `musicbrainz/collaborators/route.ts` — shared collaborators of two artists
   - `credits/route.ts` — collaborators from Genius and Discogs, with a report per source
   - `artist-insights/route.ts` — bio, awards, labels, audience and shared facts for two artists
-  - `similar/route.ts` — similar artists and songs, with reasons, for the Connection Web
+  - `similar/route.ts` — similar artists and songs, with reasons, for the Connection Web (`songs=0`: artists only)
+  - `musicbrainz/neighborhood/route.ts` — MusicBrainz neighbors of an artist, for the Comparison mode's zoom-in
   - `taste/route.ts` — a map from one playlist or two (POST; nothing is stored)
   - `rooms/route.ts`, `rooms/[code]/route.ts` — short codes for comparing playlists
   - `top-track/route.ts` — an artist's top song (Deezer rank → MusicBrainz recording)

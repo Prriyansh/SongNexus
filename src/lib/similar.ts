@@ -254,13 +254,14 @@ function performedLinks(songs: SimilarNode[], artists: { id: string; name: strin
   });
 }
 
-export async function similarToArtist(id: string, options: SourceOptions = {}): Promise<SimilarWeb> {
+/** `songs: false` skips similar songs, the slow part: the Connection Web uses it to add artists on zoom-in. */
+export async function similarToArtist(id: string, options: SourceOptions = {}, { songs: withSongs = true } = {}): Promise<SimilarWeb> {
   const artist = await lookupMusicBrainz({ type: "artist", id }) as ArtistDetails;
   const sources: SourceReport[] = [];
   const { nodes, links, deezer } = await similarArtists(artist, options, sources);
 
   // Similar songs start from this artist's most popular songs that have listening data.
-  const titles = deezer?.id ? await dzTopTitles(deezer.id, options).catch(() => [] as string[]) : [];
+  const titles = withSongs && deezer?.id ? await dzTopTitles(deezer.id, options).catch(() => [] as string[]) : [];
   let songs: SimilarNode[] = [];
   const seeds: { id: string; title: string; art: string | null }[] = [];
   for (const title of seedTitles(titles)) {
