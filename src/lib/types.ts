@@ -119,6 +119,16 @@ export type Collaborator = {
 
 export type YearSpan = { first: string; last: string };
 
+/** Why an artist is in another's MusicBrainz neighborhood (the Connection Web's two-artist comparison). */
+export type DiscoveryReason = {
+  kind: 'genre' | 'country' | 'era' | 'label' | 'member' | 'band' | 'shared-member' | 'collaborator';
+  text: string;
+  sourceUrl: string;
+  relatedTo: string;
+};
+export type RelatedArtist = Artist & { reasons: DiscoveryReason[] };
+export type ArtistNeighborhood = { artist: ArtistDetails; artists: RelatedArtist[]; failed: string[] };
+
 /**
  * What a collaborator scan covered: the artist's most recent studio albums (unit "albums"), or,
  * for artists without studio albums, one page of their recordings (unit "recordings").

@@ -4,6 +4,9 @@ export type MapPoint = { x: number; y: number };
 export const MIN_WEB_ZOOM = .62;
 export const MAX_WEB_ZOOM = 4;
 export const initialWebCamera = (): WebCamera => ({ x: 0, y: 0, zoom: 1 });
+/** The two-artist comparison's discovery breadth: zooming out finds more styles, zooming in more nearby artists. */
+export const scopeForZoom = (zoom: number) => zoom >= 1.3 ? -1 : zoom >= .95 ? 0 : zoom >= .78 ? 1 : 2;
+export const zoomForScope = (scope: number) => [1.6, 1, .85, .68][Math.max(0, Math.min(3, scope + 1))];
 
 /** Keep the world point under the pointer fixed as the camera zoom changes. */
 export function zoomWebCamera(camera: WebCamera, zoom: number, focal: MapPoint): WebCamera {
@@ -18,8 +21,20 @@ export const worldToWebScreen = (point: MapPoint, camera: WebCamera): MapPoint =
 export const webScreenToWorld = (point: MapPoint, camera: WebCamera): MapPoint =>
   ({ x: (point.x - camera.x) / camera.zoom, y: (point.y - camera.y) / camera.zoom });
 
+export const projectWebPoint = (point: MapPoint, center: MapPoint, zoom: number): MapPoint =>
+  ({ x: center.x + (point.x - center.x) * zoom, y: center.y + (point.y - center.y) * zoom });
+
 /** Node coordinates are avatar centers: they scale with the map, while cards keep their size. */
 export const webArtistCenter = (node: MapPoint, camera: WebCamera): MapPoint => worldToWebScreen(node, camera);
+/** The two-artist comparison places card centers: the avatar sits 22px above. Scales with the map; the offset does not. */
+export const webCardCenter = (node: MapPoint, camera: WebCamera): MapPoint => worldToWebScreen({ x: node.x, y: node.y - 22 }, camera);
+
+/** The comparison artist nearest a screen point, for zoom-in discovery. */
+export function focusArtistAt(nodes: ({ id: string } & MapPoint)[], point: MapPoint, camera: WebCamera) {
+  const world = webScreenToWorld(point, camera);
+  const nearest = [...nodes].sort((a, b) => Math.hypot(a.x - world.x, a.y - 22 - world.y) - Math.hypot(b.x - world.x, b.y - 22 - world.y))[0];
+  return nearest ? { artistId: nearest.id, ...world } : null;
+}
 
 export function interpolateWebZoom(start: WebCamera, zoom: number, focal: MapPoint, progress: number): WebCamera {
   const t = Math.max(0, Math.min(1, progress));

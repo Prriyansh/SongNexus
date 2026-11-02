@@ -42,6 +42,14 @@ describe('api client', () => {
     expect(fetchMock.mock.calls[0][0]).toBe(`/api/similar?kind=artist&id=${ARTIST_ID}`);
   });
 
+  it('asks for similar artists only (no songs) for the zoom-in, cached apart from the full map', async () => {
+    fetchMock.mockReturnValue(json({ similar: { artists: [], songs: [] } }));
+    await api.similarArtistsOf(ARTIST_ID);
+    await api.similarArtistsOf(ARTIST_ID);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(`/api/similar?kind=artist&id=${ARTIST_ID}&songs=0`);
+  });
+
   it('retries a busy (retryable) error once before giving up', async () => {
     fetchMock.mockReturnValueOnce(json({ error: 'MusicBrainz is busy right now.', retryable: true }, 503));
     fetchMock.mockReturnValueOnce(json({ details: { id: 'ok' } }));

@@ -86,7 +86,7 @@ describe('buildPath', () => {
   });
 
   it('keeps one artist and one song for the Connection Web, and round-trips them', () => {
-    const web = { mode: 'song' as const, artist: PHOEBE, song: VAMPIRE };
+    const web = { ...defaultWeb(), mode: 'song' as const, artist: PHOEBE, song: VAMPIRE };
     const url = new URL(buildPath('connections', comparisonFor('song'), 'a note', false, web), 'http://localhost');
     const route = parseRoute(url.pathname, url.search);
     expect(route.page).toBe('connections');
@@ -95,7 +95,7 @@ describe('buildPath', () => {
   });
 
   it('opens old two-artist and search links as the new artist and song views', () => {
-    expect(parseRoute('/connections', `?mode=comparison&artistA=${PHOEBE}&artistB=${TAYLOR}`).web).toMatchObject({ mode: 'artist', artist: PHOEBE });
+    expect(parseRoute('/connections', `?mode=comparison&artistA=${PHOEBE}&artistB=${TAYLOR}`).web).toMatchObject({ mode: 'comparison', left: PHOEBE, right: TAYLOR });
     expect(parseRoute('/connections', `?mode=search&song=${VAMPIRE}`).web).toMatchObject({ mode: 'song', song: VAMPIRE });
   });
 

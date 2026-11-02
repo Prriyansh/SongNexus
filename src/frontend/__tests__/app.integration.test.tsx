@@ -302,11 +302,17 @@ describe('Connection Web workspace', () => {
     expect(document.querySelector('main footer')).not.toBeNull();
   });
 
-  it('has one search, with no second artist to pick', async () => {
+  it('has one search from an artist, and Helen\'s two-artist Comparison alongside', async () => {
     await render('/connections');
     expect(document.querySelectorAll('.web-selection-dock .chooser')).toHaveLength(1);
     expect(buttons().some(b => b.getAttribute('aria-label') === 'Swap artists')).toBe(false);
-    expect(buttons().some(b => b.textContent?.includes('Comparison'))).toBe(false);
+    const modes = [...document.querySelectorAll('.web-mode button')].map(b => b.textContent?.trim());
+    expect(modes).toEqual(['Artist', 'Song', 'My playlist', 'Comparison']);
+    await click(buttons().find(b => b.textContent?.includes('Comparison'))!);
+    expect(window.location.search).toContain('mode=comparison');
+    expect(document.querySelectorAll('.web-selection-dock .chooser')).toHaveLength(2);
+    expect(buttons().some(b => b.getAttribute('aria-label') === 'Swap artists')).toBe(true);
+    expect(document.querySelector('.web-mini-label')?.textContent).toBe('THE SPACE BETWEEN');
   });
 
   it('explains why something is here, with its closeness and sources', async () => {

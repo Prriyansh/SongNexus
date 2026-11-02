@@ -182,3 +182,63 @@ describe('Connection Web pan UX', () => {
     expect(document.querySelector('.web-info-actions')).not.toBeNull();
   });
 });
+
+describe('Connection Web zoom levels', () => {
+  const onExplore = vi.fn();
+  const renderDetailed = async (web: SimilarWeb = crowded()) => {
+    await act(async () => { root.render(<ConnectionWebCanvas nodes={(width, height) => layoutSimilarWeb(web, width, height)} edges={buildWebEdges(web)} near={id => connectionsOf(id, web)} actions={() => null} levelOfDetail onExplore={onExplore} onVisibleCount={onVisibleCount} />); });
+  };
+  const wheel = async (deltaY: number, x: number, y: number) => {
+    await act(async () => { canvas().dispatchEvent(new WheelEvent('wheel', { deltaY, clientX: x, clientY: y, bubbles: true, cancelable: true })); });
+  };
+  const settle = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 200)); });
+  beforeEach(() => onExplore.mockReset());
+
+  it('shows fewer artists zoomed out and more zoomed in', async () => {
+    await renderDetailed();
+    const normal = visible().length;
+    await click(button('Zoom out')); await click(button('Zoom out'));
+    const far = visible().length;
+    await click(button('Fit connection map')); await click(button('Zoom in'));
+    expect(far).toBeLessThan(normal);
+    expect(visible().length).toBeGreaterThan(far);
+  });
+
+  it('loads more around the artist under the pointer once a zoom-in settles', async () => {
+    await renderDetailed();
+    const target = visible().find(n => !n.classList.contains('anchor') && n.classList.contains('is-artist'))!;
+    const x = parseFloat(target.style.left), y = parseFloat(target.style.top) - 19;
+    await wheel(-200, x, y);
+    expect(onExplore).not.toHaveBeenCalled();
+    await settle();
+    expect(onExplore).toHaveBeenCalledTimes(1);
+    expect(onExplore.mock.calls[0][0]).toBe(target.dataset.artistId);
+    expect(onExplore.mock.calls[0][1]).toBeGreaterThanOrEqual(1.3);
+  });
+
+  it('does not load more on a zoom-out or a small zoom-in', async () => {
+    await renderDetailed();
+    await wheel(120, 450, 270); await settle();
+    await click(button('Fit connection map'));
+    await wheel(-40, 450, 270); await settle();
+    expect(onExplore).not.toHaveBeenCalled();
+  });
+
+  it('zoom buttons explore around the middle of the map', async () => {
+    await renderDetailed();
+    await click(button('Zoom in'));
+    expect(onExplore).toHaveBeenCalledTimes(1);
+    expect(onExplore.mock.calls[0][1]).toBeCloseTo(1.35);
+  });
+
+  it('says which artist a zoomed-in find is similar to', async () => {
+    const via = similarWeb.artists[0];
+    const found = { ...node(1, 'artist', .7), id: 'found-1', name: 'Found One' };
+    await act(async () => { root.render(<ConnectionWebCanvas nodes={(w, h) => [...layoutSimilarWeb({ ...similarWeb, songs: [], links: [] }, w, h), { ...found, x: w / 2 + 120, y: h / 2, isCenter: false, via: { id: via.id, name: via.name }, discoveryZoom: 1 }]} edges={[]} near={() => []} actions={() => null} onVisibleCount={onVisibleCount} />); });
+    const item = document.querySelector<HTMLElement>('[data-artist-id="found-1"]')!;
+    await click(item, 1);
+    const card = document.querySelector('.web-info-card')!.textContent!;
+    expect(card).toContain('70% of the closest match to Taylor Swift');
+    expect(card).toContain('Found by zooming in near Taylor Swift.');
+  });
+});

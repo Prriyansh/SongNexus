@@ -3,11 +3,15 @@ import type { CSSProperties, ReactNode } from 'react';
 import { ArrowUpRight, Expand, Minus, Plus, X } from 'lucide-react';
 import { closenessLabel, nodeOpacity } from '../similar-web';
 import type { WebEdge, WebNode } from '../similar-web';
+import { buildWebDetailIndex, focusAt, webDetailOpacity } from '../similar-detail';
+import type { WebDetailIndex, WebFocus } from '../similar-detail';
 import { initialWebCamera, interpolateWebZoom, MAX_WEB_ZOOM, MIN_WEB_ZOOM, webArtistCenter, worldToWebScreen, zoomWebCamera } from '../web-navigation';
 import type { WebCamera } from '../web-navigation';
 import { AlbumCover, ArtistAvatar } from './Artwork';
 
 const OVERSCAN = 180;
+/** Zooming in this far near an artist asks for more around it. */
+export const EXPLORE_ZOOM = 1.3;
 /** From an avatar's center to the middle of its card, and to its edge. */
 const cardOffset = (node: WebNode) => (node.isCenter ? 22 : 19);
 const avatarReach = (node: WebNode) => (node.isCenter ? 40 : 28);
@@ -26,12 +30,16 @@ type CanvasProps = {
   showCloseness?: boolean;
   /** Where the camera starts, for maps wider than the view. */
   startAt?: (width: number) => WebCamera;
+  /** Helen's zoom-dependent detail: a small, varied set zoomed out, more the closer you get. Otherwise the closest few always show. */
+  levelOfDetail?: boolean;
+  /** Called once a zoom-in near an artist settles, to load more around it. */
+  onExplore?: (nodeId: string, zoom: number) => void;
   onVisibleCount: (count: number) => void;
   status?: ReactNode;
   empty?: boolean;
 };
 
-export function ConnectionWebCanvas({ nodes: placeNodes, edges, near: nearOf, actions, showCloseness = true, startAt, onVisibleCount, status, empty }: CanvasProps) {
+export function ConnectionWebCanvas({ nodes: placeNodes, edges, near: nearOf, actions, showCloseness = true, startAt, levelOfDetail = false, onExplore, onVisibleCount, status, empty }: CanvasProps) {
   const [panning, setPanning] = useState(false);
   const canvas = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; camera: WebCamera; pointer: number; moved: boolean } | null>(null);
@@ -39,8 +47,12 @@ export function ConnectionWebCanvas({ nodes: placeNodes, edges, near: nearOf, ac
   const camera = useRef(initialWebCamera());
   const frame = useRef<number | null>(null);
   const motion = useRef<{ target: number; direction: number } | null>(null);
+  const exploreCallback = useRef(onExplore);
+  const shownNodes = useRef<WebNode[]>([]);
+  const exploreTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [size, setSize] = useState({ width: 900, height: 540 });
   const [view, setView] = useState(initialWebCamera);
+  const [focus, setFocus] = useState<WebFocus | null>(null);
   const [hover, setHover] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
   const cancelFrame = useCallback(() => { if (frame.current !== null) cancelAnimationFrame(frame.current); frame.current = null; motion.current = null; }, []);
@@ -81,6 +93,8 @@ export function ConnectionWebCanvas({ nodes: placeNodes, edges, near: nearOf, ac
     window.addEventListener('blur', finishDrag);
     return () => { window.removeEventListener('blur', finishDrag); cancelFrame(); };
   }, [finishDrag, cancelFrame]);
+  useEffect(() => { exploreCallback.current = onExplore; }, [onExplore]);
+  useEffect(() => () => { if (exploreTimer.current) clearTimeout(exploreTimer.current); }, []);
   useEffect(() => {
     const element = canvas.current;
     if (!element) return;
@@ -109,8 +123,14 @@ export function ConnectionWebCanvas({ nodes: placeNodes, edges, near: nearOf, ac
       element.focus({ preventScroll: true });
       const direction = event.deltaY < 0 ? 1 : -1;
       const baseZoom = motion.current?.direction === direction ? motion.current.target : current.zoom;
+      // The artist under the pointer, measured before the camera moves.
+      const nextFocus = focusAt(shownNodes.current, focal, current);
       const next = zoomCamera(baseZoom * Math.exp(-event.deltaY * multiplier * (event.ctrlKey ? .006 : .0015)), focal);
       if (drag.current) drag.current.camera = { x: drag.current.camera.x + next.x - current.x, y: drag.current.camera.y + next.y - current.y, zoom: next.zoom };
+      setFocus(nextFocus);
+      // Explore once the wheel gesture settles, without restarting the camera.
+      if (exploreTimer.current) clearTimeout(exploreTimer.current);
+      exploreTimer.current = setTimeout(() => { if (direction > 0 && next.zoom >= EXPLORE_ZOOM && nextFocus.nodeId) exploreCallback.current?.(nextFocus.nodeId, next.zoom); }, 140);
     };
     element.addEventListener('wheel', wheel, { passive: false });
     return () => element.removeEventListener('wheel', wheel);
@@ -118,19 +138,37 @@ export function ConnectionWebCanvas({ nodes: placeNodes, edges, near: nearOf, ac
   const panBy = (x: number, y: number) => { finishDrag(); writeCamera({ ...camera.current, x: camera.current.x + x, y: camera.current.y + y }); };
   const changeZoom = (direction: number) => {
     finishDrag();
+    if (exploreTimer.current) clearTimeout(exploreTimer.current);
+    const middle = { x: size.width / 2, y: size.height / 2 };
+    const nextFocus = focusAt(shownNodes.current, middle, camera.current);
     const baseZoom = motion.current?.direction === Math.sign(direction) ? motion.current.target : camera.current.zoom;
-    zoomCamera(baseZoom * (direction > 0 ? 1.35 : 1 / 1.35), { x: size.width / 2, y: size.height / 2 });
+    const next = zoomCamera(baseZoom * (direction > 0 ? 1.35 : 1 / 1.35), middle);
+    setFocus(nextFocus);
+    if (direction > 0 && next.zoom >= EXPLORE_ZOOM && nextFocus.nodeId) onExplore?.(nextFocus.nodeId, next.zoom);
   };
   const start = useCallback((width: number) => startAt?.(width) ?? initialWebCamera(), [startAt]);
-  const reset = () => { finishDrag(); writeCamera(start(size.width)); setPinned(null); };
+  const reset = () => { finishDrag(); if (exploreTimer.current) clearTimeout(exploreTimer.current); writeCamera(start(size.width)); setPinned(null); setFocus(null); };
   useEffect(() => { if (startAt) writeCamera(start(canvas.current?.getBoundingClientRect().width || 900)); }, [startAt, start, writeCamera]);
 
   const nodes = useMemo(() => placeNodes(size.width, size.height), [placeNodes, size.width, size.height]);
   const lookup = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
-  const present = nodes.map(node => ({ node, opacity: nodeOpacity(node, view.zoom), screen: worldToWebScreen(node, view) }))
+  // Detail cells are rebuilt only when the map changes, keeping earlier members where they were.
+  const detailKey = levelOfDetail ? `${size.width}:${size.height}:${nodes.map(n => n.id).join('|')}` : '';
+  const [detail, setDetail] = useState<{ key: string; index: WebDetailIndex | null }>({ key: '', index: null });
+  let detailIndex = detail.index;
+  if (levelOfDetail && detail.key !== detailKey) {
+    detailIndex = buildWebDetailIndex(nodes, size.width, size.height, detail.index);
+    setDetail({ key: detailKey, index: detailIndex });
+  }
+  const tiers = useMemo(() => levelOfDetail && detailIndex ? webDetailOpacity(nodes, { ...size, camera: view, focus, index: detailIndex }) : null, [levelOfDetail, nodes, size, view, focus, detailIndex]);
+  // Everything the map showed before still shows; Helen's tiers add artists found by zooming in as you get close.
+  const shownAt = (node: WebNode) => node.discoveryZoom ? tiers?.get(node.id) ?? 0 : Math.max(nodeOpacity(node, view.zoom), tiers?.get(node.id) ?? 0);
+  const present = nodes.map(node => ({ node, opacity: shownAt(node), screen: worldToWebScreen(node, view) }))
     .filter(item => item.node.isCenter || inViewport(item.screen, size, OVERSCAN));
   const opacity = new Map(present.map(item => [item.node.id, item.opacity]));
-  const visibleCount = present.filter(item => item.opacity > .5 && inViewport(item.screen, size)).length;
+  const onScreen = present.filter(item => item.opacity > .5 && inViewport(item.screen, size)).map(item => item.node);
+  const visibleCount = onScreen.length;
+  useEffect(() => { shownNodes.current = onScreen; });
   useEffect(() => { onVisibleCount(visibleCount); }, [visibleCount, onVisibleCount]);
 
   const focusId = hover ?? pinned;
@@ -201,7 +239,8 @@ export function ConnectionWebCanvas({ nodes: placeNodes, edges, near: nearOf, ac
       <strong>{card.name}</strong>
       {card.subtitle && <small>{card.kind === 'song' ? `by ${card.subtitle}` : card.subtitle}</small>}
       {card.isCenter ? <small>Everything on this map is placed by how similar it is to this {card.kind}.</small>
-        : showCloseness && <div className="web-info-meter" title="Calculated. Relative to the closest match on this map, not an absolute score."><span><i style={{ width: `${card.similarity * 100}%` }} /></span>{closenessLabel(card.similarity)}</div>}
+        : showCloseness && <div className="web-info-meter" title={card.via ? `Calculated. Relative to the closest match to ${card.via.name}, not an absolute score.` : 'Calculated. Relative to the closest match on this map, not an absolute score.'}><span><i style={{ width: `${card.similarity * 100}%` }} /></span>{closenessLabel(card.similarity)}{card.via && ` to ${card.via.name}`}</div>}
+      {card.via && <small>Found by zooming in near {card.via.name}.</small>}
       {!card.isCenter && <ul>{card.reasons.map(reason => <li key={reason.kind + reason.text}>{reason.text}{reason.sourceUrl && !isPreview && <> <a href={reason.sourceUrl} target="_blank" rel="noreferrer">Source <ArrowUpRight size={10} /></a></>}</li>)}</ul>}
       {card.listeners !== null && <small>{card.listeners.toLocaleString('en-US')} listeners on ListenBrainz (its own community, not all listeners)</small>}
       {near.length > 0 && <p className="web-info-near">Also connected to {near.slice(0, 5).join(', ')}{near.length > 5 ? ` and ${near.length - 5} more` : ''}.</p>}
