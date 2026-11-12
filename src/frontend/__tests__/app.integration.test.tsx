@@ -62,7 +62,10 @@ const insightsReply = {
   a: { id: OLIVIA, facts: { wikidataUrl: 'https://www.wikidata.org/wiki/Q1', description: 'American singer', activeFrom: '2015', awards: [{ id: 'Q9', name: 'Grammy Award for Best New Artist', year: '2022' }], nominations: [], labels: [],
     wikipedia: { url: 'https://en.wikipedia.org/wiki/Olivia_Rodrigo', extract: 'Olivia Rodrigo is a singer.', imageUrl: null } }, audience: { listenBrainz: { listeners: 18915, listens: 1329454, url: 'https://listenbrainz.org/artist/x' }, lastFm: null } },
   b: { id: 'b', facts: null, audience: { listenBrainz: null, lastFm: null } },
-  shared: { awards: [], labels: [{ id: 'Q5', name: 'Republic Records', year: '' }], similarArtists: [] },
+  shared: {
+    awards: [{ id: 'Q10', name: 'Billboard 21 Under 21', year: '' }, { id: 'Q11', name: 'Grammy Award for Best Pop Vocal Album', year: '' }],
+    labels: [{ id: 'Q5', name: 'Republic Records', year: '' }], similarArtists: [],
+  },
   sources: [{ source: 'Wikidata', status: 'no-match' }, { source: 'ListenBrainz', status: 'ok' }, { source: 'Last.fm', status: 'no-key' }],
 };
 
@@ -165,7 +168,10 @@ describe('Explore: artists', () => {
     expect(facts.textContent).toContain('Grammy Award for Best New Artist (2022)');
     expect(facts.textContent).toContain('18,915 listeners');
     expect(facts.textContent).toContain('Republic Records');
-    expect(facts.textContent).toContain('Last.fm isn’t set up here.');
+    expect(facts.querySelector('.insight-shared')?.textContent).toContain('Both received');
+    expect(facts.querySelector('.insight-shared')?.textContent).toContain('Grammy Award for Best Pop Vocal Album');
+    expect(facts.querySelector('.coverage-note p')?.textContent).toContain('Last.fm isn’t set up here.');
+    expect(facts.querySelector('.coverage-note p + p')?.textContent).toContain('Wikidata and Wikipedia are community-edited');
     const details = document.querySelector('.comparison-details')!;
     expect(details.textContent).toContain('Only On Genius');
     expect(details.textContent).toContain('Genius: checked 30 and 30 songs.');
@@ -312,7 +318,7 @@ describe('Connection Web workspace', () => {
     expect(window.location.search).toContain('mode=comparison');
     expect(document.querySelectorAll('.web-selection-dock .chooser')).toHaveLength(2);
     expect(buttons().some(b => b.getAttribute('aria-label') === 'Swap artists')).toBe(true);
-    expect(document.querySelector('.web-mini-label')?.textContent).toBe('THE SPACE BETWEEN');
+    expect(document.querySelector('.web-map-heading h2')?.textContent).toBe('Olivia Rodrigo ↔ Taylor Swift');
   });
 
   it('explains why something is here, with its closeness and sources', async () => {
@@ -528,6 +534,7 @@ describe('Friends', () => {
 describe('About Me', () => {
   it('keeps the search text across all categories and searches the active category', async () => {
     await render('/about/manual');
+    expect(text()).not.toContain('MAKE IT YOURS');
     const input = document.querySelector<HTMLInputElement>('input[aria-label="Search music"]')!;
     await type(input, '  Phoebe  ');
 
@@ -617,6 +624,7 @@ describe('Explore: songs, sound and lyrics', () => {
   it('keeps song comparisons under Explore alongside the separate Connection Web destination', async () => {
     await render(songs);
     expect(document.querySelector('.song-analysis')).not.toBeNull();
+    expect(text()).not.toContain('EXPLORE THE MUSIC BEHIND THE MUSIC');
     expect(button('2 Songs').getAttribute('aria-pressed')).toBe('true');
     expect(button('Explore').getAttribute('aria-current')).toBe('page');
     expect(document.querySelector('.topbar-left > strong')?.textContent).toBe('Explore');
@@ -638,7 +646,7 @@ describe('Explore: songs, sound and lyrics', () => {
     const analysis = document.querySelector('.song-analysis')!;
     const release = document.querySelector('.comparison-details:not(.structure-panel)')!;
     expect(analysis.compareDocumentPosition(release) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(release.textContent).toContain('07 / MORE ABOUT THESE SONGS');
+    expect(release.querySelector('h3')?.textContent).toBe('Release details and credits');
     expect(release.textContent).toContain('Released');
     expect(document.querySelector('.selection-panel')!.textContent).toContain('Search the song library for the full sound and lyrics analysis');
   });

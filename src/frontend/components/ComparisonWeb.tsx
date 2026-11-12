@@ -44,7 +44,7 @@ export function ComparisonWeb({ selection, onChange, onSelect }: ComparisonProps
 
   return <section className="web-workspace" aria-label="Connection Web workspace">
     <div className="web-toolbar"><div className="web-live-label"><span /> ARTIST CONNECTIONS<small>{graph ? `${artistCount} artist${artistCount === 1 ? '' : 's'}` : 'Loading map'}</small></div></div>
-    <div className="web-map-heading"><div><span className="web-mini-label">THE SPACE BETWEEN</span><h2>{a.data?.name ?? 'Artist one'} <span>↔</span> {b.data?.name ?? 'Artist two'}</h2></div></div>
+    <div className="web-map-heading"><h2>{a.data?.name ?? 'Artist one'} <span>↔</span> {b.data?.name ?? 'Artist two'}</h2></div>
     {!!journey.length && <div className="web-journey" aria-label="Genre discovery neighborhoods">{journey.map((genre, i) => <span key={genre}>{i > 0 && <ArrowRight size={11} />}<span>{capitalize(genre)}</span></span>)}</div>}
     {graph ? <ComparisonWebCanvas key={selectionKey} graph={graph} onSelect={onSelect} onLevelChange={setLevel} onExplore={(focus, zoom) => void discovery.expand(focus, zoom)} onVisibleCount={setVisibleCount} status={status} /> : <div className="web-map web-loading" aria-busy={!error}>{error ? <div role="alert"><strong>We couldn’t load this map.</strong><p>{error.message}</p><button className="secondary-button" onClick={retry}>Try again</button></div> : <div role="status"><Network size={42} strokeWidth={1} /><p>Finding artists…</p></div>}</div>}
     <div className="web-selection-dock">

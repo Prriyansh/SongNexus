@@ -88,14 +88,14 @@ export function ComparisonDetails({ kind, a, b, collab, more, role, onSelect, on
   onSelect: (s: Selection) => void;
   onCompareSongs: (a: TrackRef, b: TrackRef) => void;
 }) {
-  if (!a || !b) return <section className="panel comparison-details" aria-busy="true"><div className="section-title"><div><span className="overline">{kind === 'song' ? '07 / MORE ABOUT THESE SONGS' : 'SIDE BY SIDE'}</span><h3>Loading from MusicBrainz…</h3></div></div><div className="skeleton-lines"><span/><span/><span/><span/></div></section>;
+  if (!a || !b) return <section className="panel comparison-details" aria-busy="true"><div className="section-title"><h3>Loading from MusicBrainz…</h3></div><div className="skeleton-lines"><span/><span/><span/><span/></div></section>;
 
   if (kind === 'song') {
     const sa = a as RecordingDetails, sb = b as RecordingDetails;
     const pair = [sa, sb] as const;
     const two = <T,>(f: (s: RecordingDetails) => T) => [f(sa), f(sb)] as [T, T];
     // Secondary for songs: the sound and lyrics analysis (SongAnalysis) comes first.
-    return <section className="panel comparison-details"><div className="section-title"><div><span className="overline">07 / MORE ABOUT THESE SONGS</span><h3>Release details and credits</h3></div></div>
+    return <section className="panel comparison-details"><div className="section-title"><h3>Release details and credits</h3></div>
       <div className="comparison-row comparison-row-heading"><span/>{pair.map(s => <strong key={s.id}>{s.title}</strong>)}</div>
       <Row name="Artist" values={two(s => <div className="inline-credit-list">{s.artists.map(artist => artist.id
         ? <button className="inline-link" key={artist.id} onClick={() => onSelect({ type: 'artist', id: artist.id! })}>{artist.name} ↗</button>
@@ -114,7 +114,7 @@ export function ComparisonDetails({ kind, a, b, collab, more, role, onSelect, on
   const aa = a as ArtistDetails, ab = b as ArtistDetails;
   const pair = [aa, ab] as const;
   const two = <T,>(f: (x: ArtistDetails) => T) => [f(aa), f(ab)] as [T, T];
-  return <section className="panel comparison-details"><div className="section-title"><div><span className="overline">SIDE BY SIDE</span><h3>Their sound, their circle.</h3></div></div>
+  return <section className="panel comparison-details"><div className="section-title"><h3>Their sound, their circle.</h3></div>
     <div className="comparison-row comparison-row-heading"><span/>{pair.map(x => <strong key={x.id}>{x.name}</strong>)}</div>
     <Row name="Artist" values={two(x => <p>{[x.type, x.area || x.country].filter(Boolean).join(' · ') || 'Artist'}{x.disambiguation && <small>{x.disambiguation}</small>}</p>)}/>
     <Row name="Born / formed" values={two(lifeSpan)}/>
