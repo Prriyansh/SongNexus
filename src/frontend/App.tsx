@@ -6,7 +6,7 @@ import {
   ArrowUpRight, Check, ChevronDown, ChevronRight, Network,
   CircleUserRound, Compass, Copy, Filter, GitCompareArrows,
   Heart, Info, Link2, Menu, Music2, Share2,
-  Sparkles, Users, X
+  Users, X
 } from 'lucide-react';
 import type { ArtistDetails, RecordingDetails, TrackRef } from '@/lib/types';
 import { formatDuration, partitionGenres } from '@/lib/types';
@@ -55,7 +55,7 @@ function DetailDrawer({ selected, onClose, onSelect, profile, onProfileChange, o
   const [notice, setNotice] = useState('');
   const toggle = useTaste(profile, onProfileChange, setNotice);
   const state = useAsync(selected.type === 'album' ? null : `${selected.type}:${selected.id}`, () => loadDetails(selected.type as EntityType, selected.id));
-  const top = <div className="drawer-top"><span className="overline">SONG NEXUS / DETAILS</span><button className="icon-button" onClick={onClose} aria-label="Close details"><X size={19} /></button></div>;
+  const top = <div className="drawer-top"><button className="icon-button" onClick={onClose} aria-label="Close details"><X size={19} /></button></div>;
   const tip = notice ? <div className="drawer-tip" role="status"><Check size={16} /> {notice}</div> : <div className="drawer-tip"><Info size={16} /> Select any artist above to keep exploring without leaving the comparison.</div>;
   const heart = (added: boolean, onClick: () => void) => <button className={`secondary-button ${added ? 'is-saved' : ''}`} onClick={onClick}><Heart size={15} fill={added ? 'currentColor' : 'none'} /> {added ? 'In your taste' : 'Add to your taste'}</button>;
 
@@ -99,14 +99,13 @@ function DetailDrawer({ selected, onClose, onSelect, profile, onProfileChange, o
   return <Modal drawer onClose={onClose} label={selected.type === 'artist' ? 'Artist details' : 'Song details'}>{top}{body()}{tip}</Modal>;
 }
 
-function SelectedCard({ kind, index, state, onDetails }: { kind: EntityType; index: number; state: ReturnType<typeof useAsync<Details>>; onDetails: (s: Selection) => void }) {
-  const tag = <span className="selected-index">{index === 0 ? '01 / LEFT' : '02 / RIGHT'}</span>;
-  if (state.error) return <div className="selected-card"><span className="selected-card-info">{tag}<LoadError error={state.error} retry={state.retry} /></span></div>;
+function SelectedCard({ kind, state, onDetails }: { kind: EntityType; state: ReturnType<typeof useAsync<Details>>; onDetails: (s: Selection) => void }) {
+  if (state.error) return <div className="selected-card"><span className="selected-card-info"><LoadError error={state.error} retry={state.retry} /></span></div>;
   const d = state.data;
-  if (!d) return <div className="selected-card is-loading" aria-busy="true"><span className="skeleton-art" /><span className="selected-card-info">{tag}<span className="skeleton-lines"><span /><span /></span></span></div>;
+  if (!d) return <div className="selected-card is-loading" aria-busy="true"><span className="skeleton-art" /><span className="selected-card-info"><span className="skeleton-lines"><span /><span /></span></span></div>;
   const song = 'title' in d ? d : null, artist = song ? null : (d as ArtistDetails);
   const subtitle = song ? [songArtists(song), song.representative?.title, yearOf(song.firstReleaseDate)].filter(Boolean).join(' · ') : [artist!.genres.slice(0, 3).map(g => capitalize(g.name)).join(' · '), artist!.area || artist!.country].filter(Boolean).join(' · ') || artistSubtitle(artist!);
-  return <button className="selected-card" onClick={() => onDetails({ type: kind, id: d.id })}>{song ? <AlbumCover cover={{ id: song.id, artUrl: song.representative?.artUrl }} size="lg" /> : <ArtistAvatar artist={{ ...artist!, artUrl: artistCover(artist!) }} size="lg" />}<span className="selected-card-info">{tag}<strong>{nameOf(d)}</strong><small>{subtitle}</small><span className="selected-details">View {kind === 'artist' ? 'details & albums' : 'song details'} <ArrowUpRight size={14} /></span></span></button>;
+  return <button className="selected-card" onClick={() => onDetails({ type: kind, id: d.id })}>{song ? <AlbumCover cover={{ id: song.id, artUrl: song.representative?.artUrl }} size="lg" /> : <ArtistAvatar artist={{ ...artist!, artUrl: artistCover(artist!) }} size="lg" />}<span className="selected-card-info"><strong>{nameOf(d)}</strong><small>{subtitle}</small><span className="selected-details">View {kind === 'artist' ? 'details & albums' : 'song details'} <ArrowUpRight size={14} /></span></span></button>;
 }
 
 function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissNote }: { comparison: Comparison; onComparison: (c: Comparison) => void; onRole: (role: string) => void; onDetails: (s: Selection) => void; note: string; onDismissNote: () => void }) {
@@ -161,43 +160,43 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
   const graphStatus = collabPending ? 'Finding people credited on both artists’ albums… (up to a minute the first time)' : collab.error ? `Couldn’t load collaborators: ${collab.error.message}` : '';
   const people = kind === 'artist' ? [a, b].filter(Boolean).map(x => ({ id: x!.id, name: nameOf(x) }))
     : [a, b].flatMap(s => (s as RecordingDetails | undefined)?.artists.filter(x => x.id).slice(0, 1).map(x => ({ id: x.id!, name: x.name })) ?? []).filter((v, i, arr) => arr.findIndex(x => x.id === v.id) === i);
-  const insight = (n: string, title: string, body: ReactNode) => <div className="insight-block"><span className="insight-number">{n}</span><div><strong>{title}</strong><p>{body}</p></div></div>;
+  const insight = (title: string, body: ReactNode) => <div className="insight-block"><strong>{title}</strong><p>{body}</p></div>;
   const mutualLinks = mutual.length ? mutual.slice(0, 4).map(c => <button className="inline-link" key={c.id} onClick={() => onDetails({ type: 'artist', id: c.id })}>{c.name} · {roleText([...new Set([...c.roles.a, ...c.roles.b])])} ↗</button>) : null;
 
   return <div className="explore-page">
-    <div className="page-heading"><div><div className="eyebrow"><Sparkles size={14} /> EXPLORE THE MUSIC BEHIND THE MUSIC</div><h1>Find the connection.</h1><p>Compare two tracks or artists, follow their shared connections, and discover the people behind the sound.</p></div><Segment value={kind} onChange={next => onComparison(comparisonFor(next))} /></div>
+    <div className="page-heading"><div><h1>Find the connection.</h1><p>Compare two tracks or artists, follow their shared connections, and discover the people behind the sound.</p></div><Segment value={kind} onChange={next => onComparison(comparisonFor(next))} /></div>
     {note && <div className="shared-note"><Link2 size={17} /><div><strong>Shared with a note</strong><p>{note}</p></div><button className="icon-button" onClick={onDismissNote} aria-label="Dismiss shared note"><X size={17} /></button></div>}
-    <section className="panel selection-panel"><div className="selection-heading"><div><span className="overline">01 / SELECT MUSIC</span><h2>Choose {kind === 'song' ? 'two songs' : 'two artists'} to compare</h2></div>{kind === 'artist' ? <button className="secondary-button" disabled={!a || !b || top.busy} onClick={() => void compareTopSongs()}><Music2 size={15} /> {top.busy ? 'Finding top songs…' : 'Compare their top songs'}</button> : <span className="mini-caption">Search the song library for the full sound and lyrics analysis</span>}</div>
+    <section className="panel selection-panel"><div className="selection-heading"><h2>Choose {kind === 'song' ? 'two songs' : 'two artists'} to compare</h2>{kind === 'artist' ? <button className="secondary-button" disabled={!a || !b || top.busy} onClick={() => void compareTopSongs()}><Music2 size={15} /> {top.busy ? 'Finding top songs…' : 'Compare their top songs'}</button> : <span className="mini-caption">Search the song library for the full sound and lyrics analysis</span>}</div>
       {top.error && <p className="error-text" role="alert">{top.error}</p>}
       <div className="select-grid"><SearchChooser type={kind} value={left} display={a} other={right} label={kind === 'song' ? 'SONG ONE' : 'ARTIST ONE'} onChange={v => onComparison({ ...comparison, left: v })} /><span className="vs">VS</span><SearchChooser type={kind} value={right} display={b} other={left} label={kind === 'song' ? 'SONG TWO' : 'ARTIST TWO'} onChange={v => onComparison({ ...comparison, right: v })} /></div>
-      <div className="selected-cards"><SelectedCard kind={kind} index={0} state={da} onDetails={onDetails} /><SelectedCard kind={kind} index={1} state={db} onDetails={onDetails} /></div>
+      <div className="selected-cards"><SelectedCard kind={kind} state={da} onDetails={onDetails} /><SelectedCard kind={kind} state={db} onDetails={onDetails} /></div>
     </section>
     {/* Songs: the sound and lyrics analysis is the comparison; release details and credits follow. */}
     {kind === 'song' && (songs ? <SongAnalysis sound={sound} songs={songs} onPickSimilar={song => void compareWithSimilar(song)} busyId={pick.id} pickError={pick.error} /> : <section className="panel match-panel" aria-busy="true"><p className="loading-text">Loading the songs…</p><div className="skeleton-lines"><span /><span /></div></section>)}
     {kind === 'artist' && <ArtistInsightsPanel state={insights} names={[a ? nameOf(a) : 'Artist one', b ? nameOf(b) : 'Artist two']} />}
     <ComparisonDetails kind={kind} a={a} b={b} collab={pair ? collab : null} more={kind === 'artist' ? more : undefined} role={role} onSelect={onDetails} onCompareSongs={compareSongs} />
-    <div className="content-columns"><section className="panel graph-panel"><div className="graph-heading"><div><span className="overline">{kind === 'song' ? '08' : '02'} / CONNECTION WEB</span><h2>How they’re connected</h2><p>Solid lines are credits on MusicBrainz; dotted is a songwriting credit alone; dashed is shared genre tags. Select a person to see the songs that connect them.</p></div><RoleSelect value={role} onChange={onRole} /></div>
+    <div className="content-columns"><section className="panel graph-panel"><div className="graph-heading"><div><h2>How they’re connected</h2><p>Solid lines are credits on MusicBrainz; dotted is a songwriting credit alone; dashed is shared genre tags. Select a person to see the songs that connect them.</p></div><RoleSelect value={role} onChange={onRole} /></div>
       {input ? <ConnectionGraph key={`${kind}:${left}:${right}:${role}`} input={input} status={graphStatus} onSelect={onDetails} /> : da.error || db.error ? <LoadError error={(da.error || db.error)!} retry={() => { da.retry(); db.retry(); }} /> : <div className="graph-canvas graph-loading" aria-busy="true"><div className="graph-grid" /><p className="loading-text">Loading from MusicBrainz…</p></div>}
     </section>
-      <aside className="right-column"><section className="panel insights"><div className="section-title"><div><span className="overline">{kind === 'song' ? '09' : '03'} / DISCOVER INSIGHTS</span><h3>What connects them?</h3></div><GitCompareArrows size={20} /></div>
+      <aside className="right-column"><section className="panel insights"><div className="section-title"><h3>What connects them?</h3><GitCompareArrows size={20} /></div>
         {kind === 'artist' ? <>
-          {insight('01', 'Direct connection', collabPending ? 'Checking album credits…' : collabData && (collabData.direct.bOnA.length || collabData.direct.aOnB.length)
+          {insight('Direct connection', collabPending ? 'Checking album credits…' : collabData && (collabData.direct.bOnA.length || collabData.direct.aOnB.length)
             ? [collabData.direct.bOnA.length ? `${nameOf(b)} is credited on ${nameOf(a)}’s “${collabData.direct.bOnA[0].title}”.` : '', collabData.direct.aOnB.length ? `${nameOf(a)} is credited on ${nameOf(b)}’s “${collabData.direct.aOnB[0].title}”.` : ''].filter(Boolean).join(' ')
             : collabData?.writing && (collabData.writing.bOnA.length || collabData.writing.aOnB.length)
               ? [collabData.writing.bOnA.length ? `${nameOf(b)} has a songwriting credit on ${nameOf(a)}’s “${collabData.writing.bOnA[0].title}”.` : '', collabData.writing.aOnB.length ? `${nameOf(a)} has a songwriting credit on ${nameOf(b)}’s “${collabData.writing.aOnB[0].title}”.` : '', 'Writing credits can come from a sample or interpolation, so this doesn’t by itself mean they worked together.'].filter(Boolean).join(' ')
             : 'Neither is credited on the other’s scanned albums.')}
-          {insight('02', 'Mutual collaborators', collabPending ? 'Reading album credits…' : mutualLinks || 'No one is credited on both artists’ scanned albums.')}
-          {insight('03', 'Genre overlap', sharedGenres.length ? sharedGenres.slice(0, 5).join(', ') : 'Their MusicBrainz genre tags don’t overlap. Follow the web to see where they meet.')}
+          {insight('Mutual collaborators', collabPending ? 'Reading album credits…' : mutualLinks || 'No one is credited on both artists’ scanned albums.')}
+          {insight('Genre overlap', sharedGenres.length ? sharedGenres.slice(0, 5).join(', ') : 'Their MusicBrainz genre tags don’t overlap. Follow the web to see where they meet.')}
         </> : <>
-          {insight('01', 'Shared credited artists', a && b ? ((a as RecordingDetails).artists.filter(x => x.id && (b as RecordingDetails).artists.some(y => y.id === x.id)).map(x => x.name).join(', ') || 'Different artists. The web shows who worked with both.') : 'Loading…')}
-          {insight('02', 'Musical similarity · calculated', soundResult
+          {insight('Shared credited artists', a && b ? ((a as RecordingDetails).artists.filter(x => x.id && (b as RecordingDetails).artists.some(y => y.id === x.id)).map(x => x.name).join(', ') || 'Different artists. The web shows who worked with both.') : 'Loading…')}
+          {insight('Musical similarity · calculated', soundResult
             ? `${Math.round(soundResult.overall * 100)}% overall match: sound ${Math.round(soundResult.audio.score * 100)}%, lyrics ${soundResult.lyrics ? `${Math.round(soundResult.lyrics.score * 100)}%` : 'not matched'}.${sharedGenres.length ? ` Shared genres: ${sharedGenres.slice(0, 3).join(', ')}.` : ''}`
             : sound.loading ? 'Measuring their sound and lyrics…'
             : sharedGenres.length ? `Shared genres: ${sharedGenres.slice(0, 5).join(', ')}.` : 'No genre tags in common on MusicBrainz.')}
-          {insight('03', 'Factual connection path', pathText || (collabPending ? 'Reading album credits…' : 'No documented path between these two songs in the albums we scanned.'))}
+          {insight('Factual connection path', pathText || (collabPending ? 'Reading album credits…' : 'No documented path between these two songs in the albums we scanned.'))}
         </>}
       </section>
-        <section className="panel quick-peek"><span className="overline">GO DEEPER</span><h3>The people behind the music</h3><p>Click an artist in the web or choose one below to see their albums, links, and genres.</p>{people.map(p => <MiniArtist key={p.id} artist={p} onClick={() => onDetails({ type: 'artist', id: p.id })} />)}{mutual.slice(0, 3).map(c => <MiniArtist key={c.id} artist={c} picture={false} subtitle={`Worked with both · ${roleText([...new Set([...c.roles.a, ...c.roles.b])])}`} onClick={() => onDetails({ type: 'artist', id: c.id })} />)}</section>
+        <section className="panel quick-peek"><h3>The people behind the music</h3><p>Click an artist in the web or choose one below to see their albums, links, and genres.</p>{people.map(p => <MiniArtist key={p.id} artist={p} onClick={() => onDetails({ type: 'artist', id: p.id })} />)}{mutual.slice(0, 3).map(c => <MiniArtist key={c.id} artist={c} picture={false} subtitle={`Worked with both · ${roleText([...new Set([...c.roles.a, ...c.roles.b])])}`} onClick={() => onDetails({ type: 'artist', id: c.id })} />)}</section>
       </aside></div>
   </div>;
 }
@@ -219,8 +218,7 @@ function ShareModal({ route, profile, onClose }: { route: Route; profile: MusicP
   const url = sharingProfile ? buildProfileShareUrl(window.location.origin, profile, note) : onFriends ? window.location.href : route.page === 'connections' ? new URL(buildPath('connections', comparison, note, false, web) + window.location.hash, window.location.origin).href : buildShareUrl(window.location.origin, comparison, note);
   const copy = async () => { try { await navigator.clipboard.writeText(url); setCopied(true); } catch { const el = document.createElement('textarea'); el.value = url; document.body.appendChild(el); el.select(); const success = document.execCommand('copy'); setCopied(success); setCopyError(!success); el.remove(); } };
   return <Modal onClose={onClose} label={sharingProfile ? 'Share music profile' : 'Share music comparison'}>
-    <div className="modal-heading"><div className="overline">{sharingProfile ? 'SHARE YOUR MUSIC TASTE' : 'SHARE A DISCOVERY'}</div><button className="icon-button" onClick={onClose} aria-label="Close share"><X size={19} /></button></div>
-    <div className="share-emblem"><Share2 size={23} /></div>
+    <div className="modal-heading"><div className="share-emblem"><Share2 size={23} /></div><button className="icon-button" onClick={onClose} aria-label="Close share"><X size={19} /></button></div>
     <h2>{sharingProfile ? 'Share your About Me.' : 'Pass the connection along.'}</h2>
     <p className="share-pair">{sharingProfile ? `${profile.artists.length} artists · ${profile.genres.length} genres · ${profile.albums.length} albums · ${profile.songs.length} songs` : onFriends ? 'Friends' : onTaste ? 'Connection Web' : webPair ? `${nameOf(left.data) || '…'} ↔ ${nameOf(right.data) || '…'} · Connection Web` : onWeb ? `${nameOf(left.data) || '…'} · Connection Web` : `${nameOf(left.data) || '…'} ↔ ${nameOf(right.data) || '…'}`}</p>
     <p>{sharingProfile ? 'Copy a snapshot of your favorite artists, genres, albums, and songs. Anyone with the link can view it.' : route.page === 'connections' ? 'Copy a link to this Connection Web and its selected music.' : 'Copy a link to this comparison and its role filter.'}</p>

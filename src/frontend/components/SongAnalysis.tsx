@@ -25,8 +25,8 @@ const FEATURES: { key: AudioFeature; label: string }[] = [
   { key: 'instrumentalness', label: 'Instrumentalness' },
 ];
 
-const Title = ({ overline, title, icon }: { overline: string; title: string; icon?: ReactNode }) =>
-  <div className="section-title"><div><span className="overline">{overline}</span><h3>{title}</h3></div>{icon}</div>;
+const Title = ({ title, icon }: { title: string; icon?: ReactNode }) =>
+  <div className="section-title"><h3>{title}</h3>{icon}</div>;
 const Bars = ({ a, b }: { a: number; b?: number }) =>
   <div className="audio-bar"><span className="bar-a" style={{ width: `${a}%` }} />{b !== undefined && <span className="bar-b" style={{ width: `${b}%` }} />}</div>;
 const Row = ({ name, a, b }: { name: string; a: ReactNode; b: ReactNode }) =>
@@ -46,7 +46,7 @@ export function soundUnavailableText(sound: SoundState, titles: [string, string]
   return null;
 }
 
-/** 02 / How alike they are: the overall match, sound and lyric scores, reasons, shared credits. */
+/** The overall match, sound and lyric scores, reasons, and shared credits. */
 function MatchPanel({ c }: { c: SoundComparison }) {
   const shared = [
     ...c.credits.artists.map(artist => `Artist: ${artist}`),
@@ -54,7 +54,7 @@ function MatchPanel({ c }: { c: SoundComparison }) {
     c.credits.same_genre && c.credits.genre ? `Genre: ${capitalize(c.credits.genre)}` : '',
   ].filter(Boolean);
   return <section className="panel match-panel">
-    <Title overline="02 / HOW ALIKE THEY ARE" title="Listen for the similarities." icon={<GitCompareArrows size={20} />} />
+    <Title title="Listen for the similarities." icon={<GitCompareArrows size={20} />} />
     <div className="match-hero">
       <div className="match-score"><strong>{pct(c.overall)}%</strong><span>overall match</span></div>
       <div className="match-scores">
@@ -63,7 +63,7 @@ function MatchPanel({ c }: { c: SoundComparison }) {
         <small>{c.lyrics ? 'Sound counts 60%, lyrics 40%.' : 'Lyrics weren’t matched for one of the songs, so this is sound only.'}</small>
       </div>
       <div className="match-reasons">
-        {c.reasons.map((reason, i) => <div className="insight-block" key={reason}><span className="insight-number">{String(i + 1).padStart(2, '0')}</span><div><p>{plainReason(reason)}</p></div></div>)}
+        {c.reasons.map(reason => <div className="insight-block" key={reason}><p>{plainReason(reason)}</p></div>)}
       </div>
     </div>
     {shared.length > 0 && <div className="chip-row match-shared">{shared.map(item => <span className="chip" key={item}>{item}</span>)}</div>}
@@ -73,7 +73,7 @@ function MatchPanel({ c }: { c: SoundComparison }) {
 /** Helen's sound-profile bars, one pair per audio feature. */
 function SoundPanel({ c, titles }: { c: SoundComparison; titles: [string, string] }) {
   return <section className="panel audio-panel">
-    <Title overline="03 / SOUND PROFILE" title="How they sound" />
+    <Title title="How they sound" />
     <div className="bar-key"><span><i className="key-a" />{titles[0]}</span><span><i className="key-b" />{titles[1]}</span></div>
     {FEATURES.map(({ key, label }) => <div className="audio-row" key={key}>
       <div className="audio-label"><span>{label}</span><strong>{pct(c.a.audio[key])} <em>/</em> {pct(c.b.audio[key])}</strong></div>
@@ -88,7 +88,7 @@ function StructurePanel({ c, titles }: { c: SoundComparison; titles: [string, st
   const s = c.structure, la = c.a.lyrics?.structure, lb = c.b.lyrics?.structure;
   const notes = [s.key.relation !== 'unknown' ? `Keys: ${s.key.relation}.` : '', s.tempo.half_double_match ? 'Tempos line up in half or double time.' : ''].filter(Boolean).join(' ');
   return <section className="panel comparison-details structure-panel">
-    <Title overline="04 / STRUCTURE" title="How they’re built" />
+    <Title title="How they’re built" />
     <div className="comparison-row comparison-row-heading"><span /><strong>{titles[0]}</strong><strong>{titles[1]}</strong></div>
     <Row name="Tempo" a={`${s.tempo.a} BPM`} b={`${s.tempo.b} BPM`} />
     <Row name="Key" a={s.key.a} b={s.key.b} />
@@ -113,7 +113,7 @@ function LyricsPanel({ c, titles }: { c: SoundComparison; titles: [string, strin
       : <p className="loading-text">Lyrics not matched.</p>}
   </div>;
   return <section className="panel audio-panel">
-    <Title overline="05 / LYRICS" title="What they’re about" />
+    <Title title="What they’re about" />
     <div className="lyric-sides">{side(c.a, titles[0])}{side(c.b, titles[1])}</div>
     {c.lyrics && ([['Meaning', c.lyrics.semantic], ['Shared words', c.lyrics.vocabulary], ['Themes', c.lyrics.themes], ['Sentiment', c.lyrics.sentiment]] as const).map(([label, value]) =>
       <div className="audio-row" key={label}><div className="audio-label"><span>{label}</span><strong>{pct(value)}%</strong></div><Bars a={pct(value)} /></div>)}
@@ -130,7 +130,7 @@ function SimilarPanel({ similar, titles, onPick, busyId, error }: { similar: { a
     </button>)}
   </div>;
   return <section className="panel quick-peek similar-panel">
-    <span className="overline">06 / DISCOVER</span><h3>Songs that sound like these</h3>
+    <h3>Songs that sound like these</h3>
     <p>Pick one to compare it with {titles[0]}.</p>
     {list(titles[0], similar.a)}{list(titles[1], similar.b)}
     {error && <p className="error-text" role="alert">{error}</p>}
@@ -149,7 +149,7 @@ export function SongAnalysis({ sound, songs, onPickSimilar, busyId, pickError }:
   if (sound.data?.status !== 'ok') {
     const why = soundUnavailableText(sound, titles);
     return <section className="panel match-panel" aria-busy={sound.loading}>
-      <Title overline="02 / HOW ALIKE THEY ARE" title="Listen for the similarities." />
+      <Title title="Listen for the similarities." />
       {why ? <p className="analysis-missing">{why}</p> : <><p className="loading-text">Measuring their sound and lyrics…</p><div className="skeleton-lines"><span /><span /><span /></div></>}
       {sound.error && <button className="secondary-button" onClick={sound.retry}>Try again</button>}
     </section>;

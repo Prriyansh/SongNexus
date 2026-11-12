@@ -55,8 +55,9 @@ export function PlaylistUpload({ onClose, onImport }: { onClose: () => void; onI
   const matched = [...new Map(matches.flatMap(m => (m.song ? [[m.song.id, m.song] as const] : []))).values()];
   const pending = matches.filter(m => m.status === 'waiting').length;
   const done = matches.length - pending;
-  return <Modal onClose={onClose} label="Upload playlist"><div className="modal-heading"><span className="overline">BRING YOUR MUSIC</span><button className="icon-button" onClick={onClose} aria-label="Close upload"><X size={20}/></button></div>
-    <h2>Start with a playlist.</h2><p>Import an exported playlist file or try our sample. We’ll look up each song on MusicBrainz.</p>
+  return <Modal onClose={onClose} label="Upload playlist">
+    <div className="modal-heading"><h2>Start with a playlist.</h2><button className="icon-button" onClick={onClose} aria-label="Close upload"><X size={20}/></button></div>
+    <p>Import an exported playlist file or try our sample. We’ll look up each song on MusicBrainz.</p>
     <div className="provider-pills" role="group" aria-label="Playlist source">{['Spotify', 'YouTube Music', 'Apple Music'].map(p => <button key={p} aria-pressed={p === provider} className={p === provider ? 'active' : ''} onClick={() => setProvider(p)}>{p}</button>)}</div>
     <div className="drop-zone" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); void load(e.dataTransfer.files[0]); }}>
       <span className="upload-symbol"><FileMusic size={28}/></span><h3>Drop a playlist file here</h3><p>CSV, JSON, or TXT · Up to 2 MB · first {MAX_MATCH_ROWS} songs are matched</p>

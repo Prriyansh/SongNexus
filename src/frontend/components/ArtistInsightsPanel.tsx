@@ -34,10 +34,11 @@ function Side({ name, insight }: { name: string; insight: ArtistInsight }) {
 }
 
 export function ArtistInsightsPanel({ state, names }: { state: Loadable<ArtistInsights>; names: [string, string] }) {
-  const title = <div className="section-title"><div><span className="overline">WHO THEY ARE</span><h3>Beyond the credits</h3></div></div>;
+  const title = <div className="section-title"><h3>Beyond the credits</h3></div>;
   if (state.error) return <section className="panel artist-insights">{title}<p className="error-text" role="alert">{state.error.message}</p><button className="secondary-button" onClick={state.retry}>Try again</button></section>;
   if (!state.data) return <section className="panel artist-insights" aria-busy="true">{title}<p className="loading-text">Looking them up on Wikidata, Wikipedia and ListenBrainz…</p><div className="skeleton-lines"><span /><span /><span /></div></section>;
   const { a, b, shared, sources } = state.data;
+  const sourceStatus = sourceNote(sources.filter(s => s.status !== 'ok'));
   return <section className="panel artist-insights">{title}
     <div className="insight-sides"><Side name={names[0]} insight={a} /><Side name={names[1]} insight={b} /></div>
     {(shared.awards.length > 0 || shared.labels.length > 0 || shared.similarArtists.length > 0) && <div className="insight-shared">
@@ -45,6 +46,9 @@ export function ArtistInsightsPanel({ state, names }: { state: Loadable<ArtistIn
       {shared.awards.length > 0 && <div className="insight-fact"><span>Both received</span><div className="chip-row">{shared.awards.map(item => <span className="chip" key={item.id}>{item.name}</span>)}</div></div>}
       {shared.similarArtists.length > 0 && <div className="insight-fact"><span>Last.fm lists as similar to both</span><div className="chip-row">{shared.similarArtists.slice(0, 8).map(artist => <a className="chip" key={artist.url} href={artist.url} target="_blank" rel="noreferrer">{artist.name}</a>)}</div><small>Listener similarity, not a collaboration.</small></div>}
     </div>}
-    <small className="coverage-note">{sourceNote(sources.filter(s => s.status !== 'ok'))} Wikidata and Wikipedia are community-edited: their lists aren’t complete totals and can contain mistakes, so check the links.</small>
+    <div className="coverage-note">
+      {sourceStatus && <p>{sourceStatus}</p>}
+      <p>Wikidata and Wikipedia are community-edited: their lists aren’t complete totals and can contain mistakes, so check the links.</p>
+    </div>
   </section>;
 }
