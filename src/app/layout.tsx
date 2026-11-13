@@ -5,6 +5,7 @@ import "@/frontend/styles.css";
 import "@/frontend/product.css";
 import "@/frontend/integration.css";
 import "@/frontend/connection-web.css";
+import "@/frontend/accounts.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
