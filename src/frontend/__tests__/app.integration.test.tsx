@@ -455,7 +455,52 @@ describe('Connection Web: my playlist', () => {
 });
 
 describe('Friends', () => {
-  const useSample = async () => { await click(button('Try a sample')); await settle(); };
+  const usePlaylist = async () => {
+    await type(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Paste a playlist"]')!, samplePlaylist.map(song => `${song.title} - ${song.artist}`).join('\n'));
+    await click(button('Use pasted songs'));
+  };
+
+  it.each([false, true])('starts empty without saved songs, including an artist-only profile (%s)', async (hasArtist) => {
+    if (hasArtist) localStorage.setItem('song-nexus-profile', JSON.stringify({ artists: [phoebe], songs: [], albums: [], genres: ['indie folk'] }));
+    await render('/friends');
+    expect(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Paste a playlist"]')?.value).toBe('');
+    expect(document.querySelector('[aria-label="Autofill from About Me"]')).toBeNull();
+    expect(button('Use pasted songs').disabled).toBe(true);
+  });
+
+  it('uses songs added in About Me and lets you restore them with autofill', async () => {
+    await render('/about/manual');
+    await click(button('Songs'));
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search music"]')!, 'vampire');
+    await click(document.querySelector('.catalog-card')!);
+    await click(button('Friends'));
+    const input = document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Paste a playlist"]')!;
+    expect(input.value).toBe('vampire - Olivia Rodrigo');
+    expect(button('Autofill from About Me').textContent).toBe('vampire - Olivia Rodrigo');
+
+    await type(input, 'My own song - My own artist');
+    await click(button('Autofill from About Me'));
+    expect(input.value).toBe('vampire - Olivia Rodrigo');
+    expect(document.activeElement).toBe(input);
+    await click(button('Use pasted songs'));
+    await click(button('Get a code to share'));
+    const request = (fetchMock.mock.calls as unknown as [string, RequestInit][]).find(([url, init]) => url === '/api/rooms' && init.method === 'POST')!;
+    expect(JSON.parse(String(request[1].body))).toEqual({ name: '', songs: samplePlaylist });
+    expect(stored().songs[0].title).toBe('vampire');
+  });
+
+  it('prefills an invitation with your own saved songs and preserves their titles when joining', async () => {
+    const songs = [{ id: VAMPIRE, title: 'My song - Live', artist: 'My artist' }, { id: OPHELIA, title: 'Another song', artist: 'Another artist' }, { id: EXPECTATIONS, title: 'No artist', artist: '' }];
+    localStorage.setItem('song-nexus-profile', JSON.stringify({ artists: [], songs, albums: [], genres: [] }));
+    await render('/friends?code=ABC234');
+    const input = document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Paste a playlist"]')!;
+    expect(input.value).toBe('My song - Live - My artist\nAnother song - Another artist');
+    expect(button('Autofill from About Me').textContent).toBe('My song - Live - My artist');
+    fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ room: { host: roomReply.host, guest: { name: '', songs: songs.slice(0, 2) } } })));
+    await click(button('Use pasted songs'));
+    const request = (fetchMock.mock.calls as unknown as [string, RequestInit][]).find(([url, init]) => url === '/api/rooms/ABC234' && init?.method === 'POST')!;
+    expect(JSON.parse(String(request[1].body))).toEqual({ name: '', songs: [{ title: 'My song - Live', artist: 'My artist' }, { title: 'Another song', artist: 'Another artist' }] });
+  });
 
   it('is its own page in the sidebar', async () => {
     await render('/connections');
@@ -466,7 +511,7 @@ describe('Friends', () => {
 
   it('gives you a short code and opens the map by itself once your friend joins', async () => {
     await render('/friends');
-    await useSample();
+    await usePlaylist();
     await click(button('Get a code to share'));
     await settle();
     expect(document.querySelector('.room-code')?.textContent).toBe('ABC234');
@@ -490,7 +535,7 @@ describe('Friends', () => {
     await settle();
     expect(document.querySelector('.taste-box h3')?.textContent).toBe('Priya wants to compare playlists');
     fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ room: { host: roomReply.host, guest: { name: '', songs: [{ title: 'Kill Bill', artist: 'SZA' }] } } })));
-    await useSample();
+    await usePlaylist();
     const body = JSON.parse(String((fetchMock.mock.calls as unknown as [string, RequestInit?][]).find(([, init]) => init?.method === 'POST')![1]!.body));
     expect(body.songs.length).toBeGreaterThan(0);
     await settle();
@@ -516,7 +561,7 @@ describe('Friends', () => {
   it('falls back to a long link where short codes aren’t set up', async () => {
     roomsUnavailable = true;
     await render('/friends');
-    await useSample();
+    await usePlaylist();
     await click(button('Get a code to share'));
     await settle(5);
     expect(document.querySelector<HTMLInputElement>('input[aria-label="Your friend link"]')?.value).toContain('/friends#a=');

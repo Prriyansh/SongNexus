@@ -262,6 +262,7 @@ body:has(.app-shell.is-connection-web) {
 .taste-box { display:flex; flex-direction:column; gap:10px; padding:18px; border:1px solid #35353c; border-radius:12px; background:#1c1d23; }
 .taste-box h3 { margin:0; font-size:15px; }
 .taste-box p { margin:0; font-size:12px; color:#c9c6d0; line-height:1.45; }
+.playlist-autofill { text-decoration:underline; text-underline-offset:2px; overflow-wrap:anywhere; }
 .taste-box input[type=text],.taste-box textarea { width:100%; box-sizing:border-box; padding:8px 10px; border-radius:7px; border:1px solid #3a3c45; background:#14151a; color:#fff; font-size:12px; }
 .taste-box textarea { min-height:62px; resize:vertical; font-family:inherit; }
 .taste-box-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
