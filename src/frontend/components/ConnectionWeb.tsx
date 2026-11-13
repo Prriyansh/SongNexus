@@ -6,6 +6,7 @@ import type { WebSelection } from '../routing';
 import { buildWebEdges, connectionsOf, discoveredNodes, discoveryEdges, layoutSimilarWeb, placeDiscovered } from '../similar-web';
 import type { WebFilter, WebNode } from '../similar-web';
 import type { EntityType, Selection } from '../types';
+import type { MusicProfile } from '../profile';
 import { useAsync } from '../useAsync';
 import { useSimilarDiscovery } from '../useSimilarDiscovery';
 import { ComparisonWeb } from './ComparisonWeb';
@@ -13,7 +14,7 @@ import { ConnectionWebCanvas } from './ConnectionWebCanvas';
 import { SearchChooser } from './SearchChooser';
 import { PlaylistWeb } from './TasteWeb';
 
-type WebProps = { selection: WebSelection; onChange: (s: WebSelection) => void; onSelect: (s: Selection) => void; onCompare: (kind: EntityType, a: string, b: string) => void; note?: string };
+type WebProps = { selection: WebSelection; onChange: (s: WebSelection) => void; onSelect: (s: Selection) => void; onCompare: (kind: EntityType, a: string, b: string) => void; note?: string; profile: MusicProfile };
 const FILTERS: { value: WebFilter; label: string }[] = [{ value: 'all', label: 'Both' }, { value: 'artist', label: 'Artists' }, { value: 'song', label: 'Songs' }];
 
 const MODES: { value: WebSelection['mode']; label: string; icon: typeof Music2 }[] = [
@@ -32,12 +33,12 @@ export function ConnectionWeb(props: WebProps) {
     {note && <div className="shared-note"><Link2 size={17} /><div><strong>Shared with a note</strong><p>{note}</p></div></div>}
     {selection.mode === 'playlist'
       ? <PlaylistWeb onExploreArtist={artist => onChange({ ...selection, mode: 'artist', artist })} onExploreSong={song => onChange({ ...selection, mode: 'song', song })} onDetails={props.onSelect} />
-      : selection.mode === 'comparison' ? <ComparisonWeb key={`${selection.left}:${selection.right}`} selection={selection} onChange={onChange} onSelect={props.onSelect} />
+      : selection.mode === 'comparison' ? <ComparisonWeb key={`${selection.left}:${selection.right}`} selection={selection} onChange={onChange} onSelect={props.onSelect} profile={props.profile} />
       : <SimilarView {...props} mode={selection.mode} />}
   </div>;
 }
 
-function SimilarView({ selection, onChange, onSelect, onCompare, mode }: WebProps & { mode: EntityType }) {
+function SimilarView({ selection, onChange, onSelect, onCompare, mode, profile }: WebProps & { mode: EntityType }) {
   const id = mode === 'song' ? selection.song : selection.artist;
   const state = useAsync(`similar:${mode}:${id}`, () => similarMusic(mode, id));
   const [filter, setFilter] = useState<WebFilter>('all');
@@ -88,8 +89,8 @@ function SimilarView({ selection, onChange, onSelect, onCompare, mode }: WebProp
       {shown ? <ConnectionWebCanvas key={`${mode}:${id}`} nodes={place} edges={edges} near={near} actions={actions} levelOfDetail onExplore={onExplore} onVisibleCount={setVisibleCount} status={discoveryStatus || sourceStatus ? <div className="web-map-status" role="status">{discoveryStatus ?? <><span>{sourceStatus}</span>{missing.some(s => s.status === 'failed') && <button onClick={state.retry}>Try again</button>}</>}</div> : null} empty={empty} />
         : <div className="web-map web-loading" aria-busy={!state.error}>{state.error ? <div role="alert"><strong>We couldn’t load this map.</strong><p>{state.error.message}</p><button className="secondary-button" onClick={state.retry}>Try again</button></div> : <div role="status"><Network size={42} strokeWidth={1} /><p><LoaderCircle size={14} className="web-spinner" /> Finding similar artists and songs…</p></div>}</div>}
       <div className="web-selection-dock search-mode">
-        {mode === 'artist' ? <SearchChooser key="artist" type="artist" label="ARTIST" value={selection.artist} display={undefined} displayName={web?.center.kind === 'artist' ? web.center.name : undefined} other="" onChange={next => onChange({ ...selection, artist: next })} />
-          : <SearchChooser key="song" type="song" label="SONG" value={selection.song} display={undefined} displayName={web?.center.kind === 'song' ? web.center.name : undefined} other="" onChange={next => onChange({ ...selection, song: next })} />}
+        {mode === 'artist' ? <SearchChooser key="artist" type="artist" label="ARTIST" value={selection.artist} display={undefined} displayName={web?.center.kind === 'artist' ? web.center.name : undefined} other="" onChange={next => onChange({ ...selection, artist: next })} profile={profile} />
+          : <SearchChooser key="song" type="song" label="SONG" value={selection.song} display={undefined} displayName={web?.center.kind === 'song' ? web.center.name : undefined} other="" onChange={next => onChange({ ...selection, song: next })} profile={profile} />}
       </div>
     </section>
   </>;

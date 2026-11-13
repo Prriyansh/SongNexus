@@ -7,6 +7,7 @@ import { allGenres, familyOf } from '../genres';
 import { artistSubtitle, capitalize, colorFor, recentAlbums, songArtists, yearOf, firstRelease } from '../model';
 import { albumSnapshot, artistSnapshot, songSnapshot } from '../profile';
 import type { MusicProfile, SavedAlbum, SavedArtist, SavedSong } from '../profile';
+import { rankSearchResults } from '../search-ranking';
 import type { Selection } from '../types';
 import { useAsync } from '../useAsync';
 import { ArtistAvatar, ArtistPicture, AlbumCover } from './Artwork';
@@ -58,16 +59,16 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
     if (q.length < 2 || category === 'genre') return;
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      const request = category === 'song' ? searchSongs(q, controller.signal) : searchArtists(q, controller.signal, category === 'album' ? 5 : undefined);
+      const request = category === 'song' ? searchSongs(q, controller.signal) : searchArtists(q, controller.signal);
       request.then(
-        (items: (Artist | Song)[]) => setFound({ key: searchKey, items }),
+        (items: (Artist | Song)[]) => { if (!controller.signal.aborted) setFound({ key: searchKey, items }); },
         error => { if (!controller.signal.aborted) setFound({ key: searchKey, error: error instanceof Error ? error.message : 'Search failed.' }); }
       );
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [category, q, searchKey]);
   const searching = q.length >= 2 && category !== 'genre' && found.key !== searchKey;
-  const results = found.key === searchKey ? found.items ?? [] : [];
+  const results = found.key === searchKey ? rankSearchResults(found.items ?? [], q, profile, { preferArtists: category === 'album' }) : [];
   const pickedArtist = category === 'album' ? albumArtist ?? (results[0] ? { id: results[0].id, name: (results[0] as Artist).name } : null) : null;
   const albums = useAsync(pickedArtist ? `artist:${pickedArtist.id}` : null, () => artistDetails(pickedArtist!.id));
 

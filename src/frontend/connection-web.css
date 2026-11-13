@@ -258,12 +258,23 @@ body:has(.app-shell.is-connection-web) {
 .taste-legend i.is-line { width:14px; height:0; border-radius:0; border-width:1px 0 0; }
 .taste-stats { display:flex; flex-wrap:wrap; gap:4px 14px; padding:8px 23px; font-size:11px; color:#c9c6d0; border-bottom:1px solid #ffffff0b; }
 .taste-stats strong { color:#fff; }
-.taste-panel-upload { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; padding:24px; overflow:auto; flex:1; min-height:0; }
-.taste-box { display:flex; flex-direction:column; gap:10px; padding:18px; border:1px solid #35353c; border-radius:12px; background:#1c1d23; }
+.taste-panel-upload { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:16px; padding:24px; overflow:auto; flex:1; min-height:0; }
+.taste-box { display:flex; flex-direction:column; gap:10px; min-width:0; padding:18px; border:1px solid #35353c; border-radius:12px; background:#1c1d23; }
 .taste-box h3 { margin:0; font-size:15px; }
 .taste-box p { margin:0; font-size:12px; color:#c9c6d0; line-height:1.45; }
+.playlist-autofill { text-decoration:underline; text-underline-offset:2px; overflow-wrap:anywhere; }
 .taste-box input[type=text],.taste-box textarea { width:100%; box-sizing:border-box; padding:8px 10px; border-radius:7px; border:1px solid #3a3c45; background:#14151a; color:#fff; font-size:12px; }
-.taste-box textarea { min-height:62px; resize:vertical; font-family:inherit; }
+.taste-box textarea { min-height:62px; flex:0 0 auto; resize:none; overflow-x:hidden; overflow-y:auto; scrollbar-gutter:stable; font-family:inherit; line-height:1.6; }
+.taste-panel-upload,.taste-box textarea { scrollbar-width:thin; scrollbar-color:#62596b transparent; }
+@supports selector(::-webkit-scrollbar) {
+  .taste-panel-upload,.taste-box textarea { scrollbar-width:auto; scrollbar-color:auto; }
+  .taste-panel-upload::-webkit-scrollbar,.taste-box textarea::-webkit-scrollbar { width:10px; height:10px; }
+  .taste-panel-upload::-webkit-scrollbar-track,.taste-box textarea::-webkit-scrollbar-track { background:transparent; }
+  .taste-panel-upload::-webkit-scrollbar-thumb,.taste-box textarea::-webkit-scrollbar-thumb { min-height:32px; background:#62596b; border:2px solid transparent; border-radius:999px; background-clip:padding-box; }
+  .taste-panel-upload::-webkit-scrollbar-thumb:hover,.taste-box textarea::-webkit-scrollbar-thumb:hover { background-color:#8b7d94; }
+  .taste-panel-upload::-webkit-scrollbar-button,.taste-box textarea::-webkit-scrollbar-button { display:none; width:0; height:0; }
+  .taste-panel-upload::-webkit-scrollbar-corner,.taste-box textarea::-webkit-scrollbar-corner { background:transparent; }
+}
 .taste-box-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .taste-toolbar-actions { display:flex; gap:6px; flex-wrap:wrap; }
 .taste-toolbar-actions button { font-size:11px; min-height:30px; padding:4px 10px; }

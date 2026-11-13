@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Check, Compass, Copy, GitCompareArrows, LoaderCircle, Network, RotateCcw, Upload } from 'lucide-react';
 import { ApiError, createRoom, joinRoom, readRoom, tasteWeb } from '../api';
 import { sourceNote } from '../credits';
 import { parsePlaylist } from '../playlist';
+import type { MusicProfile } from '../profile';
 import { findRecording } from '../resolve';
-import { decodePlaylist, encodePlaylist, friendLink, layoutTaste, readStoredPlaylist, SAMPLE_FRIEND, SAMPLE_MINE, storePlaylist, TASTE_WORLD_WIDTH, tasteEdges, tasteNear } from '../taste';
+import { decodePlaylist, encodePlaylist, friendLink, layoutTaste, readStoredPlaylist, SAMPLE_MINE, storePlaylist, TASTE_WORLD_WIDTH, tasteEdges, tasteNear } from '../taste';
 import type { Room } from '@/lib/rooms';
 import type { SharedPlaylist } from '../taste';
 import type { WebNode } from '../similar-web';
@@ -25,10 +26,62 @@ const LEGEND_FRIEND = (name: string) => [
 const centerOnBoth = (width: number) => ({ x: Math.min(0, (width - TASTE_WORLD_WIDTH) / 2), y: 0, zoom: 1 });
 
 /** Reads a playlist file or pasted lines. Rows without an artist can't be placed on the map, so they're dropped and counted. */
-function PlaylistPicker({ onPick, sample, label }: { onPick: (songs: SharedPlaylist['songs']) => void; sample: SharedPlaylist; label: string }) {
+function PlaylistPicker({ onPick, sample, label, savedSongs = [] }: { onPick: (songs: SharedPlaylist['songs']) => void; sample?: SharedPlaylist; label: string; savedSongs?: SharedPlaylist['songs'] }) {
   const input = useRef<HTMLInputElement>(null);
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  const savedText = savedSongs.map(song => `${song.title} - ${song.artist}`).join('\n');
   const [text, setText] = useState('');
   const [error, setError] = useState('');
+
+  useLayoutEffect(() => {
+    const field = textarea.current;
+    const box = field?.closest<HTMLElement>('.taste-box');
+    const panel = box?.closest<HTMLElement>('.taste-panel-upload');
+    if (!field || !box || !panel) return;
+    const px = (value: string) => parseFloat(value) || 0;
+    const visibleChildren = (element: Element) => Array.from(element.children).filter(child => getComputedStyle(child).display !== 'none');
+    const outerHeight = (element: Element) => {
+      const style = getComputedStyle(element);
+      return element.getBoundingClientRect().height + px(style.marginTop) + px(style.marginBottom);
+    };
+    const resize = () => {
+      // Reset first so deleting songs also shrinks the field, including wrapped lines.
+      field.style.height = '0px';
+      const fieldStyle = getComputedStyle(field);
+      const contentHeight = field.scrollHeight + px(fieldStyle.borderTopWidth) + px(fieldStyle.borderBottomWidth);
+      const boxStyle = getComputedStyle(box);
+      const panelStyle = getComputedStyle(panel);
+      const children = visibleChildren(box);
+      const afterField = children.slice(children.indexOf(field) + 1);
+      let reserved = px(boxStyle.paddingBottom) + px(boxStyle.borderBottomWidth)
+        + afterField.reduce((height, child) => height + outerHeight(child) + px(boxStyle.rowGap), 0);
+
+      // On narrow screens, leave room for the code card beneath the playlist card.
+      for (const card of visibleChildren(panel)) {
+        if (card === box || card.getBoundingClientRect().top <= box.getBoundingClientRect().top + 1) continue;
+        const style = getComputedStyle(card);
+        const items = visibleChildren(card);
+        reserved += px(style.paddingTop) + px(style.paddingBottom) + px(style.borderTopWidth) + px(style.borderBottomWidth)
+          + items.reduce((height, child) => height + outerHeight(child), 0)
+          + Math.max(0, items.length - 1) * px(style.rowGap) + px(panelStyle.rowGap);
+      }
+
+      const panelTop = panel.getBoundingClientRect().top + panel.clientTop;
+      const viewport = window.visualViewport;
+      const viewportBottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+      const panelHeight = Math.min(panel.clientHeight, viewportBottom - panelTop);
+      const fieldTop = field.getBoundingClientRect().top - panelTop + panel.scrollTop;
+      const available = panelHeight - px(panelStyle.paddingBottom) - fieldTop - reserved;
+      field.style.height = `${Math.min(contentHeight, Math.max(px(fieldStyle.minHeight), available))}px`;
+    };
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(panel);
+    observer.observe(field);
+    window.visualViewport?.addEventListener('resize', resize);
+    return () => { observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); };
+  });
+
   const take = (name: string, content: string) => {
     try {
       const rows = parsePlaylist(name, content);
@@ -45,14 +98,19 @@ function PlaylistPicker({ onPick, sample, label }: { onPick: (songs: SharedPlayl
     take(file.name, await file.text());
     if (input.current) input.current.value = '';
   };
+  const submit = () => {
+    // Saved titles can contain " - "; keep their original fields until the user edits them.
+    if (savedSongs.length && text === savedText) { setError(''); onPick(savedSongs); }
+    else take('pasted.txt', text);
+  };
   return <>
-    <p>{label} CSV, JSON or TXT, or paste lines like “vampire - Olivia Rodrigo”. It stays in your browser.</p>
+    <p>{label} CSV, JSON or TXT, or paste {savedSongs.length ? <button className="inline-link playlist-autofill" aria-label="Autofill from About Me" title="Autofill from About Me" onClick={() => { setText(savedText); setError(''); textarea.current?.focus(); }}>{savedSongs[0].title} - {savedSongs[0].artist}</button> : 'Song - Artist'}.</p>
     <input ref={input} hidden type="file" accept=".csv,.json,.txt" aria-label="Playlist file" onChange={e => void load(e.target.files?.[0])} />
-    <textarea aria-label="Paste a playlist" value={text} onChange={e => setText(e.target.value)} placeholder={'vampire - Olivia Rodrigo\nKill Bill - SZA'} />
+    <textarea ref={textarea} aria-label="Paste a playlist" value={text} onChange={e => setText(e.target.value)} placeholder="Song - Artist" />
     <div className="taste-box-actions">
       <button className="primary-button" onClick={() => input.current?.click()}><Upload size={14} /> Choose file</button>
-      <button className="secondary-button" disabled={!text.trim()} onClick={() => take('pasted.txt', text)}>Use pasted songs</button>
-      <button className="secondary-button" onClick={() => onPick(sample.songs)}>Try a sample</button>
+      <button className="secondary-button" disabled={!text.trim()} onClick={submit}>Use pasted songs</button>
+      {sample && <button className="secondary-button" onClick={() => onPick(sample.songs)}>Try a sample</button>}
     </div>
     {error && <p className="error-text" role="alert">{error}</p>}
   </>;
@@ -134,7 +192,10 @@ const saveRoom = (room: SavedRoom | null) => {
 const codeInUrl = () => new URLSearchParams(window.location.search).get('code')?.trim().toUpperCase() ?? '';
 
 /** The Friends page: two people's playlists on one map, joined with a short code. */
-export function Friends(props: Props) {
+export function Friends({ profile, ...props }: Props & { profile: MusicProfile }) {
+  const savedSongs = useMemo(() => profile.songs
+    .map(({ title, artist }) => ({ title: title.trim(), artist: artist.trim() }))
+    .filter(song => song.title && song.artist), [profile.songs]);
   const [name, setName] = useState(() => readStoredPlaylist()?.name ?? '');
   const [mine, setMine] = useState<SharedPlaylist | null>(() => readStoredPlaylist());
   const [friend, setFriend] = useState<SharedPlaylist | null>(null);
@@ -246,7 +307,7 @@ export function Friends(props: Props) {
     return () => { live = false; };
   }, [saved, friend, mine]);
 
-  const nameField = <><label className="field-label" htmlFor="taste-name">YOUR NAME (OPTIONAL)</label><input id="taste-name" type="text" maxLength={30} value={name} onChange={e => setName(e.target.value)} placeholder="Shown to your friend" /></>;
+  const nameField = <><label className="field-label" htmlFor="taste-name">YOUR NAME (OPTIONAL)</label><input id="taste-name" type="text" maxLength={30} value={name} onChange={e => setName(e.target.value)} /></>;
   const shareUrl = saved ? `${window.location.origin}/friends?code=${saved.code}` : '';
 
   let body;
@@ -256,15 +317,15 @@ export function Friends(props: Props) {
     body = <div className="taste-panel-upload"><div className="taste-box room-box">
       <h3>Your code</h3>
       <div className="room-code" aria-label="Room code">{saved.code}</div>
-      <p>Send this to your friend. They go to the Friends page, enter it and upload their playlist. Your map will open here by itself.</p>
+      <p>Share this code to compare playlists.</p>
       <div className="taste-box-actions"><CopyButton text={saved.code} label="Copy code" /><CopyButton text={shareUrl} label="Copy link" /><button className="secondary-button" onClick={startOver}>Start over</button></div>
-      <p className="room-waiting" role="status"><LoaderCircle size={13} className="web-spinner" /> Waiting for your friend… You can close this page and come back. The code lasts a week.</p>
+      <p className="room-waiting" role="status"><LoaderCircle size={13} className="web-spinner" /> Waiting for your friend… Codes last 7 days.</p>
     </div></div>;
   } else if (joining || invite) {
     const inviter = invite ? invite.name || 'A friend' : hostName ?? 'A friend';
     body = <div className="taste-panel-upload"><div className="taste-box">
       <h3>{inviter} wants to compare playlists</h3>{nameField}
-      <PlaylistPicker label="Add your playlist to see what you share and what you should each listen to." sample={SAMPLE_FRIEND} onPick={songs => { if (invite) { pick(songs); setFriend(invite); } else void join(songs); }} />
+      <PlaylistPicker label="Add your playlist to compare." savedSongs={savedSongs} onPick={songs => { if (invite) { pick(songs); setFriend(invite); } else void join(songs); }} />
       {busy && <p className="loading-text">Joining…</p>}
       {error && <p className="error-text" role="alert">{error}</p>}
       <div className="taste-box-actions"><button className="secondary-button" onClick={startOver}>Cancel</button></div>
@@ -272,12 +333,12 @@ export function Friends(props: Props) {
   } else {
     body = <div className="taste-panel-upload">
       <div className="taste-box"><h3>Start a comparison</h3>{nameField}
-        {mine ? <><p><Check size={13} /> {mine.songs.length} songs ready.</p><div className="taste-box-actions"><button className="primary-button" disabled={busy} onClick={() => void startRoom()}>{busy ? 'Creating…' : 'Get a code to share'}</button><button className="secondary-button" onClick={() => setFriend(SAMPLE_FRIEND)}>Try a sample friend</button><button className="secondary-button" onClick={() => { setMine(null); storePlaylist(null); setLongLink(''); }}>Use a different playlist</button></div></> : <PlaylistPicker label="Upload your playlist, then share a short code with a friend." sample={SAMPLE_MINE} onPick={pick} />}
-        {noCodes && longLink && <><p>Short codes aren’t set up on this server, so send this longer link instead. It contains your playlist.</p><input type="text" readOnly aria-label="Your friend link" value={longLink} onFocus={e => e.currentTarget.select()} /><div className="taste-box-actions"><CopyButton text={longLink} label="Copy link" /></div></>}
+        {mine ? <><p><Check size={13} /> {mine.songs.length} songs ready.</p><div className="taste-box-actions"><button className="primary-button" disabled={busy} onClick={() => void startRoom()}>{busy ? 'Creating…' : 'Get a code to share'}</button><button className="secondary-button" onClick={() => { setMine(null); storePlaylist(null); setLongLink(''); }}>Use a different playlist</button></div></> : <PlaylistPicker label="Add a playlist to share a code." savedSongs={savedSongs} onPick={pick} />}
+        {noCodes && longLink && <><p>Codes are unavailable. Share this playlist link instead.</p><input type="text" readOnly aria-label="Your friend link" value={longLink} onFocus={e => e.currentTarget.select()} /><div className="taste-box-actions"><CopyButton text={longLink} label="Copy link" /></div></>}
       </div>
       <div className="taste-box"><h3>Got a code?</h3>
-        <p>Enter the code a friend sent you, then add your playlist.</p>
-        <input type="text" aria-label="Room code" className="room-input" maxLength={8} value={entered} onChange={e => setEntered(e.target.value.toUpperCase())} placeholder="ABC234" />
+        <p>Enter your friend’s code.</p>
+        <input type="text" aria-label="Room code" className="room-input" maxLength={8} value={entered} onChange={e => setEntered(e.target.value.toUpperCase())} placeholder="••••••" />
         <div className="taste-box-actions"><button className="primary-button" disabled={busy || entered.trim().length < 6} onClick={() => lookUp(entered.trim())}><GitCompareArrows size={14} /> Continue</button></div>
         {error && <p className="error-text" role="alert">{error}</p>}
       </div>

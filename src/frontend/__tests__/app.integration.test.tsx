@@ -236,7 +236,7 @@ describe('Explore: artists', () => {
     await render('/compare/artists');
     await click(document.querySelectorAll('.chooser-button')[1]);
     await type(document.querySelector<HTMLInputElement>('input[aria-label="Search artists"]')!, 'Phoebe');
-    expect(called('/api/musicbrainz/search?type=artist&limit=10&q=Phoebe')).toBe(true);
+    expect(called('/api/musicbrainz/search?type=artist&limit=24&q=Phoebe')).toBe(true);
     await click(button('Phoebe Bridgers'));
     expect(window.location.search).toBe(`?artistA=${OLIVIA}&artistB=${PHOEBE}`);
     expect(document.querySelector('.selected-cards')!.textContent).toContain('Phoebe Bridgers');
@@ -455,7 +455,56 @@ describe('Connection Web: my playlist', () => {
 });
 
 describe('Friends', () => {
-  const useSample = async () => { await click(button('Try a sample')); await settle(); };
+  const usePlaylist = async () => {
+    await type(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Paste a playlist"]')!, samplePlaylist.map(song => `${song.title} - ${song.artist}`).join('\n'));
+    await click(button('Use pasted songs'));
+  };
+
+  it.each([false, true])('starts empty without saved songs, including an artist-only profile (%s)', async (hasArtist) => {
+    if (hasArtist) localStorage.setItem('song-nexus-profile', JSON.stringify({ artists: [phoebe], songs: [], albums: [], genres: ['indie folk'] }));
+    await render('/friends');
+    expect(document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Paste a playlist"]')?.value).toBe('');
+    expect(document.querySelector('[aria-label="Autofill from About Me"]')).toBeNull();
+    expect(button('Use pasted songs').disabled).toBe(true);
+  });
+
+  it('only fills saved About Me songs after clicking autofill', async () => {
+    await render('/about/manual');
+    await click(button('Songs'));
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search music"]')!, 'vampire');
+    await click(document.querySelector('.catalog-card')!);
+    await click(button('Friends'));
+    const input = document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Paste a playlist"]')!;
+    expect(input.value).toBe('');
+    expect(button('Use pasted songs').disabled).toBe(true);
+    expect(button('Autofill from About Me').textContent).toBe('vampire - Olivia Rodrigo');
+
+    await type(input, 'My own song - My own artist');
+    await click(button('Autofill from About Me'));
+    expect(input.value).toBe('vampire - Olivia Rodrigo');
+    expect(document.activeElement).toBe(input);
+    await click(button('Use pasted songs'));
+    await click(button('Get a code to share'));
+    const request = (fetchMock.mock.calls as unknown as [string, RequestInit][]).find(([url, init]) => url === '/api/rooms' && init.method === 'POST')!;
+    expect(JSON.parse(String(request[1].body))).toEqual({ name: '', songs: samplePlaylist });
+    expect(stored().songs[0].title).toBe('vampire');
+  });
+
+  it('only autofills an invitation on request and preserves saved titles when joining', async () => {
+    const songs = [{ id: VAMPIRE, title: 'My song - Live', artist: 'My artist' }, { id: OPHELIA, title: 'Another song', artist: 'Another artist' }, { id: EXPECTATIONS, title: 'No artist', artist: '' }];
+    localStorage.setItem('song-nexus-profile', JSON.stringify({ artists: [], songs, albums: [], genres: [] }));
+    await render('/friends?code=ABC234');
+    const input = document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Paste a playlist"]')!;
+    expect(input.value).toBe('');
+    expect(button('Use pasted songs').disabled).toBe(true);
+    expect(button('Autofill from About Me').textContent).toBe('My song - Live - My artist');
+    await click(button('Autofill from About Me'));
+    expect(input.value).toBe('My song - Live - My artist\nAnother song - Another artist');
+    fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ room: { host: roomReply.host, guest: { name: '', songs: songs.slice(0, 2) } } })));
+    await click(button('Use pasted songs'));
+    const request = (fetchMock.mock.calls as unknown as [string, RequestInit][]).find(([url, init]) => url === '/api/rooms/ABC234' && init?.method === 'POST')!;
+    expect(JSON.parse(String(request[1].body))).toEqual({ name: '', songs: [{ title: 'My song - Live', artist: 'My artist' }, { title: 'Another song', artist: 'Another artist' }] });
+  });
 
   it('is its own page in the sidebar', async () => {
     await render('/connections');
@@ -466,7 +515,7 @@ describe('Friends', () => {
 
   it('gives you a short code and opens the map by itself once your friend joins', async () => {
     await render('/friends');
-    await useSample();
+    await usePlaylist();
     await click(button('Get a code to share'));
     await settle();
     expect(document.querySelector('.room-code')?.textContent).toBe('ABC234');
@@ -490,7 +539,7 @@ describe('Friends', () => {
     await settle();
     expect(document.querySelector('.taste-box h3')?.textContent).toBe('Priya wants to compare playlists');
     fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ room: { host: roomReply.host, guest: { name: '', songs: [{ title: 'Kill Bill', artist: 'SZA' }] } } })));
-    await useSample();
+    await usePlaylist();
     const body = JSON.parse(String((fetchMock.mock.calls as unknown as [string, RequestInit?][]).find(([, init]) => init?.method === 'POST')![1]!.body));
     expect(body.songs.length).toBeGreaterThan(0);
     await settle();
@@ -516,7 +565,7 @@ describe('Friends', () => {
   it('falls back to a long link where short codes aren’t set up', async () => {
     roomsUnavailable = true;
     await render('/friends');
-    await useSample();
+    await usePlaylist();
     await click(button('Get a code to share'));
     await settle(5);
     expect(document.querySelector<HTMLInputElement>('input[aria-label="Your friend link"]')?.value).toContain('/friends#a=');
@@ -541,7 +590,7 @@ describe('About Me', () => {
     await click(button('Albums'));
     expect(input.value).toBe('  Phoebe  ');
     await settle(60);
-    expect(called('/api/musicbrainz/search?type=artist&limit=5&q=Phoebe')).toBe(true);
+    expect(called('/api/musicbrainz/search?type=artist&limit=24&q=Phoebe')).toBe(true);
     expect(document.querySelector('.manual-grid')!.textContent).toContain('Punisher');
 
     await click(button('Songs'));
@@ -723,7 +772,7 @@ describe('Explore: song pickers', () => {
   it('offers songs from the sound dataset and opens the MusicBrainz version of the pick', async () => {
     soundSearchReply = { status: 'ok', results: [{ id: 'sp-kb', title: 'Kill Bill', artists: ['SZA'], album: 'SOS', genre: 'r-n-b', has_lyrics: true }] };
     await openSongPicker('kill bill');
-    expect(called('/api/sound/search?q=kill%20bill&limit=10')).toBe(true);
+    expect(called('/api/sound/search?q=kill%20bill&limit=24')).toBe(true);
     expect(text()).toContain('Songs with full sound and lyrics analysis');
     await click(button('Kill Bill'));
     expect(called('q=recording%3A%22Kill%20Bill%22%20AND%20artist%3A%22SZA%22%20AND%20status%3Aofficial')).toBe(true);
@@ -740,9 +789,119 @@ describe('Explore: song pickers', () => {
 
   it('falls back to MusicBrainz search when the sound service is not running', async () => {
     await openSongPicker('vampire', 0); // the first picker; the second hides the song already chosen
-    expect(called('/api/musicbrainz/search?type=recording&limit=10&q=vampire')).toBe(true);
+    expect(called('/api/musicbrainz/search?type=recording&limit=24&q=vampire')).toBe(true);
     expect(document.querySelector('.chooser-results')!.textContent).toContain('vampire');
     expect(text()).toContain('From MusicBrainz. Sound and lyrics analysis isn’t available right now.');
+  });
+});
+
+describe('Search ranking across the workspace', () => {
+  const savePreferences = (artists: { id: string; name: string }[] = [], genres: string[] = []) =>
+    localStorage.setItem('song-nexus-profile', JSON.stringify({ artists, genres, songs: [], albums: [] }));
+  const musicResults = (type: 'artist' | 'recording', results: unknown[]) => {
+    const base = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (input: string) => {
+      const url = new URL(input, 'http://localhost');
+      return url.pathname === '/api/musicbrainz/search' && url.searchParams.get('type') === type
+        ? new Response(JSON.stringify({ results })) : base(input);
+    });
+  };
+  const chooserTitles = () => Array.from(document.querySelectorAll('.chooser-option strong'), item => item.textContent);
+  const catalogTitles = () => Array.from(document.querySelectorAll('.catalog-card > strong'), item => item.textContent);
+  const openChooser = async (path: string, type: 'artist' | 'song', query: string) => {
+    await render(path);
+    await click(document.querySelector('.chooser-button')!);
+    await typeInput(type, query);
+  };
+  const typeInput = async (kind: 'artist' | 'song', query: string) =>
+    type(document.querySelector<HTMLInputElement>(`input[aria-label="Search ${kind}s"]`)!, query);
+
+  it.each(['/connections?mode=artist', '/connections?mode=comparison', '/compare/artists'])('promotes preferred genres in artist searches on %s', async path => {
+    savePreferences([], ['indie folk']);
+    musicResults('artist', [
+      { ...oliviaDetails, name: 'Artist One', tags: ['pop'] },
+      { ...phoebe, name: 'Artist Folk', tags: ['indie folk'] },
+      { ...taylorDetails, name: 'Artist Two', tags: ['pop'] },
+    ]);
+    await openChooser(path, 'artist', 'artist');
+    expect(chooserTitles()).toEqual(path === '/connections?mode=artist'
+      ? ['Artist Folk', 'Artist One', 'Artist Two'] : ['Artist Folk', 'Artist One']);
+  });
+
+  it.each(['/connections?mode=song', '/compare/songs'])('puts favorite artists first in song-library results on %s', async path => {
+    savePreferences([{ id: PHOEBE, name: 'Phoebe Bridgers' }]);
+    soundSearchReply = { status: 'ok', results: [
+      { id: 'sp-popular', title: 'Shared song', artists: ['Popular Artist'], album: null, genre: null, has_lyrics: true },
+      { id: 'sp-favorite', title: 'Shared song', artists: ['Phoebe Bridgers'], album: null, genre: null, has_lyrics: true },
+      { id: 'sp-next', title: 'Shared song', artists: ['Next Artist'], album: null, genre: null, has_lyrics: true },
+    ] };
+    await openChooser(path, 'song', 'shared');
+    expect(Array.from(document.querySelectorAll('.chooser-option small'), item => item.textContent))
+      .toEqual(['Phoebe Bridgers', 'Popular Artist', 'Next Artist']);
+  });
+
+  it.each(['/about/manual', '/compare/songs'])('ranks MusicBrainz songs by favorite artist when the song library is unavailable on %s', async path => {
+    savePreferences([{ id: PHOEBE, name: 'Phoebe Bridgers' }]);
+    musicResults('recording', [
+      { ...vampireSong, title: 'Shared song' },
+      { ...opheliaDetails, id: EXPECTATIONS, title: 'Shared song', artists: [{ id: PHOEBE, name: 'Phoebe Bridgers' }] },
+    ]);
+    if (path === '/about/manual') {
+      await render(path);
+      await click(button('Songs'));
+      await type(document.querySelector<HTMLInputElement>('input[aria-label="Search music"]')!, 'shared');
+      expect(document.querySelector('.catalog-card > small')?.textContent).toContain('Phoebe Bridgers');
+    } else {
+      await openChooser(path, 'song', 'shared');
+      expect(document.querySelector('.chooser-option small')?.textContent).toContain('Phoebe Bridgers');
+      expect(text()).toContain('From MusicBrainz');
+    }
+  });
+
+  it('reranks current About Me results after adding a favorite without repeating the search', async () => {
+    musicResults('artist', [
+      { ...oliviaDetails, name: 'Search Artist One' },
+      { ...phoebe, name: 'Search Artist Two' },
+    ]);
+    await render('/about/manual');
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search music"]')!, 'search');
+    expect(catalogTitles()).toEqual(['Search Artist One', 'Search Artist Two']);
+    const searchCalls = () => fetchMock.mock.calls.filter(([url]) => String(url).startsWith('/api/musicbrainz/search')).length;
+    const before = searchCalls();
+    await click(document.querySelectorAll('.catalog-card')[1]);
+    expect(catalogTitles()).toEqual(['Search Artist Two', 'Search Artist One']);
+    expect(stored().artists[0].id).toBe(PHOEBE);
+    expect(searchCalls()).toBe(before);
+    await click(button('Connection Web'));
+    await click(document.querySelector('.chooser-button')!);
+    await typeInput('artist', 'search');
+    expect(chooserTitles()).toEqual(['Search Artist Two', 'Search Artist One']);
+  });
+
+  it('opens a favorite artist’s albums first while keeping other returned artists selectable', async () => {
+    savePreferences([{ id: PHOEBE, name: 'Phoebe Bridgers' }], ['pop']);
+    musicResults('artist', [
+      { ...taylorDetails, name: 'Phoebe Ensemble', tags: ['pop'] },
+      { ...phoebe, tags: ['indie folk'] },
+    ]);
+    await render('/about/manual');
+    await click(button('Albums'));
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search music"]')!, 'phoebe');
+    expect(document.querySelector('.artist-picker button[aria-pressed="true"]')?.textContent).toContain('Phoebe Bridgers');
+    expect(catalogTitles()).toEqual(['Punisher', 'Stranger in the Alps']);
+    const otherArtist = Array.from(document.querySelectorAll('.artist-picker button')).find(item => item.textContent?.includes('Phoebe Ensemble'))!;
+    await click(otherArtist);
+    expect(catalogTitles()).toEqual(['1989']);
+  });
+
+  it('prefers an exact song title with no preferences and retains popularity order for the remaining matches', async () => {
+    soundSearchReply = { status: 'ok', results: [
+      { id: 'sp-popular', title: 'Moonlight Memories', artists: ['Popular Artist'], album: null, genre: null, has_lyrics: true },
+      { id: 'sp-exact', title: 'Moonlight', artists: ['Exact Artist'], album: null, genre: null, has_lyrics: true },
+      { id: 'sp-next', title: 'Moonlight Dreams', artists: ['Next Artist'], album: null, genre: null, has_lyrics: true },
+    ] };
+    await openChooser('/compare/songs', 'song', 'moonlight');
+    expect(chooserTitles()).toEqual(['Moonlight', 'Moonlight Memories', 'Moonlight Dreams']);
   });
 });
 
