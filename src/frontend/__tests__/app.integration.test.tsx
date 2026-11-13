@@ -468,14 +468,15 @@ describe('Friends', () => {
     expect(button('Use pasted songs').disabled).toBe(true);
   });
 
-  it('uses songs added in About Me and lets you restore them with autofill', async () => {
+  it('only fills saved About Me songs after clicking autofill', async () => {
     await render('/about/manual');
     await click(button('Songs'));
     await type(document.querySelector<HTMLInputElement>('input[aria-label="Search music"]')!, 'vampire');
     await click(document.querySelector('.catalog-card')!);
     await click(button('Friends'));
     const input = document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Paste a playlist"]')!;
-    expect(input.value).toBe('vampire - Olivia Rodrigo');
+    expect(input.value).toBe('');
+    expect(button('Use pasted songs').disabled).toBe(true);
     expect(button('Autofill from About Me').textContent).toBe('vampire - Olivia Rodrigo');
 
     await type(input, 'My own song - My own artist');
@@ -489,13 +490,16 @@ describe('Friends', () => {
     expect(stored().songs[0].title).toBe('vampire');
   });
 
-  it('prefills an invitation with your own saved songs and preserves their titles when joining', async () => {
+  it('only autofills an invitation on request and preserves saved titles when joining', async () => {
     const songs = [{ id: VAMPIRE, title: 'My song - Live', artist: 'My artist' }, { id: OPHELIA, title: 'Another song', artist: 'Another artist' }, { id: EXPECTATIONS, title: 'No artist', artist: '' }];
     localStorage.setItem('song-nexus-profile', JSON.stringify({ artists: [], songs, albums: [], genres: [] }));
     await render('/friends?code=ABC234');
     const input = document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Paste a playlist"]')!;
-    expect(input.value).toBe('My song - Live - My artist\nAnother song - Another artist');
+    expect(input.value).toBe('');
+    expect(button('Use pasted songs').disabled).toBe(true);
     expect(button('Autofill from About Me').textContent).toBe('My song - Live - My artist');
+    await click(button('Autofill from About Me'));
+    expect(input.value).toBe('My song - Live - My artist\nAnother song - Another artist');
     fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ room: { host: roomReply.host, guest: { name: '', songs: songs.slice(0, 2) } } })));
     await click(button('Use pasted songs'));
     const request = (fetchMock.mock.calls as unknown as [string, RequestInit][]).find(([url, init]) => url === '/api/rooms/ABC234' && init?.method === 'POST')!;

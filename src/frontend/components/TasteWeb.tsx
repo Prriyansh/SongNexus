@@ -30,7 +30,7 @@ function PlaylistPicker({ onPick, sample, label, savedSongs = [] }: { onPick: (s
   const input = useRef<HTMLInputElement>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const savedText = savedSongs.map(song => `${song.title} - ${song.artist}`).join('\n');
-  const [text, setText] = useState(savedText);
+  const [text, setText] = useState('');
   const [error, setError] = useState('');
 
   useLayoutEffect(() => {
