@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Music2, Search } from 'lucide-react';
 import type { Artist, ArtistDetails, RecordingDetails, Song } from '@/lib/types';
 import type { SoundTrackBrief } from '@/lib/sound';
-import { searchArtists, searchSongs, searchSoundSongs } from '../api';
+import { SEARCH_LIMIT, searchArtists, searchSongs, searchSoundSongs } from '../api';
+import type { MusicProfile } from '../profile';
+import { rankSearchResults } from '../search-ranking';
 import { findRecording } from '../resolve';
 import { artistCover, artistSubtitle, capitalize, coverForRelease, firstRelease, songArtists, yearOf } from '../model';
 import type { EntityType } from '../types';
@@ -18,7 +20,7 @@ const isDatasetSong = (item: ChooserItem): item is SoundTrackBrief => 'has_lyric
 // Song pickers search the sound dataset first, so picked songs have the full sound and lyrics
 // analysis; a pick is then matched to its MusicBrainz recording. Without the sound service they
 // search MusicBrainz directly. Artist pickers always search MusicBrainz.
-export function SearchChooser({ type, value, display, displayName, other, label, onChange }: { type: EntityType; value: string; display?: Details; displayName?: string; other: string; label: string; onChange: (id: string) => void }) {
+export function SearchChooser({ type, value, display, displayName, other, label, onChange, profile }: { type: EntityType; value: string; display?: Details; displayName?: string; other: string; label: string; onChange: (id: string) => void; profile: MusicProfile }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [found, setFound] = useState<ChooserResults>({ key: '' });
@@ -34,19 +36,22 @@ export function SearchChooser({ type, value, display, displayName, other, label,
     const fail = (error: unknown) => { if (!controller.signal.aborted) setFound({ key, error: error instanceof Error ? error.message : 'Search failed.' }); };
     const timer = window.setTimeout(() => {
       if (type === 'artist') {
-        searchArtists(q, controller.signal, 10).then(items => setFound({ key, items, source: 'musicbrainz' }), fail);
+        searchArtists(q, controller.signal).then(items => { if (!controller.signal.aborted) setFound({ key, items, source: 'musicbrainz' }); }, fail);
         return;
       }
-      searchSoundSongs(q, controller.signal)
+      searchSoundSongs(q, controller.signal, SEARCH_LIMIT)
         .catch(() => ({ status: 'unavailable' }) as const) // any failure: fall back to MusicBrainz
-        .then(result => result.status === 'ok'
-          ? setFound({ key, items: result.results, source: 'dataset' })
-          : searchSongs(q, controller.signal, 10).then(items => setFound({ key, items, source: 'musicbrainz' })))
+        .then(result => {
+          if (controller.signal.aborted) return;
+          return result.status === 'ok'
+            ? setFound({ key, items: result.results, source: 'dataset' })
+            : searchSongs(q, controller.signal).then(items => { if (!controller.signal.aborted) setFound({ key, items, source: 'musicbrainz' }); });
+        })
         .catch(fail);
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [open, q, key, type]);
-  const items = found.key === key ? (found.items ?? []).filter(x => x.id !== other) : [];
+  const items = found.key === key ? rankSearchResults(found.items ?? [], q, profile).filter(x => x.id !== other) : [];
   const searching = q.length >= 2 && found.key !== key;
   const where = type === 'song' && found.source !== 'musicbrainz' ? 'the song library' : 'MusicBrainz';
 

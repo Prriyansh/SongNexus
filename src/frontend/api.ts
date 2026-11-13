@@ -59,7 +59,7 @@ function once<T>(key: string, load: () => Promise<T>): Promise<T> {
   return promise;
 }
 
-const SEARCH_LIMIT = 24;
+export const SEARCH_LIMIT = 24;
 const search = <T>(type: 'artist' | 'recording', query: string, signal?: AbortSignal, limit = SEARCH_LIMIT) =>
   getJson<{ results: T[] }>(`/api/musicbrainz/search?type=${type}&limit=${limit}&q=${encodeURIComponent(query)}`, signal).then(r => r.results);
 

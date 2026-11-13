@@ -8,14 +8,15 @@ import type { WebSource } from '../connection-web';
 import { capitalize } from '../model';
 import type { WebSelection } from '../routing';
 import type { Selection } from '../types';
+import type { MusicProfile } from '../profile';
 import { useAsync } from '../useAsync';
 import { useWebDiscovery } from '../useWebDiscovery';
 import { ComparisonWebCanvas } from './ComparisonWebCanvas';
 import { SearchChooser } from './SearchChooser';
 
-type ComparisonProps = { selection: WebSelection; onChange: (s: WebSelection) => void; onSelect: (s: Selection) => void };
+type ComparisonProps = { selection: WebSelection; onChange: (s: WebSelection) => void; onSelect: (s: Selection) => void; profile: MusicProfile };
 
-export function ComparisonWeb({ selection, onChange, onSelect }: ComparisonProps) {
+export function ComparisonWeb({ selection, onChange, onSelect, profile }: ComparisonProps) {
   const { left, right } = selection;
   const selectionKey = `comparison:${left}:${right}`;
   const [scope, setScope] = useState({ key: selectionKey, level: 0 });
@@ -48,7 +49,7 @@ export function ComparisonWeb({ selection, onChange, onSelect }: ComparisonProps
     {!!journey.length && <div className="web-journey" aria-label="Genre discovery neighborhoods">{journey.map((genre, i) => <span key={genre}>{i > 0 && <ArrowRight size={11} />}<span>{capitalize(genre)}</span></span>)}</div>}
     {graph ? <ComparisonWebCanvas key={selectionKey} graph={graph} onSelect={onSelect} onLevelChange={setLevel} onExplore={(focus, zoom) => void discovery.expand(focus, zoom)} onVisibleCount={setVisibleCount} status={status} /> : <div className="web-map web-loading" aria-busy={!error}>{error ? <div role="alert"><strong>We couldn’t load this map.</strong><p>{error.message}</p><button className="secondary-button" onClick={retry}>Try again</button></div> : <div role="status"><Network size={42} strokeWidth={1} /><p>Finding artists…</p></div>}</div>}
     <div className="web-selection-dock">
-      <div className="web-pair-pickers"><SearchChooser type="artist" label="ARTIST ONE" value={left} display={a.data} other={right} onChange={id => onChange({ ...selection, left: id })} /><button className="web-swap icon-button" aria-label="Swap artists" onClick={() => onChange({ ...selection, left: right, right: left })}><ArrowRightLeft size={17} /></button><SearchChooser type="artist" label="ARTIST TWO" value={right} display={b.data} other={left} onChange={id => onChange({ ...selection, right: id })} /></div>
+      <div className="web-pair-pickers"><SearchChooser type="artist" label="ARTIST ONE" value={left} display={a.data} other={right} onChange={id => onChange({ ...selection, left: id })} profile={profile} /><button className="web-swap icon-button" aria-label="Swap artists" onClick={() => onChange({ ...selection, left: right, right: left })}><ArrowRightLeft size={17} /></button><SearchChooser type="artist" label="ARTIST TWO" value={right} display={b.data} other={left} onChange={id => onChange({ ...selection, right: id })} profile={profile} /></div>
     </div>
   </section>;
 }
