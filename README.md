@@ -7,6 +7,8 @@ have in common, and the songs that link them. All facts come from
 
 ## Run it locally
 
+On Windows, run `.\demo.cmd` in PowerShell to start the account demo at `http://127.0.0.1:3000/accounts`. The launcher uses a prepared `.tools/node` runtime when available, or Node/npm installed on your PATH, and preserves an existing `.env.local`.
+
 Requires Node.js 20.9 or newer (`.nvmrc` pins 22). No API keys are needed.
 
 ```bash

@@ -13,7 +13,7 @@ The music account implementation is ready for local acceptance testing at `/acco
 | Docker image/Compose and external Postgres deployment | Not executed; Docker is unavailable in this environment |
 | Separate, unchanged Python comparison service | Test attempt could not run: installed Python has no `pytest` |
 
-The environment has a standalone Node binary but no `npm` command on PATH, so JavaScript checks were executed through the installed tools' Node entry points, equivalent to the documented package scripts. Install a complete Node 22 distribution with npm for normal local commands. The test worker count is capped at four to avoid resource starvation in the WASM database and jsdom suites.
+Initial JavaScript checks used the tools' Node entry points because npm was not on PATH. This checkout now has a portable Node/npm runtime under the ignored `.tools/node` folder; `.\demo.cmd` puts it on PATH for the demo process. Other checkouts can use an installed Node 22 distribution with npm. The test worker count is capped at four to avoid resource starvation in the WASM database and jsdom suites.
 
 Implemented: independent multi-user accounts, encrypted provider credentials, seven provider adapters, persistent SQL migrations and job queue, scheduling and recovery, per-resource sync state, SSE dashboard updates, provider capability/policy reporting, a private library with source filters and playlist/history pages, previewed/batched imports, explicit source-combination consent, open-source discovery handoff, disconnect/import/account deletion, privacy information, setup documentation, environment template and Docker/cron configuration.
 

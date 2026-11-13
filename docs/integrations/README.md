@@ -8,6 +8,8 @@ The initial audit found a client-rendered React app, Next.js API routes, optiona
 
 ## Local setup
 
+On Windows, run `.\demo.cmd` from the repository to launch the demo. It uses the ignored `.tools/node` portable runtime when present, or Node/npm from your PATH. It creates `.env.local` only if missing and installs dependencies only if Next.js is missing. Open `http://127.0.0.1:3000/accounts` and keep the terminal open. This checkout has a portable runtime prepared locally; it is not committed to Git. Other checkouts need a complete Node 22 installation with npm.
+
 1. Use Node 22 and run `npm ci`.
 2. Copy `.env.example` to `.env.local`. Set `APP_URL` to the exact origin you open in the browser. Use `http://127.0.0.1:3000` when testing Spotify, which rejects `localhost` redirect URIs.
 3. Run `npm run dev`, open `/accounts`, and create a Song Nexus account. No provider credentials are needed for account creation or file imports. ListenBrainz requires only your own user token.
