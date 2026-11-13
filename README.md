@@ -18,7 +18,7 @@ npm run dev
 
 Then open <http://localhost:3000>.
 
-**Music accounts:** open `/accounts` to create a private Song Nexus account, connect supported services, inspect sync progress, import exported music and browse your source-filtered library. Development account storage works without a database server; production needs Postgres and an encryption key. See [integration setup and testing](docs/integrations/README.md), [provider configuration and capabilities](docs/integrations/providers.md), and [data-use restrictions](docs/integrations/compliance.md). Provider connections require the credentials/approvals listed there; no integration is claimed as live-tested.
+**Music accounts:** open `/accounts` to create a private Song Nexus account, connect supported services, inspect sync progress, import exported music and browse your source-filtered library. Development account storage works without a database server; production needs Postgres and an encryption key. See [how to connect each service](docs/integrations/connecting.md), [integration setup and testing](docs/integrations/README.md), [provider configuration and capabilities](docs/integrations/providers.md), and [data-use restrictions](docs/integrations/compliance.md). Provider connections require the credentials/approvals listed there; no integration is claimed as live-tested.
 
 Everything runs without keys. These optional environment variables (in `.env.local`, or Vercel's
 settings) add more to the two-artist comparison; each page says which sources were checked.

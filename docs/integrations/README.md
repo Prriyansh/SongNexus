@@ -1,6 +1,6 @@
 # Music account integrations
 
-See [current implementation and verification status](readiness.md) for completed checks and external testing requirements.
+See [current implementation and verification status](readiness.md) for completed checks and external testing requirements. Users: see [how to connect each service](connecting.md).
 
 The account implementation extends the existing Next.js app. Postgres holds independent Song Nexus users, hashed sessions, encrypted connection credentials, OAuth states, sync cursors, leased jobs, provider references, canonical identifiers, library membership, playlists, listening events, import provenance and progress events. Adapters never write SQL; each page and its cursor are persisted together. No Redis dependency is needed for this queue.
 
