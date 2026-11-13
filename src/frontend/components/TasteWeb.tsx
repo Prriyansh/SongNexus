@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Check, Compass, Copy, GitCompareArrows, LoaderCircle, Network, RotateCcw, Upload } from 'lucide-react';
 import { ApiError, createRoom, joinRoom, readRoom, tasteWeb } from '../api';
@@ -32,6 +32,56 @@ function PlaylistPicker({ onPick, sample, label, savedSongs = [] }: { onPick: (s
   const savedText = savedSongs.map(song => `${song.title} - ${song.artist}`).join('\n');
   const [text, setText] = useState(savedText);
   const [error, setError] = useState('');
+
+  useLayoutEffect(() => {
+    const field = textarea.current;
+    const box = field?.closest<HTMLElement>('.taste-box');
+    const panel = box?.closest<HTMLElement>('.taste-panel-upload');
+    if (!field || !box || !panel) return;
+    const px = (value: string) => parseFloat(value) || 0;
+    const visibleChildren = (element: Element) => Array.from(element.children).filter(child => getComputedStyle(child).display !== 'none');
+    const outerHeight = (element: Element) => {
+      const style = getComputedStyle(element);
+      return element.getBoundingClientRect().height + px(style.marginTop) + px(style.marginBottom);
+    };
+    const resize = () => {
+      // Reset first so deleting songs also shrinks the field, including wrapped lines.
+      field.style.height = '0px';
+      const fieldStyle = getComputedStyle(field);
+      const contentHeight = field.scrollHeight + px(fieldStyle.borderTopWidth) + px(fieldStyle.borderBottomWidth);
+      const boxStyle = getComputedStyle(box);
+      const panelStyle = getComputedStyle(panel);
+      const children = visibleChildren(box);
+      const afterField = children.slice(children.indexOf(field) + 1);
+      let reserved = px(boxStyle.paddingBottom) + px(boxStyle.borderBottomWidth)
+        + afterField.reduce((height, child) => height + outerHeight(child) + px(boxStyle.rowGap), 0);
+
+      // On narrow screens, leave room for the code card beneath the playlist card.
+      for (const card of visibleChildren(panel)) {
+        if (card === box || card.getBoundingClientRect().top <= box.getBoundingClientRect().top + 1) continue;
+        const style = getComputedStyle(card);
+        const items = visibleChildren(card);
+        reserved += px(style.paddingTop) + px(style.paddingBottom) + px(style.borderTopWidth) + px(style.borderBottomWidth)
+          + items.reduce((height, child) => height + outerHeight(child), 0)
+          + Math.max(0, items.length - 1) * px(style.rowGap) + px(panelStyle.rowGap);
+      }
+
+      const panelTop = panel.getBoundingClientRect().top + panel.clientTop;
+      const viewport = window.visualViewport;
+      const viewportBottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+      const panelHeight = Math.min(panel.clientHeight, viewportBottom - panelTop);
+      const fieldTop = field.getBoundingClientRect().top - panelTop + panel.scrollTop;
+      const available = panelHeight - px(panelStyle.paddingBottom) - fieldTop - reserved;
+      field.style.height = `${Math.min(contentHeight, Math.max(px(fieldStyle.minHeight), available))}px`;
+    };
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(panel);
+    observer.observe(field);
+    window.visualViewport?.addEventListener('resize', resize);
+    return () => { observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); };
+  });
+
   const take = (name: string, content: string) => {
     try {
       const rows = parsePlaylist(name, content);
