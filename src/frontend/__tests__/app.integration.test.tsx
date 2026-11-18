@@ -957,7 +957,7 @@ describe('First-visit setup', () => {
     expect(dialog()).toBeNull();
   });
 
-  it('“Something new for me” maps your songs on My playlist; “Compare with friends” opens Friends with your name', async () => {
+  it('“Something new for me” maps your songs on My playlist', async () => {
     firstVisit();
     await render('/about');
     await click(button('Skip')); await click(button('Skip'));
@@ -970,11 +970,11 @@ describe('First-visit setup', () => {
     expect(new URLSearchParams(window.location.search).get('mode')).toBe('playlist');
     expect(JSON.parse(localStorage.getItem('song-nexus-playlist')!).songs).toEqual([{ title: 'vampire', artist: 'Olivia Rodrigo' }]);
     expect(called('/api/taste')).toBe(true);
+  });
 
-    await act(async () => root?.unmount());
-    localStorage.removeItem('song-nexus-playlist');
+  it('“Compare with friends” opens Friends with your name, which About Me shows too', async () => {
+    firstVisit();
     await render('/about');
-    await click(button('Personalize'));
     for (let i = 0; i < 3; i++) await click(button('Skip'));
     await click(button('Compare with friends'));
     await click(button('Next'));
@@ -984,7 +984,9 @@ describe('First-visit setup', () => {
     expect(document.querySelector<HTMLInputElement>('#taste-name')?.value).toBe('Alka');
     await act(async () => root?.unmount());
     await render('/about');
+    expect(dialog()).toBeNull();
     expect(document.querySelector('h1')?.textContent).toBe('Alka’s taste. Your starting point.');
+    expect(buttons().some(b => /personalize/i.test(b.textContent ?? ''))).toBe(false);
   });
 
   it('never interrupts deep links, shared profiles or people who already saved music', async () => {
@@ -1000,12 +1002,16 @@ describe('First-visit setup', () => {
     expect(dialog()).toBeNull();
   });
 
-  it('starts Explore and the Connection Web from your saved artists', async () => {
-    localStorage.setItem('song-nexus-profile', JSON.stringify({ artists: [{ id: TAYLOR, name: 'Taylor Swift', subtitle: '' }, { id: OLIVIA, name: 'Olivia Rodrigo', subtitle: '' }], songs: [], albums: [], genres: [] }));
+  it('keeps the usual starting artists for Explore and the Connection Web', async () => {
+    firstVisit();
     await render('/about');
+    await click(button('Skip'));
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search artists"]')!, 'phoebe');
+    await click(button('Phoebe Bridgers'));
+    await click(button('Skip setup'));
     await click(button('Explore'));
-    expect(window.location.search).toBe(`?artistA=${TAYLOR}&artistB=${OLIVIA}`);
+    expect(window.location.search).toBe(`?artistA=${OLIVIA}&artistB=${TAYLOR}`);
     await click(button('Connection Web'));
-    expect(new URLSearchParams(window.location.search).get('artist')).toBe(TAYLOR);
+    expect(new URLSearchParams(window.location.search).get('artist')).toBe(OLIVIA);
   });
 });

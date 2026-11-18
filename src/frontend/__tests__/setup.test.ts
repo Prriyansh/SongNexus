@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { applyAnswers, emptySetup, needsSetup, parseSetup, personalComparison, personalWeb, playlistFrom, readSetup, storeSetup } from '../setup';
+import { applyAnswers, emptySetup, needsSetup, parseSetup, playlistFrom, readSetup, storeSetup } from '../setup';
 import type { SetupAnswers } from '../setup';
 import { emptyProfile } from '../profile';
 import type { MusicProfile } from '../profile';
-import { defaultWeb, examples } from '../routing';
-import { OLIVIA, phoebe, PHOEBE, TAYLOR, vampireDetails } from './fixtures';
+import { phoebe, PHOEBE, vampireDetails } from './fixtures';
 
 const answers = (more: Partial<SetupAnswers> = {}): SetupAnswers => ({ name: '', genres: [], artists: [], songs: [], discover: null, ...more });
 const withArtists = (...ids: string[]): MusicProfile => ({ ...emptyProfile, artists: ids.map(id => ({ id, name: id, subtitle: '', artUrl: null })) });
@@ -43,20 +42,5 @@ describe('applyAnswers', () => {
     expect(next.artists.map(a => a.id)).toEqual([PHOEBE]);
     expect(next.songs.map(s => [s.id, s.title, s.artist])).toEqual([[vampireDetails.id, 'vampire', 'Olivia Rodrigo']]);
     expect(playlistFrom(next)).toEqual([{ title: 'vampire', artist: 'Olivia Rodrigo' }]);
-  });
-});
-
-describe('personal starting points', () => {
-  it('starts from your first two artists, or keeps the examples without any', () => {
-    expect(personalWeb(emptyProfile, defaultWeb())).toEqual(defaultWeb());
-    expect(personalComparison(emptyProfile)).toMatchObject({ left: examples.artist[0], right: examples.artist[1] });
-    const web = personalWeb(withArtists(TAYLOR, PHOEBE), defaultWeb());
-    expect(web).toMatchObject({ mode: 'artist', artist: TAYLOR, left: TAYLOR, right: PHOEBE });
-    expect(personalComparison(withArtists(TAYLOR, PHOEBE))).toMatchObject({ left: TAYLOR, right: PHOEBE });
-  });
-
-  it('pairs a single saved artist with an example artist', () => {
-    expect(personalComparison(withArtists(PHOEBE))).toMatchObject({ left: PHOEBE, right: examples.artist[1] });
-    expect(personalComparison(withArtists(OLIVIA))).toMatchObject({ left: OLIVIA, right: TAYLOR });
   });
 });

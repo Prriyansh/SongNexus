@@ -1,10 +1,8 @@
-// First-visit setup: a few questions that fill About Me and decide where the app opens.
+// First-visit setup: a few questions that fill About Me and decide where you go next.
 // Saved in localStorage next to the profile, since there are no accounts yet.
 import type { Artist, PlaylistSong, Song } from '@/lib/types';
 import { artistSnapshot, songSnapshot } from './profile';
 import type { MusicProfile } from './profile';
-import { comparisonFor, examples } from './routing';
-import type { Comparison, WebSelection } from './routing';
 
 export type Discover = 'similar' | 'new' | 'friends';
 export type TasteSetup = { done: boolean; name: string; discover: Discover | null };
@@ -48,19 +46,6 @@ export function applyAnswers(profile: MusicProfile, answers: SetupAnswers): Musi
     songs: [...profile.songs, ...songs],
     genres: [...new Set([...profile.genres, ...answers.genres])],
   };
-}
-
-/** The Connection Web and Explore start from your first saved artists instead of the examples. */
-export function personalWeb(profile: MusicProfile, web: WebSelection): WebSelection {
-  const [first, second] = profile.artists;
-  if (!first) return web;
-  const pair = comparisonFor('artist', first.id, second?.id);
-  return { ...web, artist: first.id, left: pair.left, right: pair.right };
-}
-
-export function personalComparison(profile: MusicProfile): Comparison {
-  const [first, second] = profile.artists;
-  return comparisonFor('artist', first?.id ?? examples.artist[0], second?.id);
 }
 
 /** Saved songs as a playlist, for the My playlist map ("New to you"). */
