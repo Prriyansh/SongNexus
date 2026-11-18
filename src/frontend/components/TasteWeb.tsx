@@ -6,6 +6,7 @@ import { sourceNote } from '../credits';
 import { parsePlaylist } from '../playlist';
 import type { MusicProfile } from '../profile';
 import { findRecording } from '../resolve';
+import { readSetup } from '../setup';
 import { decodePlaylist, encodePlaylist, friendLink, layoutTaste, readStoredPlaylist, SAMPLE_MINE, storePlaylist, TASTE_WORLD_WIDTH, tasteEdges, tasteNear } from '../taste';
 import type { Room } from '@/lib/rooms';
 import type { SharedPlaylist } from '../taste';
@@ -196,7 +197,7 @@ export function Friends({ profile, ...props }: Props & { profile: MusicProfile }
   const savedSongs = useMemo(() => profile.songs
     .map(({ title, artist }) => ({ title: title.trim(), artist: artist.trim() }))
     .filter(song => song.title && song.artist), [profile.songs]);
-  const [name, setName] = useState(() => readStoredPlaylist()?.name ?? '');
+  const [name, setName] = useState(() => readStoredPlaylist()?.name || readSetup().name);
   const [mine, setMine] = useState<SharedPlaylist | null>(() => readStoredPlaylist());
   const [friend, setFriend] = useState<SharedPlaylist | null>(null);
   const [saved, setSaved] = useState<SavedRoom | null>(() => (codeInUrl() ? null : readSavedRoom()));
