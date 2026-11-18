@@ -20,6 +20,8 @@ The UI: Helen's design (see `docs/design/`) running on live API data. Browser-on
   (Helen's) positions and routes it.
 - `profile.ts` — About Me favourites as snapshots in localStorage (`song-nexus-profile`);
   validates stored and shared profiles.
+- `setup.ts` — first-visit setup answers (`song-nexus-setup`: done, name, how you discover), merging
+  them into the profile.
 - `playlist.ts` — parses CSV/JSON/TXT exports; matches rows via MusicBrainz search.
 - `resolve.ts` — `findRecording(title, artist)`: the MusicBrainz recording of a dataset song
   (earliest official release). Used by the song pickers and the similar-songs list.

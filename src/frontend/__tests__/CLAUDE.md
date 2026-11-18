@@ -8,6 +8,7 @@ Vitest tests for the frontend. Run with `npm test` from the repository root.
   The Fate of Ophelia, Phoebe Bridgers). Reuse these instead of inline objects.
 - `api.test.ts` — URLs sent to each route, memoised lookups, error messages, retry after failure.
 - `routing.test.ts` — parsing and building every URL form, defaults, share links.
+- `setup.test.ts` — setup storage and validation, merging answers.
 - `profile.test.ts` — snapshots, profile validation (ids, image hosts, caps), localStorage (jsdom).
 - `playlist.test.ts` — CSV/JSON/TXT parsing, MusicBrainz query building, title/artist matching.
 - `model.test.ts` — display helpers and the genre list.

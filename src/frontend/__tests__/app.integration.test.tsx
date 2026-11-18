@@ -103,6 +103,8 @@ beforeEach(async () => {
   vi.stubGlobal('matchMedia', () => ({ matches: true }));
   window.scrollTo = vi.fn() as typeof window.scrollTo;
   localStorage.clear();
+  // Most tests start as a returning visitor; the first-visit setup has its own tests below.
+  localStorage.setItem('song-nexus-setup', JSON.stringify({ done: true, name: '', discover: null }));
   App = (await import('../App')).default;
   (await import('../api')).retryPolicy.delayMs = 0;
 });
@@ -905,3 +907,111 @@ describe('Search ranking across the workspace', () => {
   });
 });
 
+
+describe('First-visit setup', () => {
+  const setupStored = () => JSON.parse(localStorage.getItem('song-nexus-setup') || 'null');
+  const firstVisit = () => localStorage.removeItem('song-nexus-setup');
+  const dialog = () => document.querySelector('[aria-label="Set up your music taste"]');
+
+  it('asks five questions, fills About Me and opens the Connection Web on your top artist', async () => {
+    firstVisit();
+    await render('/about');
+    expect(dialog()).not.toBeNull();
+    expect(text()).toContain('Step 1 of 5');
+    expect(button('Next').disabled).toBe(true);
+    await click(button('Indie Folk'));
+    await click(button('Next'));
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search artists"]')!, 'phoebe');
+    await click(button('Phoebe Bridgers'));
+    expect(button('Remove Phoebe Bridgers')).toBeTruthy();
+    await click(button('Next'));
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search songs"]')!, 'vampire');
+    await click(button('vampire'));
+    await click(button('Next'));
+    await click(button('Similar to what I love'));
+    await click(button('Next'));
+    await type(document.querySelector<HTMLInputElement>('#setup-name')!, 'Alka');
+    await click(button('Finish'));
+
+    expect(dialog()).toBeNull();
+    expect(stored().genres).toEqual(['indie folk']);
+    expect(stored().artists.map((a: { id: string }) => a.id)).toEqual([PHOEBE]);
+    expect(stored().songs.map((s: { id: string }) => s.id)).toEqual([VAMPIRE]);
+    expect(setupStored()).toEqual({ done: true, name: 'Alka', discover: 'similar' });
+    expect(window.location.pathname).toBe('/connections');
+    expect(new URLSearchParams(window.location.search).get('artist')).toBe(PHOEBE);
+    expect(called(`/api/similar?kind=artist&id=${PHOEBE}`)).toBe(true);
+  });
+
+  it('closing keeps you on About Me, saves what was picked and doesn’t ask again', async () => {
+    firstVisit();
+    await render('/about');
+    await click(button('Jazz'));
+    await click(button('Skip setup'));
+    expect(dialog()).toBeNull();
+    expect(window.location.pathname).toBe('/about');
+    expect(stored().genres).toEqual(['jazz']);
+    expect(setupStored().done).toBe(true);
+    await act(async () => root?.unmount());
+    await render('/about');
+    expect(dialog()).toBeNull();
+  });
+
+  it('“Something new for me” maps your songs on My playlist', async () => {
+    firstVisit();
+    await render('/about');
+    await click(button('Skip')); await click(button('Skip'));
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search songs"]')!, 'vampire');
+    await click(button('vampire'));
+    await click(button('Next'));
+    await click(button('Something new for me'));
+    await click(button('Next'));
+    await click(button('Skip and finish'));
+    expect(new URLSearchParams(window.location.search).get('mode')).toBe('playlist');
+    expect(JSON.parse(localStorage.getItem('song-nexus-playlist')!).songs).toEqual([{ title: 'vampire', artist: 'Olivia Rodrigo' }]);
+    expect(called('/api/taste')).toBe(true);
+  });
+
+  it('“Compare with friends” opens Friends with your name, which About Me shows too', async () => {
+    firstVisit();
+    await render('/about');
+    for (let i = 0; i < 3; i++) await click(button('Skip'));
+    await click(button('Compare with friends'));
+    await click(button('Next'));
+    await type(document.querySelector<HTMLInputElement>('#setup-name')!, 'Alka');
+    await click(button('Finish'));
+    expect(window.location.pathname).toBe('/friends');
+    expect(document.querySelector<HTMLInputElement>('#taste-name')?.value).toBe('Alka');
+    await act(async () => root?.unmount());
+    await render('/about');
+    expect(dialog()).toBeNull();
+    expect(document.querySelector('h1')?.textContent).toBe('Alka’s taste. Your starting point.');
+    expect(buttons().some(b => /personalize/i.test(b.textContent ?? ''))).toBe(false);
+  });
+
+  it('never interrupts deep links, shared profiles or people who already saved music', async () => {
+    firstVisit();
+    await render(`/compare/artists?artistA=${OLIVIA}&artistB=${TAYLOR}`);
+    expect(dialog()).toBeNull();
+    await act(async () => root?.unmount());
+    await render(`/about?profile=${encodeURIComponent(JSON.stringify({ artists: [], songs: [], albums: [], genres: ['pop'] }))}`);
+    expect(dialog()).toBeNull();
+    await act(async () => root?.unmount());
+    localStorage.setItem('song-nexus-profile', JSON.stringify({ artists: [{ id: PHOEBE, name: 'Phoebe Bridgers', subtitle: '' }], songs: [], albums: [], genres: [] }));
+    await render('/about');
+    expect(dialog()).toBeNull();
+  });
+
+  it('keeps the usual starting artists for Explore and the Connection Web', async () => {
+    firstVisit();
+    await render('/about');
+    await click(button('Skip'));
+    await type(document.querySelector<HTMLInputElement>('input[aria-label="Search artists"]')!, 'phoebe');
+    await click(button('Phoebe Bridgers'));
+    await click(button('Skip setup'));
+    await click(button('Explore'));
+    expect(window.location.search).toBe(`?artistA=${OLIVIA}&artistB=${TAYLOR}`);
+    await click(button('Connection Web'));
+    expect(new URLSearchParams(window.location.search).get('artist')).toBe(OLIVIA);
+  });
+});

@@ -32,3 +32,4 @@ Components take data and callbacks as props; fetching happens through `../api.ts
 - `ArtistInsightsPanel.tsx` — bio, awards, labels, audience and shared facts on a two-artist comparison.
 - `TasteWeb.tsx` — the My playlist option and the Friends page.
 - `ConnectionWeb.tsx` — the Connection Web modes: Artist, Song, My playlist, and Helen's Comparison (`ComparisonWeb.tsx` on `ComparisonWebCanvas.tsx`).
+- `TasteSetup.tsx` — first-visit questions on About Me (genres, artists, songs, how you discover, name), shown once on a first visit.

@@ -32,6 +32,10 @@ import { Friends } from './components/TasteWeb';
 import { ComparisonDetails } from './components/ComparisonDetails';
 import { ArtistInsightsPanel } from './components/ArtistInsightsPanel';
 import { Modal } from './components/Modal';
+import { TasteSetup } from './components/TasteSetup';
+import { applyAnswers, needsSetup, playlistFrom, readSetup, storeSetup } from './setup';
+import type { SetupAnswers } from './setup';
+import { readStoredPlaylist, storePlaylist } from './taste';
 
 type Details = ArtistDetails | RecordingDetails;
 const loadDetails = (kind: EntityType, id: string): Promise<Details> => (kind === 'artist' ? artistDetails(id) : songDetails(id));
@@ -231,10 +235,11 @@ function ShareModal({ route, profile, onClose }: { route: Route; profile: MusicP
 }
 
 function App() {
-  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.pathname, window.location.search));
-  const [web, setWeb] = useState(() => route.web ?? defaultWeb());
   const [profile, setProfile] = useState(readStoredProfile);
   useEffect(() => { storeProfile(profile); }, [profile]);
+  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.pathname, window.location.search));
+  const [web, setWeb] = useState(() => route.web ?? defaultWeb());
+  const [setup, setSetup] = useState(readSetup);
   const [detail, setDetail] = useState<Selection | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -278,13 +283,28 @@ function App() {
     go({ page: 'explore', manual: false, comparison: comparisonFor(kind, id, keep), note: '' });
   };
   const shared = page === 'about' ? route.profile : undefined;
+  // First visit only: the setup questions. Shared profiles and deep links never ask.
+  const showSetup = page === 'about' && !shared && !route.manual && needsSetup(profile, setup);
+  const finishSetup = (answers: SetupAnswers) => {
+    const nextProfile = applyAnswers(profile, answers);
+    const nextSetup = { done: true, name: answers.name.trim(), discover: answers.discover };
+    setProfile(nextProfile); setSetup(nextSetup); storeSetup(nextSetup);
+    const base = { manual: false, comparison, note: '' };
+    const songs = playlistFrom(nextProfile);
+    const top = nextProfile.artists[0];
+    if (answers.discover === 'friends') go({ ...base, page: 'friends', web });
+    else if (answers.discover === 'new' && songs.length) {
+      if (!readStoredPlaylist()) storePlaylist({ name: nextSetup.name, songs });
+      go({ ...base, page: 'connections', web: { ...web, mode: 'playlist' } });
+    } else if (answers.discover && top) go({ ...base, page: 'connections', web: { ...web, mode: 'artist', artist: top.id } });
+  };
 
   return <div className={`app-shell ${page === 'connections' || page === 'friends' ? 'is-connection-web' : ''}`}><div className={`sidebar-backdrop ${menuOpen ? 'visible' : ''}`} onClick={() => setMenuOpen(false)} /><aside className={`sidebar ${menuOpen ? 'open' : ''}`}><button className="brand" onClick={() => navigate('about')} aria-label="Song Nexus home"><span className="brand-mark"><Music2 size={28} strokeWidth={2.5} /></span><span><strong>SONG NEXUS</strong></span></button><div className="sidebar-navigation"><span className="nav-caption">YOUR WORKSPACE</span><nav aria-label="Main navigation"><button className={`nav-option ${page === 'about' ? 'active' : ''}`} aria-label="About Me" aria-current={page === 'about' ? 'page' : undefined} onClick={() => navigate('about')}><CircleUserRound size={22} /><span>About Me</span>{page === 'about' && <span className="nav-track" />}</button><button className={`nav-option ${page === 'connections' ? 'active' : ''}`} aria-label="Connection Web" aria-current={page === 'connections' ? 'page' : undefined} onClick={() => navigate('connections')}><Network size={22} /><span>Connection Web</span>{page === 'connections' && <span className="nav-track" />}</button><button className={`nav-option ${page === 'friends' ? 'active' : ''}`} aria-label="Friends" aria-current={page === 'friends' ? 'page' : undefined} onClick={() => navigate('friends')}><Users size={22} /><span>Friends</span>{page === 'friends' && <span className="nav-track" />}</button><button className={`nav-option ${page === 'explore' ? 'active' : ''}`} aria-label="Explore" aria-current={page === 'explore' ? 'page' : undefined} onClick={() => navigate('explore')}><Compass size={22} /><span>Explore</span>{page === 'explore' && <span className="nav-track" />}</button></nav></div><div className="sidebar-bottom"><div className="sidebar-status"><span className="status-dot" />MUSICBRAINZ<span>v2.0</span></div></div></aside>
     <div className="page-column"><header className="topbar"><div className="topbar-left"><button className="icon-button mobile-menu" onClick={() => setMenuOpen(true)} aria-label="Open navigation"><Menu size={23} /></button><button className="header-wordmark" onClick={() => navigate('about')} aria-label="Song Nexus home"><Music2 size={21} /> SONG NEXUS<span></span></button><ChevronRight size={15} /><strong>{page === 'about' ? 'About Me' : page === 'connections' ? 'Connection Web' : page === 'friends' ? 'Friends' : 'Explore'}</strong></div><div className="topbar-right"><button className="top-share" aria-label="Share" onClick={() => setShareOpen(true)}><Share2 size={17} /><span>Share</span></button></div></header>
-      <main className={`main-content ${page === 'connections' || page === 'friends' ? 'web-main-content' : ''}`}>{page === 'about' ? <>{shared && <div className="shared-note"><CircleUserRound size={20} /><div><strong>Shared About Me</strong><p>{note || 'You’re viewing a shared music taste profile.'}</p></div><button className="secondary-button" onClick={() => navigate('about')}>View my About Me</button></div>}<AboutMe key={shared ? 'shared' : 'own'} onSelect={setDetail} profile={shared || profile} onProfileChange={setProfile} readOnly={!!shared} manual={route.manual} onManual={open => go({ ...route, manual: open, profile: undefined, note: '' }, { scroll: false })} /></>
+      <main className={`main-content ${page === 'connections' || page === 'friends' ? 'web-main-content' : ''}`}>{page === 'about' ? <>{shared && <div className="shared-note"><CircleUserRound size={20} /><div><strong>Shared About Me</strong><p>{note || 'You’re viewing a shared music taste profile.'}</p></div><button className="secondary-button" onClick={() => navigate('about')}>View my About Me</button></div>}<AboutMe key={shared ? 'shared' : 'own'} onSelect={setDetail} profile={shared || profile} onProfileChange={setProfile} readOnly={!!shared} manual={route.manual} onManual={open => go({ ...route, manual: open, profile: undefined, note: '' }, { scroll: false })} name={shared ? '' : setup.name} /></>
         : page === 'friends' ? <Friends profile={profile} onExploreArtist={artist => go({ page: 'connections', manual: false, comparison, web: { ...web, mode: 'artist', artist }, note: '' })} onExploreSong={song => go({ page: 'connections', manual: false, comparison, web: { ...web, mode: 'song', song }, note: '' })} onDetails={setDetail} />
         : page === 'connections' ? <ConnectionWeb selection={web} onChange={next => go({ ...route, web: next, note: '' }, { scroll: false })} onSelect={setDetail} onCompare={(kind, a, b) => go({ page: 'explore', manual: false, comparison: comparisonFor(kind, a, b), note: '' })} note={note} profile={profile} /> : <Explore comparison={comparison} onComparison={updateComparison} onRole={role => go({ ...route, comparison: { ...comparison, role } }, { replace: true, scroll: false })} onDetails={setDetail} note={note} onDismissNote={() => go({ ...route, note: '' }, { replace: true, scroll: false })} profile={profile} />}
         {page !== 'connections' && page !== 'friends' && <footer><span>SONG NEXUS</span><span>Data from <a href="https://musicbrainz.org" target="_blank" rel="noreferrer">MusicBrainz</a> and the <a href="https://coverartarchive.org" target="_blank" rel="noreferrer">Cover Art Archive</a>; top songs, related artists and artist photos from <a href="https://www.deezer.com" target="_blank" rel="noreferrer">Deezer</a>; artist facts from <a href="https://www.wikidata.org" target="_blank" rel="noreferrer">Wikidata</a>, <a href="https://en.wikipedia.org" target="_blank" rel="noreferrer">Wikipedia</a> (CC BY-SA), <a href="https://listenbrainz.org" target="_blank" rel="noreferrer">ListenBrainz</a> and <a href="https://www.last.fm" target="_blank" rel="noreferrer">Last.fm</a>; more credits from <a href="https://genius.com" target="_blank" rel="noreferrer">Genius</a> and <a href="https://www.discogs.com" target="_blank" rel="noreferrer">Discogs</a>; sound from the <a href="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset" target="_blank" rel="noreferrer">Spotify tracks dataset</a> and Genius lyrics.</span></footer>}</main>
-    </div>{detail && <DetailDrawer selected={detail} onClose={() => setDetail(null)} onSelect={setDetail} profile={profile} onProfileChange={setProfile} onCompare={compareFrom} />}{shareOpen && <ShareModal route={{ ...route, web }} profile={shared || profile} onClose={() => setShareOpen(false)} />}</div>;
+    </div>{detail && <DetailDrawer selected={detail} onClose={() => setDetail(null)} onSelect={setDetail} profile={profile} onProfileChange={setProfile} onCompare={compareFrom} />}{shareOpen && <ShareModal route={{ ...route, web }} profile={shared || profile} onClose={() => setShareOpen(false)} />}{showSetup && <TasteSetup onFinish={finishSetup} />}</div>;
 }
 export default App;

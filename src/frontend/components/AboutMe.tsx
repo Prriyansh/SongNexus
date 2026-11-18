@@ -41,7 +41,7 @@ export function useTaste(profile: MusicProfile, onProfileChange: Dispatch<SetSta
   };
 }
 
-export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, manual, onManual }: { onSelect: (s: Selection) => void; profile: MusicProfile; onProfileChange: Dispatch<SetStateAction<MusicProfile>>; readOnly?: boolean; manual: boolean; onManual: (open: boolean) => void }) {
+export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, manual, onManual, name = '' }: { onSelect: (s: Selection) => void; profile: MusicProfile; onProfileChange: Dispatch<SetStateAction<MusicProfile>>; readOnly?: boolean; manual: boolean; onManual: (open: boolean) => void; name?: string }) {
   const [category, setCategory] = useState<Category>('artist');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(0);
@@ -128,7 +128,7 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
       {!loading && !failure && q.length >= 2 && !entries.length && <div className="catalog-empty"><Search size={28}/><h3>No matches for “{query}”</h3><p>Try another spelling or switch categories.</p><button className="secondary-button" onClick={() => setQuery('')}>Clear search</button></div>}
       {pages > 1 && <div className="pagination"><span>Page {page + 1} of {pages}</span><button className="secondary-button" disabled={!page} onClick={() => setPage(p => p - 1)}><ChevronLeft size={16}/> Previous</button><button className="secondary-button" disabled={page + 1 >= pages} onClick={() => setPage(p => p + 1)}>Next <ChevronRight size={16}/></button></div>}
     </> : <>
-      <div className="page-heading about-heading"><div><h1>{readOnly ? 'A taste worth sharing.' : 'Your taste. Your starting point.'}</h1><p>{readOnly ? 'Favorite artists, genres, albums, and songs from this shared profile.' : 'Here’s what we know about your music taste so far.'}</p></div></div>
+      <div className="page-heading about-heading"><div><h1>{readOnly ? 'A taste worth sharing.' : name ? `${name}’s taste. Your starting point.` : 'Your taste. Your starting point.'}</h1><p>{readOnly ? 'Favorite artists, genres, albums, and songs from this shared profile.' : 'Here’s what we know about your music taste so far.'}</p></div></div>
       {!readOnly && <div className="taste-actions"><button className="add-music-search" onClick={() => openManual()}><Search size={19}/><span>Add an artist, genre, album, or song</span><kbd>+</kbd></button><button className="secondary-button upload-cta" onClick={() => setUpload(true)}><Upload size={17}/> Upload Playlist</button></div>}
       <div className="taste-grid">
         <PreferenceSection title="Artists" count={profile.artists.length} icon={<Users size={18}/>} onAdd={readOnly ? undefined : () => openManual('artist')}><div className="favorite-grid">{profile.artists.map(a => <div className="preference-card" key={a.id}><button className="favorite-item" onClick={() => onSelect({ type: 'artist', id: a.id })}><ArtistPicture artist={a} size="lg"/><strong>{a.name}</strong><small>{a.subtitle}</small></button>{!readOnly && <button className="remove-preference" aria-label={`Remove ${a.name}`} onClick={() => toggle.artist(a)}><X size={13}/></button>}</div>)}{!profile.artists.length && empty('artist')}</div></PreferenceSection>
