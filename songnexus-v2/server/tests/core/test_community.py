@@ -17,7 +17,9 @@ def tallies(
     return [c.Tally(m, artist, plays, last) for m in range(start, start + members)]
 
 
-def chart(rows: list[c.Tally], now: datetime = NOW, genres: dict[str, list[str]] | None = None):
+def chart(
+    rows: list[c.Tally], now: datetime = NOW, genres: dict[str, list[str]] | None = None
+) -> c.Chart:
     return c.compute_chart(
         rows,
         known=lambda a: a != "unknown",

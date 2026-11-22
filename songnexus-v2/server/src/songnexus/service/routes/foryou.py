@@ -622,7 +622,7 @@ def create_taste_feedback(
 
 
 @router.delete(
-    "/users/{user:rid}/tasteFeedback/{feedback}",
+    "/users/{user:rid}/tasteFeedback/{feedback:rid}",
     response_model=api.Empty,
     summary="DeleteTasteFeedback",
     dependencies=Write,

@@ -28,8 +28,9 @@ import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
-from songnexus.catalog.canonicalize import build_batch
 from songnexus.catalog.musicbrainz.snapshot import read_snapshot
+
+from songnexus.catalog.canonicalize import build_batch
 from songnexus.core.text import normalize
 
 ROOT = Path(__file__).resolve().parents[2]

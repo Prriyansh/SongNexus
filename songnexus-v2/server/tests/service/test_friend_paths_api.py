@@ -4,6 +4,7 @@ import contextlib
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -70,7 +71,7 @@ def befriend(stack: tuple[AppState, contextlib.ExitStack], a: str, b: str) -> No
         social.befriend(session, a, b, datetime.now(UTC))
 
 
-def paths(c: TestClient, friend: str) -> object:
+def paths(c: TestClient, friend: str) -> Any:
     return c.get(f"/v1/users/me/friends/{friend}/paths")
 
 

@@ -1119,6 +1119,50 @@
         "title": "AudioDescriptors",
         "type": "object"
       },
+      "BatchCreateEventsRequest": {
+        "description": "Up to 100 events.",
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            },
+            "maxItems": 100,
+            "title": "Events",
+            "type": "array"
+          }
+        },
+        "required": [
+          "events"
+        ],
+        "title": "BatchCreateEventsRequest",
+        "type": "object"
+      },
+      "BatchCreateEventsResponse": {
+        "description": "What was kept.",
+        "properties": {
+          "personalize": {
+            "description": "False: learning from activity is off; nothing stored.",
+            "title": "Personalize",
+            "type": "boolean"
+          },
+          "received": {
+            "title": "Received",
+            "type": "integer"
+          },
+          "stored": {
+            "description": "New events stored (duplicates and unknown artists are not).",
+            "title": "Stored",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "received",
+          "stored",
+          "personalize"
+        ],
+        "title": "BatchCreateEventsResponse",
+        "type": "object"
+      },
       "BlockedArtist": {
         "description": "An artist the user never wants to see in lists or paths.",
         "properties": {
@@ -2255,6 +2299,21 @@
         "title": "CreateBlockedUserRequest",
         "type": "object"
       },
+      "CreateFollowedArtistRequest": {
+        "description": "Follow an artist.",
+        "properties": {
+          "artist": {
+            "description": "`artists/{artist}`.",
+            "title": "Artist",
+            "type": "string"
+          }
+        },
+        "required": [
+          "artist"
+        ],
+        "title": "CreateFollowedArtistRequest",
+        "type": "object"
+      },
       "CreateLinkedAccountRequest": {
         "description": "CreateLinkedAccount: a ListenBrainz user token, or an Apple Music user token.",
         "properties": {
@@ -2379,6 +2438,43 @@
           "subjects"
         ],
         "title": "CreateShareRequest",
+        "type": "object"
+      },
+      "CreateTasteFeedbackRequest": {
+        "description": "Give feedback: an artist for NOT_INTERESTED and MORE_LIKE_THIS, a genre for LESS_OF_GENRE.",
+        "properties": {
+          "artist": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`artists/{artist}`.",
+            "title": "Artist"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`genres/{genre}`.",
+            "title": "Genre"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TasteFeedbackKind"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "CreateTasteFeedbackRequest",
         "type": "object"
       },
       "Credit": {
@@ -2568,6 +2664,101 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "Event": {
+        "description": "One interaction.",
+        "properties": {
+          "artist": {
+            "description": "`artists/{artist}`.",
+            "title": "Artist",
+            "type": "string"
+          },
+          "dwellMs": {
+            "anyOf": [
+              {
+                "maximum": 3600000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dwellms"
+          },
+          "eventId": {
+            "description": "Client-chosen unique ID; a retried event is stored once.",
+            "maxLength": 64,
+            "minLength": 8,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Eventid",
+            "type": "string"
+          },
+          "feed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`users/{user}/feeds/{feed}` for cards.",
+            "title": "Feed"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EventKind"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "maximum": 10000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
+          "surface": {
+            "$ref": "#/components/schemas/Surface",
+            "default": "OTHER"
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When it happened (RFC 3339); server time when absent or skewed.",
+            "title": "Time"
+          }
+        },
+        "required": [
+          "eventId",
+          "kind",
+          "artist"
+        ],
+        "title": "Event",
+        "type": "object"
+      },
+      "EventKind": {
+        "description": "What happened.",
+        "enum": [
+          "IMPRESSION",
+          "OPEN",
+          "LISTEN",
+          "SKIP",
+          "HIDE",
+          "SHARE"
+        ],
+        "title": "EventKind",
+        "type": "string"
+      },
       "Evidence": {
         "description": "One reason two artists are connected, as a localizable message.",
         "properties": {
@@ -2641,6 +2832,229 @@
         "title": "FeaturedArtistsResponse",
         "type": "object"
       },
+      "Feed": {
+        "description": "A page of a For You feed.",
+        "properties": {
+          "arm": {
+            "default": "",
+            "title": "Arm",
+            "type": "string"
+          },
+          "cold": {
+            "default": false,
+            "description": "True when nothing is known about the listener yet: the client should offer to pick artists, import or link a service.",
+            "title": "Cold",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FeedItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "modelVersion": {
+            "default": "",
+            "title": "Modelversion",
+            "type": "string"
+          },
+          "name": {
+            "description": "`users/{user}/feeds/{feed}`; events about these cards name it. Empty for previews.",
+            "title": "Name",
+            "type": "string"
+          },
+          "nextPageToken": {
+            "default": "",
+            "title": "Nextpagetoken",
+            "type": "string"
+          },
+          "personalized": {
+            "default": true,
+            "description": "False when the listener turned off learning from activity.",
+            "title": "Personalized",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "items",
+          "nextPageToken",
+          "cold",
+          "personalized",
+          "modelVersion",
+          "arm"
+        ],
+        "title": "Feed",
+        "type": "object"
+      },
+      "FeedGenre": {
+        "description": "A top-level genre.",
+        "properties": {
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "displayName"
+        ],
+        "title": "FeedGenre",
+        "type": "object"
+      },
+      "FeedItem": {
+        "description": "One card.",
+        "properties": {
+          "artist": {
+            "$ref": "#/components/schemas/ArtistSummary"
+          },
+          "exploratory": {
+            "default": false,
+            "description": "Placed to learn something new about the listener's taste.",
+            "title": "Exploratory",
+            "type": "boolean"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeedGenre"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/FeedReason"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/FeedTrack"
+            },
+            "title": "Tracks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "position",
+          "artist",
+          "reason",
+          "genre",
+          "tracks",
+          "exploratory"
+        ],
+        "title": "FeedItem",
+        "type": "object"
+      },
+      "FeedReason": {
+        "description": "The reason shown on a card. Clients word it from ``kind`` and the fields.",
+        "properties": {
+          "friends": {
+            "default": 0,
+            "description": "FRIENDS: how many friends share the artist.",
+            "title": "Friends",
+            "type": "integer"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeedGenre"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "GENRE: the genre."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/FeedReasonKind"
+          },
+          "viaArtist": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtistSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "CONNECTED, FANS_ALSO, SIMILAR: the listener's artist this one is close to."
+          },
+          "viaKind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SeedKind"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why `viaArtist` counts: followed, Top 5, played, and so on."
+          }
+        },
+        "required": [
+          "kind",
+          "viaArtist",
+          "viaKind",
+          "genre",
+          "friends"
+        ],
+        "title": "FeedReason",
+        "type": "object"
+      },
+      "FeedReasonKind": {
+        "description": "Why a card is in the feed.",
+        "enum": [
+          "CONNECTED",
+          "FANS_ALSO",
+          "SIMILAR",
+          "GENRE",
+          "FRIENDS",
+          "DISCOVER"
+        ],
+        "title": "FeedReasonKind",
+        "type": "string"
+      },
+      "FeedTrack": {
+        "description": "A recording to start with.",
+        "properties": {
+          "name": {
+            "description": "`recordings/{recording}`.",
+            "title": "Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "year"
+        ],
+        "title": "FeedTrack",
+        "type": "object"
+      },
       "FindPathResponse": {
         "description": "FindPath.",
         "properties": {
@@ -2677,6 +3091,38 @@
           "graphVersion"
         ],
         "title": "FindPathResponse",
+        "type": "object"
+      },
+      "FollowedArtist": {
+        "description": "An artist the listener follows.",
+        "properties": {
+          "artist": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtistSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when the artist left the catalog."
+          },
+          "createTime": {
+            "title": "Createtime",
+            "type": "string"
+          },
+          "name": {
+            "description": "`users/{user}/followedArtists/{artist}`.",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "artist",
+          "createTime"
+        ],
+        "title": "FollowedArtist",
         "type": "object"
       },
       "Friend": {
@@ -3292,6 +3738,46 @@
         "title": "HintResponse",
         "type": "object"
       },
+      "ImportListeningRequest": {
+        "description": "Keep an import's artists (and play counts only) for For You.",
+        "properties": {
+          "artists": {
+            "items": {
+              "$ref": "#/components/schemas/ImportedArtist"
+            },
+            "maxItems": 5000,
+            "title": "Artists",
+            "type": "array"
+          }
+        },
+        "required": [
+          "artists"
+        ],
+        "title": "ImportListeningRequest",
+        "type": "object"
+      },
+      "ImportedArtist": {
+        "description": "An artist from an imported file and how often it was played there.",
+        "properties": {
+          "artist": {
+            "description": "`artists/{artist}`.",
+            "title": "Artist",
+            "type": "string"
+          },
+          "plays": {
+            "default": 1,
+            "maximum": 10000000.0,
+            "minimum": 1.0,
+            "title": "Plays",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "artist"
+        ],
+        "title": "ImportedArtist",
+        "type": "object"
+      },
       "InterpretedBy": {
         "description": "Who read the question: the built-in parser, the model, or no one (not understood).",
         "enum": [
@@ -3817,6 +4303,35 @@
         "title": "ListDataSourcesResponse",
         "type": "object"
       },
+      "ListFollowedArtistsResponse": {
+        "description": "Followed artists, newest first.",
+        "properties": {
+          "followedArtists": {
+            "items": {
+              "$ref": "#/components/schemas/FollowedArtist"
+            },
+            "title": "Followedartists",
+            "type": "array"
+          },
+          "nextPageToken": {
+            "default": "",
+            "title": "Nextpagetoken",
+            "type": "string"
+          },
+          "totalSize": {
+            "default": 0,
+            "title": "Totalsize",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "followedArtists",
+          "nextPageToken",
+          "totalSize"
+        ],
+        "title": "ListFollowedArtistsResponse",
+        "type": "object"
+      },
       "ListFriendInvitesResponse": {
         "description": "ListFriendInvites: the user's unexpired invites, newest first (codes not included).",
         "properties": {
@@ -4078,6 +4593,23 @@
         "title": "ListStoriesResponse",
         "type": "object"
       },
+      "ListTasteFeedbackResponse": {
+        "description": "Feedback, newest first.",
+        "properties": {
+          "tasteFeedback": {
+            "items": {
+              "$ref": "#/components/schemas/TasteFeedback"
+            },
+            "title": "Tastefeedback",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tasteFeedback"
+        ],
+        "title": "ListTasteFeedbackResponse",
+        "type": "object"
+      },
       "ListenerOverlap": {
         "description": "Shared audience, from aggregate ListenBrainz data; never about individual listeners.",
         "properties": {
@@ -4203,6 +4735,27 @@
           "providers"
         ],
         "title": "ListeningArtist",
+        "type": "object"
+      },
+      "ListeningImport": {
+        "description": "What is kept from imports.",
+        "properties": {
+          "artists": {
+            "description": "Artists kept (0: nothing imported or cleared).",
+            "title": "Artists",
+            "type": "integer"
+          },
+          "name": {
+            "description": "`users/{user}/listeningImport`.",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "artists"
+        ],
+        "title": "ListeningImport",
         "type": "object"
       },
       "ListeningProvider": {
@@ -4627,6 +5180,12 @@
             "title": "Name",
             "type": "string"
           },
+          "personalize": {
+            "default": true,
+            "description": "For You learns from what you do in the app (opens, listens, skips). Off: nothing is logged and only follows, imports, linked services and feedback count.",
+            "title": "Personalize",
+            "type": "boolean"
+          },
           "theme": {
             "$ref": "#/components/schemas/Theme",
             "default": "SYSTEM"
@@ -4674,6 +5233,12 @@
             "title": "Name",
             "type": "string"
           },
+          "personalize": {
+            "default": true,
+            "description": "For You learns from what you do in the app (opens, listens, skips). Off: nothing is logged and only follows, imports, linked services and feedback count.",
+            "title": "Personalize",
+            "type": "boolean"
+          },
           "theme": {
             "$ref": "#/components/schemas/Theme",
             "default": "SYSTEM"
@@ -4695,10 +5260,42 @@
           "genres",
           "categories",
           "theme",
+          "personalize",
           "etag",
           "updateTime"
         ],
         "title": "Preferences",
+        "type": "object"
+      },
+      "PreviewFeedRequest": {
+        "description": "A feed for someone signed out: seeds come from the browser, nothing is stored.",
+        "properties": {
+          "exclude": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Exclude",
+            "type": "array"
+          },
+          "pageSize": {
+            "default": 20,
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Pagesize",
+            "type": "integer"
+          },
+          "seeds": {
+            "description": "`artists/{artist}`.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Seeds",
+            "type": "array"
+          }
+        },
+        "title": "PreviewFeedRequest",
         "type": "object"
       },
       "ProductionDirection": {
@@ -5317,6 +5914,18 @@
         ],
         "title": "SearchResult",
         "type": "object"
+      },
+      "SeedKind": {
+        "description": "Why the artist a reason names is part of the listener's taste.",
+        "enum": [
+          "FOLLOW",
+          "TOP",
+          "PLAYS",
+          "MORE_LIKE",
+          "ENGAGED"
+        ],
+        "title": "SeedKind",
+        "type": "string"
       },
       "SessionInfo": {
         "description": "The current session. The cookie itself is never readable by scripts.",
@@ -6070,6 +6679,20 @@
         "title": "SubmitTriviaScoreRequest",
         "type": "object"
       },
+      "Surface": {
+        "description": "Where it happened.",
+        "enum": [
+          "FOR_YOU",
+          "ARTIST",
+          "HOME",
+          "EXPLORE",
+          "SEARCH",
+          "CHART",
+          "OTHER"
+        ],
+        "title": "Surface",
+        "type": "string"
+      },
       "SyncLinkedAccountResponse": {
         "description": "SyncLinkedAccount: what this sync read.",
         "properties": {
@@ -6211,6 +6834,62 @@
         ],
         "title": "TasteDecade",
         "type": "object"
+      },
+      "TasteFeedback": {
+        "description": "One piece of feedback.",
+        "properties": {
+          "artist": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtistSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createTime": {
+            "title": "Createtime",
+            "type": "string"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeedGenre"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TasteFeedbackKind"
+          },
+          "name": {
+            "description": "`users/{user}/tasteFeedback/{kind}.{artists|genres}.{id}`.",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "artist",
+          "genre",
+          "createTime"
+        ],
+        "title": "TasteFeedback",
+        "type": "object"
+      },
+      "TasteFeedbackKind": {
+        "description": "Explicit feedback.",
+        "enum": [
+          "NOT_INTERESTED",
+          "MORE_LIKE_THIS",
+          "LESS_OF_GENRE"
+        ],
+        "title": "TasteFeedbackKind",
+        "type": "string"
       },
       "TasteGenre": {
         "description": "A top-level genre's share.",
@@ -8047,6 +8726,48 @@
         "summary": "ListDataSources",
         "tags": [
           "ops"
+        ]
+      }
+    },
+    "/v1/feed:preview": {
+      "post": {
+        "description": "A feed from artists the browser remembers, for signed-out visitors. Nothing is stored.",
+        "operationId": "PreviewFeed",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewFeedRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Feed"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "PreviewFeed",
+        "tags": [
+          "for you"
         ]
       }
     },
@@ -10113,6 +10834,271 @@
         ]
       }
     },
+    "/v1/users/{user}/events:batchCreate": {
+      "post": {
+        "description": "Stores interaction events (idempotent by event ID) when personalization is on.",
+        "operationId": "BatchCreateEvents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchCreateEventsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchCreateEventsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "BatchCreateEvents",
+        "tags": [
+          "for you"
+        ]
+      }
+    },
+    "/v1/users/{user}/feed": {
+      "get": {
+        "description": "The listener's For You feed. Without a page token, a fresh feed is made.",
+        "operationId": "GetFeed",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Pagesize",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageToken",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 600,
+              "title": "Pagetoken",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Feed"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "GetFeed",
+        "tags": [
+          "for you"
+        ]
+      }
+    },
+    "/v1/users/{user}/followedArtists": {
+      "get": {
+        "description": "Followed artists, newest first.",
+        "operationId": "ListFollowedArtists",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListFollowedArtistsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "ListFollowedArtists",
+        "tags": [
+          "for you"
+        ]
+      },
+      "post": {
+        "description": "Follows an artist (idempotent: following again returns the existing follow).",
+        "operationId": "CreateFollowedArtist",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFollowedArtistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowedArtist"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "CreateFollowedArtist",
+        "tags": [
+          "for you"
+        ]
+      }
+    },
+    "/v1/users/{user}/followedArtists/{artist}": {
+      "delete": {
+        "description": "Unfollows an artist.",
+        "operationId": "DeleteFollowedArtist",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artist",
+            "required": true,
+            "schema": {
+              "title": "Artist",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "DeleteFollowedArtist",
+        "tags": [
+          "for you"
+        ]
+      }
+    },
     "/v1/users/{user}/friendInvites": {
       "get": {
         "description": "Lists the user's open invites. Codes are not shown again (only hashes are kept).",
@@ -10961,6 +11947,184 @@
         ]
       }
     },
+    "/v1/users/{user}/listeningImport": {
+      "delete": {
+        "description": "Forgets imported listening.",
+        "operationId": "DeleteListeningImport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "DeleteListeningImport",
+        "tags": [
+          "for you"
+        ]
+      },
+      "get": {
+        "description": "How many imported artists are kept for For You.",
+        "operationId": "GetListeningImport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListeningImport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "GetListeningImport",
+        "tags": [
+          "for you"
+        ]
+      },
+      "put": {
+        "description": "Keeps an import's artists and play counts for For You, at the listener's request.\n\nNothing else from the file is sent or kept. Replaces any earlier import.",
+        "operationId": "ReplaceListeningImport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportListeningRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListeningImport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "ReplaceListeningImport",
+        "tags": [
+          "for you"
+        ]
+      }
+    },
+    "/v1/users/{user}/personalization:reset": {
+      "post": {
+        "description": "Forgets everything learned from activity (events and served feeds).",
+        "operationId": "ResetPersonalization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "ResetPersonalization",
+        "tags": [
+          "for you"
+        ]
+      }
+    },
     "/v1/users/{user}/preferences": {
       "get": {
         "description": "Returns the user's preferences (defaults until first saved).",
@@ -11304,6 +12468,152 @@
         "summary": "UpdateSocialProfile",
         "tags": [
           "social"
+        ]
+      }
+    },
+    "/v1/users/{user}/tasteFeedback": {
+      "get": {
+        "description": "Feedback given, newest first (to review and undo).",
+        "operationId": "ListTasteFeedback",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListTasteFeedbackResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "ListTasteFeedback",
+        "tags": [
+          "for you"
+        ]
+      },
+      "post": {
+        "description": "Not interested in an artist, more like an artist, or less of a genre.",
+        "operationId": "CreateTasteFeedback",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTasteFeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TasteFeedback"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "CreateTasteFeedback",
+        "tags": [
+          "for you"
+        ]
+      }
+    },
+    "/v1/users/{user}/tasteFeedback/{feedback}": {
+      "delete": {
+        "description": "Withdraws feedback (undo).",
+        "operationId": "DeleteTasteFeedback",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "title": "User",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "feedback",
+            "required": true,
+            "schema": {
+              "title": "Feedback",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "DeleteTasteFeedback",
+        "tags": [
+          "for you"
         ]
       }
     },

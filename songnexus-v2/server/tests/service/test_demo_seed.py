@@ -9,7 +9,6 @@ the demo account's screens through local sign-in; and that ``--reset`` removes
 exactly what the seed created.
 """
 
-from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -111,7 +110,7 @@ def snapshot(url: str) -> dict[str, Any]:
 
 
 @pytest.fixture(scope="module")
-def seeded(database: str) -> Iterator[str]:
+def seeded(database: str) -> str:
     with pytest.MonkeyPatch.context() as patch:
         assert run(patch, database) == 0
     return database

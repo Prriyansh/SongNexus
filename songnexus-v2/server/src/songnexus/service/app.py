@@ -48,9 +48,8 @@ from songnexus.service.routes import (
     users,
 )
 from songnexus.service.routes import ask as ask_routes
-from songnexus.service.routes import foryou as foryou_routes
-from songnexus.service.routes import links as links_routes
 from songnexus.service.routes import community as community_routes
+from songnexus.service.routes import foryou as foryou_routes
 from songnexus.service.routes import friend_paths as friend_paths_routes
 from songnexus.service.routes import games as games_routes
 from songnexus.service.routes import recap as recap_routes
