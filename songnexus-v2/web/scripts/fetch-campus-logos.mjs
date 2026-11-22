@@ -90,11 +90,20 @@ function isFreeLicense(name) {
 }
 
 function plainText(html) {
-  return html
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
+  // Strip tags until none are left (one pass can rebuild one: "<scr<b>ipt>"),
+  // then drop any stray angle brackets. Decode &amp; last so "&amp;quot;"
+  // becomes the text "&quot;" rather than a second, unintended quote.
+  let text = html;
+  let previous;
+  do {
+    previous = text;
+    text = text.replace(/<[^>]*>/g, '');
+  } while (text !== previous);
+  return text
+    .replace(/[<>]/g, '')
     .replace(/&quot;/g, '"')
     .replace(/&#0?39;/g, "'")
+    .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/^(.+?)\1$/, '$1'); // Commons sometimes repeats the text.
