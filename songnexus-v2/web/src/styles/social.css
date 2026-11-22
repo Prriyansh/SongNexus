@@ -231,6 +231,106 @@
   }
 }
 
+/* The Around you hero's art: a stylised globe with a pin dropped on it. */
+.globe {
+  position: relative;
+  inline-size: clamp(200px, 22vw, 300px);
+  aspect-ratio: 1;
+}
+.globe__svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+.globe__stop-light {
+  stop-color: hsl(var(--hue) 75% 58% / 55%);
+}
+.globe__stop-dark {
+  stop-color: hsl(calc(var(--hue) - 20) 60% 14% / 35%);
+}
+.globe__halo {
+  fill: hsl(var(--hue) 85% 60% / 10%);
+  filter: blur(6px);
+}
+.globe__land {
+  fill: hsl(var(--hue) 80% 72% / 22%);
+}
+.globe__line {
+  fill: none;
+  stroke: hsl(var(--hue) 80% 78% / 28%);
+  stroke-width: 0.8;
+}
+.globe__line--equator {
+  stroke: hsl(var(--hue) 85% 80% / 45%);
+}
+.globe__rim {
+  fill: none;
+  stroke: hsl(var(--hue) 80% 75% / 55%);
+  stroke-width: 1.2;
+}
+.globe__spot {
+  fill: hsl(var(--hue) 90% 70% / 45%);
+}
+.globe__pulse {
+  fill: none;
+  stroke: hsl(var(--hue) 90% 75% / 80%);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: globe-pulse 2.8s var(--motion-decelerate) infinite;
+}
+@keyframes globe-pulse {
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+:root[data-theme='light'] .globe__stop-light {
+  stop-color: hsl(var(--hue) 80% 80% / 70%);
+}
+:root[data-theme='light'] .globe__stop-dark {
+  stop-color: hsl(var(--hue) 70% 62% / 55%);
+}
+:root[data-theme='light'] .globe__land {
+  fill: hsl(var(--hue) 60% 40% / 18%);
+}
+:root[data-theme='light'] .globe__line {
+  stroke: hsl(var(--hue) 55% 35% / 30%);
+}
+:root[data-theme='light'] .globe__line--equator,
+:root[data-theme='light'] .globe__rim {
+  stroke: hsl(var(--hue) 60% 35% / 50%);
+}
+:root[data-theme='light'] .globe__spot {
+  fill: hsl(var(--hue) 70% 40% / 35%);
+}
+:root[data-theme='light'] .globe__pulse {
+  stroke: hsl(var(--hue) 70% 40% / 70%);
+}
+/* The pin stands on the spot at (22, -14) in the globe's -100..100 viewBox.
+   Physical left: the SVG does not mirror in right-to-left languages. */
+.globe__pin {
+  position: absolute;
+  left: 61%;
+  top: 43%;
+  display: grid;
+  place-items: center;
+  inline-size: 48px;
+  block-size: 48px;
+  border-radius: var(--shape-full);
+  background: var(--btn-filled-bg);
+  color: var(--btn-filled-fg);
+  box-shadow: var(--elevation-3);
+  translate: -50% calc(-100% - 6px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .globe__pulse {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* ---------- Blocks: a section with a large title ---------- */
 
 .block {

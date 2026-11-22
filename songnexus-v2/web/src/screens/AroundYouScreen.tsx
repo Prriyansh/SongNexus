@@ -39,7 +39,7 @@ import {Sheet} from '../components/Sheet';
 import {useSnackbar} from '../components/Snackbar';
 import {ErrorState} from '../components/States';
 import {useI18n} from '../i18n/i18n';
-import {Block, Hero, PromiseLine, RadarArt} from '../social/Hero';
+import {Block, GlobeArt, Hero, PromiseLine, RadarArt} from '../social/Hero';
 import {campusLogo, CommunityMark} from '../community/CommunityMark';
 
 const KINDS: CommunityKind[] = ['CAMPUS', 'CITY'];
@@ -463,7 +463,7 @@ export default function AroundYouScreen() {
           icon="place"
           title={t('around.title')}
           body={<p>{t('around.off')}</p>}
-          art={<RadarArt />}
+          art={<GlobeArt />}
         />
       </div>
     );
@@ -494,9 +494,7 @@ export default function AroundYouScreen() {
             </button>
           }
           footnote={<PromiseLine>{t('around.promise')}</PromiseLine>}
-          art={
-            <RadarArt names={['UW', 'Madison', 'Austin', 'Toronto', 'Seoul']} />
-          }
+          art={<GlobeArt />}
         />
       )}
 
