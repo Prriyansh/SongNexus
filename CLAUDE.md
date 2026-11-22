@@ -30,7 +30,10 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript (strict), Vitest.
 - `docs/` — architecture notes, Helen's design handoff, the first mockup.
 - `song_compare/` — Ishita's Python (Flask) API for the sound & lyrics part of Explore's song
   comparison (via `/api/sound`); deployed as its own Vercel project (see `song_compare/CLAUDE.md`).
-- `.github/` — CI workflow.
+- `songnexus-v2/` — SongNexus v2, a separate app (Python API in `server/`, Vite web app in `web/`)
+  with its own tooling (`uv`, its own `package.json`); see `songnexus-v2/README.md`. The root
+  `tsconfig.json`, ESLint config and `.vercelignore` exclude it, so it never affects the Next.js app.
+- `.github/` — CI workflows.
 
 ## Working rules
 

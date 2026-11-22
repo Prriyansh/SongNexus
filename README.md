@@ -7,6 +7,8 @@ have in common, and the songs that link them. All facts come from
 
 ## Run it locally
 
+On Windows, run `.\demo.cmd` in PowerShell to start the account demo at `http://127.0.0.1:3000/accounts`. The launcher uses a prepared `.tools/node` runtime when available, or Node/npm installed on your PATH, and preserves an existing `.env.local`.
+
 Requires Node.js 20.9 or newer (`.nvmrc` pins 22). No API keys are needed.
 
 ```bash
@@ -15,6 +17,8 @@ npm run dev
 ```
 
 Then open <http://localhost:3000>.
+
+**Music accounts:** open `/accounts` to create a private Song Nexus account, connect supported services, inspect sync progress, import exported music and browse your source-filtered library. Development account storage works without a database server; production needs Postgres and an encryption key. See [how to connect each service](docs/integrations/connecting.md), [integration setup and testing](docs/integrations/README.md), [provider configuration and capabilities](docs/integrations/providers.md), and [data-use restrictions](docs/integrations/compliance.md). Provider connections require the credentials/approvals listed there; no integration is claimed as live-tested.
 
 Everything runs without keys. These optional environment variables (in `.env.local`, or Vercel's
 settings) add more to the two-artist comparison; each page says which sources were checked.
@@ -86,11 +90,13 @@ SongNexus/
 │   └── lib/            MusicBrainz + Deezer integration (rate limits, caching, mapping)
 ├── public/             static files; song-nexus.html is the prototype served at /prototype
 ├── song_compare/       Python API for the sound & lyrics part of song comparisons
+├── songnexus-v2/       SongNexus v2: Python API (server/) + Vite web app (web/), run on its own
 ├── docs/
 │   ├── architecture.md data sources, caching, API and frontend details
 │   ├── design/         Helen's design handoff and reference screenshots
 │   └── prototype/      the first HTML mockup, from the paper sketches
 ├── .github/workflows/  CI: lint, type checks, tests and build on every push and PR
+│                       (songnexus-v2.yml checks songnexus-v2/ when it changes)
 └── package.json, next.config.ts, tsconfig.json, vitest.config.ts, eslint.config.mjs
 ```
 
@@ -122,6 +128,14 @@ cd song_compare && pip install -r requirements.txt && python backend/app.py   # 
 
 Without it, everything else works and the comparison says the sound analysis isn't available.
 On Vercel it's a second project; see [Deploying the sound service](#deploying-the-sound-service-on-vercel).
+
+## SongNexus v2 (songnexus-v2)
+
+A second version of the app, added next to this one rather than replacing it: a Python API
+(catalog, search, artist connections, Daily puzzle, communities) and a Vite + React web app.
+It has its own dependencies and does not change anything above. To run it, see
+[songnexus-v2/README.md](songnexus-v2/README.md): the API serves on http://127.0.0.1:8790 and the
+web app on http://127.0.0.1:5173. Its checks run in the `SongNexus v2` workflow.
 
 ## Stack
 

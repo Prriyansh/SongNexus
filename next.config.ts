@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
         { source: "/about/manual", destination: "/" },
         { source: "/connections", destination: "/" },
         { source: "/friends", destination: "/" },
+        { source: "/accounts", destination: "/" },
         { source: "/compare/:mode(artists|songs)", destination: "/" },
         { source: "/prototype", destination: "/song-nexus.html" },
       ],

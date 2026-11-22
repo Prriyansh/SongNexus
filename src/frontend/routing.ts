@@ -5,7 +5,7 @@ import type { EntityType } from './types';
 import { parseProfile } from './profile';
 import type { MusicProfile } from './profile';
 
-export type Page = 'about' | 'connections' | 'friends' | 'explore';
+export type Page = 'about' | 'connections' | 'friends' | 'explore' | 'accounts';
 /** comparison: Helen's two-artist Connection Web (left and right); the others start from one artist, song or playlist. */
 export type WebMode = EntityType | 'playlist' | 'comparison';
 export type WebSelection = { mode: WebMode; artist: string; song: string; left: string; right: string };
@@ -41,6 +41,7 @@ export function parseRoute(pathname: string, search: string, fallback?: Comparis
   const q = new URLSearchParams(search);
   const path = pathname.replace(/\/+$/, '') || '/';
   const compare = path.match(/^\/compare\/(artists|songs)$/);
+  if (path === '/accounts') return { page: 'accounts', manual: false, comparison: fallback ?? comparisonFor('artist'), note: '' };
   if (path === '/friends') return { page: 'friends', manual: false, comparison: fallback ?? comparisonFor('artist'), note: note(q) };
   if (path === '/connections') {
     // Older links used mode=search for a song; artistA alone also opens an artist.
@@ -70,6 +71,7 @@ export function parseRoute(pathname: string, search: string, fallback?: Comparis
 }
 
 export function buildPath(page: Page, comparison: Comparison, noteText = '', manual = false, web = defaultWeb()): string {
+  if (page === 'accounts') return '/accounts';
   if (page === 'about') return manual ? '/about/manual' : '/about';
   if (page === 'friends') return '/friends';
   if (page === 'connections') {

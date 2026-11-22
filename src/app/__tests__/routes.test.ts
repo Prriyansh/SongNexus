@@ -10,6 +10,7 @@ describe("next.config rewrites", () => {
     expect(map).toEqual({
       "/about": "/",
       "/about/manual": "/",
+      "/accounts": "/",
       "/connections": "/",
       "/friends": "/",
       "/compare/:mode(artists|songs)": "/",
