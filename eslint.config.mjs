@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     ".data/**",
     ".tools/**",
     "next-env.d.ts",
+    // The v2 app has its own lint setup (songnexus-v2/web/eslint.config.js).
+    "songnexus-v2/**",
   ]),
 ]);
 

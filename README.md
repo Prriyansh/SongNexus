@@ -90,11 +90,13 @@ SongNexus/
 │   └── lib/            MusicBrainz + Deezer integration (rate limits, caching, mapping)
 ├── public/             static files; song-nexus.html is the prototype served at /prototype
 ├── song_compare/       Python API for the sound & lyrics part of song comparisons
+├── songnexus-v2/       SongNexus v2: Python API (server/) + Vite web app (web/), run on its own
 ├── docs/
 │   ├── architecture.md data sources, caching, API and frontend details
 │   ├── design/         Helen's design handoff and reference screenshots
 │   └── prototype/      the first HTML mockup, from the paper sketches
 ├── .github/workflows/  CI: lint, type checks, tests and build on every push and PR
+│                       (songnexus-v2.yml checks songnexus-v2/ when it changes)
 └── package.json, next.config.ts, tsconfig.json, vitest.config.ts, eslint.config.mjs
 ```
 
@@ -126,6 +128,14 @@ cd song_compare && pip install -r requirements.txt && python backend/app.py   # 
 
 Without it, everything else works and the comparison says the sound analysis isn't available.
 On Vercel it's a second project; see [Deploying the sound service](#deploying-the-sound-service-on-vercel).
+
+## SongNexus v2 (songnexus-v2)
+
+A second version of the app, added next to this one rather than replacing it: a Python API
+(catalog, search, artist connections, Daily puzzle, communities) and a Vite + React web app.
+It has its own dependencies and does not change anything above. To run it, see
+[songnexus-v2/README.md](songnexus-v2/README.md): the API serves on http://127.0.0.1:8790 and the
+web app on http://127.0.0.1:5173. Its checks run in the `SongNexus v2` workflow.
 
 ## Stack
 

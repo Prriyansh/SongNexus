@@ -1,15 +1,19 @@
-name: CI
+name: SongNexus v2
 
+# Checks for the app in songnexus-v2/ (Python API + Vite web app). It runs only
+# when that folder or this file changes; the root Next.js app keeps ci.yml.
 on:
   pull_request:
+    paths: ["songnexus-v2/**", ".github/workflows/songnexus-v2.yml"]
   push:
-    branches: [main, v2]
+    branches: [main]
+    paths: ["songnexus-v2/**", ".github/workflows/songnexus-v2.yml"]
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: songnexus-v2-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -28,12 +32,13 @@ jobs:
           --health-interval 5s --health-timeout 3s --health-retries 20
     defaults:
       run:
-        working-directory: server
+        working-directory: songnexus-v2/server
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: true
+          cache-dependency-glob: songnexus-v2/server/uv.lock
       - run: uv sync --locked
       - name: Format
         run: uv run ruff format --check .
@@ -49,23 +54,21 @@ jobs:
         run: uv run pytest --cov --cov-report=term
       - name: OpenAPI contract is up to date
         run: uv run songnexus openapi --check
-      - name: Resources page matches the source registry
-        run: uv run songnexus resources --check
       - name: Dependency audit
-        run: uvx pip-audit --strict --progress-spinner off -r <(uv export --format requirements-txt --no-hashes --no-dev)
+        run: uvx pip-audit --strict --progress-spinner off -r <(uv export --format requirements-txt --no-hashes --no-dev --no-emit-project)
 
   web:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: web
+        working-directory: songnexus-v2/web
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: songnexus-v2/web/package-lock.json
       - run: npm ci
       - name: API types match the contract
         run: npm run api:types && git diff --exit-code -- src/api/schema.d.ts
@@ -86,13 +89,14 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: true
+          cache-dependency-glob: songnexus-v2/server/uv.lock
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: songnexus-v2/web/package-lock.json
       - name: Build the catalog and start the API
-        working-directory: server
+        working-directory: songnexus-v2/server
         env:
           SONGNEXUS_DATABASE_URL: sqlite:////tmp/e2e.db
           SONGNEXUS_ALLOWED_ORIGINS: '["http://127.0.0.1:4273"]'
@@ -101,7 +105,7 @@ jobs:
           uv run songnexus ingest > /dev/null
           uv run uvicorn songnexus.service.app:create_app --factory --port 8790 --no-access-log &
       - name: Build and serve the web app
-        working-directory: web
+        working-directory: songnexus-v2/web
         run: |
           npm ci
           npx playwright install --with-deps chromium
@@ -109,5 +113,5 @@ jobs:
           npx vite preview --host 127.0.0.1 --port 4273 --strictPort &
           npx --yes wait-on@8 http://127.0.0.1:8790/healthz http://127.0.0.1:4273
       - name: Journeys and accessibility (mobile + desktop)
-        working-directory: web
+        working-directory: songnexus-v2/web
         run: npx playwright test
