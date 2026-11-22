@@ -1,5 +1,5 @@
 import pytest
-from hypothesis import given, settings
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 from songnexus.core.text import (
@@ -52,6 +52,9 @@ def test_normalize_keeps_every_script(raw: str, expected: str) -> None:
 
 
 @given(st.text(max_size=40))
+@example("0퟼֑")  # a mark on an unassigned code point, which becomes a space
+@example("a☃́b")  # a mark on a symbol
+@example("֑abc")  # a mark with no base
 def test_normalize_is_idempotent(text: str) -> None:
     assert normalize(normalize(text)) == normalize(text)
 

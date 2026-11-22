@@ -67,14 +67,17 @@ def normalize(text: str) -> str:
     folded = unicodedata.normalize("NFKD", text.translate(_CHAR_FOLDS)).casefold()
     decomposed = unicodedata.normalize("NFKD", folded)
     kept: list[str] = []
-    base = ""
+    # Combining marks stay only on a kept letter or digit outside the foldable
+    # blocks. A mark on anything else is dropped: on Latin/Greek/Cyrillic it is an
+    # accent to fold, and on punctuation or a symbol (which becomes a space) it
+    # would be left dangling after that space and folded off on a second pass.
+    keep_marks = False
     for char in decomposed:
         if unicodedata.combining(char):
-            if base and ord(base) < _FOLDABLE_BASE_LIMIT:
-                continue  # fold the accent off a Latin/Greek/Cyrillic letter
-            kept.append(char)
+            if keep_marks:
+                kept.append(char)
             continue
-        base = char
+        keep_marks = char.isalnum() and ord(char) >= _FOLDABLE_BASE_LIMIT
         if char == "'":
             continue  # "Guns N' Roses" -> "guns n roses"
         kept.append(char if char.isalnum() else " ")
