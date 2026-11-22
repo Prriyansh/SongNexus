@@ -1,0 +1,41 @@
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# Local data: the raw HTTP cache and local databases are regenerated.
+# Committed data lives in data/samples, data/seeds and data/eval.
+data/raw/
+data/*.db
+/*.db
+*.sqlite
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.import_linter_cache/
+
+# Playwright
+test-results/
+playwright-report/
+
+# Local code graph (graphify), not part of the project
+graphify-out/
