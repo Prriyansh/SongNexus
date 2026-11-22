@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.data
+.env*
+coverage
+*.tsbuildinfo
+song_compare/.venv
+song_compare/data
