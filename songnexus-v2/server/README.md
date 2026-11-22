@@ -1,7 +1,7 @@
 # songnexus (server)
 
-Core library, catalog pipeline and HTTP API for SongNexus. See the [design doc](../docs/design/design-doc.md)
-for what and why, and the repository [README](../README.md) for a quickstart.
+Core library, catalog pipeline and HTTP API for SongNexus. See the [SongNexus v2 README](../README.md)
+for a quickstart.
 
 ## Commands
 
@@ -27,7 +27,6 @@ uv run songnexus <command>       # see below; results are JSON on stdout, logs o
 | `eval-songs [--fit-weights]` | Song similarity vs genre agreement (AUC); `--fit-weights` reruns the held-out weight fit |
 | `eval-listening [--lastfm PATH]` | ListenBrainz co-listening vs Last.fm 360K listener overlap (offline research data) |
 | `eval-genres` | Genre coverage per source and MusicBrainz-Discogs agreement (floors in the golden tests) |
-| `resources [--check]` | Writes `docs/resources.md` from the data-source registry; `--check` fails if it is stale |
 | `openapi [--check]` | Writes `openapi.json`, the API contract; `--check` fails if code and contract differ |
 | `purge` | Removes expired sessions and accounts deleted 28+ days ago (daily job) |
 | `serve` | Local API server (deployments run uvicorn from the container) |
@@ -38,8 +37,7 @@ Refreshing the catalog data: `fetch`, then `fetch-wikidata`, `fetch-discogs --du
 `fetch-acousticbrainz` and `fetch-listenbrainz`, then `ingest` and the evaluations; review the snapshot diffs and the unmapped Discogs names in the ingest output before
 committing. Only `fetch*` commands touch the network.
 
-Daily puzzle methods, date rules and share telemetry are described in
-[Daily puzzle](../docs/daily-puzzle.md); their schemas are in `openapi.json`.
+Daily puzzle methods and their schemas are in `openapi.json`.
 
 ## Layout
 

@@ -482,17 +482,6 @@ def _cmd_openapi(_settings: Settings, args: argparse.Namespace) -> int:
     return _write_generated(OPENAPI_PATH, openapi_document(), command="openapi", check=args.check)
 
 
-RESOURCES_PATH = Path(__file__).resolve().parents[3] / "docs" / "resources.md"
-
-
-def _cmd_resources(_settings: Settings, args: argparse.Namespace) -> int:
-    from songnexus.catalog.sources import render_markdown
-
-    return _write_generated(
-        RESOURCES_PATH, render_markdown(), command="resources", check=args.check
-    )
-
-
 # --- Artist photos (ADR 0009) -----------------------------------------------------------
 
 
@@ -899,11 +888,6 @@ def build_parser() -> argparse.ArgumentParser:
     openapi.add_argument("--check", action="store_true", help="fail if the file is out of date")
     openapi.set_defaults(handler=_cmd_openapi)
 
-    resources = commands.add_parser(
-        "resources", help="write the data-source page (docs/resources.md) from the registry"
-    )
-    resources.add_argument("--check", action="store_true", help="fail if the file is out of date")
-    resources.set_defaults(handler=_cmd_resources)
     return parser
 
 

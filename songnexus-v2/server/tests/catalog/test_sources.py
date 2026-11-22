@@ -15,7 +15,7 @@ from songnexus.catalog.ingest import (
     registered_source_rows,
 )
 from songnexus.catalog.snapshot import write_snapshot
-from songnexus.catalog.sources import SOURCES, Kind, Status, Tier, render_markdown
+from songnexus.catalog.sources import SOURCES, Kind, Status, Tier
 from songnexus.storage import migrate
 from songnexus.storage import models as m
 from songnexus.storage.db import make_engine
@@ -85,10 +85,3 @@ def test_every_stored_fact_traces_to_an_in_use_registered_source(ingested: Engin
         registered = set(session.scalars(select(m.DataSource.id)))
     in_use = {s.id for s in SOURCES if s.status is Status.IN_USE}
     assert used <= registered <= in_use
-
-
-def test_resources_page_is_generated_from_the_registry() -> None:
-    page = render_markdown()
-    for source in SOURCES:
-        assert f"`{source.id}`" in page
-    assert "Do not edit by hand" in page

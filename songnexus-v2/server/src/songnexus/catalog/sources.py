@@ -2,8 +2,7 @@
 
 This module is the single source of truth. The ingest pipeline registers sources
 from it and refuses facts from anything else; ``ListDataSources`` and the About
-screen's Resources section serve it; ``docs/resources.md`` is generated from it
-(``songnexus resources``, checked in CI).
+screen's Resources section serve it.
 
 A source is added here *before* any code reads from it, with the license as the
 provider states it and the date that was checked. Sources whose license is
@@ -309,90 +308,3 @@ def catalog_sources() -> tuple[DataSource, ...]:
     return tuple(
         s for s in SOURCES if s.tier is not Tier.EVALUATION and s.kind is not Kind.USER_ACCOUNT
     )
-
-
-_TIER_HEADINGS = {
-    Tier.PRODUCTION: (
-        "Production-safe",
-        "CC0 or equivalent. Usable in a commercial YouTube Music feature.",
-    ),
-    Tier.NON_COMMERCIAL: (
-        "Non-commercial",
-        "Served in the capstone build only. A commercial launch removes these facts by source ID.",
-    ),
-    Tier.EVALUATION: (
-        "Evaluation only",
-        "Used offline to check our results against an independent signal. Never stored in the "
-        "catalog, never shown to listeners.",
-    ),
-}
-
-
-_KIND_LABELS = {
-    Kind.API: "its API",
-    Kind.DATA_DUMP: "published data dumps",
-    Kind.DATASET: "a published dataset",
-    Kind.USER_ACCOUNT: "the listener's own files or linked accounts",
-}
-
-
-def _link(text: str, url: str) -> str:
-    return f"[{text}]({url})" if url.startswith("http") else text
-
-
-def render_markdown() -> str:
-    """Returns ``docs/resources.md``, generated from the registry."""
-    lines = [
-        "# Resources: data sources and licenses",
-        "",
-        "<!-- Generated from server/src/songnexus/catalog/sources.py by `songnexus resources`."
-        " Do not edit by hand; CI fails when this file is out of date. -->",
-        "",
-        "Every fact SongNexus shows carries the ID of the source that asserted it. This page lists "
-        "every source we use or evaluate, what it feeds, its license, and when the license was "
-        "checked. The policy behind the tiers is [ADR 0005](adr/0005-data-source-policy.md); the "
-        "same list is served by `ListDataSources` (`GET /v1/dataSources`) and shown on the app's "
-        "About page.",
-        "",
-        "Status **Planned** means the source is approved but no code reads from it yet; the plan "
-        "milestone that wires it in is in [plans/r2-plan.md](plans/r2-plan.md).",
-        "",
-        "## Summary",
-        "",
-        "| Source | License | Tier | Status | Feeds |",
-        "|---|---|---|---|---|",
-    ]
-    for s in SOURCES:
-        lines.append(
-            f"| {_link(s.name, s.homepage)} | {s.license} | {_TIER_HEADINGS[s.tier][0]} | "
-            f"{s.status.value.replace('_', ' ').title()} | {'; '.join(s.feeds)} |"
-        )
-    for tier, (heading, meaning) in _TIER_HEADINGS.items():
-        lines += ["", f"## {heading}", "", meaning]
-        for s in (s for s in SOURCES if s.tier is tier):
-            lines += [
-                "",
-                f"### {s.name}",
-                "",
-                f"- **ID:** `{s.id}`",
-                f"- **Obtained via:** {_KIND_LABELS[s.kind]}",
-                f"- **License:** {_link(s.license, s.license_url)} (checked {s.checked_on})",
-                f"- **Feeds:** {'; '.join(s.feeds)}",
-            ]
-            if s.attribution:
-                lines.append(f"- **Attribution:** “{s.attribution}”")
-            if s.notes:
-                lines.append(f"- **Notes:** {s.notes}")
-    lines += [
-        "",
-        "## Adding a source",
-        "",
-        "1. Read the provider's license or terms; record the SPDX ID (or the terms' name), the URL "
-        "and today's date.",
-        "2. Add a `DataSource` to `sources.py` with status `PLANNED` and the right tier. "
-        "Unclear or unstated license: do not add it.",
-        "3. Run `uv run songnexus resources` and commit the regenerated page with the code that "
-        "first reads the source, switching its status to `IN_USE`.",
-        "",
-    ]
-    return "\n".join(lines)
