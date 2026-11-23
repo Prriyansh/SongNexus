@@ -1770,3 +1770,95 @@ a.sx-similar__body:focus-visible {
 .sx-source {
   grid-column: 1 / -1;
 }
+
+/* ---------- More credits (Discogs and Genius) on an artist comparison ---------- */
+
+.mc-people {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-4) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mc-person {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+}
+.mc-person .cover {
+  inline-size: 48px;
+  block-size: 48px;
+  font-size: 20px;
+}
+.mc-person__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+.mc-person__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.mc-person__name {
+  overflow: hidden;
+  color: inherit;
+  font: var(--title-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mc-source {
+  flex: none;
+  padding: 0 var(--space-2);
+  border-radius: var(--shape-full);
+  background: var(--fill-1);
+  color: var(--md-on-surface-variant);
+  font: var(--label-small);
+}
+.mc-person__roles {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  font: var(--body-small);
+}
+.mc-person__evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mc-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding-inline-start: var(--space-2);
+  border-inline-start: 2px solid var(--side);
+  list-style: none;
+  font: var(--body-small);
+}
+.mc-evidence a {
+  color: inherit;
+}
+.mc-evidence__year {
+  margin-inline-start: var(--space-2);
+  color: var(--md-on-surface-variant);
+  font-variant-numeric: tabular-nums;
+}
+.mc-direct {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.mc-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--md-on-surface-variant);
+  font: var(--body-small);
+}

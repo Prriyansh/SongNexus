@@ -125,6 +125,12 @@ class Settings(BaseSettings):
     song_compare_url: str = ""
     song_compare_timeout_s: float = 20.0
 
+    # More credits in artist comparisons (ListMoreCredits): Discogs works without a token at
+    # 25 requests a minute (a token raises it to 60); Genius needs an access token.
+    discogs_token: str = Field(default="", repr=False)
+    genius_access_token: str = Field(default="", repr=False)
+    more_credits_budget_s: float = 15.0
+
     @property
     def local_token_key_path(self) -> Path:
         """Development only: where a generated token key is kept (git-ignored)."""

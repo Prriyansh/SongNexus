@@ -308,6 +308,61 @@ class ConnectionDetail(ApiModel):
     graph_version: str
 
 
+class CreditWork(ApiModel):
+    """A release (Discogs) or song (Genius) a person is credited on, linked to the source."""
+
+    title: str
+    url: str
+    year: int | None = None
+
+
+class SourcedCollaborator(ApiModel):
+    """A person Discogs or Genius credits on both artists' work."""
+
+    source: str = Field(description="`dataSources/discogs` or `dataSources/genius`.")
+    display_name: str
+    url: str = Field(description="The person's page on that source.")
+    artist: ArtistSummary | None = Field(
+        default=None,
+        description="The catalog artist, when the catalog maps this exact Discogs ID; never "
+        "matched by name.",
+    )
+    roles_a: list[str]
+    roles_b: list[str]
+    evidence_a: list[CreditWork] = Field(description="Up to five, on the first artist's work.")
+    evidence_b: list[CreditWork] = Field(description="Up to five, on the second artist's work.")
+
+
+class CreditSourceStatus(enum.StrEnum):
+    """What happened when a source was asked."""
+
+    OK = "OK"
+    PARTIAL = "PARTIAL"  # it ran out of time: `scannedA`/`scannedB` say how far it got
+    NO_KEY = "NO_KEY"  # not set up on this server
+    NO_MATCH = "NO_MATCH"  # it doesn't know one of the artists for sure
+    FAILED = "FAILED"
+
+
+class CreditSourceCheck(ApiModel):
+    """What one source checked."""
+
+    source: str
+    status: CreditSourceStatus
+    scanned_a: int = 0
+    scanned_b: int = 0
+    unit: str = Field(description="`releases` (Discogs) or `songs` (Genius).")
+
+
+class ListMoreCreditsResponse(ApiModel):
+    """ListMoreCredits: credits from Discogs and Genius, beyond MusicBrainz."""
+
+    collaborators: list[SourcedCollaborator]
+    direct: list[CreditWork] = Field(
+        description="Work where one artist is credited on the other's, by these sources."
+    )
+    checks: list[CreditSourceCheck]
+
+
 class Collaboration(ApiModel):
     """A collaborator under one type."""
 

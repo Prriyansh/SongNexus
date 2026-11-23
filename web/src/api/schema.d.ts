@@ -157,6 +157,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/artists/{artist}:moreCredits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ListMoreCredits
+         * @description Lists people Discogs and Genius credit on both artists' work, with the evidence.
+         *
+         *     Discogs is reached through the Discogs ID the catalog maps to each artist; Genius by an
+         *     exact name match. People are compared within one source by its own IDs. A person links to
+         *     a catalog artist only through that exact Discogs ID.
+         */
+        get: operations["ListMoreCredits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/artists/{artist}:recommend": {
         parameters: {
             query?: never;
@@ -3004,6 +3028,48 @@ export interface components {
             roleDetail: string;
         };
         /**
+         * CreditSourceCheck
+         * @description What one source checked.
+         */
+        CreditSourceCheck: {
+            /**
+             * Scanneda
+             * @default 0
+             */
+            scannedA: number;
+            /**
+             * Scannedb
+             * @default 0
+             */
+            scannedB: number;
+            /** Source */
+            source: string;
+            status: components["schemas"]["CreditSourceStatus"];
+            /**
+             * Unit
+             * @description `releases` (Discogs) or `songs` (Genius).
+             */
+            unit: string;
+        };
+        /**
+         * CreditSourceStatus
+         * @description What happened when a source was asked.
+         * @enum {string}
+         */
+        CreditSourceStatus: "OK" | "PARTIAL" | "NO_KEY" | "NO_MATCH" | "FAILED";
+        /**
+         * CreditWork
+         * @description A release (Discogs) or song (Genius) a person is credited on, linked to the source.
+         */
+        CreditWork: {
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+            /** Year */
+            year: number | null;
+        };
+        /**
          * DataSource
          * @description A provider of data, with its license and what it feeds.
          */
@@ -4043,6 +4109,21 @@ export interface components {
             nextPageToken: string;
             /** Totalsize */
             totalSize: number;
+        };
+        /**
+         * ListMoreCreditsResponse
+         * @description ListMoreCredits: credits from Discogs and Genius, beyond MusicBrainz.
+         */
+        ListMoreCreditsResponse: {
+            /** Checks */
+            checks: components["schemas"]["CreditSourceCheck"][];
+            /** Collaborators */
+            collaborators: components["schemas"]["SourcedCollaborator"][];
+            /**
+             * Direct
+             * @description Work where one artist is credited on the other's, by these sources.
+             */
+            direct: components["schemas"]["CreditWork"][];
         };
         /**
          * ListShelvesResponse
@@ -5147,6 +5228,40 @@ export interface components {
          */
         SourceStatus: "IN_USE" | "PLANNED";
         /**
+         * SourcedCollaborator
+         * @description A person Discogs or Genius credits on both artists' work.
+         */
+        SourcedCollaborator: {
+            /** @description The catalog artist, when the catalog maps this exact Discogs ID; never matched by name. */
+            artist: components["schemas"]["ArtistSummary"] | null;
+            /** Displayname */
+            displayName: string;
+            /**
+             * Evidencea
+             * @description Up to five, on the first artist's work.
+             */
+            evidenceA: components["schemas"]["CreditWork"][];
+            /**
+             * Evidenceb
+             * @description Up to five, on the second artist's work.
+             */
+            evidenceB: components["schemas"]["CreditWork"][];
+            /** Rolesa */
+            rolesA: string[];
+            /** Rolesb */
+            rolesB: string[];
+            /**
+             * Source
+             * @description `dataSources/discogs` or `dataSources/genius`.
+             */
+            source: string;
+            /**
+             * Url
+             * @description The person's page on that source.
+             */
+            url: string;
+        };
+        /**
          * StartLinkRequest
          * @description StartLink.
          */
@@ -5924,6 +6039,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FindPathResponse"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ListMoreCredits: {
+        parameters: {
+            query: {
+                /** @description Resource name of the artist to compare with. */
+                other: string;
+            };
+            header?: never;
+            path: {
+                artist: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListMoreCreditsResponse"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */

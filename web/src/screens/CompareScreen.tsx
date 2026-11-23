@@ -12,6 +12,7 @@ import {useAmbient} from '../app/ambient';
 import {isFiltered, useGenreSelection} from '../app/genreSelection';
 import {usePageTitle} from '../app/Shell';
 import {useStarterArtists} from '../app/starters';
+import {MoreCredits} from '../collaborations/MoreCredits';
 import {artistPath, imageOf} from '../components/ArtistRow';
 import {GenreFilter} from '../components/Filters';
 import {Icon} from '../components/Icon';
@@ -599,6 +600,11 @@ export default function CompareScreen() {
       {data && (
         <div className="cx-board">
           <Mutual data={data} />
+          <MoreCredits
+            a={idOf(data.artistA.name)}
+            b={idOf(data.artistB.name)}
+            names={[data.artistA.displayName, data.artistB.displayName]}
+          />
           <Genres data={data} />
           <Audience data={data} />
           <SharedAwards data={data} />

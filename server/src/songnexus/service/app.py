@@ -49,6 +49,7 @@ from songnexus.service.routes import (
 )
 from songnexus.service.routes import ask as ask_routes
 from songnexus.service.routes import community as community_routes
+from songnexus.service.routes import credits as credits_routes
 from songnexus.service.routes import foryou as foryou_routes
 from songnexus.service.routes import friend_paths as friend_paths_routes
 from songnexus.service.routes import games as games_routes
@@ -211,24 +212,28 @@ def create_app(settings: Settings | None = None, state: AppState | None = None) 
     app.state.response_cache = build_cache(settings.redis_url)
     app.openapi = lambda: _openapi_with_error_model(app)  # type: ignore[method-assign]
     install_error_handlers(app)
-    app.include_router(ops.router)
-    app.include_router(catalog.router)
-    app.include_router(sound_routes.router)
-    app.include_router(analysis.router)
-    app.include_router(playlists.router)
-    app.include_router(play.router)
-    app.include_router(discover.router)
-    app.include_router(browse.router)
-    app.include_router(identity.router)
-    app.include_router(users.router)
-    app.include_router(accounts.router)
-    app.include_router(social.router)
-    app.include_router(community_routes.router)
-    app.include_router(games_routes.router)
-    app.include_router(friend_paths_routes.router)
-    app.include_router(recap_routes.router)
-    app.include_router(ask_routes.router)
-    app.include_router(foryou_routes.router)
+    for router in (
+        ops.router,
+        catalog.router,
+        sound_routes.router,
+        credits_routes.router,
+        analysis.router,
+        playlists.router,
+        play.router,
+        discover.router,
+        browse.router,
+        identity.router,
+        users.router,
+        accounts.router,
+        social.router,
+        community_routes.router,
+        games_routes.router,
+        friend_paths_routes.router,
+        recap_routes.router,
+        ask_routes.router,
+        foryou_routes.router,
+    ):
+        app.include_router(router)
     # The middleware added last runs outermost, so security headers cover every
     # response, including errors raised by the request-context layer.
     app.add_middleware(BodySizeLimitMiddleware)

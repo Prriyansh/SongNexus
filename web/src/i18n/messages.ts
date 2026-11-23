@@ -1059,6 +1059,31 @@ export const messages = {
   'compare.audience.scale':
     'Shared audience, on a scale from rarely to very often',
   'compare.genres.none': 'No genres in common in our data yet.',
+  'moreCredits.title': 'More credits',
+  'moreCredits.lead':
+    'People Discogs and Genius credit on both artists’ work, beyond the connections above. Names are matched within each source, so check the links.',
+  'moreCredits.loading':
+    'Reading credits on Discogs and Genius. The first look at two artists can take half a minute.',
+  'moreCredits.failed': 'Discogs and Genius couldn’t be read just now.',
+  'moreCredits.none':
+    'No one else credited on both in what these sources checked.',
+  'moreCredits.roles': '{a}: {rolesA} · {b}: {rolesB}',
+  'moreCredits.direct': 'Credited on each other’s work',
+  'moreCredits.role.producer': 'producer',
+  'moreCredits.role.mixing': 'mixing',
+  'moreCredits.role.songwriting': 'songwriting',
+  'moreCredits.role.programming': 'programming',
+  'moreCredits.role.engineering': 'engineering',
+  'moreCredits.role.featured': 'featured',
+  'moreCredits.role.vocals': 'vocals',
+  'moreCredits.role.instruments': 'instruments',
+  'moreCredits.check.ok': '{source}: checked {a} and {b} {unit}.',
+  'moreCredits.check.partial':
+    '{source}: checked {a} and {b} {unit} before running out of time; look again later for more.',
+  'moreCredits.check.noKey': '{source} isn’t set up on this server.',
+  'moreCredits.check.noMatch':
+    '{source} doesn’t know one of these artists for sure, so it was skipped.',
+  'moreCredits.check.failed': '{source} couldn’t be reached just now.',
   'compare.awards': 'Both received',
   'compare.awards.note':
     'The same award, in any year, as Wikidata lists it for both. Community-edited, so not a total.',

@@ -123,13 +123,36 @@ SOURCES: tuple[DataSource, ...] = (
         tier=Tier.PRODUCTION,
         status=Status.IN_USE,
         kind=Kind.DATA_DUMP,
-        feeds=("artist genres (commercial-safe)", "genre filters and shared genres in compare"),
+        feeds=(
+            "artist genres (commercial-safe)",
+            "genre filters and shared genres in compare",
+            "artist comparisons: more credits (people credited on both artists' releases)",
+        ),
         attribution="Data from Discogs",
-        checked_on="2026-11-01",
+        checked_on="2026-11-22",
         notes="Monthly XML dumps of artists, labels, masters and releases are CC0; we read the "
         "masters dump (main artists, genres, styles). API-only 'Restricted Data' (images, "
         "marketplace) is not used. Artists are joined through MusicBrainz and Wikidata links, "
-        "never by name; styles map onto the MusicBrainz genre list by name or a reviewed table.",
+        "never by name; styles map onto the MusicBrainz genre list by name or a reviewed table. "
+        "Artist comparisons also read release credits (in the CC0 releases data) live from the "
+        "Discogs API, within its rate limit, cached in memory for a day and never stored.",
+    ),
+    DataSource(
+        id="genius",
+        name="Genius API",
+        homepage="https://genius.com",
+        license="Genius API Terms of Service",
+        license_url="https://genius.com/static/terms",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.API,
+        feeds=("artist comparisons: more credits (producers, writers and features on both)",),
+        attribution="Credits from Genius",
+        checked_on="2026-11-22",
+        notes="Only with SONGNEXUS_GENIUS_ACCESS_TOKEN. Song credits of an artist's most popular "
+        "songs, read live when two artists are compared, cached in memory for a day and never "
+        "stored. The artist is the exact-name search hit, never a near match. Lyrics are never "
+        "read.",
     ),
     DataSource(
         id="wikidata",

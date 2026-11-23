@@ -121,6 +121,54 @@ def _sources(
     return found
 
 
+def discogs_ids(session: Session, artist_ids: Iterable[str]) -> dict[str, str]:
+    """Returns {artist ID: Discogs artist ID} for the given artists the catalog maps.
+
+    The mapping comes from MusicBrainz and Wikidata links (never names). An artist with several
+    Discogs IDs (rare) gets the numerically smallest, the oldest entry.
+    """
+    wanted = sorted(set(artist_ids))
+    rows = session.execute(
+        select(m.EntitySourceMapping.entity_id, m.EntitySourceMapping.source_entity_id).where(
+            m.EntitySourceMapping.source_id == "discogs",
+            m.EntitySourceMapping.entity_type == "artist",
+            m.EntitySourceMapping.entity_id.in_(wanted),
+        )
+    ).all()
+    found: dict[str, str] = {}
+    for artist_id, discogs_id in rows:
+        current = found.get(artist_id)
+        if discogs_id.isdigit() and (current is None or int(discogs_id) < int(current)):
+            found[artist_id] = discogs_id
+    return found
+
+
+def artists_by_discogs_ids(session: Session, discogs_ids_: Iterable[str]) -> dict[str, str]:
+    """Returns {Discogs artist ID: artist ID} for the Discogs IDs the catalog maps."""
+    wanted = sorted(set(discogs_ids_))
+    if not wanted:
+        return {}
+    rows = session.execute(
+        select(m.EntitySourceMapping.source_entity_id, m.EntitySourceMapping.entity_id).where(
+            m.EntitySourceMapping.source_id == "discogs",
+            m.EntitySourceMapping.entity_type == "artist",
+            m.EntitySourceMapping.source_entity_id.in_(wanted),
+        )
+    ).all()
+    return {discogs_id: artist_id for discogs_id, artist_id in rows}  # noqa: C416
+
+
+def album_titles(session: Session, artist_id: str) -> list[str]:
+    """Returns the normalized titles of the albums the artist is credited on, newest first."""
+    rows = session.execute(
+        select(m.Release.normalized_title)
+        .join(m.ReleaseArtist, m.ReleaseArtist.release_id == m.Release.id)
+        .where(m.ReleaseArtist.artist_id == artist_id, m.Release.primary_type == "Album")
+        .order_by(m.Release.first_release_date.desc())
+    ).scalars()
+    return list(dict.fromkeys(rows))
+
+
 def artist_details(session: Session, artist_id: str) -> ArtistDetails:
     """Returns an artist's aliases, links and source records."""
     aliases = tuple(

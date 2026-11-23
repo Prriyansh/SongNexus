@@ -269,6 +269,30 @@ export function useRecordingSound(
   });
 }
 
+/**
+ * People Discogs and Genius credit on both artists' work, read live by the server. A source
+ * that failed or ran out of time makes the answer stale at once, so the next visit asks again.
+ */
+export function useMoreCredits(a: string | undefined, b: string | undefined) {
+  return useQuery({
+    queryKey: ['moreCredits', a, b],
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/artists/{artist}:moreCredits', {
+          params: {path: {artist: a!}, query: {other: `artists/${b!}`}},
+        }),
+      ),
+    enabled: Boolean(a && b && a !== b),
+    ...CATALOG_CACHE,
+    staleTime: query =>
+      query.state.data?.checks.some(
+        c => c.status === 'FAILED' || c.status === 'PARTIAL',
+      )
+        ? 0
+        : CATALOG_CACHE.staleTime,
+  });
+}
+
 export function useLabel(id: string | undefined) {
   return useQuery({
     queryKey: ['label', id],

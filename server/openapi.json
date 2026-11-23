@@ -2662,6 +2662,85 @@
         "title": "Credit",
         "type": "object"
       },
+      "CreditSourceCheck": {
+        "description": "What one source checked.",
+        "properties": {
+          "scannedA": {
+            "default": 0,
+            "title": "Scanneda",
+            "type": "integer"
+          },
+          "scannedB": {
+            "default": 0,
+            "title": "Scannedb",
+            "type": "integer"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CreditSourceStatus"
+          },
+          "unit": {
+            "description": "`releases` (Discogs) or `songs` (Genius).",
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "status",
+          "scannedA",
+          "scannedB",
+          "unit"
+        ],
+        "title": "CreditSourceCheck",
+        "type": "object"
+      },
+      "CreditSourceStatus": {
+        "description": "What happened when a source was asked.",
+        "enum": [
+          "OK",
+          "PARTIAL",
+          "NO_KEY",
+          "NO_MATCH",
+          "FAILED"
+        ],
+        "title": "CreditSourceStatus",
+        "type": "string"
+      },
+      "CreditWork": {
+        "description": "A release (Discogs) or song (Genius) a person is credited on, linked to the source.",
+        "properties": {
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "title",
+          "url",
+          "year"
+        ],
+        "title": "CreditWork",
+        "type": "object"
+      },
       "DataSource": {
         "description": "A provider of data, with its license and what it feeds.",
         "properties": {
@@ -4739,6 +4818,40 @@
           "totalSize"
         ],
         "title": "ListListeningResponse",
+        "type": "object"
+      },
+      "ListMoreCreditsResponse": {
+        "description": "ListMoreCredits: credits from Discogs and Genius, beyond MusicBrainz.",
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CreditSourceCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "collaborators": {
+            "items": {
+              "$ref": "#/components/schemas/SourcedCollaborator"
+            },
+            "title": "Collaborators",
+            "type": "array"
+          },
+          "direct": {
+            "description": "Work where one artist is credited on the other's, by these sources.",
+            "items": {
+              "$ref": "#/components/schemas/CreditWork"
+            },
+            "title": "Direct",
+            "type": "array"
+          }
+        },
+        "required": [
+          "collaborators",
+          "direct",
+          "checks"
+        ],
+        "title": "ListMoreCreditsResponse",
         "type": "object"
       },
       "ListShelvesResponse": {
@@ -7023,6 +7136,78 @@
         "title": "SourceStatus",
         "type": "string"
       },
+      "SourcedCollaborator": {
+        "description": "A person Discogs or Genius credits on both artists' work.",
+        "properties": {
+          "artist": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtistSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The catalog artist, when the catalog maps this exact Discogs ID; never matched by name."
+          },
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "evidenceA": {
+            "description": "Up to five, on the first artist's work.",
+            "items": {
+              "$ref": "#/components/schemas/CreditWork"
+            },
+            "title": "Evidencea",
+            "type": "array"
+          },
+          "evidenceB": {
+            "description": "Up to five, on the second artist's work.",
+            "items": {
+              "$ref": "#/components/schemas/CreditWork"
+            },
+            "title": "Evidenceb",
+            "type": "array"
+          },
+          "rolesA": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rolesa",
+            "type": "array"
+          },
+          "rolesB": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rolesb",
+            "type": "array"
+          },
+          "source": {
+            "description": "`dataSources/discogs` or `dataSources/genius`.",
+            "title": "Source",
+            "type": "string"
+          },
+          "url": {
+            "description": "The person's page on that source.",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "displayName",
+          "url",
+          "artist",
+          "rolesA",
+          "rolesB",
+          "evidenceA",
+          "evidenceB"
+        ],
+        "title": "SourcedCollaborator",
+        "type": "object"
+      },
       "StartLinkRequest": {
         "description": "StartLink.",
         "properties": {
@@ -8763,6 +8948,60 @@
           }
         },
         "summary": "FindPath",
+        "tags": [
+          "analysis"
+        ]
+      }
+    },
+    "/v1/artists/{artist}:moreCredits": {
+      "get": {
+        "description": "Lists people Discogs and Genius credit on both artists' work, with the evidence.\n\nDiscogs is reached through the Discogs ID the catalog maps to each artist; Genius by an\nexact name match. People are compared within one source by its own IDs. A person links to\na catalog artist only through that exact Discogs ID.",
+        "operationId": "ListMoreCredits",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "artist",
+            "required": true,
+            "schema": {
+              "title": "Artist",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Resource name of the artist to compare with.",
+            "in": "query",
+            "name": "other",
+            "required": true,
+            "schema": {
+              "description": "Resource name of the artist to compare with.",
+              "title": "Other",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMoreCreditsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "ListMoreCredits",
         "tags": [
           "analysis"
         ]
