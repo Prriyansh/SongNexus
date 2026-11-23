@@ -9,6 +9,7 @@ app (`web/`, Vite + TypeScript), with the `song_compare/` sound & lyrics service
 | File | Purpose |
 | --- | --- |
 | `README.md` | Overview, how to run it, checks, layout (for people) |
+| `CHANGELOG.md` | Release notes, newest first |
 | `CLAUDE.md` | This guide |
 | `vercel.json` | The Vercel deployment: the web and API services and their routes (see README) |
 | `compose.yaml` | Optional local PostgreSQL for the API |

@@ -125,9 +125,18 @@ export function AuthProvider({children}: {children: ReactNode}) {
 
   useEffect(() => {
     let active = true;
-    unwrap(api.GET('/v1/sessions/current'))
-      .then(session => active && becomeSignedIn(session))
-      .catch(() => active && becomeSignedOut());
+    const restore = async () => {
+      // A deployment without accounts says so: there is no session to look for (and
+      // asking would only log a 401 on every visit).
+      const config = await unwrap(api.GET('/v1/config')).catch(() => null);
+      if (config?.flags.signIn === false) {
+        if (active) becomeSignedOut();
+        return;
+      }
+      const session = await unwrap(api.GET('/v1/sessions/current'));
+      if (active) becomeSignedIn(session);
+    };
+    restore().catch(() => active && becomeSignedOut());
     return () => {
       active = false;
     };

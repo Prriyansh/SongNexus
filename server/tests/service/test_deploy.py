@@ -26,6 +26,7 @@ def test_a_bare_vercel_deployment_gets_safe_defaults() -> None:
         "https://songnexus.vercel.app",
     ]
     assert out["SONGNEXUS_SIGN_IN"] == "false"  # no Firebase project: no accounts
+    assert out["SONGNEXUS_SONG_COMPARE_URL"] == "https://songnexus.vercel.app"
 
 
 def test_explicit_settings_always_win() -> None:
@@ -35,6 +36,8 @@ def test_explicit_settings_always_win() -> None:
         "SONGNEXUS_ALLOWED_ORIGINS": '["https://songnexus.app"]',
         "SONGNEXUS_FIREBASE_PROJECT_ID": "songnexus",
         "SONGNEXUS_LOG_JSON": "false",
+        "SONGNEXUS_SONG_COMPARE_URL": "https://sound.example",
+        "VERCEL_PROJECT_PRODUCTION_URL": "songnexus.vercel.app",
     }
     assert vercel_defaults(env, RUNTIME) == {}
 
@@ -82,9 +85,12 @@ def test_vercel_serves_the_api_and_the_same_security_headers_as_firebase() -> No
     routes = {r["source"]: r["destination"] for r in vercel["rewrites"]}
     assert routes["/v1/(.*)"] == {"service": "api"}
     assert routes["/healthz"] == {"service": "api"}
+    assert routes["/api/(.*)"] == {"service": "sound"}  # song_compare
     assert list(routes)[-1] == "/(.*)"  # the web app last: routing is first match
     api = vercel["services"]["api"]
     assert (api["root"], api["entrypoint"]) == ("server/", "main:app")
+    sound = vercel["services"]["sound"]
+    assert (sound["root"], sound["entrypoint"]) == ("song_compare/", "index:app")
     excluded = api["functions"]["main.py"]["excludeFiles"]
     assert "catalog.db" not in excluded
     assert "src/" not in excluded

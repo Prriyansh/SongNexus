@@ -32,8 +32,9 @@ analysis isn't available.
 
 ## Deploy on Vercel
 
-It runs as its own Vercel project from this repository: create a project with **Root Directory**
-`song_compare`. Vercel detects Flask, installs `requirements.txt` (runtime packages only, about
+The repository's `vercel.json` deploys it as the `sound` service of the app's Vercel project, at
+`/api/*` on the same domain, and the API calls it there; nothing to set up. It can also run as
+its own Vercel project: create a project with **Root Directory** `song_compare`. Vercel detects Flask, installs `requirements.txt` (runtime packages only, about
 364 MB) and serves `index.py` with the committed catalog (26 MB), under the 500 MB function
 limit. Then set `SONGNEXUS_SONG_COMPARE_URL` on the app's API to this project's URL.
 

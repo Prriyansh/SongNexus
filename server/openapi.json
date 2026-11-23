@@ -8247,7 +8247,7 @@
   "info": {
     "description": "SongNexus maps the people behind the music and how they connect. Every connection is backed by evidence with a source. Errors follow AIP-193; lists follow AIP-158.",
     "title": "SongNexus API",
-    "version": "0.1.0"
+    "version": "0.2.0a1"
   },
   "openapi": "3.1.0",
   "paths": {

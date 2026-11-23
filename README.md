@@ -4,7 +4,7 @@ The people behind the music, and how they connect: who worked with whom, how any
 connect, how two songs compare in sound and lyrics, and how the artists in your own playlists link
 up. Every connection is backed by a credit with a source.
 
-One app: a Python API (`server/`) and a Vite + React web app (`web/`), with the sound & lyrics
+**Status: alpha** (0.2.0-alpha.1, see [CHANGELOG.md](CHANGELOG.md)). One app: a Python API (`server/`) and a Vite + React web app (`web/`), with the sound & lyrics
 service in `song_compare/`.
 
 ## Run it locally (about 5 minutes)
@@ -72,9 +72,10 @@ the web port because saved progress belongs to the browser origin.
 
 ## Deploy on Vercel
 
-`vercel.json` deploys the whole app as one Vercel project with two
+`vercel.json` deploys the whole app as one Vercel project with three
 [services](https://vercel.com/docs/services) (in beta on every plan): the web app from `web/` at
-`/`, and the API from `server/` at `/v1/*` and `/healthz`. The API's build
+`/`, the API from `server/` at `/v1/*` and `/healthz`, and the sound & lyrics service from
+`song_compare/` at `/api/*`. The API's build
 (`server/vercel_build.py`) ingests the committed snapshots into a SQLite catalog, adds photos and
 Wikipedia/Wikidata facts for the best-known artists, and bundles it with the function.
 
@@ -88,16 +89,15 @@ Wikipedia/Wikidata facts for the best-known artists, and bundles it with the fun
 
 | Variable | Adds |
 | --- | --- |
-| `SONGNEXUS_SONG_COMPARE_URL` | The sound & lyrics analysis in song comparisons: the URL of the `song_compare` project (below) |
+| `SONGNEXUS_SONG_COMPARE_URL` | Only to use a different sound & lyrics service: by default the API calls this project's own `sound` service on the production domain |
 | `SONGNEXUS_DISCOGS_TOKEN` | A higher Discogs rate limit for "More credits" (Discogs works without it) |
 | `SONGNEXUS_GENIUS_ACCESS_TOKEN` | Genius in "More credits" |
 | `SONGNEXUS_FIREBASE_PROJECT_ID`, and `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_AUTH_DOMAIN` | Sign-in with Google (Firebase) |
 | `SONGNEXUS_DATABASE_URL` | Accounts that persist: a PostgreSQL database with the catalog ingested into it (`songnexus ingest` against that URL). Without it, the bundled catalog is copied to the instance's `/tmp` and anything written there lasts only as long as the instance |
 | `SONGNEXUS_BUILD_FETCH_LIMIT` | How many artists get photos and facts at build time (default 1500; `SONGNEXUS_BUILD_FETCH=0` skips the fetch) |
 
-The sound & lyrics service is its own Vercel project from the same repository: **Root Directory**
-`song_compare` (see [song_compare/README.md](song_compare/README.md)); put its URL in
-`SONGNEXUS_SONG_COMPARE_URL`.
+Preview deployments sit behind Vercel's login, so their API reaches the sound service on the
+production domain; song comparisons in a preview therefore work once production has deployed.
 
 To check a deployment's catalog locally: `cd server && uv run python vercel_build.py`, then serve
 it as Vercel would with `uv run --project server uvicorn main:app --app-dir server` from the root.
