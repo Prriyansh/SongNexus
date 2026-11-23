@@ -1,0 +1,62 @@
+# Data sources
+
+Every source SongNexus reads, with its license and what it feeds. Generated from
+`server/src/songnexus/catalog/sources.py` by `songnexus sources`; edit the registry,
+not this file (CI checks they match). The API serves the same list at
+`GET /v1/dataSources`.
+
+| Source | License | Use | How it is read | What it feeds |
+| --- | --- | --- | --- | --- |
+| [MusicBrainz](https://musicbrainz.org) | [CC0-1.0](https://musicbrainz.org/doc/About/Data_License) | Usable in a commercial product | api | artists, recordings, releases and labels; credits and artist relationships (every connection); collaborations, six degrees, compare, the daily puzzle; concerts and festivals: artists who shared a bill |
+| [MusicBrainz genres](https://musicbrainz.org/doc/Genre) | [CC-BY-NC-SA-3.0](https://musicbrainz.org/doc/About/Data_License) | Non-commercial use (dropped by ID for a commercial launch) | api | artist genres; genre filters and shared genres in compare |
+| [Discogs data dumps](https://data.discogs.com) | [CC0-1.0](https://support.discogs.com/hc/en-us/articles/360009334593) | Usable in a commercial product | data dump | artist genres (commercial-safe); genre filters and shared genres in compare; artist comparisons: more credits (people credited on both artists' releases) |
+| [Genius API](https://genius.com) | [Genius API Terms of Service](https://genius.com/static/terms) | Non-commercial use (dropped by ID for a commercial launch) | api | artist comparisons: more credits (producers, writers and features on both) |
+| [Wikidata](https://www.wikidata.org) | [CC0-1.0](https://www.wikidata.org/wiki/Wikidata:Licensing) | Usable in a commercial product | api | genre hierarchy (subgenres); links from MusicBrainz artists to Discogs; Around you: the campuses and cities listeners can join; artist photos: which Commons file shows an artist; artist pages and comparisons: descriptions, awards and nominations |
+| [Wikipedia (English)](https://en.wikipedia.org) | [CC-BY-SA-4.0](https://en.wikipedia.org/wiki/Wikipedia:Copyrights) | Usable in a commercial product | api | artist pages: a short introduction to the artist |
+| [Wikimedia pageviews](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/) | [CC0-1.0](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/documentation/access-policy.html) | Usable in a commercial product | api | artist pages: how many people read about the artist on Wikipedia each month |
+| [Cover Art Archive](https://coverartarchive.org) | [Images stay their rights holders'; the archive's data is CC0](https://musicbrainz.org/doc/Cover_Art_Archive/API) | Non-commercial use (dropped by ID for a commercial launch) | api | song pages and song comparisons: album covers |
+| [Billboard Hot 100 history (utdata/rwd-billboard-data)](https://github.com/utdata/rwd-billboard-data) | [Charts are Billboard's; archived for teaching by UT Austin (code MIT)](https://www.billboard.com/charts/hot-100/) | Non-commercial use (dropped by ID for a commercial launch) | dataset | artist pages: Hot 100 entries, top tens and number ones; song pages: peak position and weeks on the chart |
+| [Wikimedia Commons](https://commons.wikimedia.org) | [Per file: public domain, CC0, CC BY or CC BY-SA](https://commons.wikimedia.org/wiki/Commons:Licensing) | Usable in a commercial product | api | artist photos; Around you: campus athletics marks, logos and seals; the ListenBrainz and Libre.fm logos in connected services |
+| [Simple Icons](https://simpleicons.org) | [CC0-1.0 (the icons stay their brands' trademarks)](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md) | Usable in a commercial product | data dump | the YouTube Music, Spotify, Apple Music, Last.fm and Deezer marks in connected services, the import guide and every 'Listen on YouTube Music' button |
+| [AcousticBrainz](https://acousticbrainz.org) | [CC0-1.0](https://acousticbrainz.org/download) | Usable in a commercial product | api | song comparison: tempo, key, loudness, mood and other audio descriptors |
+| [ListenBrainz](https://listenbrainz.org) | [CC0-1.0](https://listenbrainz.org/terms-of-service/) | Usable in a commercial product | api | listener overlap in artist comparison; 'often played with' on artist pages |
+| [Spotify Tracks Dataset (maharshipandya)](https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset) | [As stated by the uploader (BSD on Hugging Face, CC0 on Kaggle)](https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset) | Non-commercial use (dropped by ID for a commercial launch) | service | song comparison: sound profile (energy, danceability, positivity and more), tempo, key and songs that sound alike, from the song_compare service |
+| [Genius lyrics (Hugging Face, theelderemo)](https://huggingface.co/datasets/theelderemo/genius-lyrics-cleaned) | [As stated by the uploader; the lyrics stay their rights holders'](https://huggingface.co/datasets/theelderemo/genius-lyrics-cleaned) | Non-commercial use (dropped by ID for a commercial launch) | service | song comparison: lyric mood, themes and structure, from the song_compare service |
+| [Last.fm 360K and 1K users (Celma, 2010)](https://zenodo.org/records/6090214) | [Non-commercial research use, with permission of Last.fm](https://zenodo.org/records/6090214) | Offline evaluation only; never stored or shown | dataset | evaluating listener overlap against an independent population |
+| Your listening history | The listener's own data | Usable in a commercial product | user account | Library: your artists and playlist analysis; Around you: campus and city charts, from listeners who opt in |
+
+## Notes
+
+**MusicBrainz** (checked 2026-10-07). Core data only. Fetched at no more than one request per 1.1 s with an identifying User-Agent, as MusicBrainz asks.
+
+**MusicBrainz genres** (checked 2026-10-07). Tag-derived genre associations. Kept apart from core data; replaced by Discogs and Wikidata genres for commercial use.
+
+**Discogs data dumps** (checked 2026-11-22). Monthly XML dumps of artists, labels, masters and releases are CC0; we read the masters dump (main artists, genres, styles). API-only 'Restricted Data' (images, marketplace) is not used. Artists are joined through MusicBrainz and Wikidata links, never by name; styles map onto the MusicBrainz genre list by name or a reviewed table. Artist comparisons also read release credits (in the CC0 releases data) live from the Discogs API, within its rate limit, cached in memory for a day and never stored.
+
+**Genius API** (checked 2026-11-22). Only with SONGNEXUS_GENIUS_ACCESS_TOKEN. Song credits of an artist's most popular songs, read live when two artists are compared, cached in memory for a day and never stored. The artist is the exact-name search hit, never a near match. Lyrics are never read.
+
+**Wikidata** (checked 2026-11-16). Structured data is CC0. Used for 'subclass of' (P279) links between items carrying MusicBrainz genre IDs (P8052), and for items carrying both a MusicBrainz artist ID (P434) and a Discogs artist ID (P1953). The Around you list is the largest US universities by student count (P2196) plus a few abroad, their cities, US cities over 100,000 people and national capitals, rebuilt with `songnexus fetch-communities`.
+
+**Wikipedia (English)** (checked 2026-11-22). The plain-text introduction (a few sentences) of the article linked from the artist's Wikidata item, fetched with `songnexus fetch-facts`. CC BY-SA 4.0 allows reuse with attribution: the text is always shown with a link to the article and the license, and is shown as written, never edited.
+
+**Wikimedia pageviews** (checked 2026-11-23). The average monthly human (user-agent) views of the artist's English Wikipedia article over the last 12 complete months, fetched with `songnexus fetch-facts`. Bots and crawlers are excluded by the API; a missing or new article has no figure.
+
+**Cover Art Archive** (checked 2026-11-23). Front covers of the catalog's release groups, found by MusicBrainz ID with `songnexus fetch-covers` and hot-linked from the archive (Internet Archive hosting), never copied. Cover images are usually copyrighted artwork, shown as the archive permits for identifying a release; a commercial launch would review that use.
+
+**Billboard Hot 100 history (utdata/rwd-billboard-data)** (checked 2026-11-23). Every weekly Hot 100 since August 1958, archived from billboard.com and updated weekly by UT Austin's data-journalism course (also on Kaggle as dhruvildave's billboard-the-hot-100-songs, which stops in 2021). Downloaded by `songnexus fetch-billboard` into the raw cache, never committed; only per-song summaries are stored. Songs and lead performers are matched to the catalog by exact names, never guessed. Non-commercial use only.
+
+**Wikimedia Commons** (checked 2026-11-16). Found through the image (P18) on the artist's Wikidata item, matched by MusicBrainz ID (P434); fetched with `songnexus fetch-images`. Each file carries its own license: only public domain, CC0, CC BY and CC BY-SA raster images are kept; non-free, unlicensed and non-commercial files are skipped. Images are hot-linked from Wikimedia's media hosts (upload.wikimedia.org, thumb.wikimedia.org), never copied, and the API returns the author, license and file page with every photo. Campus marks are the current logo (P154, no end date) of the athletics program that represents (P1268) the campus, else the campus's small logo (P8972), logo (P154) or seal (P158), SVG or PNG under the same license rule, chosen and hot-linked by `web/scripts/fetch-campus-logos.mjs` into `web/src/community/campusLogos.json`; the campus page links each logo's Commons file. The ListenBrainz (CC BY-SA 4.0, MetaBrainz Foundation) and Libre.fm (CC BY-SA 3.0) logo files are served unmodified from `web/public/brands`.
+
+**Simple Icons** (checked 2026-11-17). SVG paths from simple-icons 16.38 copied into `web/src/components/BrandMark.tsx` with each brand's published color. The paths are CC0, but the marks are trademarks: they are used only to name the service a listener links or listens on, as the brands' guidelines allow, never altered or combined with the SongNexus mark (see the Simple Icons disclaimer).
+
+**AcousticBrainz** (checked 2026-11-01). Data collection stopped in 2022; the API still serves the final dataset. Coverage is partial and keyed by MusicBrainz recording ID; songs without data say so. The voice-gender and genre classifiers are not used.
+
+**ListenBrainz** (checked 2026-11-01). Public listens are CC0. Only aggregates are fetched: listener and listen counts per artist, and the session-based similar-artists ranking. Overlap is shown only when both artists have at least 50 listeners, always with the counts.
+
+**Spotify Tracks Dataset (maharshipandya)** (checked 2026-11-22). About 114,000 tracks across 125 genres with audio features, a 2022 snapshot; song_compare keeps about 76,000 of them. The uploader states a license, but the values come from the Spotify Web API, whose terms the uploader cannot waive: non-commercial use only, dropped by source ID for a commercial launch. Songs are matched to the dataset by title and primary artist; songs outside it say so. Nothing is stored in the catalog.
+
+**Genius lyrics (Hugging Face, theelderemo)** (checked 2026-11-22). song_compare analyzes the lyrics into sentiment, emotions, themes and structure counts. The lyrics themselves are never stored in this repository, sent to the app or shown.
+
+**Last.fm 360K and 1K users (Celma, 2010)** (checked 2026-11-01). Per-user artist play counts with MusicBrainz artist IDs; collected 2008-2009, so it measures agreement, not current overlap. Also mirrored on Kaggle.
+
+**Your listening history** (checked 2026-10-07). Imported files are parsed on the device; only artist names reach the server. Linked accounts add each provider under its own API terms. Around you charts use only members who opted in, and only once 10 have listening data; an artist needs 3 listeners and counts are shown as ranges.

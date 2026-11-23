@@ -21,6 +21,8 @@ app (`web/`, Vite + TypeScript), with the `song_compare/` sound & lyrics service
 - `web/` — the web client; see `web/README.md`. Tooling: npm, Node 22.12+.
 - `song_compare/` — Ishita's Flask API for the sound & lyrics comparison of two songs; the API
   calls it (see `song_compare/CLAUDE.md`). Deployed as its own Vercel project.
+- `docs/` — `data-sources.md`, generated from the source registry by `uv run songnexus sources`
+  (a test fails when it is out of date).
 - `data/` — committed source snapshots (`samples/`), seeds and evaluation sets. `data/raw/` is a
   local, git-ignored cache.
 - `.github/` — CI.

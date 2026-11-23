@@ -434,6 +434,7 @@ def _cmd_eval_search(settings: Settings, args: argparse.Namespace) -> int:
 
 
 OPENAPI_PATH = Path(__file__).resolve().parents[2] / "openapi.json"
+SOURCES_DOC_PATH = Path(__file__).resolve().parents[3] / "docs" / "data-sources.md"
 
 
 def openapi_document() -> str:
@@ -622,6 +623,22 @@ def _cmd_fetch_events(settings: Settings, args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_sources(_settings: Settings, args: argparse.Namespace) -> int:
+    from songnexus.catalog.sources import render_markdown
+
+    text = render_markdown() + "\n"
+    if args.check:
+        current = SOURCES_DOC_PATH.read_text(encoding="utf-8") if SOURCES_DOC_PATH.exists() else ""
+        if current != text:
+            print("docs/data-sources.md is out of date: run `songnexus sources`", file=sys.stderr)
+            return EXIT_FAILED
+        return EXIT_OK
+    SOURCES_DOC_PATH.parent.mkdir(parents=True, exist_ok=True)
+    SOURCES_DOC_PATH.write_text(text, encoding="utf-8", newline="\n")
+    _print({"written": str(SOURCES_DOC_PATH)})
+    return EXIT_OK
+
+
 def _add_image_commands(commands: Any) -> None:
     facts = commands.add_parser(
         "fetch-facts",
@@ -640,6 +657,13 @@ def _add_image_commands(commands: Any) -> None:
         "--dry-run", action="store_true", help="report coverage without writing to the database"
     )
     covers.set_defaults(handler=_cmd_fetch_covers)
+    sources = commands.add_parser(
+        "sources", help="write docs/data-sources.md from the data-source registry"
+    )
+    sources.add_argument(
+        "--check", action="store_true", help="fail if docs/data-sources.md is out of date"
+    )
+    sources.set_defaults(handler=_cmd_sources)
     events = commands.add_parser(
         "fetch-events", help="concerts and festivals of the seed artists from MusicBrainz"
     )

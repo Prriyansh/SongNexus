@@ -1,4 +1,4 @@
-"""The data-source registry: every source SongNexus uses or evaluates, with its license (ADR 0005).
+"""The data-source registry: every source SongNexus uses or evaluates, with its license.
 
 This module is the single source of truth. The ingest pipeline registers sources
 from it and refuses facts from anything else; ``ListDataSources`` and the About
@@ -112,7 +112,7 @@ SOURCES: tuple[DataSource, ...] = (
         feeds=("artist genres", "genre filters and shared genres in compare"),
         attribution="Genre data from MusicBrainz (CC BY-NC-SA 3.0)",
         checked_on="2026-10-07",
-        notes="Tag-derived genre associations. Kept apart from core data (ADR 0003); replaced by "
+        notes="Tag-derived genre associations. Kept apart from core data; replaced by "
         "Discogs and Wikidata genres for commercial use.",
     ),
     DataSource(
@@ -268,7 +268,7 @@ SOURCES: tuple[DataSource, ...] = (
         attribution="Each photo and logo is credited with its author, license and file page",
         checked_on="2026-11-16",
         notes="Found through the image (P18) on the artist's Wikidata item, matched by MusicBrainz "
-        "ID (P434); fetched with `songnexus fetch-images` (ADR 0009). Each file carries its own "
+        "ID (P434); fetched with `songnexus fetch-images`. Each file carries its own "
         "license: only public domain, CC0, CC BY and CC BY-SA raster images are kept; non-free, "
         "unlicensed and non-commercial files are skipped. Images are hot-linked from Wikimedia's "
         "media hosts (upload.wikimedia.org, thumb.wikimedia.org), never copied, and the API "
@@ -409,7 +409,7 @@ SOURCES: tuple[DataSource, ...] = (
         attribution="",
         checked_on="2026-10-07",
         notes="Imported files are parsed on the device; only artist names reach the server. Linked "
-        "accounts (R2-6) add each provider under its own API terms. Around you charts use only "
+        "accounts add each provider under its own API terms. Around you charts use only "
         "members who opted in, and only once 10 have listening data; an artist needs 3 listeners "
         "and counts are shown as ranges.",
     ),
@@ -417,7 +417,7 @@ SOURCES: tuple[DataSource, ...] = (
 
 BY_ID: dict[str, DataSource] = {s.id: s for s in SOURCES}
 
-# Sources that may assert artist-genre associations (ADR 0003, ADR 0005).
+# Sources that may assert artist-genre associations.
 GENRE_SOURCE_IDS = ("musicbrainz-supplementary", "discogs")
 
 
@@ -432,3 +432,38 @@ def catalog_sources() -> tuple[DataSource, ...]:
         for s in SOURCES
         if s.tier is not Tier.EVALUATION and s.kind not in (Kind.USER_ACCOUNT, Kind.SERVICE)
     )
+
+
+_TIER_TEXT = {
+    Tier.PRODUCTION: "Usable in a commercial product",
+    Tier.NON_COMMERCIAL: "Non-commercial use (dropped by ID for a commercial launch)",
+    Tier.EVALUATION: "Offline evaluation only; never stored or shown",
+}
+
+
+def render_markdown() -> str:
+    """The data-source reference (``docs/data-sources.md``), generated from ``SOURCES``."""
+    lines = [
+        "# Data sources",
+        "",
+        "Every source SongNexus reads, with its license and what it feeds. Generated from",
+        "`server/src/songnexus/catalog/sources.py` by `songnexus sources`; edit the registry,",
+        "not this file (CI checks they match). The API serves the same list at",
+        "`GET /v1/dataSources`.",
+        "",
+        "| Source | License | Use | How it is read | What it feeds |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for s in SOURCES:
+        feeds = "; ".join(s.feeds)
+        link = f"[{s.name}]({s.homepage})" if s.homepage.startswith("https://") else s.name
+        license_ = (
+            f"[{s.license}]({s.license_url})" if s.license_url.startswith("https://") else s.license
+        )
+        kind = s.kind.value.replace("_", " ").lower()
+        lines.append(f"| {link} | {license_} | {_TIER_TEXT[s.tier]} | {kind} | {feeds} |")
+    lines += ["", "## Notes", ""]
+    for s in SOURCES:
+        if s.notes:
+            lines += [f"**{s.name}** (checked {s.checked_on}). {s.notes}", ""]
+    return "\n".join(lines).rstrip()

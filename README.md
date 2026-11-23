@@ -127,16 +127,23 @@ Quality gates on the reference catalog: `songnexus quality`, `songnexus eval-sea
 server/        Python 3.12: core library (pure), catalog pipeline, storage, identity, HTTP API  → server/README.md
 web/           React + TypeScript: the web client                                             → web/README.md
 song_compare/  Python (Flask): sound & lyrics comparison of two songs                         → song_compare/README.md
+docs/          data-sources.md: every data source and its license (generated)
 data/          samples/ source snapshots · seeds/ seed artists, pinned decisions, genre table · eval/ labeled sets
 ```
 
 ## Data and licensing
 
-Catalog data comes from [MusicBrainz](https://musicbrainz.org). Its core data is CC0; genre tags
-are CC BY-NC-SA and kept apart as a separate source. Every source, used or planned, is listed with
-its license and tier in the data-source registry
-([server/src/songnexus/catalog/sources.py](server/src/songnexus/catalog/sources.py)), which the
-ingest pipeline enforces and the API serves at `GET /v1/dataSources`.
+SongNexus reads 17 sources: MusicBrainz for the catalog (artists, songs, releases, credits,
+concerts), Wikidata, Wikipedia and Wikimedia Commons for facts, introductions, readership and
+photos, the Cover Art Archive for album covers, the Billboard Hot 100 archive (every weekly chart
+since 1958) for chart history, Discogs, Genius, ListenBrainz and AcousticBrainz for comparisons,
+and the Spotify Tracks and Genius lyrics datasets behind `song_compare`.
+[docs/data-sources.md](docs/data-sources.md) lists each one with its license and what it feeds.
+It is generated from the data-source registry
+([server/src/songnexus/catalog/sources.py](server/src/songnexus/catalog/sources.py)) with
+`uv run songnexus sources`; the ingest pipeline enforces the registry and the API serves it at
+`GET /v1/dataSources`. Downloaded data stays in the git-ignored `data/raw/`; nothing copyrighted
+(lyrics, cover images, chart files) is committed.
 
 ## History
 
