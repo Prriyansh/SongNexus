@@ -572,6 +572,27 @@ def _cmd_fetch_covers(settings: Settings, args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_fetch_billboard(settings: Settings, _args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
+    import httpx
+
+    from songnexus.catalog.billboard import download, read_chart_songs
+    from songnexus.service.billboard_job import run_billboard
+    from songnexus.service.readmodel import load_read_model
+    from songnexus.storage.db import make_engine
+
+    try:
+        path = download(settings.raw_dir("billboard"))
+    except httpx.HTTPError as exc:
+        print(f"fetch-billboard failed, nothing written: {exc}", file=sys.stderr)
+        return EXIT_FAILED
+    engine = make_engine(settings.database_url)
+    model = load_read_model(engine, settings.genre_sources)
+    _print(run_billboard(engine, model, read_chart_songs(path), now=datetime.now(UTC)))
+    return EXIT_OK
+
+
 def _add_image_commands(commands: Any) -> None:
     facts = commands.add_parser(
         "fetch-facts",
@@ -590,6 +611,10 @@ def _add_image_commands(commands: Any) -> None:
         "--dry-run", action="store_true", help="report coverage without writing to the database"
     )
     covers.set_defaults(handler=_cmd_fetch_covers)
+    commands.add_parser(
+        "fetch-billboard",
+        help="match the Billboard Hot 100 history (1958 on) to catalog songs and artists",
+    ).set_defaults(handler=_cmd_fetch_billboard)
     images = commands.add_parser(
         "fetch-images",
         help="find freely licensed artist photos on Wikimedia Commons through Wikidata",

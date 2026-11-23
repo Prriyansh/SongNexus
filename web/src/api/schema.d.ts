@@ -1942,6 +1942,8 @@ export interface components {
             artistType: string | null;
             /** Begindate */
             beginDate: string | null;
+            /** @description Billboard Hot 100 history, or null when they never charted. */
+            charts: components["schemas"]["ArtistCharts"] | null;
             /**
              * Connectioncount
              * @description Direct connections under the default categories.
@@ -2037,6 +2039,27 @@ export interface components {
             wikidataUrl: string;
             /** Wikipediaurl */
             wikipediaUrl: string | null;
+        };
+        /**
+         * ArtistCharts
+         * @description An artist's Billboard Hot 100 history as the lead performer (all songs, catalog or not).
+         */
+        ArtistCharts: {
+            /** Bestpeak */
+            bestPeak: number;
+            /**
+             * Entries
+             * @description Songs that reached the Hot 100.
+             */
+            entries: number;
+            /** Firstyear */
+            firstYear: number;
+            /** Lastyear */
+            lastYear: number;
+            /** Numberones */
+            numberOnes: number;
+            /** Topten */
+            topTen: number;
         };
         /**
          * ArtistImage
@@ -4745,6 +4768,8 @@ export interface components {
         Recording: {
             /** Appearances */
             appearances: components["schemas"]["Appearance"][];
+            /** @description Its Billboard Hot 100 run, or null when it never charted. */
+            chart: components["schemas"]["SongChart"] | null;
             /** Credits */
             credits: components["schemas"]["Credit"][];
             /** @description Absent when AcousticBrainz has no data for the recording. */
@@ -5132,6 +5157,29 @@ export interface components {
              * @default false
              */
             shareTopArtists: boolean;
+        };
+        /**
+         * SongChart
+         * @description A song's run on the Billboard Hot 100.
+         */
+        SongChart: {
+            /**
+             * Firstweek
+             * @description First chart week, ISO date.
+             */
+            firstWeek: string;
+            /** Lastweek */
+            lastWeek: string;
+            /**
+             * Peak
+             * @description Best position, 1 to 100.
+             */
+            peak: number;
+            /**
+             * Weeks
+             * @description Weeks on the chart.
+             */
+            weeks: number;
         };
         /**
          * SoundComparison

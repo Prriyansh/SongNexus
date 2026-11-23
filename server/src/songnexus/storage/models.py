@@ -21,12 +21,13 @@ production.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import (
     JSON,
     Boolean,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -395,6 +396,38 @@ class ReleaseCover(Base):
     thumbnail_url: Mapped[str] = mapped_column(String(2048))
     large_url: Mapped[str] = mapped_column(String(2048))
     page_url: Mapped[str] = mapped_column(String(2048))
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class RecordingChart(Base):
+    """A catalog song's run on the Billboard Hot 100 (``songnexus fetch-billboard``)."""
+
+    __tablename__ = "recording_charts"
+
+    recording_id: Mapped[str] = mapped_column(
+        ForeignKey("recordings.id", ondelete="CASCADE"), primary_key=True
+    )
+    peak: Mapped[int] = mapped_column(Integer)
+    weeks: Mapped[int] = mapped_column(Integer)
+    first_week: Mapped[date] = mapped_column(Date)
+    last_week: Mapped[date] = mapped_column(Date)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class ArtistChart(Base):
+    """A catalog artist's Billboard Hot 100 history, as the lead performer."""
+
+    __tablename__ = "artist_charts"
+
+    artist_id: Mapped[str] = mapped_column(
+        ForeignKey("artists.id", ondelete="CASCADE"), primary_key=True
+    )
+    entries: Mapped[int] = mapped_column(Integer)
+    top_ten: Mapped[int] = mapped_column(Integer)
+    number_ones: Mapped[int] = mapped_column(Integer)
+    best_peak: Mapped[int] = mapped_column(Integer)
+    first_week: Mapped[date] = mapped_column(Date)
+    last_week: Mapped[date] = mapped_column(Date)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 

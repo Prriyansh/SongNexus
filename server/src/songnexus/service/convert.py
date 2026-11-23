@@ -8,6 +8,7 @@ from songnexus.core.graph import collaborations as collab
 from songnexus.core.graph.explain import Explanation
 from songnexus.core.graph.model import ArtistGraph, Category, EdgeKind, SubjectType
 from songnexus.service import schemas as api
+from songnexus.storage import charts
 from songnexus.storage.artist_facts import FactsRecord, Honor
 from songnexus.storage.catalog_repository import SourceRef
 
@@ -145,3 +146,29 @@ def shared_awards(a: FactsRecord | None, b: FactsRecord | None) -> list[api.Hono
             seen.add(honor.id)
             shared.append(_honor(honor))
     return shared
+
+
+def artist_charts(chart: charts.ArtistChart | None) -> api.ArtistCharts | None:
+    """An artist's Hot 100 history, or None."""
+    if chart is None:
+        return None
+    return api.ArtistCharts(
+        entries=chart.entries,
+        top_ten=chart.top_ten,
+        number_ones=chart.number_ones,
+        best_peak=chart.best_peak,
+        first_year=chart.first_week.year,
+        last_year=chart.last_week.year,
+    )
+
+
+def song_chart(chart: charts.SongChart | None) -> api.SongChart | None:
+    """A song's Hot 100 run, or None."""
+    if chart is None:
+        return None
+    return api.SongChart(
+        peak=chart.peak,
+        weeks=chart.weeks,
+        first_week=chart.first_week.isoformat(),
+        last_week=chart.last_week.isoformat(),
+    )

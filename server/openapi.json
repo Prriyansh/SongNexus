@@ -201,6 +201,17 @@
             ],
             "title": "Begindate"
           },
+          "charts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtistCharts"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Billboard Hot 100 history, or null when they never charted."
+          },
           "connectionCount": {
             "description": "Direct connections under the default categories.",
             "title": "Connectioncount",
@@ -347,6 +358,7 @@
           "oftenPlayedWith",
           "sources",
           "image",
+          "charts",
           "about",
           "graphVersion"
         ],
@@ -434,6 +446,46 @@
           "monthlyWikipediaViews"
         ],
         "title": "ArtistAbout",
+        "type": "object"
+      },
+      "ArtistCharts": {
+        "description": "An artist's Billboard Hot 100 history as the lead performer (all songs, catalog or not).",
+        "properties": {
+          "bestPeak": {
+            "title": "Bestpeak",
+            "type": "integer"
+          },
+          "entries": {
+            "description": "Songs that reached the Hot 100.",
+            "title": "Entries",
+            "type": "integer"
+          },
+          "firstYear": {
+            "title": "Firstyear",
+            "type": "integer"
+          },
+          "lastYear": {
+            "title": "Lastyear",
+            "type": "integer"
+          },
+          "numberOnes": {
+            "title": "Numberones",
+            "type": "integer"
+          },
+          "topTen": {
+            "title": "Topten",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "entries",
+          "topTen",
+          "numberOnes",
+          "bestPeak",
+          "firstYear",
+          "lastYear"
+        ],
+        "title": "ArtistCharts",
         "type": "object"
       },
       "ArtistImage": {
@@ -6110,6 +6162,17 @@
             "title": "Appearances",
             "type": "array"
           },
+          "chart": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SongChart"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its Billboard Hot 100 run, or null when it never charted."
+          },
           "credits": {
             "items": {
               "$ref": "#/components/schemas/Credit"
@@ -6174,6 +6237,7 @@
           "credits",
           "appearances",
           "descriptors",
+          "chart",
           "sources"
         ],
         "title": "Recording",
@@ -6934,6 +6998,38 @@
           "shareTopArtists"
         ],
         "title": "SocialProfile",
+        "type": "object"
+      },
+      "SongChart": {
+        "description": "A song's run on the Billboard Hot 100.",
+        "properties": {
+          "firstWeek": {
+            "description": "First chart week, ISO date.",
+            "title": "Firstweek",
+            "type": "string"
+          },
+          "lastWeek": {
+            "title": "Lastweek",
+            "type": "string"
+          },
+          "peak": {
+            "description": "Best position, 1 to 100.",
+            "title": "Peak",
+            "type": "integer"
+          },
+          "weeks": {
+            "description": "Weeks on the chart.",
+            "title": "Weeks",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "peak",
+          "weeks",
+          "firstWeek",
+          "lastWeek"
+        ],
+        "title": "SongChart",
         "type": "object"
       },
       "SoundComparison": {

@@ -253,6 +253,26 @@ class ArtistAbout(ApiModel):
     )
 
 
+class ArtistCharts(ApiModel):
+    """An artist's Billboard Hot 100 history as the lead performer (all songs, catalog or not)."""
+
+    entries: int = Field(description="Songs that reached the Hot 100.")
+    top_ten: int
+    number_ones: int
+    best_peak: int
+    first_year: int
+    last_year: int
+
+
+class SongChart(ApiModel):
+    """A song's run on the Billboard Hot 100."""
+
+    peak: int = Field(description="Best position, 1 to 100.")
+    weeks: int = Field(description="Weeks on the chart.")
+    first_week: str = Field(description="First chart week, ISO date.")
+    last_week: str
+
+
 class Artist(ArtistSummary):
     """GetArtist."""
 
@@ -274,6 +294,9 @@ class Artist(ArtistSummary):
     sources: list[SourceLink]
     image: ArtistImage | None = Field(
         default=None, description="The artist's photo and its attribution, or null."
+    )
+    charts: ArtistCharts | None = Field(
+        default=None, description="Billboard Hot 100 history, or null when they never charted."
     )
     about: ArtistAbout | None = Field(
         default=None,
@@ -569,6 +592,9 @@ class Recording(ApiModel):
     appearances: list[Appearance]
     descriptors: AudioDescriptors | None = Field(
         default=None, description="Absent when AcousticBrainz has no data for the recording."
+    )
+    chart: SongChart | None = Field(
+        default=None, description="Its Billboard Hot 100 run, or null when it never charted."
     )
     sources: list[SourceLink]
 

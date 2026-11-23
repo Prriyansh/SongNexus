@@ -229,6 +229,28 @@ SOURCES: tuple[DataSource, ...] = (
         "permits for identifying a release; a commercial launch would review that use.",
     ),
     DataSource(
+        id="billboard-hot-100",
+        name="Billboard Hot 100 history (utdata/rwd-billboard-data)",
+        homepage="https://github.com/utdata/rwd-billboard-data",
+        license="Charts are Billboard's; archived for teaching by UT Austin (code MIT)",
+        license_url="https://www.billboard.com/charts/hot-100/",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.DATASET,
+        feeds=(
+            "artist pages: Hot 100 entries, top tens and number ones",
+            "song pages: peak position and weeks on the chart",
+        ),
+        attribution="Chart data: Billboard Hot 100",
+        checked_on="2026-11-23",
+        notes="Every weekly Hot 100 since August 1958, archived from billboard.com and updated "
+        "weekly by UT Austin's data-journalism course (also on Kaggle as dhruvildave's "
+        "billboard-the-hot-100-songs, which stops in 2021). Downloaded by `songnexus "
+        "fetch-billboard` into the raw cache, never committed; only per-song summaries are "
+        "stored. Songs and lead performers are matched to the catalog by exact names, never "
+        "guessed. Non-commercial use only.",
+    ),
+    DataSource(
         id="wikimedia-commons",
         name="Wikimedia Commons",
         homepage="https://commons.wikimedia.org",

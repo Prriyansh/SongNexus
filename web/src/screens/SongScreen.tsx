@@ -281,6 +281,15 @@ export default function SongScreen() {
                   count: song.appearances.length,
                 }),
               },
+              ...(song.chart
+                ? [
+                    {
+                      key: 'peak',
+                      value: `#${formatNumber(song.chart.peak)}`,
+                      label: t('song.stat.peak', {weeks: song.chart.weeks}),
+                    },
+                  ]
+                : []),
             ]}
           />
         }

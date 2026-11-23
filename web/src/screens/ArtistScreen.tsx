@@ -347,6 +347,25 @@ function useArtistStats(id: string, artist: Schemas['Artist'] | undefined) {
       value: spanText(years),
       label: t('artist.stat.years'),
     },
+    // Billboard Hot 100, as the lead performer: shown only for artists who charted.
+    ...(artist.charts
+      ? [
+          {
+            key: 'hot100',
+            value: formatNumber(artist.charts.entries),
+            label: t('artist.stat.hot100', {count: artist.charts.entries}),
+          },
+          {
+            key: 'numberOnes',
+            value: artist.charts.numberOnes
+              ? formatNumber(artist.charts.numberOnes)
+              : null,
+            label: t('artist.stat.numberOnes', {
+              count: artist.charts.numberOnes,
+            }),
+          },
+        ]
+      : []),
   ];
 }
 

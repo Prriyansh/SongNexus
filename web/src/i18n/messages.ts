@@ -154,11 +154,17 @@ export const messages = {
     '{count, plural, one {Collaborator} other {Collaborators}}',
   'artist.stat.labels': '{count, plural, one {Label} other {Labels}}',
   'artist.stat.years': 'Years in our data',
+  'artist.stat.hot100':
+    '{count, plural, one {Billboard Hot 100 hit} other {Billboard Hot 100 hits}}',
+  'artist.stat.numberOnes':
+    '{count, plural, one {Number one} other {Number ones}}',
   'artist.about': 'About',
   'artist.intro': 'In brief',
   'artist.intro.wikipedia': 'From Wikipedia · CC BY-SA 4.0',
   'artist.intro.wikidata': 'From Wikidata',
   'song.coversCredit': 'Covers from the Cover Art Archive',
+  'song.stat.peak':
+    'Billboard Hot 100 peak, {weeks, plural, one {# week} other {# weeks}} on the chart',
   'artist.readers':
     'About {count} people read their Wikipedia page each month (average of the last 12 months, Wikimedia pageviews).',
   'artist.honors.awards':

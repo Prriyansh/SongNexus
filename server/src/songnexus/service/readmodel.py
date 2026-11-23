@@ -34,6 +34,7 @@ from songnexus.storage.catalog_reader import (
     read_catalog_facts,
     read_search_entries,
 )
+from songnexus.storage.charts import charts_stamp
 from songnexus.storage.db import session_scope
 from songnexus.storage.release_covers import (
     covers_stamp,
@@ -218,7 +219,7 @@ def link_index(rows: Sequence[tuple[str, str]], graph: ArtistGraph) -> dict[str,
 
 
 def _version(session: Session) -> str | None:
-    """The served version: the catalog run, plus stamps of the artist photos and facts.
+    """The served version: the catalog run, plus stamps of what later fetches store.
 
     Photos and facts are fetched after ingestion (``songnexus fetch-images``,
     ``songnexus fetch-facts``), so each gets its own stamp: a fetch that changes them
@@ -231,6 +232,7 @@ def _version(session: Session) -> str | None:
         ("img", images_stamp(session)),
         ("fx", facts_stamp(session)),
         ("cv", covers_stamp(session)),
+        ("ch", charts_stamp(session)),
     )
     return version + "".join(f".{tag}{stamp}" for tag, stamp in stamps if stamp)
 
