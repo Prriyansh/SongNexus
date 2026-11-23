@@ -78,10 +78,9 @@ def test_without_accounts_the_sign_in_flag_is_off() -> None:
     assert on.flags["signIn"] is True
 
 
-def test_vercel_serves_the_api_and_the_same_security_headers_as_firebase() -> None:
+def test_vercel_routes_each_service_and_sets_the_security_headers() -> None:
     root = Path(__file__).resolve().parents[3]
     vercel = json.loads((root / "vercel.json").read_text(encoding="utf-8"))
-    firebase = json.loads((root / "firebase.json").read_text(encoding="utf-8"))
     routes = {r["source"]: r["destination"] for r in vercel["rewrites"]}
     assert routes["/v1/(.*)"] == {"service": "api"}
     assert routes["/healthz"] == {"service": "api"}
@@ -95,5 +94,9 @@ def test_vercel_serves_the_api_and_the_same_security_headers_as_firebase() -> No
     assert "catalog.db" not in excluded
     assert "src/" not in excluded
     web_headers = next(h for h in vercel["services"]["web"]["headers"] if h["source"] == "/(.*)")
-    firebase_headers = next(h for h in firebase["hosting"]["headers"] if h["source"] == "**")
-    assert web_headers["headers"] == firebase_headers["headers"]
+    headers = {h["key"]: h["value"] for h in web_headers["headers"]}
+    csp = headers["Content-Security-Policy"]
+    for directive in ("default-src 'self'", "object-src 'none'", "frame-ancestors 'none'"):
+        assert directive in csp
+    assert headers["Strict-Transport-Security"].startswith("max-age=")
+    assert headers["X-Content-Type-Options"] == "nosniff"

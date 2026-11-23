@@ -16,7 +16,7 @@ from collections.abc import Awaitable, Callable, MutableMapping
 from http import HTTPStatus
 from typing import Any
 
-from songnexus.logs import request_id_var, trace_var
+from songnexus.logs import request_id_var
 from songnexus.service.errors import Status, error_body
 
 log = logging.getLogger("songnexus.http")
@@ -28,7 +28,6 @@ Send = Callable[[Message], Awaitable[None]]
 ASGIApp = Callable[[Scope, Receive, Send], Awaitable[None]]
 
 _VALID_REQUEST_ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
-_TRACE_HEADER = re.compile(r"^([0-9a-f]{32})(?:/\d+)?(?:;o=\d)?$")
 
 # An API serves JSON only, so its policy can forbid everything.
 SECURITY_HEADERS: tuple[tuple[bytes, bytes], ...] = (
@@ -54,9 +53,8 @@ class RequestContextMiddleware:
     personal data in a query) and never the query string.
     """
 
-    def __init__(self, app: ASGIApp, *, gcp_project: str = "") -> None:
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
-        self.gcp_project = gcp_project
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Handles one ASGI connection."""
@@ -65,13 +63,7 @@ class RequestContextMiddleware:
             return
         incoming = _header(scope, b"x-request-id")
         request_id = incoming if _VALID_REQUEST_ID.match(incoming) else secrets.token_hex(8)
-        trace_match = _TRACE_HEADER.match(_header(scope, b"x-cloud-trace-context"))
-        trace = (
-            f"projects/{self.gcp_project}/traces/{trace_match.group(1)}"
-            if trace_match and self.gcp_project
-            else None
-        )
-        request_token, trace_token = request_id_var.set(request_id), trace_var.set(trace)
+        request_token = request_id_var.set(request_id)
         started = time.perf_counter()
         status = 500
 
@@ -100,7 +92,6 @@ class RequestContextMiddleware:
                 },
             )
             request_id_var.reset(request_token)
-            trace_var.reset(trace_token)
 
 
 # The interactive API docs (development only) load Swagger UI from a CDN.

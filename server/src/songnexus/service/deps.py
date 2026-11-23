@@ -66,7 +66,7 @@ def read_model(request: Request) -> ReadModel:
 def client_key(request: Request, trusted_proxy_hops: int) -> str:
     """Identifies the client for rate limiting.
 
-    Behind Google's front end the client address is the entry ``trusted_proxy_hops``
+    Behind the hosting proxy the client address is the entry ``trusted_proxy_hops``
     from the end of ``X-Forwarded-For``; earlier entries are client-supplied and
     untrusted. Without the header, the socket peer is used.
     """

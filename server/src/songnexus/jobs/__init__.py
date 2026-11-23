@@ -1,1 +1,1 @@
-"""Batch jobs run as Cloud Run jobs (catalog build, purge)."""
+"""Batch jobs, run on a schedule through the CLI (see the server README)."""

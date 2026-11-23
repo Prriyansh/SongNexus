@@ -54,6 +54,13 @@ Daily puzzle methods and their schemas are in `openapi.json`.
 
 The layering is enforced by `uv run lint-imports` in CI; nothing imports `service`.
 
+## Scheduled jobs
+
+A deployment with its own PostgreSQL database runs three CLI commands on a schedule against it:
+`songnexus purge` daily (expired sessions, accounts deleted 28+ days ago), and
+`songnexus community-charts` and `songnexus sync-accounts` (linked listening accounts) hourly.
+The default Vercel deployment serves without accounts, so it has nothing to schedule.
+
 ## Configuration
 
 Every setting is an environment variable `SONGNEXUS_<NAME>` (`src/songnexus/config.py`); `.env.example`

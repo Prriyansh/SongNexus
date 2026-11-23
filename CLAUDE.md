@@ -13,8 +13,7 @@ app (`web/`, Vite + TypeScript), with the `song_compare/` sound & lyrics service
 | `CLAUDE.md` | This guide |
 | `vercel.json` | The Vercel deployment: the web and API services and their routes (see README) |
 | `compose.yaml` | Optional local PostgreSQL for the API |
-| `firebase.json` | Firebase Hosting config (the Cloud Run deployment in `deploy/`) |
-| `.editorconfig`, `.gitattributes`, `.gitignore`, `.dockerignore` | Editor, line-ending and ignore rules |
+| `.editorconfig`, `.gitattributes`, `.gitignore` | Editor, line-ending and ignore rules |
 
 ## Folders
 
@@ -24,7 +23,6 @@ app (`web/`, Vite + TypeScript), with the `song_compare/` sound & lyrics service
   calls it (see `song_compare/CLAUDE.md`). Deployed as its own Vercel project.
 - `data/` — committed source snapshots (`samples/`), seeds and evaluation sets. `data/raw/` is a
   local, git-ignored cache.
-- `deploy/` — Cloud Run service and jobs.
 - `.github/` — CI.
 
 ## Working rules

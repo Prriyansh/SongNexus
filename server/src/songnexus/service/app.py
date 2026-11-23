@@ -246,7 +246,7 @@ def create_app(settings: Settings | None = None, state: AppState | None = None) 
     # The middleware added last runs outermost, so security headers cover every
     # response, including errors raised by the request-context layer.
     app.add_middleware(BodySizeLimitMiddleware)
-    app.add_middleware(RequestContextMiddleware, gcp_project=settings.gcp_project)
+    app.add_middleware(RequestContextMiddleware)
     app.add_middleware(CacheHeadersMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=GZIP_MIN_BYTES, compresslevel=5)
     app.add_middleware(SecurityHeadersMiddleware)

@@ -101,7 +101,6 @@ production domain; song comparisons in a preview therefore work once production 
 
 To check a deployment's catalog locally: `cd server && uv run python vercel_build.py`, then serve
 it as Vercel would with `uv run --project server uvicorn main:app --app-dir server` from the root.
-`deploy/` keeps the Cloud Run alternative.
 
 ## Checks
 
@@ -125,7 +124,6 @@ server/        Python 3.12: core library (pure), catalog pipeline, storage, iden
 web/           React + TypeScript: the web client                                             → web/README.md
 song_compare/  Python (Flask): sound & lyrics comparison of two songs                         → song_compare/README.md
 data/          samples/ source snapshots · seeds/ seed artists, pinned decisions, genre table · eval/ labeled sets
-deploy/        Cloud Run service and jobs
 ```
 
 ## Data and licensing

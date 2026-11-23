@@ -13,8 +13,8 @@ import hmac
 import secrets
 from dataclasses import dataclass
 
-# Firebase Hosting forwards only a cookie named "__session" to Cloud Run (and
-# keys its CDN cache on it); any other name is stripped (ADR 0002, amendment 1).
+# "__session" is the one cookie name every common host and CDN forwards to the API
+# (some strip any other), so sessions work behind any of them.
 SESSION_COOKIE = "__session"
 CSRF_HEADER = "X-CSRF-Token"
 _TOKEN_BYTES = 32

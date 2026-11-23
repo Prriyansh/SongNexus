@@ -1,8 +1,8 @@
 """Purge job: expired sessions, invites and link flows; old reports; deleted accounts.
 
-Scheduled daily (Cloud Scheduler → Cloud Run job ``songnexus-purge``). Deleted
+Run daily (``songnexus purge``) for a deployment with its own database. Deleted
 accounts are already empty at deletion time; this removes the remaining row and
-its audit trail, completing AC-18.4 within the 30-day promise.
+its audit trail, completing deletion within the 30-day promise.
 """
 
 from __future__ import annotations

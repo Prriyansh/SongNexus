@@ -1,21 +1,21 @@
 /**
- * The production Content-Security-Policy (firebase.json) must not break any screen (M8-04).
- * `vite preview` doesn't apply Firebase Hosting headers, so the test adds the real policy
- * to document responses and fails on any violation.
+ * The production Content-Security-Policy (the web service's headers in vercel.json) must not
+ * break any screen. `vite preview` doesn't apply Vercel's headers, so the test adds the real
+ * policy to document responses and fails on any violation.
  */
 import {readFileSync} from 'node:fs';
 
 import {expect, test} from '@playwright/test';
 
-const hosting = JSON.parse(
-  readFileSync(new URL('../../firebase.json', import.meta.url), 'utf8'),
+const vercel = JSON.parse(
+  readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'),
 ) as {
-  hosting: {
-    headers: {source: string; headers: {key: string; value: string}[]}[];
+  services: {
+    web: {headers: {source: string; headers: {key: string; value: string}[]}[]};
   };
 };
-const csp = hosting.hosting.headers
-  .find(h => h.source === '**')!
+const csp = vercel.services.web.headers
+  .find(h => h.source === '/(.*)')!
   .headers.find(h => h.key === 'Content-Security-Policy')!.value;
 
 const ROUTES = [

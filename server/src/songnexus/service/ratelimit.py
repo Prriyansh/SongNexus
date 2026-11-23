@@ -1,8 +1,8 @@
 """Per-client token-bucket rate limits, by method class.
 
-Buckets live in instance memory and are never logged or persisted. Cloud Run
-runs several instances, so the effective limit is per instance; that is
-acceptable as abuse protection at demo scale (plan §19) and documented as such.
+Buckets live in instance memory and are never logged or persisted. A serverless
+host runs several instances, so the effective limit is per instance; that is
+acceptable as abuse protection at this scale.
 """
 
 from __future__ import annotations

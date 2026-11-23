@@ -36,7 +36,6 @@ class Settings(BaseSettings):
     log_json: bool = True
 
     # Service.
-    gcp_project: str = Field(default="", validation_alias="GOOGLE_CLOUD_PROJECT")
     flags: dict[str, bool] = Field(default_factory=dict)
     trusted_proxy_hops: int = 1
     read_model_refresh_s: float = 60.0
