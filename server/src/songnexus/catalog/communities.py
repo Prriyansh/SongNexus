@@ -27,7 +27,7 @@ import logging
 import re
 import unicodedata
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from functools import lru_cache
 from importlib import resources
@@ -513,8 +513,3 @@ def load_directory() -> Directory:
     demo = resources.files("songnexus.catalog").joinpath("universities.synthetic.json")
     document["communities"].extend(json.loads(demo.read_text("utf-8"))["communities"])
     return parse_directory(document)
-
-
-def campus_ids(directory: Directory) -> Sequence[str]:
-    """Returns every campus ID (for help text and tests)."""
-    return [c.id for c in directory.communities if c.kind is Kind.CAMPUS]

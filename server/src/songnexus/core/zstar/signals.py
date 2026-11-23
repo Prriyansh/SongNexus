@@ -1,8 +1,7 @@
 """What a listener's data says: weighted seed artists, a genre profile and the negatives.
 
 Every signal decays with age (an exponential half-life per kind), so the feed
-follows what someone is into now. Weights are relative; they are documented
-here and in docs/design/for-you.md, and tuned offline (``evaluate``).
+follows what someone is into now. Weights are relative and documented here.
 
 Explicit signals outrank implicit ones: a follow or a Top 5 pick is a stated
 preference; a click is evidence. Negative signals never become seeds: they
