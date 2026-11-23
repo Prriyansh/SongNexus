@@ -50,7 +50,13 @@ def vercel_defaults(env: Mapping[str, str], runtime_db: PurePosixPath) -> dict[s
     if "SONGNEXUS_ALLOWED_ORIGINS" not in env:
         hosts = {env.get(name, "").strip() for name in VERCEL_HOST_VARIABLES}
         out["SONGNEXUS_ALLOWED_ORIGINS"] = json.dumps(sorted(f"https://{h}" for h in hosts if h))
-    if "SONGNEXUS_SIGN_IN" not in env and not env.get("SONGNEXUS_FIREBASE_PROJECT_ID"):
+    # Sign-in with Google: the web app's Firebase project is the API's too, so setting the
+    # VITE_FIREBASE_* variables once turns accounts on. Without a project there are none.
+    web_project = env.get("VITE_FIREBASE_PROJECT_ID", "").strip()
+    if not env.get("SONGNEXUS_FIREBASE_PROJECT_ID") and web_project:
+        out["SONGNEXUS_FIREBASE_PROJECT_ID"] = web_project
+    project = env.get("SONGNEXUS_FIREBASE_PROJECT_ID") or out.get("SONGNEXUS_FIREBASE_PROJECT_ID")
+    if "SONGNEXUS_SIGN_IN" not in env and not project:
         out["SONGNEXUS_SIGN_IN"] = "false"
     production = env.get("VERCEL_PROJECT_PRODUCTION_URL", "").strip()
     if "SONGNEXUS_SONG_COMPARE_URL" not in env and production:

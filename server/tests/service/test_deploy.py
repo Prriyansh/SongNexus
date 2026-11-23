@@ -42,6 +42,19 @@ def test_explicit_settings_always_win() -> None:
     assert vercel_defaults(env, RUNTIME) == {}
 
 
+def test_the_web_apps_firebase_project_turns_on_google_sign_in() -> None:
+    env = {"VERCEL_URL": "songnexus-abc.vercel.app", "VITE_FIREBASE_PROJECT_ID": "songnexus-app"}
+    out = vercel_defaults(env, RUNTIME)
+    assert out["SONGNEXUS_FIREBASE_PROJECT_ID"] == "songnexus-app"
+    assert "SONGNEXUS_SIGN_IN" not in out  # on by default
+    settings = Settings(
+        environment=out["SONGNEXUS_ENVIRONMENT"],
+        allowed_origins=json.loads(out["SONGNEXUS_ALLOWED_ORIGINS"]),
+        firebase_project_id=out["SONGNEXUS_FIREBASE_PROJECT_ID"],
+    )
+    validate_for_serving(settings, {})
+
+
 def test_the_defaults_pass_startup_validation() -> None:
     env = {"VERCEL_URL": "songnexus-abc.vercel.app"}
     out = vercel_defaults(env, RUNTIME)

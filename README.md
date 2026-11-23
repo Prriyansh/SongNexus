@@ -89,14 +89,24 @@ Wikipedia/Wikidata facts for the best-known artists, and bundles it with the fun
    then redeploy. Vercel sets `DATABASE_URL`; the app uses it, and each production deploy loads
    the catalog into it (previews keep a bundled copy, so they never write to it). Accounts and
    saved data then persist.
-4. Optional environment variables (Project → Settings → Environment Variables), then redeploy:
+4. Sign-in with Google (accounts are Google accounts only; the API refuses any other sign-in
+   method):
+   1. In the [Firebase console](https://console.firebase.google.com), create a project (free
+      Spark plan), then **Authentication → Sign-in method → Google → Enable**.
+   2. **Authentication → Settings → Authorized domains**: add the Vercel production domain
+      (e.g. `songnexus.vercel.app`) and any custom domain.
+   3. **Project settings → General → Your apps → Web app**: register one and copy its
+      `apiKey`, `projectId` and `authDomain`.
+   4. In Vercel, set `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID` and
+      `VITE_FIREBASE_AUTH_DOMAIN` (these are public client settings, not secrets), then
+      redeploy. The API uses the same project ID (`SONGNEXUS_FIREBASE_PROJECT_ID` overrides it).
+5. Optional environment variables (Project → Settings → Environment Variables), then redeploy:
 
 | Variable | Adds |
 | --- | --- |
 | `SONGNEXUS_SONG_COMPARE_URL` | Only to use a different sound & lyrics service: by default the API calls this project's own `sound` service on the production domain |
 | `SONGNEXUS_DISCOGS_TOKEN` | A higher Discogs rate limit for "More credits" (Discogs works without it) |
 | `SONGNEXUS_GENIUS_ACCESS_TOKEN` | Genius in "More credits" |
-| `SONGNEXUS_FIREBASE_PROJECT_ID`, and `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_AUTH_DOMAIN` | Sign-in with Google (Firebase) |
 | `SONGNEXUS_DATABASE_URL` | Only for a database other than the Neon integration's (any PostgreSQL URL; load the catalog with `songnexus ingest` against it). With no database at all, the bundled catalog is copied to the instance's `/tmp` and anything written there lasts only as long as the instance |
 | `SONGNEXUS_BUILD_FETCH_LIMIT` | How many artists get photos and facts at build time (default 1500; `SONGNEXUS_BUILD_FETCH=0` skips the fetch) |
 
