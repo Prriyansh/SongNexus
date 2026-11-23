@@ -85,7 +85,11 @@ Wikipedia/Wikidata facts for the best-known artists, and bundles it with the fun
 2. Deploy. With no environment variables at all, it serves signed out (no accounts), accepts
    writes only from the deployment's own `https://` URLs, and shows "not set up" where an
    optional service is missing.
-3. Optional environment variables (Project → Settings → Environment Variables), then redeploy:
+3. A database (free): in Vercel, **Storage → Create Database → Neon**, connect it to this project,
+   then redeploy. Vercel sets `DATABASE_URL`; the app uses it, and each production deploy loads
+   the catalog into it (previews keep a bundled copy, so they never write to it). Accounts and
+   saved data then persist.
+4. Optional environment variables (Project → Settings → Environment Variables), then redeploy:
 
 | Variable | Adds |
 | --- | --- |
@@ -93,7 +97,7 @@ Wikipedia/Wikidata facts for the best-known artists, and bundles it with the fun
 | `SONGNEXUS_DISCOGS_TOKEN` | A higher Discogs rate limit for "More credits" (Discogs works without it) |
 | `SONGNEXUS_GENIUS_ACCESS_TOKEN` | Genius in "More credits" |
 | `SONGNEXUS_FIREBASE_PROJECT_ID`, and `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_AUTH_DOMAIN` | Sign-in with Google (Firebase) |
-| `SONGNEXUS_DATABASE_URL` | Accounts that persist: a PostgreSQL database with the catalog ingested into it (`songnexus ingest` against that URL). Without it, the bundled catalog is copied to the instance's `/tmp` and anything written there lasts only as long as the instance |
+| `SONGNEXUS_DATABASE_URL` | Only for a database other than the Neon integration's (any PostgreSQL URL; load the catalog with `songnexus ingest` against it). With no database at all, the bundled catalog is copied to the instance's `/tmp` and anything written there lasts only as long as the instance |
 | `SONGNEXUS_BUILD_FETCH_LIMIT` | How many artists get photos and facts at build time (default 1500; `SONGNEXUS_BUILD_FETCH=0` skips the fetch) |
 
 Preview deployments sit behind Vercel's login, so their API reaches the sound service on the
