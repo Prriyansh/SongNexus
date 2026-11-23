@@ -206,6 +206,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/artists/{artist}:similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GetSimilarToArtist
+         * @description Artists and songs people play with this artist, placed by how similar they are.
+         */
+        get: operations["GetSimilarToArtist"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/artists:featured": {
         parameters: {
             query?: never;
@@ -829,6 +849,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/recordings/{recording}:similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GetSimilarToRecording
+         * @description Songs people play with this song, and artists people play with its lead artist.
+         */
+        get: operations["GetSimilarToRecording"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/reports": {
         parameters: {
             query?: never;
@@ -1048,6 +1088,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/tasteMaps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * CreateTasteMap
+         * @description Maps one playlist, or two: what each holds, what both share, and what to try next.
+         *
+         *     Receives track titles and artist names only (files are parsed on the device) and stores
+         *     nothing. Artists are matched to the catalog by exact name, as in AnalyzePlaylist.
+         */
+        post: operations["CreateTasteMap"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/tasteProfiles:compute": {
         parameters: {
             query?: never;
@@ -1066,6 +1129,66 @@ export interface paths {
          *     catalog, or blocked, are skipped and counted.
          */
         post: operations["ComputeTasteProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tasteRooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * CreateTasteRoom
+         * @description Opens a room with your playlist; a friend joins with its code within a week.
+         */
+        post: operations["CreateTasteRoom"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tasteRooms/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GetTasteRoom
+         * @description A room's playlists (anyone with the code can read it, as with a shared link).
+         */
+        get: operations["GetTasteRoom"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tasteRooms/{code}:join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * JoinTasteRoom
+         * @description Adds your playlist to a friend's room. A room holds two people.
+         */
+        post: operations["JoinTasteRoom"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1890,7 +2013,7 @@ export interface components {
             /** Categories */
             categories?: components["schemas"]["ConnectionCategory"][];
             /** Tracks */
-            tracks: components["schemas"]["PlaylistTrack"][];
+            tracks: components["schemas"]["PlaylistTrack-Input"][];
         };
         /**
          * AnalyzePlaylistResponse
@@ -4366,6 +4489,150 @@ export interface components {
             words: number;
         };
         /**
+         * MapGroup
+         * @description Where a node belongs on the map (playlist maps color by it).
+         * @enum {string}
+         */
+        MapGroup: "CENTER" | "SIMILAR" | "MINE" | "THEIRS" | "SHARED" | "FOR_ME" | "FOR_THEM" | "NEW";
+        /**
+         * MapLink
+         * @description A line between two nodes.
+         */
+        MapLink: {
+            /** A */
+            a: string;
+            /** B */
+            b: string;
+            kind: components["schemas"]["MapLinkKind"];
+            /**
+             * Strength
+             * @default 1
+             */
+            strength: number;
+        };
+        /**
+         * MapLinkKind
+         * @description What a line between two nodes means. Never a credit.
+         * @enum {string}
+         */
+        MapLinkKind: "SIMILAR" | "CO_LISTENED" | "PERFORMED" | "CONTAINS" | "RECOMMENDED";
+        /**
+         * MapNode
+         * @description An artist or a song on a map.
+         */
+        MapNode: {
+            /**
+             * Artist
+             * @description `artists/{artist}` when in the catalog.
+             */
+            artist: string | null;
+            /** Displayname */
+            displayName: string;
+            /** @default SIMILAR */
+            group: components["schemas"]["MapGroup"];
+            /**
+             * Id
+             * @description Unique on the map: a resource name or a map-local key.
+             */
+            id: string;
+            /** Imageurl */
+            imageUrl: string | null;
+            kind: components["schemas"]["MapNodeKind"];
+            /**
+             * Listeners
+             * @description ListenBrainz listeners, if known.
+             */
+            listeners: number | null;
+            /** Reasons */
+            reasons: components["schemas"]["MapReason"][];
+            /**
+             * Recording
+             * @description `recordings/{recording}` when in the catalog.
+             */
+            recording: string | null;
+            /**
+             * Similarity
+             * @description 0–1, relative to the closest match on this map (1 for the center).
+             */
+            similarity: number;
+            /**
+             * Sourceurl
+             * @description Where the node itself is listed.
+             */
+            sourceUrl: string | null;
+            /**
+             * Subtitle
+             * @description For songs, the credited artists.
+             * @default
+             */
+            subtitle: string;
+            /**
+             * Weight
+             * @description Songs on the playlists, for playlist maps.
+             * @default 1
+             */
+            weight: number;
+        };
+        /**
+         * MapNodeKind
+         * @description What a node is.
+         * @enum {string}
+         */
+        MapNodeKind: "ARTIST" | "SONG";
+        /**
+         * MapReason
+         * @description One reason a node is on the map.
+         */
+        MapReason: {
+            /**
+             * Artists
+             * @description Display names.
+             */
+            artists: string[];
+            /** Count */
+            count: number | null;
+            /**
+             * Genres
+             * @description Genre display names.
+             */
+            genres: string[];
+            kind: components["schemas"]["ReasonKind"];
+            /**
+             * Otherartists
+             * @description Display names.
+             */
+            otherArtists: string[];
+            /** Othercount */
+            otherCount: number | null;
+            /** Score */
+            score: number | null;
+            /** Sourceurl */
+            sourceUrl: string | null;
+            /**
+             * Theirs
+             * @default false
+             */
+            theirs: boolean;
+        };
+        /**
+         * MapSource
+         * @description A source a map used, and how that went.
+         */
+        MapSource: {
+            /**
+             * Source
+             * @description A data-source ID (see ListDataSources).
+             */
+            source: string;
+            status: components["schemas"]["MapSourceStatus"];
+        };
+        /**
+         * MapSourceStatus
+         * @description What happened when a map asked a source.
+         * @enum {string}
+         */
+        MapSourceStatus: "OK" | "PARTIAL" | "NO_MATCH" | "UNAVAILABLE";
+        /**
          * MarkAllReadResponse
          * @description MarkInboxRead: how many shares were marked read.
          */
@@ -4544,7 +4811,7 @@ export interface components {
          * PlaylistTrack
          * @description A track as the device parsed it: a title and its artist names, nothing else.
          */
-        PlaylistTrack: {
+        "PlaylistTrack-Input": {
             /**
              * Artists
              * @description Artist names as written, or `artists/{artist}` for a choice the user made.
@@ -4555,6 +4822,22 @@ export interface components {
              * @default
              */
             title?: string;
+        };
+        /**
+         * PlaylistTrack
+         * @description A track as the device parsed it: a title and its artist names, nothing else.
+         */
+        "PlaylistTrack-Output": {
+            /**
+             * Artists
+             * @description Artist names as written, or `artists/{artist}` for a choice the user made.
+             */
+            artists: string[];
+            /**
+             * Title
+             * @default
+             */
+            title: string;
         };
         /**
          * Preferences
@@ -4753,6 +5036,12 @@ export interface components {
             };
         };
         /**
+         * ReasonKind
+         * @description Why a node is on the map. The client words each kind; the fields carry the facts.
+         * @enum {string}
+         */
+        ReasonKind: "CO_LISTENED" | "SHARED_GENRES" | "SOUND_MATCH" | "ON_PLAYLIST" | "ON_BOTH" | "CLOSE_TO_OTHER" | "NEW_TO_YOU";
+        /**
          * RecommendArtistsResponse
          * @description RecommendArtists.
          */
@@ -4888,6 +5177,32 @@ export interface components {
             graphVersion: string;
             /** Steps */
             steps: components["schemas"]["PathStep"][];
+        };
+        /**
+         * RoomMember
+         * @description One person's side of a room: a first name and a playlist.
+         */
+        "RoomMember-Input": {
+            /**
+             * Displayname
+             * @default
+             */
+            displayName?: string;
+            /** Tracks */
+            tracks: components["schemas"]["PlaylistTrack-Input"][];
+        };
+        /**
+         * RoomMember
+         * @description One person's side of a room: a first name and a playlist.
+         */
+        "RoomMember-Output": {
+            /**
+             * Displayname
+             * @default
+             */
+            displayName: string;
+            /** Tracks */
+            tracks: components["schemas"]["PlaylistTrack-Output"][];
         };
         /**
          * SearchCatalogResponse
@@ -5141,6 +5456,19 @@ export interface components {
             name: string;
             /** Year */
             year: number | null;
+        };
+        /**
+         * SimilarMap
+         * @description Similar artists and songs around an artist or a song.
+         */
+        SimilarMap: {
+            center: components["schemas"]["MapNode"];
+            /** Links */
+            links: components["schemas"]["MapLink"][];
+            /** Nodes */
+            nodes: components["schemas"]["MapNode"][];
+            /** Sources */
+            sources: components["schemas"]["MapSource"][];
         };
         /**
          * SimilarSong
@@ -5626,6 +5954,34 @@ export interface components {
             share: number;
         };
         /**
+         * TasteMap
+         * @description A map of one or two playlists: what each holds, what they share, what to try.
+         */
+        TasteMap: {
+            /** Links */
+            links: components["schemas"]["MapLink"][];
+            /** Nodes */
+            nodes: components["schemas"]["MapNode"][];
+            /** Sources */
+            sources: components["schemas"]["MapSource"][];
+            stats: components["schemas"]["TasteStats"];
+        };
+        /**
+         * TasteMapRequest
+         * @description One playlist, or two to compare. Parsed on the device; nothing is stored.
+         */
+        TasteMapRequest: {
+            /** Friend */
+            friend?: components["schemas"]["PlaylistTrack-Input"][] | null;
+            /**
+             * Friendname
+             * @default
+             */
+            friendName?: string;
+            /** Mine */
+            mine: components["schemas"]["PlaylistTrack-Input"][];
+        };
+        /**
          * TastePair
          * @description Two profiled artists far apart: open them with FindPath.
          */
@@ -5675,6 +6031,42 @@ export interface components {
             undatedArtistCount: number;
             /** Unknowngenreartistcount */
             unknownGenreArtistCount: number;
+        };
+        /**
+         * TasteRoom
+         * @description Two playlists joined by a short code. Rooms are deleted a week after they open.
+         */
+        TasteRoom: {
+            /**
+             * Code
+             * @description Six characters, no 0/O or 1/I/L.
+             */
+            code: string;
+            /**
+             * Expiretime
+             * Format: date-time
+             */
+            expireTime: string;
+            guest: components["schemas"]["RoomMember-Output"] | null;
+            host: components["schemas"]["RoomMember-Output"];
+        };
+        /**
+         * TasteStats
+         * @description What the playlists hold.
+         */
+        TasteStats: {
+            /** Friendartists */
+            friendArtists: number;
+            /** Friendsongs */
+            friendSongs: number;
+            /** Mineartists */
+            mineArtists: number;
+            /** Minesongs */
+            mineSongs: number;
+            /** Sharedartists */
+            sharedArtists: number;
+            /** Sharedsongs */
+            sharedSongs: number;
         };
         /**
          * Theme
@@ -6219,6 +6611,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RecommendArtistsResponse"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    GetSimilarToArtist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                artist: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimilarMap"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
@@ -7168,6 +7591,37 @@ export interface operations {
             };
         };
     };
+    GetSimilarToRecording: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimilarMap"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     CreateReport: {
         parameters: {
             query?: never;
@@ -7513,6 +7967,39 @@ export interface operations {
             };
         };
     };
+    CreateTasteMap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TasteMapRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TasteMap"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     ComputeTasteProfile: {
         parameters: {
             query?: never;
@@ -7533,6 +8020,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TasteProfile"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CreateTasteRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoomMember-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TasteRoom"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    GetTasteRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TasteRoom"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    JoinTasteRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoomMember-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TasteRoom"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */

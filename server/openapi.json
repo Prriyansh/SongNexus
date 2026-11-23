@@ -44,7 +44,7 @@
           },
           "tracks": {
             "items": {
-              "$ref": "#/components/schemas/PlaylistTrack"
+              "$ref": "#/components/schemas/PlaylistTrack-Input"
             },
             "maxItems": 10000,
             "minItems": 1,
@@ -5390,6 +5390,316 @@
         "title": "LyricStructure",
         "type": "object"
       },
+      "MapGroup": {
+        "description": "Where a node belongs on the map (playlist maps color by it).",
+        "enum": [
+          "CENTER",
+          "SIMILAR",
+          "MINE",
+          "THEIRS",
+          "SHARED",
+          "FOR_ME",
+          "FOR_THEM",
+          "NEW"
+        ],
+        "title": "MapGroup",
+        "type": "string"
+      },
+      "MapLink": {
+        "description": "A line between two nodes.",
+        "properties": {
+          "a": {
+            "title": "A",
+            "type": "string"
+          },
+          "b": {
+            "title": "B",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/MapLinkKind"
+          },
+          "strength": {
+            "default": 1.0,
+            "title": "Strength",
+            "type": "number"
+          }
+        },
+        "required": [
+          "a",
+          "b",
+          "kind",
+          "strength"
+        ],
+        "title": "MapLink",
+        "type": "object"
+      },
+      "MapLinkKind": {
+        "description": "What a line between two nodes means. Never a credit.",
+        "enum": [
+          "SIMILAR",
+          "CO_LISTENED",
+          "PERFORMED",
+          "CONTAINS",
+          "RECOMMENDED"
+        ],
+        "title": "MapLinkKind",
+        "type": "string"
+      },
+      "MapNode": {
+        "description": "An artist or a song on a map.",
+        "properties": {
+          "artist": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`artists/{artist}` when in the catalog.",
+            "title": "Artist"
+          },
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "group": {
+            "$ref": "#/components/schemas/MapGroup",
+            "default": "SIMILAR"
+          },
+          "id": {
+            "description": "Unique on the map: a resource name or a map-local key.",
+            "title": "Id",
+            "type": "string"
+          },
+          "imageUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Imageurl"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/MapNodeKind"
+          },
+          "listeners": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ListenBrainz listeners, if known.",
+            "title": "Listeners"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/MapReason"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "recording": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`recordings/{recording}` when in the catalog.",
+            "title": "Recording"
+          },
+          "similarity": {
+            "description": "0–1, relative to the closest match on this map (1 for the center).",
+            "title": "Similarity",
+            "type": "number"
+          },
+          "sourceUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the node itself is listed.",
+            "title": "Sourceurl"
+          },
+          "subtitle": {
+            "default": "",
+            "description": "For songs, the credited artists.",
+            "title": "Subtitle",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "description": "Songs on the playlists, for playlist maps.",
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "displayName",
+          "subtitle",
+          "artist",
+          "recording",
+          "imageUrl",
+          "similarity",
+          "group",
+          "weight",
+          "listeners",
+          "reasons",
+          "sourceUrl"
+        ],
+        "title": "MapNode",
+        "type": "object"
+      },
+      "MapNodeKind": {
+        "description": "What a node is.",
+        "enum": [
+          "ARTIST",
+          "SONG"
+        ],
+        "title": "MapNodeKind",
+        "type": "string"
+      },
+      "MapReason": {
+        "description": "One reason a node is on the map.",
+        "properties": {
+          "artists": {
+            "description": "Display names.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Artists",
+            "type": "array"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count"
+          },
+          "genres": {
+            "description": "Genre display names.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Genres",
+            "type": "array"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ReasonKind"
+          },
+          "otherArtists": {
+            "description": "Display names.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Otherartists",
+            "type": "array"
+          },
+          "otherCount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Othercount"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "sourceUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourceurl"
+          },
+          "theirs": {
+            "default": false,
+            "title": "Theirs",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "artists",
+          "otherArtists",
+          "genres",
+          "count",
+          "otherCount",
+          "theirs",
+          "score",
+          "sourceUrl"
+        ],
+        "title": "MapReason",
+        "type": "object"
+      },
+      "MapSource": {
+        "description": "A source a map used, and how that went.",
+        "properties": {
+          "source": {
+            "description": "A data-source ID (see ListDataSources).",
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MapSourceStatus"
+          }
+        },
+        "required": [
+          "source",
+          "status"
+        ],
+        "title": "MapSource",
+        "type": "object"
+      },
+      "MapSourceStatus": {
+        "description": "What happened when a map asked a source.",
+        "enum": [
+          "OK",
+          "PARTIAL",
+          "NO_MATCH",
+          "UNAVAILABLE"
+        ],
+        "title": "MapSourceStatus",
+        "type": "string"
+      },
       "MarkAllReadResponse": {
         "description": "MarkInboxRead: how many shares were marked read.",
         "properties": {
@@ -5744,7 +6054,7 @@
         "title": "PlaylistThread",
         "type": "object"
       },
-      "PlaylistTrack": {
+      "PlaylistTrack-Input": {
         "description": "A track as the device parsed it: a title and its artist names, nothing else.",
         "properties": {
           "artists": {
@@ -5765,6 +6075,33 @@
           }
         },
         "required": [
+          "artists"
+        ],
+        "title": "PlaylistTrack",
+        "type": "object"
+      },
+      "PlaylistTrack-Output": {
+        "description": "A track as the device parsed it: a title and its artist names, nothing else.",
+        "properties": {
+          "artists": {
+            "description": "Artist names as written, or `artists/{artist}` for a choice the user made.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Artists",
+            "type": "array"
+          },
+          "title": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
           "artists"
         ],
         "title": "PlaylistTrack",
@@ -6132,6 +6469,20 @@
         "title": "Reason",
         "type": "object"
       },
+      "ReasonKind": {
+        "description": "Why a node is on the map. The client words each kind; the fields carry the facts.",
+        "enum": [
+          "CO_LISTENED",
+          "SHARED_GENRES",
+          "SOUND_MATCH",
+          "ON_PLAYLIST",
+          "ON_BOTH",
+          "CLOSE_TO_OTHER",
+          "NEW_TO_YOU"
+        ],
+        "title": "ReasonKind",
+        "type": "string"
+      },
       "RecommendArtistsResponse": {
         "description": "RecommendArtists.",
         "properties": {
@@ -6475,6 +6826,57 @@
           "graphVersion"
         ],
         "title": "RevealResponse",
+        "type": "object"
+      },
+      "RoomMember-Input": {
+        "description": "One person's side of a room: a first name and a playlist.",
+        "properties": {
+          "displayName": {
+            "default": "",
+            "maxLength": 30,
+            "title": "Displayname",
+            "type": "string"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/PlaylistTrack-Input"
+            },
+            "maxItems": 250,
+            "minItems": 1,
+            "title": "Tracks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tracks"
+        ],
+        "title": "RoomMember",
+        "type": "object"
+      },
+      "RoomMember-Output": {
+        "description": "One person's side of a room: a first name and a playlist.",
+        "properties": {
+          "displayName": {
+            "default": "",
+            "maxLength": 30,
+            "title": "Displayname",
+            "type": "string"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/PlaylistTrack-Output"
+            },
+            "maxItems": 250,
+            "minItems": 1,
+            "title": "Tracks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "displayName",
+          "tracks"
+        ],
+        "title": "RoomMember",
         "type": "object"
       },
       "SearchCatalogResponse": {
@@ -6991,6 +7393,43 @@
           "artists"
         ],
         "title": "ShelfRecording",
+        "type": "object"
+      },
+      "SimilarMap": {
+        "description": "Similar artists and songs around an artist or a song.",
+        "properties": {
+          "center": {
+            "$ref": "#/components/schemas/MapNode"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/MapLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/MapNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/MapSource"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "center",
+          "nodes",
+          "links",
+          "sources"
+        ],
+        "title": "SimilarMap",
         "type": "object"
       },
       "SimilarSong": {
@@ -7921,6 +8360,83 @@
         "title": "TasteGenre",
         "type": "object"
       },
+      "TasteMap": {
+        "description": "A map of one or two playlists: what each holds, what they share, what to try.",
+        "properties": {
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/MapLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/MapNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/MapSource"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/TasteStats"
+          }
+        },
+        "required": [
+          "nodes",
+          "links",
+          "stats",
+          "sources"
+        ],
+        "title": "TasteMap",
+        "type": "object"
+      },
+      "TasteMapRequest": {
+        "description": "One playlist, or two to compare. Parsed on the device; nothing is stored.",
+        "properties": {
+          "friend": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PlaylistTrack-Input"
+                },
+                "maxItems": 250,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Friend"
+          },
+          "friendName": {
+            "default": "",
+            "maxLength": 30,
+            "title": "Friendname",
+            "type": "string"
+          },
+          "mine": {
+            "items": {
+              "$ref": "#/components/schemas/PlaylistTrack-Input"
+            },
+            "maxItems": 250,
+            "minItems": 1,
+            "title": "Mine",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mine"
+        ],
+        "title": "TasteMapRequest",
+        "type": "object"
+      },
       "TastePair": {
         "description": "Two profiled artists far apart: open them with FindPath.",
         "properties": {
@@ -8043,6 +8559,81 @@
           "graphVersion"
         ],
         "title": "TasteProfile",
+        "type": "object"
+      },
+      "TasteRoom": {
+        "description": "Two playlists joined by a short code. Rooms are deleted a week after they open.",
+        "properties": {
+          "code": {
+            "description": "Six characters, no 0/O or 1/I/L.",
+            "title": "Code",
+            "type": "string"
+          },
+          "expireTime": {
+            "format": "date-time",
+            "title": "Expiretime",
+            "type": "string"
+          },
+          "guest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoomMember-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "host": {
+            "$ref": "#/components/schemas/RoomMember-Output"
+          }
+        },
+        "required": [
+          "code",
+          "host",
+          "guest",
+          "expireTime"
+        ],
+        "title": "TasteRoom",
+        "type": "object"
+      },
+      "TasteStats": {
+        "description": "What the playlists hold.",
+        "properties": {
+          "friendArtists": {
+            "title": "Friendartists",
+            "type": "integer"
+          },
+          "friendSongs": {
+            "title": "Friendsongs",
+            "type": "integer"
+          },
+          "mineArtists": {
+            "title": "Mineartists",
+            "type": "integer"
+          },
+          "mineSongs": {
+            "title": "Minesongs",
+            "type": "integer"
+          },
+          "sharedArtists": {
+            "title": "Sharedartists",
+            "type": "integer"
+          },
+          "sharedSongs": {
+            "title": "Sharedsongs",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mineSongs",
+          "mineArtists",
+          "friendSongs",
+          "friendArtists",
+          "sharedArtists",
+          "sharedSongs"
+        ],
+        "title": "TasteStats",
         "type": "object"
       },
       "Theme": {
@@ -9305,6 +9896,49 @@
         "summary": "RecommendArtists",
         "tags": [
           "browse"
+        ]
+      }
+    },
+    "/v1/artists/{artist}:similar": {
+      "get": {
+        "description": "Artists and songs people play with this artist, placed by how similar they are.",
+        "operationId": "GetSimilarToArtist",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "artist",
+            "required": true,
+            "schema": {
+              "title": "Artist",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimilarMap"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "GetSimilarToArtist",
+        "tags": [
+          "maps"
         ]
       }
     },
@@ -10782,6 +11416,49 @@
         ]
       }
     },
+    "/v1/recordings/{recording}:similar": {
+      "get": {
+        "description": "Songs people play with this song, and artists people play with its lead artist.",
+        "operationId": "GetSimilarToRecording",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recording",
+            "required": true,
+            "schema": {
+              "title": "Recording",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimilarMap"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "GetSimilarToRecording",
+        "tags": [
+          "maps"
+        ]
+      }
+    },
     "/v1/reports": {
       "post": {
         "description": "Reports a share you received (it leaves your inbox) or a person you know.\n\nModerators see a copy of the reported note; reports are kept 90 days. Blocking\nis a separate step, so reporting alone never tips anyone off.",
@@ -11240,6 +11917,48 @@
         ]
       }
     },
+    "/v1/tasteMaps": {
+      "post": {
+        "description": "Maps one playlist, or two: what each holds, what both share, and what to try next.\n\nReceives track titles and artist names only (files are parsed on the device) and stores\nnothing. Artists are matched to the catalog by exact name, as in AnalyzePlaylist.",
+        "operationId": "CreateTasteMap",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TasteMapRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TasteMap"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "CreateTasteMap",
+        "tags": [
+          "maps"
+        ]
+      }
+    },
     "/v1/tasteProfiles:compute": {
       "post": {
         "description": "Profiles a list of artists (\"Your Nexus\") without storing anything.\n\nFor signed-out listeners who matched a playlist on their device: send the\nmatched artists' resource names, most important first. Artists not in the\ncatalog, or blocked, are skipped and counted.",
@@ -11279,6 +11998,144 @@
         "summary": "ComputeTasteProfile",
         "tags": [
           "browse"
+        ]
+      }
+    },
+    "/v1/tasteRooms": {
+      "post": {
+        "description": "Opens a room with your playlist; a friend joins with its code within a week.",
+        "operationId": "CreateTasteRoom",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomMember-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TasteRoom"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "CreateTasteRoom",
+        "tags": [
+          "maps"
+        ]
+      }
+    },
+    "/v1/tasteRooms/{code}": {
+      "get": {
+        "description": "A room's playlists (anyone with the code can read it, as with a shared link).",
+        "operationId": "GetTasteRoom",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TasteRoom"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "GetTasteRoom",
+        "tags": [
+          "maps"
+        ]
+      }
+    },
+    "/v1/tasteRooms/{code}:join": {
+      "post": {
+        "description": "Adds your playlist to a friend's room. A room holds two people.",
+        "operationId": "JoinTasteRoom",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomMember-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TasteRoom"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "JoinTasteRoom",
+        "tags": [
+          "maps"
         ]
       }
     },

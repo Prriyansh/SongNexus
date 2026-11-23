@@ -1,4 +1,4 @@
-"""Purge job: expired sessions, invites and link flows; old reports; deleted accounts.
+"""Purge job: expired sessions, invites, link flows and rooms; old reports; deleted accounts.
 
 Run daily (``songnexus purge``) for a deployment with its own database. Deleted
 accounts are already empty at deletion time; this removes the remaining row and
@@ -16,6 +16,7 @@ from songnexus.storage import (
     community_repository,
     games_repository,
     social_repository,
+    taste_rooms,
 )
 from songnexus.storage import user_repository as users
 from songnexus.storage.db import session_scope
@@ -43,6 +44,7 @@ def run_purge(engine: Engine, now: datetime | None = None) -> dict[str, int]:
         )
         flows = accounts_repository.purge_flows(session, now)
         invites = social_repository.purge_invites(session, now)
+        rooms = taste_rooms.purge_rooms(session, now)
         reports = social_repository.purge_reports(session, now - REPORT_RETENTION)
         charts = community_repository.purge_charts(session, now - COMMUNITY_CHART_RETENTION)
         scores, answers = games_repository.purge(
@@ -56,5 +58,6 @@ def run_purge(engine: Engine, now: datetime | None = None) -> dict[str, int]:
         "deletedAccounts": accounts,
         "expiredLinkFlows": flows,
         "expiredInvites": invites,
+        "expiredTasteRooms": rooms,
         "expiredReports": reports,
     }

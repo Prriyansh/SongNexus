@@ -331,12 +331,16 @@ SOURCES: tuple[DataSource, ...] = (
         feeds=(
             "listener overlap in artist comparison",
             "'often played with' on artist pages",
+            "the Connection Web's similar-music maps: similar artists and songs around an artist, "
+            "a song or a playlist, and two friends' playlists on one map",
         ),
         attribution="Listening data from ListenBrainz",
-        checked_on="2026-11-01",
+        checked_on="2026-11-23",
         notes="Public listens are CC0. Only aggregates are fetched: listener and listen counts per "
         "artist, and the session-based similar-artists ranking. Overlap is shown only when both "
-        "artists have at least 50 listeners, always with the counts.",
+        "artists have at least 50 listeners, always with the counts. Similar songs (the Labs "
+        "session-based similar recordings) are read live for the maps and cached in memory for a "
+        "day, never stored; songs outside the catalog link to MusicBrainz.",
     ),
     # --- Sound & lyrics analysis (the song_compare service) ----------------------------------
     DataSource(

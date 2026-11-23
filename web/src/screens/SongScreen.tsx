@@ -300,6 +300,10 @@ export default function SongScreen() {
               <Icon name="compare" />
               {t('song.compare')}
             </Link>
+            <Link className="btn btn--tonal" to={`/map?song=${id}`}>
+              <Icon name="spark" />
+              {t('song.similar')}
+            </Link>
             <ShareButton
               kind="RECORDING"
               subjects={[song.name]}

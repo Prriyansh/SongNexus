@@ -458,6 +458,10 @@ export default function ArtistScreen() {
               <Icon name="compare" />
               {t('artist.compare')}
             </Link>
+            <Link className="btn btn--tonal" to={`/map?artist=${id}`}>
+              <Icon name="spark" />
+              {t('artist.similar')}
+            </Link>
             <ShareButton
               kind="ARTIST"
               subjects={[a.name]}

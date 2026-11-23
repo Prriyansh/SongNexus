@@ -395,6 +395,7 @@ def test_delete_account(client: TestClient, state: AppState) -> None:
         "deletedAccounts": 1,
         "expiredLinkFlows": 0,
         "expiredInvites": 0,
+        "expiredTasteRooms": 0,
         "expiredReports": 0,
         "expiredCommunityCharts": 0,
         "expiredGameScores": 0,

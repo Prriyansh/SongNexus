@@ -94,7 +94,7 @@ def db_session(request: Request) -> Iterator[Session]:
 
     Use with ``Depends(db_session, scope="function")``: the commit then happens
     before the response is sent, so a failed commit is an error response, never
-    a false success (QA review Q2).
+    a false success.
     """
     with session_scope(app_state(request).engine) as session:
         yield session

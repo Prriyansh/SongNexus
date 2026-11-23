@@ -730,6 +730,24 @@ class FriendInvite(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 
+class TasteRoom(Base):
+    """Two playlists joined by a short code, to map together. Deleted a week after opening.
+
+    Holds what each person chose to share: a first name and their tracks (titles and artist
+    names, parsed on their device). Not tied to an account.
+    """
+
+    __tablename__ = "taste_rooms"
+
+    code: Mapped[str] = mapped_column(String(6), primary_key=True)
+    host_name: Mapped[str] = mapped_column(String(30), default="")
+    host_tracks: Mapped[list[Any]] = mapped_column(JsonType)
+    guest_name: Mapped[str | None] = mapped_column(String(30))
+    guest_tracks: Mapped[list[Any] | None] = mapped_column(JsonType)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
 class Friendship(Base):
     """One direction of a friendship; every friendship is stored as two rows."""
 

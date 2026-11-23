@@ -1904,6 +1904,149 @@ export const messages = {
   'taste.note.skipped':
     '{count, plural, one {# artist isn’t in our data yet.} other {# artists aren’t in our data yet.}}',
   // </library-v2>
+  'tool.similar.title': 'Similar music',
+  'tool.similar.body':
+    'Map what listeners play with an artist, a song or your playlist.',
+  'artist.similar': 'Similar music',
+  'song.similar': 'Similar songs',
+  'friends.maps.title': 'Compare playlists',
+  'friends.maps.body':
+    'Put your playlist and a friend’s on one map: what only you play, what you share, and what each of you should try. Join with a six-character code; no account needed.',
+  'friends.maps.start': 'Compare with a friend',
+  'friends.maps.mine': 'Map my playlist',
+  // <maps> Similar music: the Connection Web's map modes (artist, song, playlist, friend).
+  'map.overline': 'Similar music',
+  'map.heading': 'Map what sounds alike',
+  'map.lead':
+    'Start from an artist, a song or your playlist. The closer something sits, the more often listeners play it together. Select anything to see why it’s there.',
+  'map.title': 'Similar music',
+  'map.title.of': 'Similar to {name}',
+  'map.modes': 'What to start from',
+  'map.mode.artist': 'Artist',
+  'map.mode.song': 'Song',
+  'map.mode.playlist': 'My playlist',
+  'map.mode.friend': 'With a friend',
+  'map.pick.artist': 'Start from an artist',
+  'map.pick.song': 'Start from a song',
+  'map.label':
+    'Map of similar music. The closer something is to the center, the more similar it is. Drag to pan, scroll to zoom, arrow keys to move, plus or minus to zoom, zero to reset.',
+  'map.label.taste':
+    'Map of playlists: yours on the left, your friend’s on the right, what you share in the middle. Drag to pan, scroll to zoom.',
+  'map.roleDescription': 'interactive map',
+  'map.node.center': 'Selected: {name}',
+  'map.node.why': 'Why is this here: {name}',
+  'map.card.label': 'Why {name} is here',
+  'map.card.close': 'Close explanation',
+  'map.zoomIn': 'Zoom in',
+  'map.zoomOut': 'Zoom out',
+  'map.zoomLevel': 'Map zoom',
+  'map.fit': 'Reset the map',
+  'map.center.artist':
+    'Everything on this map is placed by how similar it is to this artist.',
+  'map.center.song':
+    'Everything on this map is placed by how similar it is to this song.',
+  'map.closeness': '{value} of the closest match',
+  'map.closeness.title':
+    'Calculated: relative to the closest match on this map, not an absolute score.',
+  'map.source': 'Source',
+  'map.listeners':
+    '{count, plural, one {# listener} other {# listeners}} on ListenBrainz (its own community, not all listeners)',
+  'map.near':
+    '{more, plural, =0 {Also connected to {names}.} other {Also connected to {names} and # more.}}',
+  'map.legend.similar':
+    'Closer means more often played together. Lines join what listeners connect; zoom in near an artist to find more around it.',
+  'map.legend.label': 'What the colors mean',
+  'map.status.loading': 'Finding similar music…',
+  'map.status.error': 'We couldn’t load this map. Try again in a moment.',
+  'map.status.partial':
+    'Some listening data couldn’t be loaded just now. What we have is shown.',
+  'map.notFound': 'That isn’t in our data.',
+  'map.empty':
+    'The listening data doesn’t cover this one yet. Try someone more widely played.',
+  'map.action.mapFromHere': 'Map from here',
+  'map.action.artist': 'Artist page',
+  'map.action.song': 'Song page',
+  'map.action.source': 'On MusicBrainz',
+  'map.reason.coListened':
+    'People who play {played} often play this in the same listening sessions.',
+  'map.reason.sharedGenres': 'Both are tagged {genres}.',
+  'map.reason.soundMatch': 'Calculated sound match: {score}.',
+  'map.reason.onMine':
+    'On your playlist ({count, plural, one {# song} other {# songs}}).',
+  'map.reason.onMine.song': 'On your playlist.',
+  'map.reason.onTheirs':
+    'On {friend}’s playlist ({count, plural, one {# song} other {# songs}}).',
+  'map.reason.onTheirs.song': 'On {friend}’s playlist.',
+  'map.reason.onBoth':
+    'On both playlists: {count, plural, one {# song} other {# songs}} of yours and {other, plural, one {# song} other {# songs}} of {friend}’s.',
+  'map.reason.onBoth.song': 'On both of your playlists.',
+  'map.reason.forMe':
+    'You might like this: people who play {names}, on your playlist, often play {name} too.',
+  'map.reason.forThem':
+    '{friend} might like this: people who play {names}, on {friend}’s playlist, often play {name} too.',
+  'map.reason.newToYou':
+    'New to you: people who play {names} often play {name} too.',
+  'map.reason.newToBoth':
+    'New to both of you: people who play {names} often play {name} too.',
+  'map.reason.newToBoth.split':
+    'New to both of you: people who play {mine} (yours) and {theirs} ({friend}’s) often play {name} too.',
+  'map.group.MINE': 'On your playlist',
+  'map.group.THEIRS': 'Only {friend}’s',
+  'map.group.SHARED': 'On both',
+  'map.group.FOR_ME': 'You should listen',
+  'map.group.FOR_THEM': '{friend} should listen',
+  'map.group.NEW': 'New to you',
+  'map.taste.stats':
+    '{artists, plural, one {# artist} other {# artists}} and {songs, plural, one {# song} other {# songs}} on your playlist',
+  'map.taste.statsFriend':
+    'You and {friend} share {shared, plural, one {# artist} other {# artists}} and {songs, plural, one {# song} other {# songs}}',
+  'map.playlist.title': 'Your playlist',
+  'map.playlist.label': 'Choose a CSV, JSON or TXT file, or paste lines like',
+  'map.playlist.format.hint': '“Song - Artist”.',
+  'map.playlist.autofill':
+    'your {count, plural, one {saved song} other {# saved songs}}',
+  'map.playlist.paste': 'Paste a playlist, one “Song - Artist” per line',
+  'map.playlist.placeholder': 'Song - Artist',
+  'map.playlist.file': 'Playlist file',
+  'map.playlist.use': 'Map these songs',
+  'map.playlist.chooseFile': 'Choose a file',
+  'map.playlist.presets': 'Or start from a preset:',
+  'map.playlist.sample': 'Try a sample playlist',
+  'map.playlist.change': 'Change playlist',
+  'map.playlist.noArtists':
+    'These songs have no artist names. Use “Song - Artist” lines, or a file with an Artist column.',
+  'map.playlist.skipped':
+    '{count, plural, one {# line had no artist and was left out.} other {# lines had no artist and were left out.}}',
+  'map.playlist.tooBig': 'Please choose a file under 2 MB.',
+  'map.playlist.format': 'Please choose a CSV, JSON or TXT file.',
+  'map.preset.pop': 'Pop',
+  'map.preset.hiphop': 'Hip hop',
+  'map.preset.rnb': 'R&B',
+  'map.preset.indie': 'Indie & rock',
+  'map.preset.latin': 'Latin',
+  'map.friend.default': 'your friend',
+  'map.friend.name': 'Your first name (optional)',
+  'map.friend.start': 'Start a room',
+  'map.friend.startLead':
+    'Add your playlist and we’ll give you a six-character code. When your friend adds theirs, you both see one map. Rooms are deleted after a week.',
+  'map.friend.join': 'Have a code?',
+  'map.friend.joinLead': 'Enter the code your friend shared.',
+  'map.friend.code': 'Room code',
+  'map.friend.codePlaceholder': 'ABC234',
+  'map.friend.open': 'Open',
+  'map.friend.failed': 'We couldn’t open a room just now. Try again.',
+  'map.friend.missing':
+    'This room doesn’t exist or has expired (rooms last a week).',
+  'map.friend.again': 'Start a new room',
+  'map.friend.share': 'Share this code with your friend',
+  'map.friend.waiting':
+    'We’ll show the map here as soon as they add their playlist.',
+  'map.friend.copy': 'Copy the link',
+  'map.friend.copied': 'Link copied',
+  'map.friend.joining': 'Compare your playlist with {name}’s',
+  'map.friend.full': 'Someone already joined this room. Ask for a new code.',
+  'map.friend.new': 'New room',
+  // </maps>
 } as const;
 
 export type MessageId = keyof typeof messages;

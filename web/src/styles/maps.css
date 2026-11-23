@@ -1,0 +1,476 @@
+/* maps: the similar-music map (Connection Web map modes), its pickers and rooms. */
+
+.smap-page .segmented {
+  margin-top: 16px;
+}
+
+.smap-search {
+  max-width: 560px;
+  margin: 0 auto 16px;
+}
+
+.smap {
+  position: relative;
+  height: min(72vh, 680px);
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  touch-action: none;
+  cursor: grab;
+  outline-offset: 3px;
+}
+.smap[data-panning] {
+  cursor: grabbing;
+}
+.smap__grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--md-outline-variant) 70%, transparent) 1px,
+    transparent 1.5px
+  );
+  pointer-events: none;
+}
+.smap__world {
+  position: absolute;
+  inset: 0 auto auto 0;
+  will-change: transform;
+}
+.smap__lines {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.smap__line {
+  stroke: var(--md-outline);
+  stroke-width: 1.5;
+  opacity: var(--strength, 0.4);
+  transition: opacity var(--duration-short) var(--motion-standard);
+}
+.smap__line--co_listened,
+.smap__line--performed,
+.smap__line--contains {
+  stroke-dasharray: 4 4;
+}
+.smap__line--recommended {
+  stroke: var(--md-success);
+}
+.smap__line.is-lit {
+  stroke: var(--md-primary);
+  stroke-width: 2.5;
+  opacity: 0.95;
+}
+.smap__line.is-muted {
+  opacity: 0.08;
+}
+
+.smap__node {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 104px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--md-on-surface);
+  font: inherit;
+  text-align: center;
+  transform: translate(-50%, -28px);
+  opacity: var(--shown, 1);
+  transition: opacity var(--duration-medium) var(--motion-standard);
+  cursor: pointer;
+}
+.smap__node strong {
+  font: var(--label-medium);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--md-surface-container-low) 82%, transparent);
+}
+.smap__node small {
+  font: var(--body-small);
+  color: var(--md-on-surface-variant);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.smap__node:focus-visible {
+  outline: none;
+}
+.smap__node:focus-visible .smap__avatar,
+.smap__node.is-pinned .smap__avatar {
+  box-shadow:
+    0 0 0 3px var(--md-surface),
+    0 0 0 5px var(--md-primary);
+}
+.smap__avatar {
+  --ring: var(--md-outline-variant);
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: hsl(var(--smap-hue, 210) 45% 42%);
+  color: #fff;
+  font: var(--label-large);
+  border: 3px solid var(--ring);
+  box-shadow: var(--elevation-1);
+  transition: transform var(--duration-short) var(--motion-standard);
+}
+.smap__avatar--song {
+  border-radius: 12px;
+}
+.smap__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.smap__node:hover .smap__avatar {
+  transform: scale(1.06);
+}
+.smap__node--center {
+  width: 140px;
+  transform: translate(-50%, -40px);
+}
+.smap__node--center .smap__avatar {
+  width: 80px;
+  height: 80px;
+  --ring: var(--md-primary);
+}
+.smap__node--center strong {
+  font: var(--label-large);
+}
+
+/* Playlist groups: you on the left, your friend on the right (dataviz: color plus position). */
+.smap__node--mine .smap__avatar,
+.smap__key [data-group='mine']::before {
+  --ring: #4f8fe8;
+  --dot: #4f8fe8;
+}
+.smap__node--for_them .smap__avatar,
+.smap__key [data-group='for_them']::before {
+  --ring: #8bb8f5;
+  --dot: #8bb8f5;
+}
+.smap__node--theirs .smap__avatar,
+.smap__key [data-group='theirs']::before {
+  --ring: #e8892e;
+  --dot: #e8892e;
+}
+.smap__node--for_me .smap__avatar,
+.smap__key [data-group='for_me']::before {
+  --ring: #f2b878;
+  --dot: #f2b878;
+}
+.smap__node--shared .smap__avatar,
+.smap__key [data-group='shared']::before {
+  --ring: #c9a400;
+  --dot: #c9a400;
+}
+.smap__node--new .smap__avatar,
+.smap__key [data-group='new']::before {
+  --ring: #2e9e63;
+  --dot: #2e9e63;
+}
+
+.smap__card {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  width: min(340px, calc(100% - 24px));
+  max-height: calc(100% - 88px);
+  overflow: auto;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: var(--glass-strong, var(--md-surface-container-high));
+  backdrop-filter: blur(18px);
+  box-shadow: var(--elevation-3);
+  cursor: auto;
+  z-index: 2;
+}
+.smap__card.is-preview {
+  pointer-events: none;
+}
+.smap__card h3 {
+  margin: 0 28px 2px 0;
+  font: var(--headline-small);
+}
+.smap__card-sub,
+.smap__note {
+  margin: 0 0 8px;
+  font: var(--body-small);
+  color: var(--md-on-surface-variant);
+}
+.smap__close {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+}
+.smap__meter {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 10px;
+  font: var(--body-small);
+}
+.smap__meter span {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--md-surface-container-highest);
+  overflow: hidden;
+}
+.smap__meter i {
+  display: block;
+  height: 100%;
+  background: var(--md-primary);
+}
+.smap__reasons {
+  margin: 0 0 8px;
+  padding-inline-start: 18px;
+  font: var(--body-medium);
+}
+.smap__reasons li + li {
+  margin-top: 4px;
+}
+.smap__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.smap__controls {
+  position: absolute;
+  bottom: 12px;
+  inset-inline-end: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--glass-strong, var(--md-surface-container-high));
+  box-shadow: var(--elevation-2);
+}
+.smap__controls button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--md-on-surface);
+  cursor: pointer;
+}
+.smap__controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.smap__controls output {
+  min-width: 44px;
+  text-align: center;
+  font: var(--label-medium);
+}
+.smap__status,
+.smap__legend,
+.smap__key {
+  position: absolute;
+  bottom: 12px;
+  inset-inline-start: 12px;
+  max-width: min(520px, calc(100% - 200px));
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 16px;
+  background: var(--glass-strong, var(--md-surface-container-high));
+  font: var(--body-small);
+  color: var(--md-on-surface-variant);
+}
+.smap__status {
+  top: 12px;
+  bottom: auto;
+}
+.smap__status--error {
+  color: var(--md-error);
+}
+.smap__legend {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.smap__key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  list-style: none;
+}
+.smap__key li::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+.smap__empty {
+  text-align: center;
+  color: var(--md-on-surface-variant);
+}
+
+.smap-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.smap-bar p {
+  margin: 0;
+  font: var(--body-medium);
+}
+
+.smap-panels {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+.smap-panel {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 20px;
+}
+.smap-panel h2 {
+  margin: 0;
+  font: var(--headline-small);
+}
+.smap-panel p {
+  margin: 0;
+}
+.smap-picker {
+  display: grid;
+  gap: 10px;
+}
+.smap-picker__label {
+  font: var(--body-medium);
+}
+.smap-picker__autofill {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--md-primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.smap-picker__text {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--md-outline);
+  background: var(--md-surface-container-lowest);
+  color: var(--md-on-surface);
+  font: var(--body-medium);
+  line-height: 1.5;
+}
+.smap-picker__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.smap-picker__presets {
+  display: grid;
+  gap: 6px;
+  font: var(--body-small);
+  color: var(--md-on-surface-variant);
+}
+.smap-picker__problem {
+  color: var(--md-error);
+  font: var(--body-small);
+}
+.smap-name {
+  max-width: 360px;
+}
+.smap-room {
+  justify-items: start;
+}
+.smap-room__code {
+  font: var(--display-small);
+  letter-spacing: 0.18em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  .smap {
+    height: 70vh;
+    border-radius: 20px;
+  }
+  .smap__card {
+    top: auto;
+    bottom: 64px;
+    inset-inline: 8px;
+    width: auto;
+    max-height: 50%;
+  }
+  .smap__legend,
+  .smap__key {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smap__node,
+  .smap__avatar,
+  .smap__line {
+    transition: none;
+  }
+}
+
+.smap-picker__presets .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The Friends page's way in to playlist maps. */
+.friends-maps {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 20px;
+}
+.friends-maps h2 {
+  margin: 0;
+  font: var(--headline-small);
+}
+.friends-maps p {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+}
+.friends-maps__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

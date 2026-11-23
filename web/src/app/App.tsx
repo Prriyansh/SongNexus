@@ -123,6 +123,10 @@ export const routes: RouteObject[] = [
         lazy: screen(() => import('../screens/YouScreen')),
       },
       {
+        path: 'map',
+        lazy: screen(() => import('../screens/MapScreen')),
+      },
+      {
         path: 'personalize',
         lazy: screen(() => import('../screens/PersonalizeScreen')),
       },
