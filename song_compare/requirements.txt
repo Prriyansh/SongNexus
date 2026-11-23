@@ -2,6 +2,6 @@
 # run with (Python 3.12). Rebuilding the data needs requirements-prepare.txt as well.
 flask>=3.1,<4
 pandas>=3.1,<4
-numpy>=2.5,<3
+numpy>=2.5.5,<3
 scipy>=1.18,<2
 pyarrow>=26
