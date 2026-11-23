@@ -153,6 +153,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/artists/{artist}:compareOnLastFm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * CompareOnLastFm
+         * @description Both artists on Last.fm: listeners, plays, and artists similar to both.
+         */
+        get: operations["CompareOnLastFm"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/artists/{artist}:findPath": {
         parameters: {
             query?: never;
@@ -2996,6 +3016,11 @@ export interface components {
             sharedEvents: components["schemas"]["EventSummary"][];
             /** Sharedgenres */
             sharedGenres: components["schemas"]["SharedGenre"][];
+            /**
+             * Sharedlabels
+             * @description Labels both artists released on, with the first artist's releases there.
+             */
+            sharedLabels: components["schemas"]["ArtistLabel"][];
         };
         /**
          * CompareMap
@@ -3019,6 +3044,17 @@ export interface components {
             path: string[];
             /** Sources */
             sources: components["schemas"]["MapSource"][];
+        };
+        /**
+         * CompareOnLastFm
+         * @description CompareOnLastFm: both artists' Last.fm audience, and who Last.fm finds similar to both.
+         */
+        CompareOnLastFm: {
+            audienceA: components["schemas"]["LastFmAudience"] | null;
+            audienceB: components["schemas"]["LastFmAudience"] | null;
+            /** Similartoboth */
+            similarToBoth: components["schemas"]["LastFmSimilar"][];
+            status: components["schemas"]["LastFmStatus"];
         };
         /**
          * CompareRecordingsResponse
@@ -4099,6 +4135,39 @@ export interface components {
             /** Year */
             year: number | null;
         };
+        /**
+         * LastFmAudience
+         * @description An artist's listeners and plays on Last.fm (its own community, not all listeners).
+         */
+        LastFmAudience: {
+            /** Listeners */
+            listeners: number;
+            /** Plays */
+            plays: number;
+            /** Url */
+            url: string;
+        };
+        /**
+         * LastFmSimilar
+         * @description An artist Last.fm lists as similar to both: listener behaviour, not a collaboration.
+         */
+        LastFmSimilar: {
+            /**
+             * Artist
+             * @description `artists/{artist}` when in our catalog.
+             */
+            artist: string | null;
+            /** Displayname */
+            displayName: string;
+            /** Url */
+            url: string;
+        };
+        /**
+         * LastFmStatus
+         * @description Whether Last.fm could be asked.
+         * @enum {string}
+         */
+        LastFmStatus: "OK" | "NO_KEY" | "UNAVAILABLE";
         /**
          * LeaderboardPeriod
          * @description One day, or the ISO week (Monday to Sunday) containing the date.
@@ -6673,6 +6742,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompareMap"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CompareOnLastFm: {
+        parameters: {
+            query: {
+                /** @description Resource name of the artist to compare with. */
+                other: string;
+            };
+            header?: never;
+            path: {
+                artist: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareOnLastFm"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */

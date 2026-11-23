@@ -552,6 +552,10 @@ class CompareArtistsResponse(ApiModel):
         default_factory=list,
         description="Concerts and festivals both artists performed at, newest first (up to 8).",
     )
+    shared_labels: list[ArtistLabel] = Field(
+        default_factory=list,
+        description="Labels both artists released on, with the first artist's releases there.",
+    )
     shared_awards: list[Honor] = Field(
         default_factory=list,
         description="Awards Wikidata lists for both artists (the same award, any year), with "

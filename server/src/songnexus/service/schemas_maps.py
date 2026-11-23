@@ -157,6 +157,39 @@ class CompareMap(ApiModel):
     sources: list[MapSource]
 
 
+class LastFmStatus(enum.StrEnum):
+    """Whether Last.fm could be asked."""
+
+    OK = "OK"
+    NO_KEY = "NO_KEY"  # no Last.fm API key is configured
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class LastFmAudience(ApiModel):
+    """An artist's listeners and plays on Last.fm (its own community, not all listeners)."""
+
+    listeners: int
+    plays: int
+    url: str
+
+
+class LastFmSimilar(ApiModel):
+    """An artist Last.fm lists as similar to both: listener behaviour, not a collaboration."""
+
+    display_name: str
+    url: str
+    artist: str | None = Field(default=None, description="`artists/{artist}` when in our catalog.")
+
+
+class CompareOnLastFm(ApiModel):
+    """CompareOnLastFm: both artists' Last.fm audience, and who Last.fm finds similar to both."""
+
+    status: LastFmStatus
+    audience_a: LastFmAudience | None = None
+    audience_b: LastFmAudience | None = None
+    similar_to_both: list[LastFmSimilar] = Field(default_factory=list)
+
+
 class TasteMapRequest(ApiModel):
     """One playlist, or two to compare. Parsed on the device; nothing is stored."""
 

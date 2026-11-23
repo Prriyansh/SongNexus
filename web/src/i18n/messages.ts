@@ -1926,6 +1926,14 @@ export const messages = {
     '{count, plural, one {# artist isn’t in our data yet.} other {# artists aren’t in our data yet.}}',
   // </library-v2>
   'compare.openMap': 'See both on a map',
+  'compare.labels': 'Both released on',
+  'compare.lastfm': 'On Last.fm',
+  'compare.lastfm.audience': '{listeners} listeners \u00b7 {plays} plays',
+  'compare.lastfm.unknown': 'Not on Last.fm',
+  'compare.lastfm.similar': 'Last.fm lists as similar to both',
+  'compare.lastfm.note':
+    'Last.fm counts its own community, not all listeners. Similar means listeners play them alike, not that they worked together.',
+  'compare.lastfm.unavailable': 'Last.fm isn\u2019t reachable right now.',
   'tool.similar.title': 'Similar music',
   'tool.similar.body':
     'Map what listeners play with an artist, a song or your playlist.',

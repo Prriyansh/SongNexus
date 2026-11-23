@@ -177,6 +177,27 @@ SOURCES: tuple[DataSource, ...] = (
         "Answers are cached in memory for a day. Non-commercial use under Deezer's terms.",
     ),
     DataSource(
+        id="lastfm-api",
+        name="Last.fm API",
+        homepage="https://www.last.fm/api",
+        license="Last.fm API Terms of Service",
+        license_url="https://www.last.fm/api/tos",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.API,
+        feeds=(
+            "artist comparisons: Last.fm listeners and plays, and artists Last.fm lists as "
+            "similar to both",
+        ),
+        attribution="Listening data from Last.fm",
+        checked_on="2026-11-23",
+        notes="Only with SONGNEXUS_LASTFM_API_KEY (free). Artists are looked up by MusicBrainz "
+        "ID, never by name; read live when two artists are compared, cached in memory for an "
+        "hour and never stored. Counts are Last.fm's own community, not all listeners, and "
+        "'similar' is listener behaviour, never a collaboration. Non-commercial use only under "
+        "the Last.fm API terms.",
+    ),
+    DataSource(
         id="wikidata",
         name="Wikidata",
         homepage="https://www.wikidata.org",

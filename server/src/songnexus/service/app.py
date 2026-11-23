@@ -57,6 +57,7 @@ from songnexus.service.routes import credits as credits_routes
 from songnexus.service.routes import foryou as foryou_routes
 from songnexus.service.routes import friend_paths as friend_paths_routes
 from songnexus.service.routes import games as games_routes
+from songnexus.service.routes import lastfm as lastfm_routes
 from songnexus.service.routes import maps as maps_routes
 from songnexus.service.routes import recap as recap_routes
 from songnexus.service.routes import sound as sound_routes
@@ -244,6 +245,7 @@ def create_app(settings: Settings | None = None, state: AppState | None = None) 
         ask_routes.router,
         foryou_routes.router,
         maps_routes.router,
+        lastfm_routes.router,
         top_song_routes.router,
     ):
         app.include_router(router)

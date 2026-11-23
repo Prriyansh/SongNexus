@@ -523,3 +523,22 @@
 .analyzed__hit small {
   color: var(--md-on-surface-variant);
 }
+
+/* Compare artists: both on Last.fm. */
+.cx-lastfm {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.cx-lastfm li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cx-card__subtitle {
+  margin: 8px 0;
+  font: var(--label-large);
+}

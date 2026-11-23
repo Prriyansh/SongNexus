@@ -2211,6 +2211,14 @@
             },
             "title": "Sharedgenres",
             "type": "array"
+          },
+          "sharedLabels": {
+            "description": "Labels both artists released on, with the first artist's releases there.",
+            "items": {
+              "$ref": "#/components/schemas/ArtistLabel"
+            },
+            "title": "Sharedlabels",
+            "type": "array"
           }
         },
         "required": [
@@ -2225,6 +2233,7 @@
           "countsB",
           "listening",
           "sharedEvents",
+          "sharedLabels",
           "sharedAwards",
           "graphVersion"
         ],
@@ -2272,6 +2281,49 @@
           "sources"
         ],
         "title": "CompareMap",
+        "type": "object"
+      },
+      "CompareOnLastFm": {
+        "description": "CompareOnLastFm: both artists' Last.fm audience, and who Last.fm finds similar to both.",
+        "properties": {
+          "audienceA": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LastFmAudience"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "audienceB": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LastFmAudience"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "similarToBoth": {
+            "items": {
+              "$ref": "#/components/schemas/LastFmSimilar"
+            },
+            "title": "Similartoboth",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LastFmStatus"
+          }
+        },
+        "required": [
+          "status",
+          "audienceA",
+          "audienceB",
+          "similarToBoth"
+        ],
+        "title": "CompareOnLastFm",
         "type": "object"
       },
       "CompareRecordingsResponse": {
@@ -4466,6 +4518,72 @@
         ],
         "title": "LabelRelease",
         "type": "object"
+      },
+      "LastFmAudience": {
+        "description": "An artist's listeners and plays on Last.fm (its own community, not all listeners).",
+        "properties": {
+          "listeners": {
+            "title": "Listeners",
+            "type": "integer"
+          },
+          "plays": {
+            "title": "Plays",
+            "type": "integer"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "listeners",
+          "plays",
+          "url"
+        ],
+        "title": "LastFmAudience",
+        "type": "object"
+      },
+      "LastFmSimilar": {
+        "description": "An artist Last.fm lists as similar to both: listener behaviour, not a collaboration.",
+        "properties": {
+          "artist": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`artists/{artist}` when in our catalog.",
+            "title": "Artist"
+          },
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "url",
+          "artist"
+        ],
+        "title": "LastFmSimilar",
+        "type": "object"
+      },
+      "LastFmStatus": {
+        "description": "Whether Last.fm could be asked.",
+        "enum": [
+          "OK",
+          "NO_KEY",
+          "UNAVAILABLE"
+        ],
+        "title": "LastFmStatus",
+        "type": "string"
       },
       "LeaderboardPeriod": {
         "description": "One day, or the ISO week (Monday to Sunday) containing the date.",
@@ -9866,6 +9984,60 @@
         "summary": "GetCompareMap",
         "tags": [
           "maps"
+        ]
+      }
+    },
+    "/v1/artists/{artist}:compareOnLastFm": {
+      "get": {
+        "description": "Both artists on Last.fm: listeners, plays, and artists similar to both.",
+        "operationId": "CompareOnLastFm",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "artist",
+            "required": true,
+            "schema": {
+              "title": "Artist",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Resource name of the artist to compare with.",
+            "in": "query",
+            "name": "other",
+            "required": true,
+            "schema": {
+              "description": "Resource name of the artist to compare with.",
+              "title": "Other",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareOnLastFm"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "CompareOnLastFm",
+        "tags": [
+          "catalog"
         ]
       }
     },

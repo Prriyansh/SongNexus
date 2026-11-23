@@ -310,6 +310,26 @@ export function useTopRecording(id: string | undefined) {
   });
 }
 
+/** Both artists on Last.fm, read live by the server (only with a Last.fm key there). */
+export function useCompareOnLastFm(
+  a: string | undefined,
+  b: string | undefined,
+) {
+  return useQuery({
+    queryKey: ['compareOnLastFm', a, b],
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/artists/{artist}:compareOnLastFm', {
+          params: {path: {artist: a!}, query: {other: `artists/${b!}`}},
+        }),
+      ),
+    enabled: Boolean(a && b && a !== b),
+    ...CATALOG_CACHE,
+    staleTime: query =>
+      query.state.data?.status === 'UNAVAILABLE' ? 0 : CATALOG_CACHE.staleTime,
+  });
+}
+
 export function useLabel(id: string | undefined) {
   return useQuery({
     queryKey: ['label', id],

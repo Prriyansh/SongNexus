@@ -7,7 +7,7 @@ import {useState, type CSSProperties} from 'react';
 import {Link, useSearchParams} from 'react-router';
 
 import {idOf, type Schemas} from '../api/client';
-import {useArtist, useCompare} from '../api/queries';
+import {useArtist, useCompare, useCompareOnLastFm} from '../api/queries';
 import {useAmbient} from '../app/ambient';
 import {isFiltered, useGenreSelection} from '../app/genreSelection';
 import {usePageTitle} from '../app/Shell';
@@ -198,6 +198,111 @@ function SharedAwards({data}: {data: Comparison}) {
         ))}
       </ul>
       <p className="cx-card__note">{t('compare.awards.note')}</p>
+    </section>
+  );
+}
+
+/** Labels both released on (Lakadia's "Both released on"); shown only when there are some. */
+function SharedLabels({data}: {data: Comparison}) {
+  const {t} = useI18n();
+  if (data.sharedLabels.length === 0) return null;
+  return (
+    <section className="cx-card" aria-labelledby="cx-labels">
+      <div className="cx-card__head">
+        <h2 id="cx-labels" className="cx-card__title">
+          {t('compare.labels')}
+        </h2>
+        <span className="cx-card__count">{data.sharedLabels.length}</span>
+      </div>
+      <ul className="chips">
+        {data.sharedLabels.slice(0, 12).map(label => (
+          <li key={label.label}>
+            <Link className="chip" to={`/label/${idOf(label.label)}`}>
+              {label.displayName}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Both on Last.fm (Lakadia's artist insights): only with a Last.fm key on the server. */
+function OnLastFm({data}: {data: Comparison}) {
+  const {t, formatNumber} = useI18n();
+  const query = useCompareOnLastFm(
+    idOf(data.artistA.name),
+    idOf(data.artistB.name),
+  );
+  const result = query.data;
+  if (!result || result.status === 'NO_KEY') return null;
+  if (result.status === 'UNAVAILABLE')
+    return (
+      <section className="cx-card" aria-labelledby="cx-lastfm">
+        <h2 id="cx-lastfm" className="cx-card__title">
+          {t('compare.lastfm')}
+        </h2>
+        <p className="cx-card__empty">{t('compare.lastfm.unavailable')}</p>
+      </section>
+    );
+  const sides = [
+    [data.artistA.displayName, result.audienceA],
+    [data.artistB.displayName, result.audienceB],
+  ] as const;
+  if (
+    !result.audienceA &&
+    !result.audienceB &&
+    result.similarToBoth.length === 0
+  )
+    return null;
+  return (
+    <section className="cx-card" aria-labelledby="cx-lastfm">
+      <h2 id="cx-lastfm" className="cx-card__title">
+        {t('compare.lastfm')}
+      </h2>
+      <ul className="cx-lastfm">
+        {sides.map(([name, audience]) => (
+          <li key={name}>
+            <strong>{name}</strong>
+            {audience ? (
+              <a href={audience.url} target="_blank" rel="noreferrer">
+                {t('compare.lastfm.audience', {
+                  listeners: formatNumber(audience.listeners),
+                  plays: formatNumber(audience.plays),
+                })}
+              </a>
+            ) : (
+              <span>{t('compare.lastfm.unknown')}</span>
+            )}
+          </li>
+        ))}
+      </ul>
+      {result.similarToBoth.length > 0 && (
+        <>
+          <h3 className="cx-card__subtitle">{t('compare.lastfm.similar')}</h3>
+          <ul className="chips">
+            {result.similarToBoth.map(s => (
+              <li key={s.url}>
+                {s.artist ? (
+                  <Link className="chip" to={`/artist/${idOf(s.artist)}`}>
+                    {s.displayName}
+                  </Link>
+                ) : (
+                  <a
+                    className="chip"
+                    href={s.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {s.displayName}
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <p className="cx-card__note">{t('compare.lastfm.note')}</p>
     </section>
   );
 }
@@ -647,6 +752,8 @@ export default function CompareScreen() {
           <Genres data={data} />
           <Audience data={data} />
           <SharedAwards data={data} />
+          <SharedLabels data={data} />
+          <OnLastFm data={data} />
           <SharedBills data={data} />
           <HowConnected data={data} />
           <OnTheirOwn data={data} />

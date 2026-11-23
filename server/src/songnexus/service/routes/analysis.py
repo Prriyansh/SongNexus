@@ -220,6 +220,23 @@ def compare_artists(
         shared_events=[
             convert.event_summary(graph, e) for e in shared_events(session, a, b, SHARED_EVENTS)
         ],
+        shared_labels=_shared_labels(session, a, b),
         shared_awards=convert.shared_awards(facts.get(a), facts.get(b)),
         graph_version=model.version,
     )
+
+
+def _shared_labels(session: Session, a: str, b: str) -> list[api.ArtistLabel]:
+    """Labels both artists released on, as the first artist's label list orders them."""
+    theirs = {lb.label_id for lb in repo.artist_labels(session, b)}
+    return [
+        api.ArtistLabel(
+            label=f"labels/{lb.label_id}",
+            display_name=lb.name,
+            release_count=lb.release_count,
+            first_year=lb.first_year,
+            last_year=lb.last_year,
+        )
+        for lb in repo.artist_labels(session, a)
+        if lb.label_id in theirs
+    ]
