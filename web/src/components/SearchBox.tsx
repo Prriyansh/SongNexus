@@ -7,12 +7,22 @@
  * (or the sparkle button) shows an answer from our data in a panel under the
  * bar. Focus stays in the input throughout; Escape closes the panel.
  */
-import {useDeferredValue, useEffect, useId, useRef, useState} from 'react';
+import {
+  useDeferredValue,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {readsLikeQuestion, useAsk, answerText} from '../api/ask';
 import {idOf, type Schemas} from '../api/client';
 import {useConfig, useSearch} from '../api/queries';
 import {useI18n} from '../i18n/i18n';
+import {usePicks} from '../taste/picks';
+import {rankByTaste} from '../taste/searchRanking';
+import {useSetup} from '../taste/setup';
 
 import {Avatar, imageOf} from './ArtistRow';
 import {AskAnswer, useListFormat, type AskState} from './AskAnswer';
@@ -78,7 +88,14 @@ export function SearchBox({
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const askToken = useRef(0);
-  const results = deferred.trim() ? (search.data?.results ?? []) : [];
+  const picks = usePicks();
+  const {songs} = useSetup();
+  const raw = deferred.trim() ? search.data?.results : undefined;
+  // Your saved music first, among results that match equally well (Helen's ranking).
+  const results = useMemo(
+    () => (raw ? rankByTaste(raw, picks, songs) : []),
+    [raw, picks, songs],
+  );
   const offerAsk = askEnabled && readsLikeQuestion(deferred);
   const options: Option[] = [
     ...(offerAsk ? [{kind: 'ask'} as const] : []),
