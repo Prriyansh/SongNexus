@@ -28,6 +28,7 @@ import {useI18n} from '../i18n/i18n';
 import type {MessageId} from '../i18n/messages';
 import {MOODS, Meter, percent, useDescribe} from '../songs/Descriptors';
 import {ShareButton} from '../social/ShareSheet';
+import {AnalyzedPicker} from '../songs/AnalyzedPicker';
 import {SoundLyrics} from '../songs/SoundLyrics';
 
 const KNOWN_ROLES = new Set([
@@ -310,6 +311,9 @@ export default function SongCompareScreen() {
         )}
       </section>
 
+      {(!a || !b) && (
+        <AnalyzedPicker onPick={id => set(a ? {b: id} : {a: id})} />
+      )}
       {(!a || !b) && (
         <Moment
           icon="note"

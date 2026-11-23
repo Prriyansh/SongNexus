@@ -110,6 +110,23 @@ class SoundComparison(ApiModel):
     reasons: list[str] = Field(description="Plain-language reasons, most telling first.")
 
 
+class SoundSearchHit(ApiModel):
+    """A song in the sound dataset that our catalog also has."""
+
+    recording: str = Field(description="`recordings/{id}`, matched without guessing.")
+    title: str
+    artists: list[str]
+    genre: str | None = None
+    has_lyrics: bool = Field(description="Whether the lyrics analysis covers it too.")
+
+
+class SearchSoundResponse(ApiModel):
+    """SearchSound: songs with the full sound (and usually lyrics) analysis, for song pickers."""
+
+    status: SoundStatus = Field(description="OK, or UNAVAILABLE when the service isn't reachable.")
+    results: list[SoundSearchHit] = Field(default_factory=list)
+
+
 class SimilarSong(ApiModel):
     """A song from the dataset that sounds like one of the two."""
 

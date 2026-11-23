@@ -7005,6 +7005,28 @@
         "title": "SearchResult",
         "type": "object"
       },
+      "SearchSoundResponse": {
+        "description": "SearchSound: songs with the full sound (and usually lyrics) analysis, for song pickers.",
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SoundSearchHit"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SoundStatus",
+            "description": "OK, or UNAVAILABLE when the service isn't reachable."
+          }
+        },
+        "required": [
+          "status",
+          "results"
+        ],
+        "title": "SearchSoundResponse",
+        "type": "object"
+      },
       "SeedKind": {
         "description": "Why the artist a reason names is part of the listener's taste.",
         "enum": [
@@ -7692,6 +7714,52 @@
         ],
         "title": "SoundFeature",
         "type": "string"
+      },
+      "SoundSearchHit": {
+        "description": "A song in the sound dataset that our catalog also has.",
+        "properties": {
+          "artists": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Artists",
+            "type": "array"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "hasLyrics": {
+            "description": "Whether the lyrics analysis covers it too.",
+            "title": "Haslyrics",
+            "type": "boolean"
+          },
+          "recording": {
+            "description": "`recordings/{id}`, matched without guessing.",
+            "title": "Recording",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recording",
+          "title",
+          "artists",
+          "genre",
+          "hasLyrics"
+        ],
+        "title": "SoundSearchHit",
+        "type": "object"
       },
       "SoundStatus": {
         "description": "Whether the sound & lyrics comparison could be made.",
@@ -11956,6 +12024,65 @@
         "summary": "ListShelves",
         "tags": [
           "browse"
+        ]
+      }
+    },
+    "/v1/sound:search": {
+      "get": {
+        "description": "Songs with the full sound analysis (and usually lyrics) that our catalog also has.\n\nFor the song pickers: each dataset song is linked to our catalog by title and an\nunambiguous artist, never guessed; songs we can't link are left out.",
+        "operationId": "SearchSound",
+        "parameters": [
+          {
+            "description": "Title or artist.",
+            "in": "query",
+            "name": "query",
+            "required": true,
+            "schema": {
+              "description": "Title or artist.",
+              "maxLength": 200,
+              "minLength": 2,
+              "title": "Query",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 25,
+              "minimum": 1,
+              "title": "Pagesize",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchSoundResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "SearchSound",
+        "tags": [
+          "catalog"
         ]
       }
     },

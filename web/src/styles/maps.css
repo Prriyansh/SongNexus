@@ -481,3 +481,45 @@
   gap: 12px;
   margin-bottom: 12px;
 }
+
+/* Compare songs: pickers that offer songs with the full sound analysis. */
+.analyzed {
+  margin-bottom: 16px;
+}
+.analyzed .cx-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.analyzed__search {
+  max-width: 520px;
+}
+.analyzed__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.analyzed__hit {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 14px;
+  background: var(--md-surface-container);
+  color: var(--md-on-surface);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.analyzed__hit:hover,
+.analyzed__hit:focus-visible {
+  border-color: var(--md-primary);
+}
+.analyzed__hit span,
+.analyzed__hit small {
+  color: var(--md-on-surface-variant);
+}

@@ -1085,6 +1085,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sound:search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SearchSound
+         * @description Songs with the full sound analysis (and usually lyrics) that our catalog also has.
+         *
+         *     For the song pickers: each dataset song is linked to our catalog by title and an
+         *     unambiguous artist, never guessed; songs we can't link are left out.
+         */
+        get: operations["SearchSound"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/stories": {
         parameters: {
             query?: never;
@@ -5289,6 +5312,16 @@ export interface components {
             subtitle: string;
         };
         /**
+         * SearchSoundResponse
+         * @description SearchSound: songs with the full sound (and usually lyrics) analysis, for song pickers.
+         */
+        SearchSoundResponse: {
+            /** Results */
+            results: components["schemas"]["SoundSearchHit"][];
+            /** @description OK, or UNAVAILABLE when the service isn't reachable. */
+            status: components["schemas"]["SoundStatus"];
+        };
+        /**
          * SeedKind
          * @description Why the artist a reason names is part of the listener's taste.
          * @enum {string}
@@ -5630,6 +5663,28 @@ export interface components {
          * @enum {string}
          */
         SoundFeature: "ENERGY" | "DANCEABILITY" | "VALENCE" | "ACOUSTICNESS" | "SPEECHINESS" | "LIVENESS" | "INSTRUMENTALNESS";
+        /**
+         * SoundSearchHit
+         * @description A song in the sound dataset that our catalog also has.
+         */
+        SoundSearchHit: {
+            /** Artists */
+            artists: string[];
+            /** Genre */
+            genre: string | null;
+            /**
+             * Haslyrics
+             * @description Whether the lyrics analysis covers it too.
+             */
+            hasLyrics: boolean;
+            /**
+             * Recording
+             * @description `recordings/{id}`, matched without guessing.
+             */
+            recording: string;
+            /** Title */
+            title: string;
+        };
         /**
          * SoundStatus
          * @description Whether the sound & lyrics comparison could be made.
@@ -7999,6 +8054,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListShelvesResponse"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    SearchSound: {
+        parameters: {
+            query: {
+                /** @description Title or artist. */
+                query: string;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchSoundResponse"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */

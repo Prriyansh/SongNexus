@@ -132,6 +132,7 @@ class FakeService:
             "/api/compare": COMPARISON,
             "/api/similar/sp-1": {"results": SIMILAR_TO_SONG},
             "/api/similar/sp-2": {"results": []},
+            "/api/search": {"results": SIMILAR_TO_SONG},
         }
         return httpx.Response(200, json=fixed[path]) if path in fixed else httpx.Response(500)
 
@@ -285,3 +286,19 @@ def test_bad_requests_are_rejected(client: TestClient) -> None:
         f"/v1/{SONG}:compareSound", params={"other": "recordings/0000000000000000000000"}
     )
     assert unknown.status_code in (400, 404)
+
+
+def test_song_pickers_offer_dataset_songs_we_have(client: TestClient) -> None:
+    body = client.get("/v1/sound:search", params={"query": "song"}).json()
+    assert body["status"] == "OK"
+    # Elsewhere by Nobody is in the dataset but not in our catalog, so it is left out.
+    assert body["results"] == [
+        {
+            "recording": OTHER_SONG,
+            "title": "Other Song",
+            "artists": ["Alice"],
+            "genre": "indie-pop",
+            "hasLyrics": True,
+        }
+    ]
+    assert client.get("/v1/sound:search", params={"query": "x"}).status_code == 400

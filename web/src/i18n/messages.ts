@@ -1936,6 +1936,17 @@ export const messages = {
     'Put your playlist and a friend’s on one map: what only you play, what you share, and what each of you should try. Join with a six-character code; no account needed.',
   'friends.maps.start': 'Compare with a friend',
   'friends.maps.mine': 'Map my playlist',
+  'songCompare.analyzed.title': 'Songs with the full analysis',
+  'songCompare.analyzed.lead':
+    'These songs are in the sound and lyrics dataset, so the comparison can show how they sound and what their lyrics are about. Pick one to fill the next side.',
+  'songCompare.analyzed.label': 'Search songs with the full analysis',
+  'songCompare.analyzed.placeholder': 'Search by title or artist',
+  'songCompare.analyzed.full': 'Sound and lyrics',
+  'songCompare.analyzed.sound': 'Sound only',
+  'songCompare.analyzed.none':
+    'None of the matching songs are in our catalog yet.',
+  'songCompare.analyzed.unavailable':
+    'The sound analysis isn’t reachable right now.',
   // <maps> Similar music: the Connection Web's map modes (artist, song, playlist, friend).
   'map.overline': 'Similar music',
   'map.heading': 'Map what sounds alike',

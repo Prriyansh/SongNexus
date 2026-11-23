@@ -95,3 +95,25 @@ def compare_recording_sound(
     else:
         set_cache_control(response, who)
     return result
+
+
+@router.get("/sound:search", response_model=api.SearchSoundResponse, summary="SearchSound")
+def search_sound(
+    model: Annotated[ReadModel, Depends(read_model)],
+    who: Annotated[Viewer, Depends(viewer)],
+    client: Annotated[SoundCompareClient, Depends(sound_client)],
+    response: Response,
+    query: Annotated[str, Query(min_length=2, max_length=200, description="Title or artist.")],
+    page_size: Annotated[int, Query(alias="pageSize", ge=1, le=25)] = 10,
+) -> api.SearchSoundResponse:
+    """Songs with the full sound analysis (and usually lyrics) that our catalog also has.
+
+    For the song pickers: each dataset song is linked to our catalog by title and an
+    unambiguous artist, never guessed; songs we can't link are left out.
+    """
+    result = client.search(model, query.strip(), page_size)
+    if result.status is api.SoundStatus.UNAVAILABLE:
+        response.headers["Cache-Control"] = "no-store"
+    else:
+        set_cache_control(response, who)
+    return result
