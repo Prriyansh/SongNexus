@@ -781,6 +781,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/recordings/{recording}:compareSound": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * CompareRecordingSound
+         * @description Compares two songs' sound and lyrics, from the song_compare dataset.
+         *
+         *     Each song is matched to the dataset by title and first primary artist; a song it lacks is
+         *     listed in `missing` (NOT_FOUND). The similarity blends sound and lyrics and comes with
+         *     plain-language reasons. Similar songs link to our catalog only when matched unambiguously.
+         */
+        get: operations["CompareRecordingSound"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/reports": {
         parameters: {
             query?: never;
@@ -2701,6 +2725,28 @@ export interface components {
             similarity: number | null;
         };
         /**
+         * CompareSoundResponse
+         * @description CompareRecordingSound.
+         */
+        CompareSoundResponse: {
+            comparison: components["schemas"]["SoundComparison"] | null;
+            /**
+             * Missing
+             * @description For NOT_FOUND: which songs (`recordings/{id}`) the dataset lacks.
+             */
+            missing: string[];
+            /** Similara */
+            similarA: components["schemas"]["SimilarSong"][];
+            /** Similarb */
+            similarB: components["schemas"]["SimilarSong"][];
+            /**
+             * Sources
+             * @description Data sources behind the analysis, `dataSources/{source}`.
+             */
+            sources: string[];
+            status: components["schemas"]["SoundStatus"];
+        };
+        /**
          * ComputeTasteProfileRequest
          * @description ComputeTasteProfile: the artists to profile (e.g. matched from a playlist on the device).
          */
@@ -3061,6 +3107,15 @@ export interface components {
             toArtist: string;
             /** Torole */
             toRole: string;
+        };
+        /**
+         * FeatureValue
+         * @description One audio feature of a song.
+         */
+        FeatureValue: {
+            feature: components["schemas"]["SoundFeature"];
+            /** Value */
+            value: number;
         };
         /**
          * FeaturedArtistsResponse
@@ -4034,6 +4089,59 @@ export interface components {
          */
         ListeningProvider: "LISTENBRAINZ" | "LASTFM" | "LIBREFM" | "SPOTIFY" | "DEEZER" | "APPLE_MUSIC" | "YOUTUBE_MUSIC";
         /**
+         * LyricProfile
+         * @description What a song's lyrics are about, computed from them.
+         */
+        LyricProfile: {
+            /**
+             * Sentiment
+             * @description Compound sentiment, -1 to 1.
+             */
+            sentiment: number;
+            structure: components["schemas"]["LyricStructure"];
+            /** Topemotion */
+            topEmotion: string;
+            /** Topthemes */
+            topThemes: string[];
+        };
+        /**
+         * LyricSimilarity
+         * @description How alike two songs' lyrics are, by part (each 0–1).
+         */
+        LyricSimilarity: {
+            /** Meaning */
+            meaning: number;
+            /** Score */
+            score: number;
+            /** Sentiment */
+            sentiment: number;
+            /** Sharedthemes */
+            sharedThemes: string[];
+            /** Sharedwords */
+            sharedWords: number;
+            /** Themes */
+            themes: number;
+        };
+        /**
+         * LyricStructure
+         * @description Counts from a song's lyrics (the lyrics themselves are never sent).
+         */
+        LyricStructure: {
+            /** Bridges */
+            bridges: number;
+            /** Choruses */
+            choruses: number;
+            /**
+             * Repetition
+             * @description Share of lines that repeat.
+             */
+            repetition: number;
+            /** Verses */
+            verses: number;
+            /** Words */
+            words: number;
+        };
+        /**
          * MarkAllReadResponse
          * @description MarkInboxRead: how many shares were marked read.
          */
@@ -4804,6 +4912,27 @@ export interface components {
             year: number | null;
         };
         /**
+         * SimilarSong
+         * @description A song from the dataset that sounds like one of the two.
+         */
+        SimilarSong: {
+            /** Artists */
+            artists: string[];
+            /** Genre */
+            genre: string | null;
+            /**
+             * Recording
+             * @description `recordings/{id}` when the song is in our catalog, so it can be opened; matched by title and an unambiguous artist, never guessed.
+             */
+            recording: string | null;
+            /** Sharesartist */
+            sharesArtist: boolean;
+            /** Similarity */
+            similarity: number;
+            /** Title */
+            title: string;
+        };
+        /**
          * SimilarityPart
          * @description One named part of the similarity score.
          */
@@ -4849,11 +4978,93 @@ export interface components {
             shareTopArtists: boolean;
         };
         /**
+         * SoundComparison
+         * @description The comparison: an explained similarity, both songs' profiles, and why.
+         */
+        SoundComparison: {
+            lyricSimilarity: components["schemas"]["LyricSimilarity"] | null;
+            /**
+             * Reasons
+             * @description Plain-language reasons, most telling first.
+             */
+            reasons: string[];
+            /**
+             * Similarity
+             * @description 0–1: sound and lyric similarity blended (sound alone without lyrics).
+             */
+            similarity: number;
+            /** Soundsimilarity */
+            soundSimilarity: number;
+            structure: components["schemas"]["SoundStructure"];
+            trackA: components["schemas"]["SoundTrack"];
+            trackB: components["schemas"]["SoundTrack"];
+        };
+        /**
+         * SoundFeature
+         * @description An audio feature on a 0–1 scale, as the dataset measures it.
+         * @enum {string}
+         */
+        SoundFeature: "ENERGY" | "DANCEABILITY" | "VALENCE" | "ACOUSTICNESS" | "SPEECHINESS" | "LIVENESS" | "INSTRUMENTALNESS";
+        /**
+         * SoundStatus
+         * @description Whether the sound & lyrics comparison could be made.
+         * @enum {string}
+         */
+        SoundStatus: "OK" | "NOT_FOUND" | "SAME_TRACK" | "UNAVAILABLE";
+        /**
+         * SoundStructure
+         * @description Tempo and key side by side.
+         */
+        SoundStructure: {
+            /**
+             * Halfordoubletime
+             * @description The tempos line up in half or double time.
+             */
+            halfOrDoubleTime: boolean;
+            /**
+             * Keyrelation
+             * @description How the keys relate, e.g. `same key`, `relative major/minor`, `unknown`.
+             */
+            keyRelation: string;
+        };
+        /**
+         * SoundTrack
+         * @description A song as the sound dataset knows it.
+         */
+        SoundTrack: {
+            /** Album */
+            album: string | null;
+            /** Artists */
+            artists: string[];
+            /** Durationms */
+            durationMs: number;
+            /** Features */
+            features: components["schemas"]["FeatureValue"][];
+            /** Genre */
+            genre: string | null;
+            /**
+             * Key
+             * @description Key name, e.g. `F# minor`; `Unknown` when not detected.
+             */
+            key: string;
+            /** @description Null when the dataset has no lyrics for the song. */
+            lyrics: components["schemas"]["LyricProfile"] | null;
+            /** Tempobpm */
+            tempoBpm: number;
+            /**
+             * Timesignature
+             * @description Beats per bar.
+             */
+            timeSignature: number | null;
+            /** Title */
+            title: string;
+        };
+        /**
          * SourceKind
          * @description How the data is obtained.
          * @enum {string}
          */
-        SourceKind: "API" | "DATA_DUMP" | "DATASET" | "USER_ACCOUNT";
+        SourceKind: "API" | "DATA_DUMP" | "DATASET" | "USER_ACCOUNT" | "SERVICE";
         /**
          * SourceLink
          * @description A page where a person can check a fact.
@@ -6588,6 +6799,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompareRecordingsResponse"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CompareRecordingSound: {
+        parameters: {
+            query: {
+                /** @description Resource name of the recording to compare with. */
+                other: string;
+            };
+            header?: never;
+            path: {
+                recording: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareSoundResponse"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */

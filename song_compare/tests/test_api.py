@@ -45,7 +45,7 @@ def test_standalone_page_and_assets_are_served(client):
     assert response.status_code == 200 and response.mimetype == "text/html"
     page = response.get_data(as_text=True)
     assert "Hear the difference." in page
-    assert 'data-nexus="/about"' in page and 'data-nexus="/compare/artists"' in page
+    assert 'data-nexus="/"' in page and 'data-nexus="/compare/songs"' in page
     for path in ("/index.html", "/app.js", "/style.css"):
         assert client.get(path).status_code == 200, path
     for name in ("styles.css", "product.css", "integration.css"):
@@ -62,7 +62,7 @@ def test_only_shared_stylesheets_are_exposed(client):
 def test_sidebar_links_use_the_main_app_address(client, monkeypatch):
     response = client.get("/config.js")
     assert response.mimetype == "text/javascript"
-    assert "http://localhost:3000" in response.get_data(as_text=True)
+    assert "http://localhost:5173" in response.get_data(as_text=True)
     monkeypatch.setenv("NEXUS_URL", "https://nexus.example/")
     assert client.get("/config.js").get_data(as_text=True) == 'window.NEXUS_URL = "https://nexus.example";\n'
 

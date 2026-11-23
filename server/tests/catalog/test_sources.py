@@ -40,8 +40,17 @@ def test_every_source_states_its_license_and_purpose(source: sources.DataSource)
 def test_evaluation_sources_are_never_storable() -> None:
     storable = {s.id for s in sources.catalog_sources()}
     for source in SOURCES:
-        if source.tier is Tier.EVALUATION or source.kind is Kind.USER_ACCOUNT:
+        if source.tier is Tier.EVALUATION or source.kind in (Kind.USER_ACCOUNT, Kind.SERVICE):
             assert source.id not in storable
+
+
+def test_the_sound_and_lyrics_datasets_are_served_live_and_never_stored() -> None:
+    for source_id in ("kaggle-spotify-tracks", "genius-lyrics-dataset"):
+        source = sources.BY_ID[source_id]
+        assert source.kind is Kind.SERVICE
+        assert source.tier is Tier.NON_COMMERCIAL  # dropped by ID for a commercial launch
+        with pytest.raises(UnregisteredSourceError):
+            registered_source_rows([source_id])
 
 
 def test_ingest_registers_only_in_use_catalog_sources() -> None:

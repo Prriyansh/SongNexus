@@ -246,6 +246,29 @@ export function useRecordingComparison(
   });
 }
 
+/**
+ * How two songs compare in sound and lyrics (the song_compare service). A missing or
+ * sleeping service is a status (UNAVAILABLE), not an error, and is asked again next time.
+ */
+export function useRecordingSound(
+  a: string | undefined,
+  b: string | undefined,
+) {
+  return useQuery({
+    queryKey: ['recordingSound', a, b],
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/recordings/{recording}:compareSound', {
+          params: {path: {recording: a!}, query: {other: `recordings/${b!}`}},
+        }),
+      ),
+    enabled: Boolean(a && b && a !== b),
+    ...CATALOG_CACHE,
+    staleTime: query =>
+      query.state.data?.status === 'UNAVAILABLE' ? 0 : CATALOG_CACHE.staleTime,
+  });
+}
+
 export function useLabel(id: string | undefined) {
   return useQuery({
     queryKey: ['label', id],

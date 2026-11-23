@@ -1,7 +1,8 @@
 /**
  * Compare songs (R2-4, S1), head to head: two covers facing each other with
- * how alike they sound in the middle, the explained parts of that number, the
- * structure side by side, and the people who worked on both (and on only one).
+ * how alike they sound in the middle, the sound and lyrics analysis (song_compare),
+ * the explained parts of the AcousticBrainz similarity, the structure side by
+ * side, and the people who worked on both (and on only one).
  */
 import type {CSSProperties} from 'react';
 import {Link, useSearchParams} from 'react-router';
@@ -27,6 +28,7 @@ import {useI18n} from '../i18n/i18n';
 import type {MessageId} from '../i18n/messages';
 import {MOODS, Meter, percent, useDescribe} from '../songs/Descriptors';
 import {ShareButton} from '../social/ShareSheet';
+import {SoundLyrics} from '../songs/SoundLyrics';
 
 const KNOWN_ROLES = new Set([
   'primary',
@@ -333,8 +335,16 @@ export default function SongCompareScreen() {
           onRetry={() => void result.refetch()}
         />
       )}
-      {data && (
+      {data && a && b && (
         <div className="cx-board">
+          <SoundLyrics
+            a={a}
+            b={b}
+            names={{
+              [data.recordingA.name]: data.recordingA.displayName,
+              [data.recordingB.name]: data.recordingB.displayName,
+            }}
+          />
           <section className="cx-card" aria-labelledby="cx-similarity">
             <div className="cx-card__head">
               <h2 id="cx-similarity" className="cx-card__title">

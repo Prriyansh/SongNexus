@@ -2101,6 +2101,64 @@
         "title": "CompareRecordingsResponse",
         "type": "object"
       },
+      "CompareSoundResponse": {
+        "description": "CompareRecordingSound.",
+        "properties": {
+          "comparison": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoundComparison"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "missing": {
+            "description": "For NOT_FOUND: which songs (`recordings/{id}`) the dataset lacks.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "similarA": {
+            "items": {
+              "$ref": "#/components/schemas/SimilarSong"
+            },
+            "title": "Similara",
+            "type": "array"
+          },
+          "similarB": {
+            "items": {
+              "$ref": "#/components/schemas/SimilarSong"
+            },
+            "title": "Similarb",
+            "type": "array"
+          },
+          "sources": {
+            "description": "Data sources behind the analysis, `dataSources/{source}`.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SoundStatus"
+          }
+        },
+        "required": [
+          "status",
+          "comparison",
+          "similarA",
+          "similarB",
+          "missing",
+          "sources"
+        ],
+        "title": "CompareSoundResponse",
+        "type": "object"
+      },
       "ComputeTasteProfileRequest": {
         "description": "ComputeTasteProfile: the artists to profile (e.g. matched from a playlist on the device).",
         "properties": {
@@ -2808,6 +2866,26 @@
           "sources"
         ],
         "title": "Evidence",
+        "type": "object"
+      },
+      "FeatureValue": {
+        "description": "One audio feature of a song.",
+        "properties": {
+          "feature": {
+            "$ref": "#/components/schemas/SoundFeature"
+          },
+          "value": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "feature",
+          "value"
+        ],
+        "title": "FeatureValue",
         "type": "object"
       },
       "FeaturedArtistsResponse": {
@@ -4772,6 +4850,119 @@
         "title": "ListeningProvider",
         "type": "string"
       },
+      "LyricProfile": {
+        "description": "What a song's lyrics are about, computed from them.",
+        "properties": {
+          "sentiment": {
+            "description": "Compound sentiment, -1 to 1.",
+            "maximum": 1.0,
+            "minimum": -1.0,
+            "title": "Sentiment",
+            "type": "number"
+          },
+          "structure": {
+            "$ref": "#/components/schemas/LyricStructure"
+          },
+          "topEmotion": {
+            "title": "Topemotion",
+            "type": "string"
+          },
+          "topThemes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Topthemes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "topEmotion",
+          "sentiment",
+          "topThemes",
+          "structure"
+        ],
+        "title": "LyricProfile",
+        "type": "object"
+      },
+      "LyricSimilarity": {
+        "description": "How alike two songs' lyrics are, by part (each 0–1).",
+        "properties": {
+          "meaning": {
+            "title": "Meaning",
+            "type": "number"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "sentiment": {
+            "title": "Sentiment",
+            "type": "number"
+          },
+          "sharedThemes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sharedthemes",
+            "type": "array"
+          },
+          "sharedWords": {
+            "title": "Sharedwords",
+            "type": "number"
+          },
+          "themes": {
+            "title": "Themes",
+            "type": "number"
+          }
+        },
+        "required": [
+          "score",
+          "meaning",
+          "sharedWords",
+          "themes",
+          "sentiment",
+          "sharedThemes"
+        ],
+        "title": "LyricSimilarity",
+        "type": "object"
+      },
+      "LyricStructure": {
+        "description": "Counts from a song's lyrics (the lyrics themselves are never sent).",
+        "properties": {
+          "bridges": {
+            "title": "Bridges",
+            "type": "integer"
+          },
+          "choruses": {
+            "title": "Choruses",
+            "type": "integer"
+          },
+          "repetition": {
+            "description": "Share of lines that repeat.",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Repetition",
+            "type": "number"
+          },
+          "verses": {
+            "title": "Verses",
+            "type": "integer"
+          },
+          "words": {
+            "title": "Words",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "verses",
+          "choruses",
+          "bridges",
+          "words",
+          "repetition"
+        ],
+        "title": "LyricStructure",
+        "type": "object"
+      },
       "MarkAllReadResponse": {
         "description": "MarkInboxRead: how many shares were marked read.",
         "properties": {
@@ -6350,6 +6541,63 @@
         "title": "ShelfRecording",
         "type": "object"
       },
+      "SimilarSong": {
+        "description": "A song from the dataset that sounds like one of the two.",
+        "properties": {
+          "artists": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Artists",
+            "type": "array"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "recording": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`recordings/{id}` when the song is in our catalog, so it can be opened; matched by title and an unambiguous artist, never guessed.",
+            "title": "Recording"
+          },
+          "sharesArtist": {
+            "title": "Sharesartist",
+            "type": "boolean"
+          },
+          "similarity": {
+            "title": "Similarity",
+            "type": "number"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "artists",
+          "genre",
+          "similarity",
+          "sharesArtist",
+          "recording"
+        ],
+        "title": "SimilarSong",
+        "type": "object"
+      },
       "SimilarityPart": {
         "description": "One named part of the similarity score.",
         "properties": {
@@ -6411,13 +6659,207 @@
         "title": "SocialProfile",
         "type": "object"
       },
+      "SoundComparison": {
+        "description": "The comparison: an explained similarity, both songs' profiles, and why.",
+        "properties": {
+          "lyricSimilarity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LyricSimilarity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reasons": {
+            "description": "Plain-language reasons, most telling first.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "similarity": {
+            "description": "0–1: sound and lyric similarity blended (sound alone without lyrics).",
+            "title": "Similarity",
+            "type": "number"
+          },
+          "soundSimilarity": {
+            "title": "Soundsimilarity",
+            "type": "number"
+          },
+          "structure": {
+            "$ref": "#/components/schemas/SoundStructure"
+          },
+          "trackA": {
+            "$ref": "#/components/schemas/SoundTrack"
+          },
+          "trackB": {
+            "$ref": "#/components/schemas/SoundTrack"
+          }
+        },
+        "required": [
+          "trackA",
+          "trackB",
+          "similarity",
+          "soundSimilarity",
+          "lyricSimilarity",
+          "structure",
+          "reasons"
+        ],
+        "title": "SoundComparison",
+        "type": "object"
+      },
+      "SoundFeature": {
+        "description": "An audio feature on a 0–1 scale, as the dataset measures it.",
+        "enum": [
+          "ENERGY",
+          "DANCEABILITY",
+          "VALENCE",
+          "ACOUSTICNESS",
+          "SPEECHINESS",
+          "LIVENESS",
+          "INSTRUMENTALNESS"
+        ],
+        "title": "SoundFeature",
+        "type": "string"
+      },
+      "SoundStatus": {
+        "description": "Whether the sound & lyrics comparison could be made.",
+        "enum": [
+          "OK",
+          "NOT_FOUND",
+          "SAME_TRACK",
+          "UNAVAILABLE"
+        ],
+        "title": "SoundStatus",
+        "type": "string"
+      },
+      "SoundStructure": {
+        "description": "Tempo and key side by side.",
+        "properties": {
+          "halfOrDoubleTime": {
+            "description": "The tempos line up in half or double time.",
+            "title": "Halfordoubletime",
+            "type": "boolean"
+          },
+          "keyRelation": {
+            "description": "How the keys relate, e.g. `same key`, `relative major/minor`, `unknown`.",
+            "title": "Keyrelation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "halfOrDoubleTime",
+          "keyRelation"
+        ],
+        "title": "SoundStructure",
+        "type": "object"
+      },
+      "SoundTrack": {
+        "description": "A song as the sound dataset knows it.",
+        "properties": {
+          "album": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album"
+          },
+          "artists": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Artists",
+            "type": "array"
+          },
+          "durationMs": {
+            "title": "Durationms",
+            "type": "integer"
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureValue"
+            },
+            "title": "Features",
+            "type": "array"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "key": {
+            "description": "Key name, e.g. `F# minor`; `Unknown` when not detected.",
+            "title": "Key",
+            "type": "string"
+          },
+          "lyrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LyricProfile"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when the dataset has no lyrics for the song."
+          },
+          "tempoBpm": {
+            "title": "Tempobpm",
+            "type": "number"
+          },
+          "timeSignature": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Beats per bar.",
+            "title": "Timesignature"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "artists",
+          "album",
+          "genre",
+          "tempoBpm",
+          "key",
+          "timeSignature",
+          "durationMs",
+          "features",
+          "lyrics"
+        ],
+        "title": "SoundTrack",
+        "type": "object"
+      },
       "SourceKind": {
         "description": "How the data is obtained.",
         "enum": [
           "API",
           "DATA_DUMP",
           "DATASET",
-          "USER_ACCOUNT"
+          "USER_ACCOUNT",
+          "SERVICE"
         ],
         "title": "SourceKind",
         "type": "string"
@@ -9671,6 +10113,60 @@
           }
         },
         "summary": "CompareRecordings",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/v1/recordings/{recording}:compareSound": {
+      "get": {
+        "description": "Compares two songs' sound and lyrics, from the song_compare dataset.\n\nEach song is matched to the dataset by title and first primary artist; a song it lacks is\nlisted in `missing` (NOT_FOUND). The similarity blends sound and lyrics and comes with\nplain-language reasons. Similar songs link to our catalog only when matched unambiguously.",
+        "operationId": "CompareRecordingSound",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recording",
+            "required": true,
+            "schema": {
+              "title": "Recording",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Resource name of the recording to compare with.",
+            "in": "query",
+            "name": "other",
+            "required": true,
+            "schema": {
+              "description": "Resource name of the recording to compare with.",
+              "title": "Other",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareSoundResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "CompareRecordingSound",
         "tags": [
           "catalog"
         ]

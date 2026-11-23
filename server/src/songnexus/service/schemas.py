@@ -732,6 +732,7 @@ class SourceKind(enum.StrEnum):
     DATA_DUMP = "DATA_DUMP"
     DATASET = "DATASET"
     USER_ACCOUNT = "USER_ACCOUNT"
+    SERVICE = "SERVICE"
 
 
 class DataSource(ApiModel):

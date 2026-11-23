@@ -53,6 +53,7 @@ from songnexus.service.routes import foryou as foryou_routes
 from songnexus.service.routes import friend_paths as friend_paths_routes
 from songnexus.service.routes import games as games_routes
 from songnexus.service.routes import recap as recap_routes
+from songnexus.service.routes import sound as sound_routes
 from songnexus.service.schemas import ErrorResponse
 from songnexus.service.sync_job import run_sync
 from songnexus.storage.db import make_engine
@@ -212,6 +213,7 @@ def create_app(settings: Settings | None = None, state: AppState | None = None) 
     install_error_handlers(app)
     app.include_router(ops.router)
     app.include_router(catalog.router)
+    app.include_router(sound_routes.router)
     app.include_router(analysis.router)
     app.include_router(playlists.router)
     app.include_router(play.router)

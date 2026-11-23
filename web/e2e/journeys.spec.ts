@@ -243,7 +243,14 @@ test('a song page shows its sound and compares with another song (R2-4)', async 
     .first()
     .click();
   await expect(
-    page.getByRole('heading', {name: 'How alike they sound'}),
+    page.getByRole('heading', {name: 'Measured by AcousticBrainz'}),
+  ).toBeVisible();
+  // CI runs no song_compare service: the section says so and the rest still shows.
+  await expect(
+    page.getByRole('heading', {name: 'Sound and lyrics'}),
+  ).toBeVisible();
+  await expect(
+    page.getByText('The sound and lyrics analysis isn’t available right now.'),
   ).toBeVisible();
   await expect(
     page.getByRole('heading', {name: 'Who worked on both'}),

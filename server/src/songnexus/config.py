@@ -119,6 +119,12 @@ class Settings(BaseSettings):
     llm_base_url: str = ""
     llm_timeout_s: float = 4.0
 
+    # Sound & lyrics comparison of two songs (the song_compare service in song_compare/).
+    # Empty: song comparisons say the analysis isn't available. Hosted as a serverless function,
+    # its first request after a quiet spell loads its catalog, so the timeout is generous.
+    song_compare_url: str = ""
+    song_compare_timeout_s: float = 20.0
+
     @property
     def local_token_key_path(self) -> Path:
         """Development only: where a generated token key is kept (git-ignored)."""

@@ -40,6 +40,9 @@ class Kind(enum.StrEnum):
     DATA_DUMP = "DATA_DUMP"
     DATASET = "DATASET"  # a published research or Kaggle dataset
     USER_ACCOUNT = "USER_ACCOUNT"  # a listener's own data, through a linked account or export
+    # Analysis computed live by a companion service (song_compare) from a dataset it holds;
+    # results are shown with the source, never stored in the catalog.
+    SERVICE = "SERVICE"
 
 
 @dataclass(frozen=True)
@@ -238,24 +241,45 @@ SOURCES: tuple[DataSource, ...] = (
         "artist, and the session-based similar-artists ranking. Overlap is shown only when both "
         "artists have at least 50 listeners, always with the counts.",
     ),
-    # --- Offline evaluation only ---------------------------------------------------------
+    # --- Sound & lyrics analysis (the song_compare service) ----------------------------------
     DataSource(
         id="kaggle-spotify-tracks",
-        name="Spotify Tracks Dataset (Kaggle, maharshipandya)",
-        homepage="https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset",
-        license="CC0-1.0 (as stated by the uploader)",
-        license_url="https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset",
-        tier=Tier.EVALUATION,
-        status=Status.PLANNED,
-        kind=Kind.DATASET,
-        feeds=("evaluating song similarity against genre labels",),
-        attribution="",
-        checked_on="2026-11-01",
-        notes="About 114,000 tracks across 125 genres with audio features. The uploader states "
-        "CC0, but the values come from the Spotify Web API, whose terms the uploader cannot waive. "
-        "Treated as evaluation-only. Not used yet: downloading needs a Kaggle account, so song "
-        "similarity is evaluated against genre agreement instead (eval-songs).",
+        name="Spotify Tracks Dataset (maharshipandya)",
+        homepage="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset",
+        license="As stated by the uploader (BSD on Hugging Face, CC0 on Kaggle)",
+        license_url="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.SERVICE,
+        feeds=(
+            "song comparison: sound profile (energy, danceability, positivity and more), "
+            "tempo, key and songs that sound alike, from the song_compare service",
+        ),
+        attribution="Sound analysis from the Spotify Tracks Dataset",
+        checked_on="2026-11-22",
+        notes="About 114,000 tracks across 125 genres with audio features, a 2022 snapshot; "
+        "song_compare keeps about 76,000 of them. The uploader states a license, but the values "
+        "come from the Spotify Web API, whose terms the uploader cannot waive: non-commercial use "
+        "only, dropped by source ID for a commercial launch. Songs are matched to the dataset by "
+        "title and primary artist; songs outside it say so. Nothing is stored in the catalog.",
     ),
+    DataSource(
+        id="genius-lyrics-dataset",
+        name="Genius lyrics (Hugging Face, theelderemo)",
+        homepage="https://huggingface.co/datasets/theelderemo/genius-lyrics-cleaned",
+        license="As stated by the uploader; the lyrics stay their rights holders'",
+        license_url="https://huggingface.co/datasets/theelderemo/genius-lyrics-cleaned",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.SERVICE,
+        feeds=("song comparison: lyric mood, themes and structure, from the song_compare service",),
+        attribution="Lyric analysis from Genius lyrics",
+        checked_on="2026-11-22",
+        notes="song_compare analyzes the lyrics into sentiment, emotions, themes and structure "
+        "counts. The lyrics themselves are never stored in this repository, sent to the app or "
+        "shown.",
+    ),
+    # --- Offline evaluation only ---------------------------------------------------------
     DataSource(
         id="lastfm-360k",
         name="Last.fm 360K and 1K users (Celma, 2010)",
@@ -303,8 +327,11 @@ GENRE_SOURCE_IDS = ("musicbrainz-supplementary", "discogs")
 def catalog_sources() -> tuple[DataSource, ...]:
     """Returns the sources whose facts may be stored in the catalog.
 
-    That excludes evaluation-only datasets and listeners' own data.
+    That excludes evaluation-only datasets, listeners' own data and analysis served live by a
+    companion service.
     """
     return tuple(
-        s for s in SOURCES if s.tier is not Tier.EVALUATION and s.kind is not Kind.USER_ACCOUNT
+        s
+        for s in SOURCES
+        if s.tier is not Tier.EVALUATION and s.kind not in (Kind.USER_ACCOUNT, Kind.SERVICE)
     )

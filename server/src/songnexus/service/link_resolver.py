@@ -60,6 +60,39 @@ CACHE_TTL_S = 24 * 3600
 REQUEST_TIMEOUT_S = 6.0
 
 
+def catalog_titles(
+    model: ReadModel, title: str, entity: EntityType, artist_ids: list[str]
+) -> list[str]:
+    """Catalog songs or releases with this title, by the given artists when known."""
+    wanted = {normalize(base_title(clean_title(title))), normalize(clean_title(title))}
+    artists = set(artist_ids)
+    exact: list[str] = []
+    loose: list[str] = []
+    for hit in model.search.search(title, limit=40, entity_types=frozenset({entity})):
+        doc = model.search.get(hit.entity_id)
+        by = set(doc.artist_ids) if doc else set()
+        if artists and not (by & artists):
+            continue
+        names = {normalize(base_title(hit.name)), normalize(hit.name)}
+        if names & wanted:
+            exact.append(hit.entity_id)
+        elif any(n and w and (n in w or w in n) for n in names for w in wanted):
+            # "Alright - Remastered 2015" against "Alright": the same song, written longer.
+            loose.append(hit.entity_id)
+    if artists:
+        return exact or loose[:1]
+    return exact
+
+
+def catalog_artists(model: ReadModel, names: Iterable[str]) -> list[str]:
+    """The catalog artist for the first name that matches one unambiguously (namesakes never)."""
+    for name in names:
+        resolution = model.resolutions.resolve(model.search, [name])[0]
+        if resolution.decision is Decision.MATCHED and resolution.entity_id:
+            return [resolution.entity_id]
+    return []
+
+
 class Outcome(enum.StrEnum):
     """How a link resolved."""
 
@@ -325,7 +358,7 @@ class LinkResolver:
             a for a in (ids.artist_id(m) for m in facts.artist_mbids) if a in model.graph.nodes
         ]
         if not artist_ids:
-            artist_ids = self._names_to_artists(model, facts.artists)
+            artist_ids = catalog_artists(model, facts.artists)
         entity = EntityType.RELEASE if link.kind is LinkKind.ALBUM else EntityType.RECORDING
         base = Resolution(
             Outcome.RESOLVED,
@@ -334,7 +367,7 @@ class LinkResolver:
             via=facts.via or ["musicbrainz"],
         )
         if facts.title:
-            hits = self._titles(model, facts.title, entity, artist_ids)
+            hits = catalog_titles(model, facts.title, entity, artist_ids)
             if hits and artist_ids:
                 base.artist_ids = list(dict.fromkeys(artist_ids))
                 if entity is EntityType.RECORDING:
@@ -353,29 +386,6 @@ class LinkResolver:
         return Resolution(
             Outcome.NOT_IN_CATALOG, title=facts.title, artist_names=facts.artists, via=facts.via
         )
-
-    def _titles(
-        self, model: ReadModel, title: str, entity: EntityType, artist_ids: list[str]
-    ) -> list[str]:
-        """Catalog songs or releases with this title, by the given artists when known."""
-        wanted = {normalize(base_title(clean_title(title))), normalize(clean_title(title))}
-        artists = set(artist_ids)
-        exact: list[str] = []
-        loose: list[str] = []
-        for hit in model.search.search(title, limit=40, entity_types=frozenset({entity})):
-            doc = model.search.get(hit.entity_id)
-            by = set(doc.artist_ids) if doc else set()
-            if artists and not (by & artists):
-                continue
-            names = {normalize(base_title(hit.name)), normalize(hit.name)}
-            if names & wanted:
-                exact.append(hit.entity_id)
-            elif any(n and w and (n in w or w in n) for n in names for w in wanted):
-                # "Alright - Remastered 2015" against "Alright": the same song, written longer.
-                loose.append(hit.entity_id)
-        if artists:
-            return exact or loose[:1]
-        return exact
 
     # --- Playlists ---------------------------------------------------------------------------
 
@@ -548,16 +558,6 @@ class LinkResolver:
         return data
 
     # --- Names -----------------------------------------------------------------------------------
-
-    def _names_to_artists(self, model: ReadModel, names: Iterable[str]) -> list[str]:
-        """Catalog artists for names, matched only when unambiguous."""
-        found: list[str] = []
-        for name in names:
-            resolution = model.resolutions.resolve(model.search, [name])[0]
-            if resolution.decision is Decision.MATCHED and resolution.entity_id:
-                found.append(resolution.entity_id)
-                break
-        return found
 
     def _by_names(self, model: ReadModel, facts: _Facts) -> Resolution:
         if not facts.artists:
