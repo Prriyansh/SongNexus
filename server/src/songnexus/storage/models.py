@@ -354,6 +354,30 @@ class ArtistImage(Base):
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class ArtistFacts(Base):
+    """Reference facts about an artist: description, Wikipedia introduction, honors.
+
+    The description and the awards and nominations come from Wikidata. Found through the
+    artist's Wikidata item (P434 MusicBrainz ID), never by name. One row per artist;
+    ``songnexus fetch-facts`` replaces it on each run. ``awards`` and ``nominations`` are
+    lists of ``{"id": QID, "name": English label, "year": int | null}``, newest first.
+    Wikipedia text is CC BY-SA 4.0: its article URL is stored so it is always shown linked.
+    """
+
+    __tablename__ = "artist_facts"
+
+    artist_id: Mapped[str] = mapped_column(
+        ForeignKey("artists.id", ondelete="CASCADE"), primary_key=True
+    )
+    wikidata_id: Mapped[str] = mapped_column(String(32))
+    description: Mapped[str | None] = mapped_column(String(512))
+    wikipedia_url: Mapped[str | None] = mapped_column(String(2048))
+    summary: Mapped[str | None] = mapped_column(Text)
+    awards: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
+    nominations: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class GenreParent(ProvenanceMixin, Base):
     """``genre_id`` is a kind of ``parent_genre_id`` (e.g. trap is a kind of hip hop)."""
 

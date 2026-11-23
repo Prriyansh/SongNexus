@@ -145,6 +145,7 @@ SOURCES: tuple[DataSource, ...] = (
             "links from MusicBrainz artists to Discogs",
             "Around you: the campuses and cities listeners can join",
             "artist photos: which Commons file shows an artist",
+            "artist pages and comparisons: descriptions, awards and nominations",
         ),
         attribution="Data from Wikidata",
         checked_on="2026-11-16",
@@ -153,6 +154,23 @@ SOURCES: tuple[DataSource, ...] = (
         "(P434) and a Discogs artist ID (P1953). The Around you list is the largest US "
         "universities by student count (P2196) plus a few abroad, their cities, US cities over "
         "100,000 people and national capitals, rebuilt with `songnexus fetch-communities`.",
+    ),
+    DataSource(
+        id="wikipedia",
+        name="Wikipedia (English)",
+        homepage="https://en.wikipedia.org",
+        license="CC-BY-SA-4.0",
+        license_url="https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+        tier=Tier.PRODUCTION,
+        status=Status.IN_USE,
+        kind=Kind.API,
+        feeds=("artist pages: a short introduction to the artist",),
+        attribution="From Wikipedia (CC BY-SA 4.0)",
+        checked_on="2026-11-22",
+        notes="The plain-text introduction (a few sentences) of the article linked from the "
+        "artist's Wikidata item, fetched with `songnexus fetch-facts`. CC BY-SA 4.0 allows reuse "
+        "with attribution: the text is always shown with a link to the article and the license, "
+        "and is shown as written, never edited.",
     ),
     DataSource(
         id="wikimedia-commons",

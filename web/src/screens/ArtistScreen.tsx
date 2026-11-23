@@ -130,6 +130,73 @@ function Labels({labels}: {labels: Schemas['ArtistLabel'][]}) {
   );
 }
 
+/** Wikidata's description and the Wikipedia introduction, always with its link and license. */
+function Intro({about}: {about: Schemas['ArtistAbout']}) {
+  const {t} = useI18n();
+  if (!about.summary && !about.description) return null;
+  return (
+    <div className="entity-about__block entity-about__block--wide">
+      <h3 className="entity-about__title">{t('artist.intro')}</h3>
+      {about.summary ? (
+        <p className="entity-intro" lang="en">
+          {about.summary}
+        </p>
+      ) : (
+        <p className="entity-intro">{about.description}</p>
+      )}
+      <p className="entity-intro__source">
+        {about.summary && about.wikipediaUrl ? (
+          <a href={about.wikipediaUrl} target="_blank" rel="noreferrer">
+            {t('artist.intro.wikipedia')}
+          </a>
+        ) : (
+          <a href={about.wikidataUrl} target="_blank" rel="noreferrer">
+            {t('artist.intro.wikidata')}
+          </a>
+        )}
+      </p>
+    </div>
+  );
+}
+
+/** Awards or nominations as Wikidata lists them: community-edited, so never called a total. */
+function Honors({
+  title,
+  honors,
+  wikidataUrl,
+}: {
+  title: string;
+  honors: Schemas['Honor'][];
+  wikidataUrl: string;
+}) {
+  const {t} = useI18n();
+  const {visible, toggle} = useShowAll(honors, 6);
+  return (
+    <div className="entity-about__block">
+      <h3 className="entity-about__title">{title}</h3>
+      <ul className="entity-honors">
+        {visible.map(honor => (
+          <li key={`${honor.url}-${honor.year ?? ''}`} className="entity-honor">
+            <a href={honor.url} target="_blank" rel="noreferrer">
+              {honor.displayName}
+            </a>
+            {honor.year !== null && (
+              <span className="entity-honor__year">{honor.year}</span>
+            )}
+          </li>
+        ))}
+      </ul>
+      {toggle}
+      <p className="entity-intro__source">
+        {t('artist.honors.note')}{' '}
+        <a href={wikidataUrl} target="_blank" rel="noreferrer">
+          {t('artist.honors.wikidata')}
+        </a>
+      </p>
+    </div>
+  );
+}
+
 function Aliases({aliases}: {aliases: Schemas['Alias'][]}) {
   const {t} = useI18n();
   const legal = aliases.find(a => a.aliasType === 'legal_name');
@@ -318,7 +385,7 @@ export default function ArtistScreen() {
         name={a.displayName}
         photo={photoOf(a)}
         overline={overline}
-        lead={a.disambiguation}
+        lead={a.disambiguation ?? a.about?.description}
         meta={<Genres artist={a} />}
         stats={<Stats items={stats} label={t('artist.stat.label')} />}
         actions={
@@ -381,9 +448,31 @@ export default function ArtistScreen() {
 
       {a.labels.length > 0 && <Labels labels={a.labels} />}
 
-      {(a.aliases.length > 0 || a.links.length > 0 || a.sources.length > 0) && (
+      {(a.about ||
+        a.aliases.length > 0 ||
+        a.links.length > 0 ||
+        a.sources.length > 0) && (
         <EntitySection id="artist-about" title={t('artist.about')}>
           <div className="entity-about">
+            {a.about && <Intro about={a.about} />}
+            {a.about && a.about.awards.length > 0 && (
+              <Honors
+                title={t('artist.honors.awards', {
+                  count: a.about.awards.length,
+                })}
+                honors={a.about.awards}
+                wikidataUrl={a.about.wikidataUrl}
+              />
+            )}
+            {a.about && a.about.nominations.length > 0 && (
+              <Honors
+                title={t('artist.honors.nominations', {
+                  count: a.about.nominations.length,
+                })}
+                honors={a.about.nominations}
+                wikidataUrl={a.about.wikidataUrl}
+              />
+            )}
             {a.aliases.length > 0 && <Aliases aliases={a.aliases} />}
             <Links artist={a} />
           </div>

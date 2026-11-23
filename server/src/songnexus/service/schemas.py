@@ -222,6 +222,32 @@ class CoListener(ApiModel):
     rank: int
 
 
+class Honor(ApiModel):
+    """An award received, or a nomination, as Wikidata lists it."""
+
+    display_name: str = Field(description="The award's English name on Wikidata.")
+    year: int | None = Field(default=None, description="The year, when Wikidata states one.")
+    url: str = Field(description="The award's Wikidata page.")
+
+
+class ArtistAbout(ApiModel):
+    """Reference facts about an artist from Wikidata and Wikipedia, each linked to its source.
+
+    Both are community-edited: lists are what Wikidata has, not complete totals.
+    """
+
+    description: str | None = Field(default=None, description="Wikidata's short description.")
+    summary: str | None = Field(
+        default=None,
+        description="The introduction of the English Wikipedia article (CC BY-SA 4.0); shown "
+        "only with `wikipediaUrl` and the license.",
+    )
+    wikipedia_url: str | None = None
+    wikidata_url: str
+    awards: list[Honor] = Field(description="Newest first; up to 100.")
+    nominations: list[Honor] = Field(description="Newest first; up to 100.")
+
+
 class Artist(ArtistSummary):
     """GetArtist."""
 
@@ -243,6 +269,11 @@ class Artist(ArtistSummary):
     sources: list[SourceLink]
     image: ArtistImage | None = Field(
         default=None, description="The artist's photo and its attribution, or null."
+    )
+    about: ArtistAbout | None = Field(
+        default=None,
+        description="Description, Wikipedia introduction, awards and nominations, or null "
+        "when Wikidata has none for this artist.",
     )
     graph_version: str
 
@@ -413,6 +444,11 @@ class CompareArtistsResponse(ApiModel):
     listening: ListenerOverlap | None = Field(
         default=None,
         description="Null when either artist has fewer than 50 listeners or no data.",
+    )
+    shared_awards: list[Honor] = Field(
+        default_factory=list,
+        description="Awards Wikidata lists for both artists (the same award, any year), with "
+        "the first artist's most recent year.",
     )
     graph_version: str
 

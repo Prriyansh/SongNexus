@@ -1093,3 +1093,51 @@ a.entity-card:active {
     background: CanvasText;
   }
 }
+
+/* ---------- Artist: in brief (Wikipedia) and honors (Wikidata) ---------- */
+
+.entity-about__block--wide {
+  grid-column: 1 / -1;
+}
+.entity-intro {
+  max-inline-size: 72ch;
+  margin: 0;
+  font: var(--body-large);
+}
+.entity-intro__source {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  font: var(--body-small);
+}
+.entity-intro__source a {
+  color: inherit;
+}
+.entity-honors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  inline-size: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.entity-honor {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font: var(--body-medium);
+}
+.entity-honor a {
+  color: inherit;
+  text-decoration-color: var(--md-outline-variant);
+}
+.entity-honor a:hover {
+  text-decoration-color: currentColor;
+}
+.entity-honor__year {
+  flex: none;
+  color: var(--md-on-surface-variant);
+  font: var(--label-large);
+  font-variant-numeric: tabular-nums;
+}

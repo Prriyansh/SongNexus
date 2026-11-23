@@ -8,6 +8,7 @@ from songnexus.core.graph import collaborations as collab
 from songnexus.core.graph.explain import Explanation
 from songnexus.core.graph.model import ArtistGraph, Category, EdgeKind, SubjectType
 from songnexus.service import schemas as api
+from songnexus.storage.artist_facts import FactsRecord, Honor
 from songnexus.storage.catalog_repository import SourceRef
 
 _SUBJECT_COLLECTIONS = {
@@ -105,3 +106,41 @@ def evidence(
 def subject_keys(explanations: Iterable[Explanation]) -> list[tuple[str, str]]:
     """Returns (subject type, subject ID) pairs for a source lookup."""
     return sorted({(e.subject_type.value, e.subject_id) for e in explanations})
+
+
+def _honor(honor: Honor) -> api.Honor:
+    return api.Honor(
+        display_name=honor.name, year=honor.year, url=f"https://www.wikidata.org/wiki/{honor.id}"
+    )
+
+
+def artist_about(facts: FactsRecord | None) -> api.ArtistAbout | None:
+    """Returns an artist's reference facts, or None when there are none."""
+    if facts is None or facts.is_empty:
+        return None
+    return api.ArtistAbout(
+        description=facts.description,
+        # Wikipedia text is shown only with its article link (CC BY-SA 4.0).
+        summary=facts.summary if facts.wikipedia_url else None,
+        wikipedia_url=facts.wikipedia_url,
+        wikidata_url=f"https://www.wikidata.org/wiki/{facts.wikidata_id}",
+        awards=[_honor(h) for h in facts.awards],
+        nominations=[_honor(h) for h in facts.nominations],
+    )
+
+
+def shared_awards(a: FactsRecord | None, b: FactsRecord | None) -> list[api.Honor]:
+    """Awards both artists received (the same award, any year), once each, newest first.
+
+    Each keeps the first artist's most recent year for it.
+    """
+    if a is None or b is None:
+        return []
+    theirs = {h.id for h in b.awards}
+    seen: set[str] = set()
+    shared: list[api.Honor] = []
+    for honor in a.awards:  # already newest first
+        if honor.id in theirs and honor.id not in seen:
+            seen.add(honor.id)
+            shared.append(_honor(honor))
+    return shared

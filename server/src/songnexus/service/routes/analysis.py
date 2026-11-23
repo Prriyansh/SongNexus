@@ -38,6 +38,7 @@ from songnexus.service.routes.common import (
     set_cache_control,
 )
 from songnexus.storage import catalog_repository as repo
+from songnexus.storage.artist_facts import read_artist_facts
 
 router = APIRouter(
     prefix="/v1", tags=["analysis"], dependencies=[Depends(rate_limited(MethodClass.ANALYZE))]
@@ -176,6 +177,7 @@ def compare_artists(
         listening.ranks.get((a, b)),
         listening.ranks.get((b, a)),
     )
+    facts = read_artist_facts(session, [a, b])
     set_cache_control(response, who)
     return api.CompareArtistsResponse(
         artist_a=convert.artist_summary(graph, a),
@@ -213,5 +215,6 @@ def compare_artists(
                 url="https://listenbrainz.org/",
             ),
         ),
+        shared_awards=convert.shared_awards(facts.get(a), facts.get(b)),
         graph_version=model.version,
     )

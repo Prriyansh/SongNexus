@@ -143,6 +143,32 @@ function Mutual({data}: {data: Comparison}) {
   );
 }
 
+/** Awards Wikidata lists for both (the same award, any year); shown only when there are some. */
+function SharedAwards({data}: {data: Comparison}) {
+  const {t} = useI18n();
+  if (data.sharedAwards.length === 0) return null;
+  return (
+    <section className="cx-card" aria-labelledby="cx-awards">
+      <div className="cx-card__head">
+        <h2 id="cx-awards" className="cx-card__title">
+          {t('compare.awards')}
+        </h2>
+        <span className="cx-card__count">{data.sharedAwards.length}</span>
+      </div>
+      <ul className="entity-honors">
+        {data.sharedAwards.slice(0, 8).map(award => (
+          <li key={award.url} className="entity-honor">
+            <a href={award.url} target="_blank" rel="noreferrer">
+              {award.displayName}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p className="cx-card__note">{t('compare.awards.note')}</p>
+    </section>
+  );
+}
+
 function Genres({data}: {data: Comparison}) {
   const {t} = useI18n();
   const a = data.artistA.displayName;
@@ -575,6 +601,7 @@ export default function CompareScreen() {
           <Mutual data={data} />
           <Genres data={data} />
           <Audience data={data} />
+          <SharedAwards data={data} />
           <HowConnected data={data} />
           <OnTheirOwn data={data} />
           <div className="cx-listen-pair">

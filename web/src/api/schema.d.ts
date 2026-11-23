@@ -1905,6 +1905,8 @@ export interface components {
          * @description GetArtist.
          */
         Artist: {
+            /** @description Description, Wikipedia introduction, awards and nominations, or null when Wikidata has none for this artist. */
+            about: components["schemas"]["ArtistAbout"] | null;
             /** Aliases */
             aliases: components["schemas"]["Alias"][];
             /** Artisttype */
@@ -1969,6 +1971,38 @@ export interface components {
             oftenPlayedWith: components["schemas"]["CoListener"][];
             /** Sources */
             sources: components["schemas"]["SourceLink"][];
+        };
+        /**
+         * ArtistAbout
+         * @description Reference facts about an artist from Wikidata and Wikipedia, each linked to its source.
+         *
+         *     Both are community-edited: lists are what Wikidata has, not complete totals.
+         */
+        ArtistAbout: {
+            /**
+             * Awards
+             * @description Newest first; up to 100.
+             */
+            awards: components["schemas"]["Honor"][];
+            /**
+             * Description
+             * @description Wikidata's short description.
+             */
+            description: string | null;
+            /**
+             * Nominations
+             * @description Newest first; up to 100.
+             */
+            nominations: components["schemas"]["Honor"][];
+            /**
+             * Summary
+             * @description The introduction of the English Wikipedia article (CC BY-SA 4.0); shown only with `wikipediaUrl` and the license.
+             */
+            summary: string | null;
+            /** Wikidataurl */
+            wikidataUrl: string;
+            /** Wikipediaurl */
+            wikipediaUrl: string | null;
         };
         /**
          * ArtistImage
@@ -2692,6 +2726,11 @@ export interface components {
             mutualCollaborators: components["schemas"]["ArtistSummary"][];
             /** Path */
             path: components["schemas"]["ArtistSummary"][];
+            /**
+             * Sharedawards
+             * @description Awards Wikidata lists for both artists (the same award, any year), with the first artist's most recent year.
+             */
+            sharedAwards: components["schemas"]["Honor"][];
             /** Sharedgenres */
             sharedGenres: components["schemas"]["SharedGenre"][];
         };
@@ -3587,6 +3626,27 @@ export interface components {
         HintResponse: {
             /** Candidates */
             candidates: components["schemas"]["ArtistSummary"][];
+        };
+        /**
+         * Honor
+         * @description An award received, or a nomination, as Wikidata lists it.
+         */
+        Honor: {
+            /**
+             * Displayname
+             * @description The award's English name on Wikidata.
+             */
+            displayName: string;
+            /**
+             * Url
+             * @description The award's Wikidata page.
+             */
+            url: string;
+            /**
+             * Year
+             * @description The year, when Wikidata states one.
+             */
+            year: number | null;
         };
         /**
          * ImportListeningRequest

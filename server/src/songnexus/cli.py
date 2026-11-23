@@ -516,7 +516,48 @@ def _cmd_fetch_images(settings: Settings, args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_fetch_facts(settings: Settings, args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
+    from songnexus.catalog.http import SourceRequestError
+    from songnexus.catalog.wikidata.facts import WikipediaClient, run_fetch_facts
+    from songnexus.catalog.wikidata.fetch import WikidataClient
+    from songnexus.catalog.wikidata.images import http_client
+    from songnexus.storage.db import make_engine
+
+    # The same generic User-Agent as fetch-images; no contact is ever sent.
+    wikidata = WikidataClient(
+        sparql_url=settings.wikidata_sparql_url,
+        cache_dir=settings.raw_dir("wikidata-facts"),
+        http=http_client("application/sparql-results+json"),
+    )
+    wikipedia = WikipediaClient(cache_dir=settings.raw_dir("wikipedia"))
+    try:
+        result = run_fetch_facts(
+            make_engine(settings.database_url),
+            wikidata,
+            wikipedia,
+            now=datetime.now(UTC),
+            limit=args.limit,
+            dry_run=args.dry_run,
+        )
+    except SourceRequestError as exc:
+        print(f"fetch-facts failed, nothing written: {exc}", file=sys.stderr)
+        return EXIT_FAILED
+    _print(result)
+    return EXIT_OK
+
+
 def _add_image_commands(commands: Any) -> None:
+    facts = commands.add_parser(
+        "fetch-facts",
+        help="fetch artist descriptions, Wikipedia introductions, awards and nominations",
+    )
+    facts.add_argument("--limit", type=int, help="only the first N artists (best-known first)")
+    facts.add_argument(
+        "--dry-run", action="store_true", help="report coverage without writing to the database"
+    )
+    facts.set_defaults(handler=_cmd_fetch_facts)
     images = commands.add_parser(
         "fetch-images",
         help="find freely licensed artist photos on Wikimedia Commons through Wikidata",

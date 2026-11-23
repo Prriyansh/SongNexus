@@ -26,6 +26,7 @@ from songnexus.core.search import EntityType, SearchDoc, SearchIndex, log_prior
 from songnexus.core.text import normalize
 from songnexus.service.errors import ApiError, Status
 from songnexus.storage import catalog_repository
+from songnexus.storage.artist_facts import facts_stamp
 from songnexus.storage.artist_images import images_stamp, read_artist_images
 from songnexus.storage.catalog_reader import (
     SearchEntry,
@@ -200,15 +201,18 @@ def link_index(rows: Sequence[tuple[str, str]], graph: ArtistGraph) -> dict[str,
 
 
 def _version(session: Session) -> str | None:
-    """The served version: the catalog run, plus a stamp of the artist photos when any exist.
+    """The served version: the catalog run, plus stamps of the artist photos and facts.
 
-    Photos are fetched after ingestion (``songnexus fetch-images``), so they get
-    their own stamp: a fetch that changes them reloads the read model and so
-    changes every cache key and ETag, without a re-ingest.
+    Photos and facts are fetched after ingestion (``songnexus fetch-images``,
+    ``songnexus fetch-facts``), so each gets its own stamp: a fetch that changes them
+    reloads the read model and so changes every cache key and ETag, without a re-ingest.
     """
     version = catalog_version(session)
-    stamp = images_stamp(session) if version is not None else None
-    return f"{version}.img{stamp}" if stamp else version
+    if version is None:
+        return None
+    images = images_stamp(session)
+    facts = facts_stamp(session)
+    return version + (f".img{images}" if images else "") + (f".fx{facts}" if facts else "")
 
 
 def probe_version(engine: Engine) -> str | None:

@@ -43,6 +43,7 @@ from songnexus.service.routes.common import (
     set_cache_control,
 )
 from songnexus.storage import catalog_repository as repo
+from songnexus.storage.artist_facts import read_artist_facts
 
 router = APIRouter(
     prefix="/v1", tags=["catalog"], dependencies=[Depends(rate_limited(MethodClass.READ))]
@@ -170,6 +171,7 @@ def get_artist(
         ],
         sources=convert.source_links(details.sources),
         image=convert.artist_image(graph, artist_id),
+        about=convert.artist_about(read_artist_facts(session, [artist_id]).get(artist_id)),
         graph_version=model.version,
     )
 

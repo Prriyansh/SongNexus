@@ -110,6 +110,16 @@ export const messages = {
   'artist.stat.labels': '{count, plural, one {Label} other {Labels}}',
   'artist.stat.years': 'Years in our data',
   'artist.about': 'About',
+  'artist.intro': 'In brief',
+  'artist.intro.wikipedia': 'From Wikipedia · CC BY-SA 4.0',
+  'artist.intro.wikidata': 'From Wikidata',
+  'artist.honors.awards':
+    '{count, plural, one {# award} other {# awards}} listed on Wikidata',
+  'artist.honors.nominations':
+    '{count, plural, one {# nomination} other {# nominations}} listed on Wikidata',
+  'artist.honors.note':
+    'Wikidata is community-edited: its lists can be incomplete, so this isn’t a total.',
+  'artist.honors.wikidata': 'See it on Wikidata',
   'artist.legalName': 'Legal name',
   'artist.links.listen': 'Streaming',
   'artist.links.official': 'Official',
@@ -1049,6 +1059,9 @@ export const messages = {
   'compare.audience.scale':
     'Shared audience, on a scale from rarely to very often',
   'compare.genres.none': 'No genres in common in our data yet.',
+  'compare.awards': 'Both received',
+  'compare.awards.note':
+    'The same award, in any year, as Wikidata lists it for both. Community-edited, so not a total.',
   'compare.overlap.value': '{percent, number, ::percent}',
   'compare.unique.kind': 'Kind of credit',
   'songCompare.overline': 'Two songs',

@@ -148,6 +148,17 @@
       "Artist": {
         "description": "GetArtist.",
         "properties": {
+          "about": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtistAbout"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Description, Wikipedia introduction, awards and nominations, or null when Wikidata has none for this artist."
+          },
           "aliases": {
             "items": {
               "$ref": "#/components/schemas/Alias"
@@ -323,9 +334,80 @@
           "oftenPlayedWith",
           "sources",
           "image",
+          "about",
           "graphVersion"
         ],
         "title": "Artist",
+        "type": "object"
+      },
+      "ArtistAbout": {
+        "description": "Reference facts about an artist from Wikidata and Wikipedia, each linked to its source.\n\nBoth are community-edited: lists are what Wikidata has, not complete totals.",
+        "properties": {
+          "awards": {
+            "description": "Newest first; up to 100.",
+            "items": {
+              "$ref": "#/components/schemas/Honor"
+            },
+            "title": "Awards",
+            "type": "array"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Wikidata's short description.",
+            "title": "Description"
+          },
+          "nominations": {
+            "description": "Newest first; up to 100.",
+            "items": {
+              "$ref": "#/components/schemas/Honor"
+            },
+            "title": "Nominations",
+            "type": "array"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The introduction of the English Wikipedia article (CC BY-SA 4.0); shown only with `wikipediaUrl` and the license.",
+            "title": "Summary"
+          },
+          "wikidataUrl": {
+            "title": "Wikidataurl",
+            "type": "string"
+          },
+          "wikipediaUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wikipediaurl"
+          }
+        },
+        "required": [
+          "description",
+          "summary",
+          "wikipediaUrl",
+          "wikidataUrl",
+          "awards",
+          "nominations"
+        ],
+        "title": "ArtistAbout",
         "type": "object"
       },
       "ArtistImage": {
@@ -1994,6 +2076,14 @@
             "title": "Path",
             "type": "array"
           },
+          "sharedAwards": {
+            "description": "Awards Wikidata lists for both artists (the same award, any year), with the first artist's most recent year.",
+            "items": {
+              "$ref": "#/components/schemas/Honor"
+            },
+            "title": "Sharedawards",
+            "type": "array"
+          },
           "sharedGenres": {
             "items": {
               "$ref": "#/components/schemas/SharedGenre"
@@ -2013,6 +2103,7 @@
           "countsA",
           "countsB",
           "listening",
+          "sharedAwards",
           "graphVersion"
         ],
         "title": "CompareArtistsResponse",
@@ -3814,6 +3905,40 @@
           "candidates"
         ],
         "title": "HintResponse",
+        "type": "object"
+      },
+      "Honor": {
+        "description": "An award received, or a nomination, as Wikidata lists it.",
+        "properties": {
+          "displayName": {
+            "description": "The award's English name on Wikidata.",
+            "title": "Displayname",
+            "type": "string"
+          },
+          "url": {
+            "description": "The award's Wikidata page.",
+            "title": "Url",
+            "type": "string"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The year, when Wikidata states one.",
+            "title": "Year"
+          }
+        },
+        "required": [
+          "displayName",
+          "year",
+          "url"
+        ],
+        "title": "Honor",
         "type": "object"
       },
       "ImportListeningRequest": {
