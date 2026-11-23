@@ -1,64 +1,43 @@
-@AGENTS.md
+# SongNexus — repository guide
 
-# Song Nexus — repository guide
-
-Music discovery app: compare two artists or two songs and show how they connect (shared
-collaborators, genres, linking songs). Student team project; repo `github.com/Prriyansh/SongNexus`.
-Next.js 16 (App Router, Turbopack), React 19, TypeScript (strict), Vitest.
+Music discovery app: the people behind the music and how they connect. Student team project;
+repo `github.com/Prriyansh/SongNexus`. One app: a Python API (`server/`, FastAPI) and a React web
+app (`web/`, Vite + TypeScript), with the `song_compare/` sound & lyrics service beside them.
 
 ## Files at this level
 
 | File | Purpose |
 | --- | --- |
-| `README.md` | Project overview, how to run it, layout (for people) |
+| `README.md` | Overview, how to run it, checks, layout (for people) |
 | `CLAUDE.md` | This guide |
-| `AGENTS.md` | Written by `next dev` (Next.js version notes); keep it committed |
-| `package.json` / `package-lock.json` | Dependencies, `engines` (Node ≥ 20.9), npm scripts |
-| `next.config.ts` | `cacheComponents`, Turbopack root, and rewrites: `/about`, `/about/manual`, `/compare/(artists\|songs)` → `/`; `/prototype` → `public/song-nexus.html` |
-| `tsconfig.json` | Strict TypeScript; `@/*` → `src/*` |
-| `vitest.config.ts` | Runs `src/**/*.test.{ts,tsx}`, Node environment by default, same `@` alias |
-| `eslint.config.mjs` | ESLint with `eslint-config-next` (includes React 19 hook rules) |
-| `.nvmrc` | Node 22 for local use and CI |
-| `.gitignore` | Ignores `node_modules`, `.next`, `next-env.d.ts`, `*.tsbuildinfo`, `.env*` |
-
-`next-env.d.ts` and `tsconfig.tsbuildinfo` are generated locally and ignored.
+| `compose.yaml` | Optional local PostgreSQL for the API |
+| `firebase.json` | Firebase Hosting config (the Cloud Run deployment in `deploy/`) |
+| `.editorconfig`, `.gitattributes`, `.gitignore`, `.dockerignore` | Editor, line-ending and ignore rules |
 
 ## Folders
 
-- `src/` — all application code (see `src/CLAUDE.md`).
-- `public/` — static files; `song-nexus.html` is the older prototype at `/prototype`.
-- `docs/` — architecture notes, Helen's design handoff, the first mockup.
-- `song_compare/` — Ishita's Python (Flask) API for the sound & lyrics part of Explore's song
-  comparison (via `/api/sound`); deployed as its own Vercel project (see `song_compare/CLAUDE.md`).
-- `songnexus-v2/` — SongNexus v2, a separate app (Python API in `server/`, Vite web app in `web/`)
-  with its own tooling (`uv`, its own `package.json`); see `songnexus-v2/README.md`. The root
-  `tsconfig.json`, ESLint config and `.vercelignore` exclude it, so it never affects the Next.js app.
-- `.github/` — CI workflows.
+- `server/` — the API, catalog pipeline and core library; see `server/README.md`. Tooling: `uv`.
+- `web/` — the web client; see `web/README.md`. Tooling: npm, Node 22.12+.
+- `song_compare/` — Ishita's Flask API for the sound & lyrics comparison of two songs; the API
+  calls it (see `song_compare/CLAUDE.md`). Deployed as its own Vercel project.
+- `data/` — committed source snapshots (`samples/`), seeds and evaluation sets. `data/raw/` is a
+  local, git-ignored cache.
+- `deploy/` — Cloud Run service and jobs.
+- `.github/` — CI.
 
 ## Working rules
 
 - **Commit messages and PR descriptions must not mention an AI agent** (class requirement): no
   `Co-Authored-By` trailers, no "generated with" lines.
-- Prefer small, focused commits; each should pass lint, typecheck and tests, and include tests
-  for what it changes.
-- The backend (`src/lib`, `src/app/api`) is the source of truth. Adapt the frontend to what the
-  API returns rather than changing the API to fit a screen, unless asked.
+- Prefer small, focused commits; each should pass the checks in `README.md` and include tests for
+  what it changes.
 - Only show data a source actually provides. No invented popularity numbers, audio features or
   placeholder facts; label calculated "insights" as calculated.
-- The repository is **public** (so Vercel deploys every teammate's commits). Never commit
-  secrets, `.env` files or copyrighted data such as lyrics; keys go in Vercel's environment variables.
-- MusicBrainz allows about 1 request/second. Never call it from the browser; go through the API
-  routes, which throttle and cache.
-- Next 16 differs from older versions: route `params`/`searchParams` are Promises,
-  `LayoutProps`/`PageProps` are generated types. Check `node_modules/next/dist/docs/` first.
-
-## Commands
-
-```bash
-npm install
-npm run dev        # http://localhost:3000
-npm test           # Vitest: unit + integration
-npm run lint
-npm run typecheck  # next typegen && tsc --noEmit (typegen is needed on a fresh clone)
-npm run build
-```
+- Every data source is registered in `server/src/songnexus/catalog/sources.py` with its license
+  before any code reads from it.
+- The repository is **public**. Never commit secrets, `.env` files or copyrighted data such as
+  lyrics; keys go in the host's environment variables.
+- Only `songnexus fetch*` commands touch the network for catalog data, politely (MusicBrainz
+  allows about 1 request/second). Serving reads the ingested catalog.
+- `server/openapi.json` is the API contract: regenerate it with `uv run songnexus openapi` and the
+  web types with `npm run api:types` when the API changes.

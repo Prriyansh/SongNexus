@@ -1,179 +1,110 @@
-# Song Nexus
+# SongNexus
 
-Song Nexus is a music discovery app for listeners aged 15–35. Pick two artists or two songs and it
-shows how they connect: the producers, mixers and featured artists they share, the genres they
-have in common, and the songs that link them. Its core facts come from
-[MusicBrainz](https://musicbrainz.org) and the [Cover Art Archive](https://coverartarchive.org);
-every other source is listed under [Data sources](#data-sources).
+The people behind the music, and how they connect: who worked with whom, how any two artists
+connect, how two songs compare in sound and lyrics, and how the artists in your own playlists link
+up. Every connection is backed by a credit with a source.
 
-## Run it locally
+One app: a Python API (`server/`) and a Vite + React web app (`web/`), with the sound & lyrics
+service in `song_compare/`.
 
-On Windows, run `.\demo.cmd` in PowerShell to start the account demo at `http://127.0.0.1:3000/accounts`. The launcher uses a prepared `.tools/node` runtime when available, or Node/npm installed on your PATH, and preserves an existing `.env.local`.
+## Run it locally (about 5 minutes)
 
-Requires Node.js 20.9 or newer (`.nvmrc` pins 22). No API keys are needed.
+Needs Python tooling [uv](https://docs.astral.sh/uv/) and Node 22.12 or later. No database server
+is required. Commands below run from the repository root.
 
-```bash
-npm install
+```sh
+# API: builds the catalog into a SQLite file, then serves on http://127.0.0.1:8790
+cd server
+uv sync
+cp .env.example .env
+uv run songnexus ingest          # under a minute; rejects the catalog if a quality check fails
+uv run songnexus serve --reload
+
+# Web app, in a second terminal: http://localhost:5173 (proxies /v1 to the API)
+cd web
+npm ci
 npm run dev
 ```
 
-Then open <http://localhost:3000>.
+PostgreSQL instead of SQLite: `docker compose up -d` at the root and use the PostgreSQL URL in
+`server/.env.example`. Sign-in needs a Firebase project or the Auth emulator (see
+`web/.env.example`); everything else works signed out.
 
-**Music accounts:** open `/accounts` to create a private Song Nexus account, connect supported services, inspect sync progress, import exported music and browse your source-filtered library. Development account storage works without a database server; production needs Postgres and an encryption key. See [how to connect each service](docs/integrations/connecting.md), [integration setup and testing](docs/integrations/README.md), [provider configuration and capabilities](docs/integrations/providers.md), and [data-use restrictions](docs/integrations/compliance.md). Provider connections require the credentials/approvals listed there; no integration is claimed as live-tested.
+**Sound & lyrics analysis (optional).** Song comparisons include Ishita's sound and lyrics
+analysis when the `song_compare` service is running (otherwise they say it isn't available):
 
-Everything runs without keys. These optional environment variables (in `.env.local`, or Vercel's
-settings) add more to the two-artist comparison; each page says which sources were checked.
-
-| Variable | Adds | Without it |
-| --- | --- | --- |
-| `GENIUS_ACCESS_TOKEN` | Song-level producers and writers from Genius | Genius is skipped |
-| `DISCOGS_TOKEN` | A higher Discogs rate limit (60 requests a minute, not 25), so more albums per scan | Discogs still runs, more slowly |
-| `LASTFM_API_KEY` | Last.fm listeners and artists similar to both | Last.fm is skipped |
-| `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`) | Short friend codes when deployed: rooms are stored in Redis for a week | In production, Friends falls back to a long link holding the playlist. In development, rooms live in memory |
-
-The sidebar contains **About Me**, **Connection Web**, **Friends** and **Explore**. Connection Web
-starts from an artist, a song or your playlist, and maps what's similar: closer means more similar,
-calculated from listening data, and selecting anything says why it's there. Friends puts two playlists on
-one map, joined with a 6-character code, with colors for yours, theirs, what you share and what each of
-you should try. Explore compares two artists or songs in depth, including credits. Explore keeps its **2 Songs** and **2 Artists**
-tabs, with sound and lyrics analysis included in **2 Songs**. The standalone comparison page
-remains available at <http://localhost:5050>, with sidebar links back to About Me and Explore.
-Set `NEXUS_URL` for Flask if the main app uses a different address.
-
-| URL | What it shows |
-| --- | --- |
-| `/` or `/about` | About Me: your favourite artists, genres, albums and songs |
-| `/connections` | Connection Web: similar artists and songs from an artist, a song or your playlist |
-| `/friends` | Friends: compare playlists with a friend using a short code (`/friends?code=ABC234`) |
-| `/compare/artists` | Explore: compare two artists (defaults to Olivia Rodrigo and Taylor Swift) |
-| `/compare/songs` | Explore: compare two songs |
-| `/prototype` | The earlier HTML prototype |
-
-## Share it (deploy to Vercel)
-
-The app needs a server (its API routes call MusicBrainz), so share it by deploying it. Vercel's
-free plan works with no configuration and no API keys:
-
-1. Sign in at [vercel.com](https://vercel.com) with GitHub.
-2. **Add New → Project**, import `Prriyansh/SongNexus`, keep the detected defaults
-   (framework Next.js, root directory `./`), and click **Deploy**.
-3. Share the `https://<project>.vercel.app` link it gives you.
-
-Every push to `main` redeploys that link, and pull requests get their own preview links. The
-in-app **Share** button builds links on whatever domain the app is served from, so comparison
-and About Me links work as soon as it's deployed.
-
-**Deploying teammates' commits.** The repository is public because Vercel's free (Hobby) plan
-only deploys commits by the project owner when the repository is private; for public
-repositories anyone's commits deploy. If a commit's Vercel check says *"GitHub couldn't verify an
-account for the commit"*, the author's `git config user.email` isn't an email on their GitHub
-account: add it under GitHub → Settings → Emails, or change the git setting to one that is.
-
-### Deploying the sound service on Vercel
-
-The song analysis runs as a second Vercel project from the same repository:
-
-1. In Vercel, **Add New → Project**, import `Prriyansh/SongNexus` again, set **Root Directory**
-   to `song_compare` (Vercel detects Flask) and deploy. Note its URL, e.g.
-   `https://songnexus-sound.vercel.app`.
-2. In the main Song Nexus project, **Settings → Environment Variables**, add
-   `SONG_COMPARE_URL` with that URL (no trailing slash), then redeploy.
-
-The first comparison after a quiet spell takes a few extra seconds while the service starts.
-
-## Repository layout
-
-```
-SongNexus/
-├── src/
-│   ├── app/            Next.js routes: the page at / and the JSON API under /api
-│   ├── frontend/       the UI (Helen's design) and its client-side logic
-│   └── lib/            MusicBrainz + Deezer integration (rate limits, caching, mapping)
-├── public/             static files; song-nexus.html is the prototype served at /prototype
-├── song_compare/       Python API for the sound & lyrics part of song comparisons
-├── songnexus-v2/       SongNexus v2: Python API (server/) + Vite web app (web/), run on its own
-├── docs/
-│   ├── architecture.md data sources, caching, API and frontend details
-│   ├── design/         Helen's design handoff and reference screenshots
-│   └── prototype/      the first HTML mockup, from the paper sketches
-├── .github/workflows/  CI: lint, type checks, tests and build on every push and PR
-│                       (songnexus-v2.yml checks songnexus-v2/ when it changes)
-└── package.json, next.config.ts, tsconfig.json, vitest.config.ts, eslint.config.mjs
-```
-
-Tests live in a `__tests__/` folder inside each area of `src/`. Every folder has a `CLAUDE.md`
-describing the files at that level and the conventions to follow.
-
-## Checks
-
-```bash
-npm test            # unit + integration tests (Vitest)
-npm run lint        # ESLint
-npm run typecheck   # Next route types + tsc
-npm run build       # production build
-```
-
-CI runs all four on every push to `main` and on pull requests, plus the `song_compare` tests.
-
-## Sound & lyrics in song comparisons (song_compare)
-
-Comparing two songs in Explore is mainly Ishita's sound and lyrics analysis: how alike the songs
-are and why, their sound profile, structure (tempo, key, sections), lyrics (mood, themes) and
-songs that sound alike. Song pickers search its library of ~76k songs, so picks have the full
-analysis. MusicBrainz release details and credits follow. The analysis comes from a separate
-Python API in [song_compare/](song_compare/README.md); run it next to the app:
-
-```bash
+```sh
 cd song_compare && pip install -r requirements.txt && python backend/app.py   # http://localhost:5050
 ```
 
-Without it, everything else works and the comparison says the sound analysis isn't available.
-On Vercel it's a second project; see [Deploying the sound service](#deploying-the-sound-service-on-vercel).
+### Windows / VS Code PowerShell
 
-## Data sources
+In **Terminal → New Terminal**, from the repository root:
 
-Every source the app reads, its terms and what it's used for. The app shows the same list under
-**Data sources and licenses** in the page footer (from `src/frontend/sources.ts`; keep the two in
-step). Sources are reached through MusicBrainz ids and the links MusicBrainz holds, never matched
-by loose name, and a page says when a source had no data or failed.
+```powershell
+cd server
+uv sync --locked
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+uv run songnexus ingest
+uv run songnexus serve --reload
+```
 
-| Source | Terms | Used for |
-| --- | --- | --- |
-| [MusicBrainz](https://musicbrainz.org) | [CC0 core data; genres and tags CC BY-NC-SA 3.0](https://musicbrainz.org/doc/About/Data_License) | Search, artists, songs, releases, credits, genres and every connection |
-| [Cover Art Archive](https://coverartarchive.org) | Images stay their rights holders' | Album covers |
-| [Deezer](https://www.deezer.com) | [Deezer API terms](https://developers.deezer.com/termsofuse) | Ranking an artist's top song, related artists and their photos (no Deezer numbers are shown) |
-| [Wikidata](https://www.wikidata.org) | [CC0](https://www.wikidata.org/wiki/Wikidata:Licensing) | Artist descriptions, awards, nominations and record labels |
-| [Wikipedia](https://en.wikipedia.org) | [CC BY-SA 4.0](https://en.wikipedia.org/wiki/Wikipedia:Copyrights) | Artist summaries |
-| [Wikimedia Commons](https://commons.wikimedia.org) | [Per file: public domain, CC0, CC BY or CC BY-SA](https://commons.wikimedia.org/wiki/Commons:Licensing) | Artist photos (the artist's Wikidata image), each credited with author, license and file page; other licenses are skipped |
-| [ListenBrainz](https://listenbrainz.org) | [CC0](https://listenbrainz.org/terms-of-service/) | Listener counts and similar artists |
-| [AcousticBrainz](https://acousticbrainz.org) | [CC0](https://acousticbrainz.org/download) | Tempo, key and mood estimates in song comparisons ("Measured by AcousticBrainz"); its data stops in 2022, so newer songs often have none |
-| [Discogs](https://www.discogs.com) | [Discogs API terms](https://support.discogs.com/hc/en-us/articles/360009334593-API-Terms-of-Use) | More album credits for artist comparisons |
-| [Genius](https://genius.com) (needs `GENIUS_ACCESS_TOKEN`) | [Genius API terms](https://genius.com/static/terms) | More song credits for artist comparisons |
-| [Last.fm](https://www.last.fm) (needs `LASTFM_API_KEY`) | [Last.fm API terms](https://www.last.fm/api/tos) | Listener counts and artists similar to both |
-| [Spotify tracks dataset](https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset) | BSD, as stated by its publisher | The sound analysis in song comparisons ([song_compare](song_compare/README.md)) |
-| [Genius lyrics dataset](https://huggingface.co/datasets/theelderemo/genius-lyrics-cleaned) | As stated by its publisher | The lyrics analysis in song comparisons; lyrics are analysed, never stored in the repo or shown |
+Leave that terminal running. Open a **second terminal at the repository root**:
 
-Linked music accounts (`/accounts`) add a listener's own data from each provider under its terms;
-see [data-use restrictions](docs/integrations/compliance.md).
+```powershell
+cd web
+npm.cmd ci
+npm.cmd run dev -- --host 127.0.0.1 --strictPort
+```
 
-SongNexus v2 keeps its own registry, served at `GET /v1/dataSources`
-([sources.py](songnexus-v2/server/src/songnexus/catalog/sources.py)). It uses the same open
-sources plus the Discogs data dumps (CC0), MusicBrainz genres and Simple Icons brand marks, and
-tests its listener-overlap numbers offline against the Last.fm 360K dataset (non-commercial
-research use; never shown).
+Open **http://127.0.0.1:5173/play** for Daily, or **http://127.0.0.1:5173/** for Home. API
+readiness is at http://127.0.0.1:8790/healthz and interactive API docs at
+http://127.0.0.1:8790/v1/docs. Readiness should report `catalogLoaded: true`.
 
-## SongNexus v2 (songnexus-v2)
+`npm.cmd` works without changing PowerShell's script execution policy. The server reads
+`server/.env`. The example uses SQLite at `songnexus-dev.db` in the repository root; no Docker, API
+key, Firebase setup or MusicBrainz download is needed to browse or play.
 
-A second version of the app, added next to this one rather than replacing it: a Python API
-(catalog, search, artist connections, Daily puzzle, communities) and a Vite + React web app.
-It has its own dependencies and does not change anything above. To run it, see
-[songnexus-v2/README.md](songnexus-v2/README.md): the API serves on http://127.0.0.1:8790 and the
-web app on http://127.0.0.1:5173. Its checks run in the `SongNexus v2` workflow.
+After initial setup, restart with just the two serve commands. Ingest again when the bundled
+snapshot changes. Stop each server with **Ctrl+C** in its terminal. If a port is occupied, stop the
+existing SongNexus server before restarting; the web proxy expects the API on 8790. Avoid switching
+the web port because saved progress belongs to the browser origin.
 
-## Stack
+## Checks
 
-Next.js 16 (App Router), React 19, TypeScript, Vitest. Data: MusicBrainz and the Cover Art
-Archive, with Deezer used only to rank an artist's top song. Two-artist comparisons add Wikidata,
-Wikipedia, Wikimedia Commons photos, ListenBrainz, Discogs, and with keys Genius and Last.fm;
-two-song comparisons add AcousticBrainz. See [Data sources](#data-sources), and
-[docs/architecture.md](docs/architecture.md) for how it fits together.
+Every change must pass these (`.github/workflows/ci.yml` runs them all, plus the browser journeys
+and the `song_compare` tests):
+
+```sh
+cd server && uv run ruff format --check . && uv run ruff check . && uv run mypy src tests \
+  && uv run lint-imports && uv run pytest && uv run songnexus openapi --check
+cd web && npm run lint && npm run typecheck && npm test && npm run build && node scripts/check-bundle-size.mjs
+cd song_compare && pip install -r requirements-dev.txt && python -m pytest
+```
+
+Quality gates on the reference catalog: `songnexus quality`, `songnexus eval-search`,
+`songnexus eval-import`. Browser tests: [web/e2e/README.md](web/e2e/README.md).
+
+## Layout
+
+```
+server/        Python 3.12: core library (pure), catalog pipeline, storage, identity, HTTP API  → server/README.md
+web/           React + TypeScript: the web client                                             → web/README.md
+song_compare/  Python (Flask): sound & lyrics comparison of two songs                         → song_compare/README.md
+data/          samples/ source snapshots · seeds/ seed artists, pinned decisions, genre table · eval/ labeled sets
+deploy/        Cloud Run service and jobs
+```
+
+## Data and licensing
+
+Catalog data comes from [MusicBrainz](https://musicbrainz.org). Its core data is CC0; genre tags
+are CC BY-NC-SA and kept apart as a separate source. Every source, used or planned, is listed with
+its license and tier in the data-source registry
+([server/src/songnexus/catalog/sources.py](server/src/songnexus/catalog/sources.py)), which the
+ingest pipeline enforces and the API serves at `GET /v1/dataSources`.
+
+## History
+
+This repository first held the team's Next.js app (Explore, Connection Web, Friends, About Me and
+music accounts). It was merged into this app, which took over its features; the Next.js code
+remains in the git history. Ishita's `song_compare` service carries on unchanged.
