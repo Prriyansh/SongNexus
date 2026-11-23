@@ -1,5 +1,6 @@
 /** You (S9): sign in, Top 5, hidden artists, theme, and data controls (US-18, US-17, US-09). */
 import {useState} from 'react';
+import {Link} from 'react-router';
 
 import {ApiError, idOf} from '../api/client';
 import {
@@ -169,6 +170,10 @@ function Settings({signedIn}: {signedIn: boolean}) {
           </button>
         ))}
       </div>
+      <Link className="btn btn--tonal you__personalize" to="/personalize">
+        <Icon name="tune" />
+        {t('you.personalize')}
+      </Link>
     </section>
   );
 }

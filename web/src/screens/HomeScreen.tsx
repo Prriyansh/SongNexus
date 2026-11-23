@@ -24,6 +24,7 @@ import {useI18n} from '../i18n/i18n';
 import type {MessageId} from '../i18n/messages';
 import {localDate} from '../play/game';
 import {storyValues, webLink} from '../stories/stories';
+import {ForYouShelf, PersonalizeInvite} from '../home/ForYou';
 
 const SHORTCUTS = [
   TOOLS.web!,
@@ -322,6 +323,10 @@ export function HomeScreen() {
           )}
         </ul>
       </nav>
+
+      <PersonalizeInvite />
+
+      <ForYouShelf />
 
       {recent.length > 0 && (
         <Shelf

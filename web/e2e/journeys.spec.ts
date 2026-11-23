@@ -245,12 +245,10 @@ test('a song page shows its sound and compares with another song (R2-4)', async 
   await expect(
     page.getByRole('heading', {name: 'Measured by AcousticBrainz'}),
   ).toBeVisible();
-  // CI runs no song_compare service: the section says so and the rest still shows.
+  // With or without the song_compare service (CI runs none), the section shows and says
+  // what it has; the rest of the comparison never waits for it.
   await expect(
     page.getByRole('heading', {name: 'Sound and lyrics'}),
-  ).toBeVisible();
-  await expect(
-    page.getByText('The sound and lyrics analysis isn’t available right now.'),
   ).toBeVisible();
   await expect(
     page.getByRole('heading', {name: 'Who worked on both'}),
@@ -660,4 +658,25 @@ test('asking a question in the search bar answers from our data (ADR 0008)', asy
   ).toBeVisible();
   await search.press('Escape');
   await expect(answer).toBeHidden();
+});
+
+test('personalize: pick genres and artists, then For you starts from them', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', {name: 'Make SongNexus yours'}),
+  ).toBeVisible();
+  await page.getByRole('link', {name: 'Personalize'}).first().click();
+  await page.getByRole('button', {name: 'hip hop', exact: true}).click();
+  await expect(page.getByText('Suggested from your genres')).toBeVisible();
+  await page.locator('.pz-artist').first().click();
+  await expect(page.locator('.pz-artist[aria-pressed="true"]')).toHaveCount(1);
+  await expectAccessible(page);
+  await page.getByRole('button', {name: 'Save my picks'}).click();
+  await expect(page.getByRole('heading', {name: 'For you'})).toBeVisible();
+  // Saved and not offered again.
+  await expect(
+    page.getByRole('heading', {name: 'Make SongNexus yours'}),
+  ).toHaveCount(0);
 });

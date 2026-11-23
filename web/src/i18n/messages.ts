@@ -75,6 +75,51 @@ export const messages = {
   'home.import.title': 'Map your playlist',
   'home.import.body': 'See the hidden links between the artists you listen to.',
   'home.recent': 'Recently viewed',
+  // Personalize and For you.
+  'personalize.overline': 'Personalize',
+  'you.personalize': 'Personalize: genres and artists you love',
+  'personalize.title': 'Make SongNexus yours',
+  'personalize.lead':
+    'Pick a few genres you like and artists you love. For you on Home starts from them, and you can change them here any time.',
+  'personalize.count': '{count} of {max}',
+  'personalize.genres.title': 'Genres you like',
+  'personalize.genres.lead': 'They decide which artists we suggest below.',
+  'personalize.allGenres': 'All {count} genres',
+  'personalize.fewer': 'Fewer genres',
+  'personalize.artists.title': 'Artists you love',
+  'personalize.artists.lead':
+    'Search for anyone, or pick from the artists most connected in your genres.',
+  'personalize.artists.search': 'Add an artist',
+  'personalize.artists.placeholder': 'Search artists',
+  'personalize.artists.yours': 'Artists you added',
+  'personalize.artists.suggested': 'Suggested from your genres',
+  'personalize.artists.pickGenres':
+    'Pick a genre above for suggestions, or search for an artist.',
+  'personalize.privacy.signedOut':
+    'Kept in this browser only; nothing is stored on our servers until you sign in.',
+  'personalize.privacy.signedIn':
+    'Saving follows these artists on your account, which is what For you learns from.',
+  'personalize.privacy.link': 'Privacy',
+  'personalize.followFailed':
+    'Your picks are saved in this browser, but following them didn’t work. Try saving again.',
+  'personalize.skip': 'Skip for now',
+  'personalize.save': 'Save my picks',
+  'personalize.saving': 'Saving…',
+  'personalize.invite.title': 'Make SongNexus yours',
+  'personalize.invite.body':
+    'Tell us a few genres and artists you love, and Home gets a For you shelf built from them.',
+  'personalize.invite.action': 'Personalize',
+  'personalize.invite.later': 'Not now',
+  'forYou.eyebrow': 'Picked for you',
+  'forYou.title': 'For you',
+  'forYou.edit': 'Edit picks',
+  'forYou.reason.connected': 'Works with {name}',
+  'forYou.reason.fansAlso': 'Fans of {name} listen too',
+  'forYou.reason.similar': 'Like {name}',
+  'forYou.reason.genre': 'Big in {genre}',
+  'forYou.reason.friends':
+    '{count, plural, one {A friend listens} other {# friends listen}}',
+  'forYou.reason.discover': 'Something new to try',
 
   // Product surfaces
 
