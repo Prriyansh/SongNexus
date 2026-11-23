@@ -2,9 +2,9 @@
 
 Song Compare: Ishita's Python (Flask) API that compares two songs on audio features,
 structure, credits and lyric analysis. Its standalone Sound & Lyrics UI is in `frontend/`,
-served at `/` with sidebar links back to the main app (`NEXUS_URL`). Its analysis is also the main part
-of Explore's two-song comparison in the Next.js app (`src/frontend/components/SongAnalysis.tsx`),
-via `src/app/api/sound` → `src/lib/sound.ts` → this API. Its `/api/search` powers the song pickers. On
+served at `/` with sidebar links back to the app (`NEXUS_URL`). Its analysis is also the "Sound and
+lyrics" part of the app's song comparison (`web/src/songs/SoundLyrics.tsx`), via the API's
+`CompareRecordingSound` (`server/src/songnexus/service/sound.py`) → this API. On
 Vercel it's its own project (Root Directory `song_compare`) running `index.py` as a Python
 function; keep the runtime bundle under Vercel's 500 MB (runtime deps only in requirements.txt).
 
@@ -39,4 +39,4 @@ function; keep the runtime bundle under Vercel's 500 MB (runtime deps only in re
 - Keep processed data in Parquet/JSON/NumPy formats; don't reintroduce pickle or joblib
   (loading them can run code).
 - Every API parameter is validated; errors are JSON with a 4xx status, never an HTML 500.
-- The JSON shapes are mirrored by the TypeScript types in `src/lib/sound.ts`; change both together.
+- The JSON shapes are read by the models in `server/src/songnexus/service/sound.py`; change both together.
