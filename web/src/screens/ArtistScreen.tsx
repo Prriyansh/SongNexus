@@ -132,8 +132,9 @@ function Labels({labels}: {labels: Schemas['ArtistLabel'][]}) {
 
 /** Wikidata's description and the Wikipedia introduction, always with its link and license. */
 function Intro({about}: {about: Schemas['ArtistAbout']}) {
-  const {t} = useI18n();
+  const {t, formatNumber} = useI18n();
   if (!about.summary && !about.description) return null;
+  const readers = about.monthlyWikipediaViews;
   return (
     <div className="entity-about__block entity-about__block--wide">
       <h3 className="entity-about__title">{t('artist.intro')}</h3>
@@ -143,6 +144,13 @@ function Intro({about}: {about: Schemas['ArtistAbout']}) {
         </p>
       ) : (
         <p className="entity-intro">{about.description}</p>
+      )}
+      {readers !== null && readers > 0 && (
+        <p className="entity-readers">
+          {t('artist.readers', {
+            count: formatNumber(readers, {notation: 'compact'}),
+          })}
+        </p>
       )}
       <p className="entity-intro__source">
         {about.summary && about.wikipediaUrl ? (

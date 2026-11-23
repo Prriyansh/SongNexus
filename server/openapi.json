@@ -363,6 +363,18 @@
             "description": "Wikidata's short description.",
             "title": "Description"
           },
+          "monthlyWikipediaViews": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Average monthly human views of the Wikipedia article over the last 12 complete months (Wikimedia pageviews, CC0): how widely read about the artist is.",
+            "title": "Monthlywikipediaviews"
+          },
           "nominations": {
             "description": "Newest first; up to 100.",
             "items": {
@@ -405,7 +417,8 @@
           "wikipediaUrl",
           "wikidataUrl",
           "awards",
-          "nominations"
+          "nominations",
+          "monthlyWikipediaViews"
         ],
         "title": "ArtistAbout",
         "type": "object"

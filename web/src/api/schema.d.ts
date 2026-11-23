@@ -2014,6 +2014,11 @@ export interface components {
              */
             description: string | null;
             /**
+             * Monthlywikipediaviews
+             * @description Average monthly human views of the Wikipedia article over the last 12 complete months (Wikimedia pageviews, CC0): how widely read about the artist is.
+             */
+            monthlyWikipediaViews: number | null;
+            /**
              * Nominations
              * @description Newest first; up to 100.
              */

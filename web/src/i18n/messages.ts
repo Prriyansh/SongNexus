@@ -158,6 +158,8 @@ export const messages = {
   'artist.intro': 'In brief',
   'artist.intro.wikipedia': 'From Wikipedia · CC BY-SA 4.0',
   'artist.intro.wikidata': 'From Wikidata',
+  'artist.readers':
+    'About {count} people read their Wikipedia page each month (average of the last 12 months, Wikimedia pageviews).',
   'artist.honors.awards':
     '{count, plural, one {# award} other {# awards}} listed on Wikidata',
   'artist.honors.nominations':

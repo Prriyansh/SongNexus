@@ -375,6 +375,8 @@ class ArtistFacts(Base):
     summary: Mapped[str | None] = mapped_column(Text)
     awards: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
     nominations: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
+    # Average monthly human views of the Wikipedia article (Wikimedia pageviews, CC0).
+    monthly_views: Mapped[int | None] = mapped_column(Integer)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 

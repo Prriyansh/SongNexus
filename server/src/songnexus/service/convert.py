@@ -126,6 +126,7 @@ def artist_about(facts: FactsRecord | None) -> api.ArtistAbout | None:
         wikidata_url=f"https://www.wikidata.org/wiki/{facts.wikidata_id}",
         awards=[_honor(h) for h in facts.awards],
         nominations=[_honor(h) for h in facts.nominations],
+        monthly_wikipedia_views=facts.monthly_views,
     )
 
 

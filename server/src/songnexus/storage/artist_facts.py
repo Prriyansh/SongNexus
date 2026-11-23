@@ -43,6 +43,8 @@ class FactsRecord:
     summary: str | None
     awards: tuple[Honor, ...]
     nominations: tuple[Honor, ...]
+    # Average monthly human views of the Wikipedia article (last 12 complete months).
+    monthly_views: int | None = None
 
     @property
     def is_empty(self) -> bool:
@@ -50,7 +52,7 @@ class FactsRecord:
         return not (self.description or self.summary or self.awards or self.nominations)
 
 
-_SCALARS = ("wikidata_id", "description", "wikipedia_url", "summary")
+_SCALARS = ("wikidata_id", "description", "wikipedia_url", "summary", "monthly_views")
 _DELETE_BATCH = 500  # artist IDs per DELETE, well under SQLite's parameter limit
 
 
@@ -126,6 +128,7 @@ def read_artist_facts(session: Session, artist_ids: Iterable[str]) -> dict[str, 
             summary=row.summary,
             awards=tuple(Honor.from_json(h) for h in row.awards or []),
             nominations=tuple(Honor.from_json(h) for h in row.nominations or []),
+            monthly_views=row.monthly_views,
         )
         for row in rows
     }

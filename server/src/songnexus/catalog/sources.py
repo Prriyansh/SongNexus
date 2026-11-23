@@ -196,6 +196,22 @@ SOURCES: tuple[DataSource, ...] = (
         "and is shown as written, never edited.",
     ),
     DataSource(
+        id="wikimedia-pageviews",
+        name="Wikimedia pageviews",
+        homepage="https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/",
+        license="CC0-1.0",
+        license_url="https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/documentation/access-policy.html",
+        tier=Tier.PRODUCTION,
+        status=Status.IN_USE,
+        kind=Kind.API,
+        feeds=("artist pages: how many people read about the artist on Wikipedia each month",),
+        attribution="Pageviews from Wikimedia",
+        checked_on="2026-11-23",
+        notes="The average monthly human (user-agent) views of the artist's English Wikipedia "
+        "article over the last 12 complete months, fetched with `songnexus fetch-facts`. Bots "
+        "and crawlers are excluded by the API; a missing or new article has no figure.",
+    ),
+    DataSource(
         id="wikimedia-commons",
         name="Wikimedia Commons",
         homepage="https://commons.wikimedia.org",

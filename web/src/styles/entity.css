@@ -1141,3 +1141,8 @@ a.entity-card:active {
   font: var(--label-large);
   font-variant-numeric: tabular-nums;
 }
+.entity-readers {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  font: var(--label-large);
+}

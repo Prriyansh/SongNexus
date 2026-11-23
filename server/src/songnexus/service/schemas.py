@@ -246,6 +246,11 @@ class ArtistAbout(ApiModel):
     wikidata_url: str
     awards: list[Honor] = Field(description="Newest first; up to 100.")
     nominations: list[Honor] = Field(description="Newest first; up to 100.")
+    monthly_wikipedia_views: int | None = Field(
+        default=None,
+        description="Average monthly human views of the Wikipedia article over the last 12 "
+        "complete months (Wikimedia pageviews, CC0): how widely read about the artist is.",
+    )
 
 
 class Artist(ArtistSummary):

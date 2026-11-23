@@ -520,7 +520,7 @@ def _cmd_fetch_facts(settings: Settings, args: argparse.Namespace) -> int:
     from datetime import UTC, datetime
 
     from songnexus.catalog.http import SourceRequestError
-    from songnexus.catalog.wikidata.facts import WikipediaClient, run_fetch_facts
+    from songnexus.catalog.wikidata.facts import PageviewsClient, WikipediaClient, run_fetch_facts
     from songnexus.catalog.wikidata.fetch import WikidataClient
     from songnexus.catalog.wikidata.images import http_client
     from songnexus.storage.db import make_engine
@@ -538,6 +538,7 @@ def _cmd_fetch_facts(settings: Settings, args: argparse.Namespace) -> int:
             wikidata,
             wikipedia,
             now=datetime.now(UTC),
+            pageviews=PageviewsClient(cache_dir=settings.raw_dir("wikimedia-pageviews")),
             limit=args.limit,
             dry_run=args.dry_run,
         )

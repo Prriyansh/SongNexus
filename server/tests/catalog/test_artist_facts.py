@@ -136,6 +136,24 @@ class FakeWikimedia:
             )
         return httpx.Response(200, json={"query": {"redirects": redirects, "pages": pages}})
 
+    def pageviews(self, request: httpx.Request) -> httpx.Response:
+        self.requests.append(request)
+        article = request.url.path.split("/user/")[1].split("/")[0]
+        if article.startswith("Bob"):
+            return httpx.Response(404, json={"title": "Not found."})
+        months = [{"views": 900}, {"views": 1100}, {"views": "n/a"}]
+        return httpx.Response(200, json={"items": months})
+
+    def pageviews_client(self, cache: Path) -> facts.PageviewsClient:
+        return facts.PageviewsClient(
+            cache_dir=cache / "pageviews",
+            base_url="https://pageviews.example/api/rest_v1",
+            min_interval_s=0,
+            http=httpx.Client(
+                transport=httpx.MockTransport(self.pageviews), headers={"User-Agent": USER_AGENT}
+            ),
+        )
+
     def clients(self, cache: Path) -> tuple[WikidataClient, facts.WikipediaClient]:
         def client(handler: Callable[[httpx.Request], httpx.Response]) -> httpx.Client:
             return httpx.Client(
@@ -246,3 +264,21 @@ def test_dry_runs_and_limits_write_nothing_else(engine: Engine, tmp_path: Path) 
         engine, *FakeWikimedia(ITEMS).clients(tmp_path / "b"), now=NOW, limit=1
     )
     assert limited["artistsConsidered"] == 1
+
+
+def test_pageviews_average_the_last_twelve_complete_months() -> None:
+    assert facts.pageview_window(datetime(2026, 11, 23, tzinfo=UTC)) == ("2025110100", "2026102800")
+    assert facts.pageview_window(datetime(2027, 1, 5, tzinfo=UTC)) == ("2026010100", "2026122800")
+
+
+def test_fetch_stores_monthly_wikipedia_readers(engine: Engine, tmp_path: Path) -> None:
+    fake = FakeWikimedia(ITEMS)
+    result = facts.run_fetch_facts(
+        engine, *fake.clients(tmp_path), now=NOW, pageviews=fake.pageviews_client(tmp_path)
+    )
+    stored = _stored(engine)
+    assert stored[ALICE].monthly_views == 1000  # the non-numeric month is ignored
+    assert stored[BOB].monthly_views is None  # a 404 is "no data", not a failure
+    assert result["artistsWithPageviews"] == 1
+    asked = [r.url.path for r in fake.requests if "pageviews" in str(r.url)]
+    assert asked[0].endswith("/user/Alice_(singer)/monthly/2025110100/2026102800")
