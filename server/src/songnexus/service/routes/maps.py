@@ -15,9 +15,12 @@ import threading
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.orm import Session
 
+from songnexus.core.graph.algorithms import bidirectional_bfs_path
+from songnexus.core.graph.filters import NodeFilter
+from songnexus.core.graph.model import DEFAULT_CATEGORIES, kinds_for
 from songnexus.service import maps
 from songnexus.service import schemas_maps as api
 from songnexus.service.deps import (
@@ -32,7 +35,7 @@ from songnexus.service.deps import (
 from songnexus.service.errors import ApiError, Status, invalid_argument, not_found
 from songnexus.service.ratelimit import MethodClass
 from songnexus.service.readmodel import ReadModel
-from songnexus.service.routes.common import db_session, set_cache_control
+from songnexus.service.routes.common import MAX_PATH_STEPS, db_session, set_cache_control
 from songnexus.service.schemas import PlaylistTrack
 from songnexus.storage import catalog_repository as catalog
 from songnexus.storage import taste_rooms as rooms
@@ -118,6 +121,43 @@ def similar_to_recording(
     result = _without_blocked(result, who)
     _cache(response, who, result)
     return result
+
+
+@router.get(
+    "/artists/{artist:rid}:compareMap", response_model=api.CompareMap, summary="GetCompareMap"
+)
+def compare_map(
+    artist: str,
+    other: Annotated[str, Query(description="Resource name of the artist to compare with.")],
+    model: ReadModelDep,
+    who: ViewerDep,
+    session: SessionDep,
+    response: Response,
+) -> api.CompareMap:
+    """Two artists on one map: the credit path between them, and who listeners play with each."""
+    a = parse_name(artist, "artists", field="name")
+    b = parse_name(other, "artists", field="other")
+    if a == b:
+        raise invalid_argument("Pick two different artists.", field="other", reason="SAME_ARTIST")
+    for x in (a, b):
+        require_artist(model.graph, x)
+        if x in who.blocked:
+            raise not_found(f"artists/{x}", reason="ARTIST_NOT_FOUND")
+    graph = model.graph
+    path = bidirectional_bfs_path(
+        graph.adjacency(kinds_for(DEFAULT_CATEGORIES)),
+        a,
+        b,
+        max_depth=MAX_PATH_STEPS,
+        allowed=NodeFilter(blocked=who.blocked).predicate(graph),
+    ).path
+    result = maps.compare_map(session, graph, a, b, path or ())
+    hidden = {f"artists/{x}" for x in who.blocked}
+    nodes = [n for n in result.nodes if n.artist not in hidden]
+    kept = {n.id for n in nodes}
+    links = [link for link in result.links if link.a in kept and link.b in kept]
+    set_cache_control(response, who)
+    return result.model_copy(update={"nodes": nodes, "links": links})
 
 
 def _cache(response: Response, who: Viewer, result: api.SimilarMap) -> None:

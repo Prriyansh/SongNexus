@@ -59,6 +59,8 @@ class ReasonKind(enum.StrEnum):
     CLOSE_TO_OTHER = "CLOSE_TO_OTHER"
     # On neither: people who play `artists` (yours) and `otherArtists` (theirs) play it too.
     NEW_TO_YOU = "NEW_TO_YOU"
+    # A step on the shortest chain of credits between the two compared artists.
+    CREDIT_PATH = "CREDIT_PATH"
 
 
 class MapReason(ApiModel):
@@ -105,6 +107,7 @@ class MapLinkKind(enum.StrEnum):
     PERFORMED = "PERFORMED"  # an artist and their song
     CONTAINS = "CONTAINS"  # an artist and a playlist song by them
     RECOMMENDED = "RECOMMENDED"  # a playlist artist and a new artist it leads to
+    CREDIT = "CREDIT"  # two artists credited together (a step on a credit path)
 
 
 class MapLink(ApiModel):
@@ -138,6 +141,19 @@ class SimilarMap(ApiModel):
     center: MapNode
     nodes: list[MapNode]
     links: list[MapLink]
+    sources: list[MapSource]
+
+
+class CompareMap(ApiModel):
+    """Two artists on one map.
+
+    The credit path between them, who listeners play with each (`MINE` for the first,
+    `THEIRS` for the second) and with both (`SHARED`).
+    """
+
+    nodes: list[MapNode] = Field(description="The two artists first (group CENTER).")
+    links: list[MapLink]
+    path: list[str] = Field(description="Node IDs of the credit path, first artist to second.")
     sources: list[MapSource]
 
 

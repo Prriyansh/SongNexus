@@ -58,6 +58,20 @@ export function useSongMap(id: string | undefined) {
   });
 }
 
+export function useCompareMap(a: string | undefined, b: string | undefined) {
+  return useQuery({
+    queryKey: ['map', 'compare', a, b],
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/artists/{artist}:compareMap', {
+          params: {path: {artist: a!}, query: {other: `artists/${b!}`}},
+        }),
+      ),
+    enabled: Boolean(a && b && a !== b),
+    ...MAP_CACHE,
+  });
+}
+
 export function useTasteMap(
   mine: Track[] | null,
   friend: Track[] | null,

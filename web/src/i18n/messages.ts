@@ -1904,6 +1904,7 @@ export const messages = {
   'taste.note.skipped':
     '{count, plural, one {# artist isn’t in our data yet.} other {# artists aren’t in our data yet.}}',
   // </library-v2>
+  'compare.openMap': 'See both on a map',
   'tool.similar.title': 'Similar music',
   'tool.similar.body':
     'Map what listeners play with an artist, a song or your playlist.',
@@ -1924,7 +1925,20 @@ export const messages = {
   'map.modes': 'What to start from',
   'map.mode.artist': 'Artist',
   'map.mode.song': 'Song',
+  'map.mode.pair': 'Two artists',
   'map.mode.playlist': 'My playlist',
+  'map.pair.first': 'First artist',
+  'map.pair.second': 'Second artist',
+  'map.pair.path': 'Credit path: {names}',
+  'map.pair.noPath':
+    'No chain of credits connects them in our data; the map shows who listeners play with each.',
+  'map.pair.legend.a': 'Played with {name}',
+  'map.pair.legend.both': 'Credit path, or played with both',
+  'map.pair.legend.b': 'Played with {name}',
+  'map.label.pair':
+    'Map of two artists: the first on the left, the second on the right, the credit path and who listeners play with both in the middle. Zoom in to see more.',
+  'map.reason.creditPath':
+    'On the shortest chain of credits between {a} and {b}.',
   'map.mode.friend': 'With a friend',
   'map.pick.artist': 'Start from an artist',
   'map.pick.song': 'Start from a song',

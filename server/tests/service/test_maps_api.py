@@ -226,3 +226,15 @@ def test_versions_of_one_song_share_a_key() -> None:
     assert maps.song_key("Hit (Live)", "Zed") == maps.song_key("Hit - Remastered 2011", "Zed")
     shelf = maps.shelf_of([PlaylistTrack(title="Hit", artists=["Zed"])] * 2)
     assert len(shelf.songs) == 1
+
+
+def test_two_artists_on_one_map(client: TestClient) -> None:
+    body = client.get(f"/v1/{ALICE}:compareMap", params={"other": BOB}).json()
+    groups = {n["id"]: n["group"] for n in body["nodes"]}
+    assert groups[ALICE] == groups[BOB] == "CENTER"
+    # Alice and Bob are credited together on a song: a one-step path.
+    assert body["path"] == [ALICE, BOB]
+    assert {"a": ALICE, "b": BOB, "kind": "CREDIT", "strength": 1.0} in body["links"]
+    # Listeners play Carol with Alice only.
+    assert groups[CAROL] == "MINE"
+    assert client.get(f"/v1/{ALICE}:compareMap", params={"other": ALICE}).status_code == 400

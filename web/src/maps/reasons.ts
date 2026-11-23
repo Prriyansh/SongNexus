@@ -58,6 +58,11 @@ export function reasonText(
             name: context.name,
           })
         : t('map.reason.forMe', {names, name: context.name});
+    case 'CREDIT_PATH':
+      return t('map.reason.creditPath', {
+        a: reason.artists[0] ?? '',
+        b: reason.artists[1] ?? '',
+      });
     case 'NEW_TO_YOU':
       if (
         context.hasFriend &&

@@ -34,6 +34,8 @@ import {useI18n} from '../i18n/i18n';
 import type {MessageId} from '../i18n/messages';
 import {
   centeredOn,
+  COMPARE_WORLD_WIDTH,
+  layoutCompare,
   layoutSimilar,
   layoutTaste,
   linkedNames,
@@ -58,6 +60,7 @@ import {presetsFor} from '../maps/presets';
 import {
   prefetchArtistMap,
   useArtistMap,
+  useCompareMap,
   useCreateRoom,
   useJoinRoom,
   useRoom,
@@ -73,10 +76,11 @@ import {readRoomRole, storeRoomRole} from '../maps/rooms';
 import {useSavedSongs} from '../taste/setup';
 import {usePicks} from '../taste/picks';
 
-type Mode = 'artist' | 'song' | 'playlist' | 'friend';
+type Mode = 'artist' | 'song' | 'pair' | 'playlist' | 'friend';
 const MODES: readonly {mode: Mode; icon: IconName}[] = [
   {mode: 'artist', icon: 'person'},
   {mode: 'song', icon: 'note'},
+  {mode: 'pair', icon: 'compare'},
   {mode: 'playlist', icon: 'library'},
   {mode: 'friend', icon: 'people'},
 ];
@@ -84,8 +88,12 @@ const MODES: readonly {mode: Mode; icon: IconName}[] = [
 function modeOf(params: URLSearchParams): Mode {
   if (params.get('song')) return 'song';
   if (params.get('room')) return 'friend';
+  if (params.get('a') || params.get('b')) return 'pair';
   const mode = params.get('mode');
-  return mode === 'song' || mode === 'playlist' || mode === 'friend'
+  return mode === 'song' ||
+    mode === 'pair' ||
+    mode === 'playlist' ||
+    mode === 'friend'
     ? mode
     : 'artist';
 }
@@ -348,6 +356,101 @@ function SimilarView({kind, id}: {kind: 'artist' | 'song'; id: string}) {
           </p>
         }
       />
+    </>
+  );
+}
+
+/** Two artists on one map (Helen's comparison web), with pickers for each side. */
+function PairView({a, b}: {a: string | null; b: string | null}) {
+  const {t} = useI18n();
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const query = useCompareMap(a ?? undefined, b ?? undefined);
+  const map = query.data;
+  const explain = useExplain();
+  const place = useCallback(
+    (w: number, h: number) =>
+      map ? layoutCompare(map.nodes, map.path, w, h) : [],
+    [map],
+  );
+  const startAt = useCallback(
+    (width: number) => centeredOn(width, COMPARE_WORLD_WIDTH),
+    [],
+  );
+  const names = map ? new Map(map.nodes.map(n => [n.id, n.displayName])) : null;
+  const set = (key: 'a' | 'b', id: string) => {
+    const next = new URLSearchParams(params);
+    next.delete('mode');
+    next.set(key, id);
+    setParams(next);
+  };
+  const mapFrom = (node: Placed) => {
+    if (node.artist) void navigate(`/map?artist=${idOf(node.artist)}`);
+  };
+  return (
+    <>
+      <div className="smap-pair">
+        {(['a', 'b'] as const).map(key => (
+          <SearchBox
+            key={key}
+            label={t(key === 'a' ? 'map.pair.first' : 'map.pair.second')}
+            placeholder={
+              (key === 'a' ? a : b) &&
+              names?.get(`artists/${key === 'a' ? a : b}`)
+                ? names.get(`artists/${key === 'a' ? a : b}`)!
+                : t(key === 'a' ? 'map.pair.first' : 'map.pair.second')
+            }
+            types={['ARTIST']}
+            onPick={result => set(key, idOf(result.name))}
+            clearOnPick
+          />
+        ))}
+      </div>
+      {map && (
+        <p className="smap-bar">
+          {map.path.length > 1
+            ? t('map.pair.path', {
+                names: map.path
+                  .map(id => names?.get(id) ?? '')
+                  .join(' \u2192 '),
+              })
+            : t('map.pair.noPath')}
+        </p>
+      )}
+      {a && b && (
+        <SimilarityMap
+          place={place}
+          lines={map?.links ?? []}
+          label={t('map.label.pair')}
+          startAt={startAt}
+          explain={node =>
+            explain(
+              node,
+              linkedNames(node.id, map?.nodes ?? [], map?.links ?? []),
+              !node.isCenter && node.group !== 'SHARED',
+            )
+          }
+          actions={node => <NodeActions node={node} onMap={mapFrom} />}
+          status={
+            <Status map={map} loading={query.isLoading} error={query.error} />
+          }
+          legend={
+            <ul className="smap__key" aria-label={t('map.legend.label')}>
+              <li data-group="mine">
+                {t('map.pair.legend.a', {
+                  name: names?.get(`artists/${a}`) ?? '',
+                })}
+              </li>
+              <li data-group="shared">{t('map.pair.legend.both')}</li>
+              <li data-group="theirs">
+                {t('map.pair.legend.b', {
+                  name: names?.get(`artists/${b}`) ?? '',
+                })}
+              </li>
+            </ul>
+          }
+        />
+      )}
     </>
   );
 }
@@ -860,6 +963,7 @@ export default function MapScreen() {
       {mode === 'song' && song && (
         <SimilarView key={`s:${song}`} kind="song" id={song} />
       )}
+      {mode === 'pair' && <PairView a={params.get('a')} b={params.get('b')} />}
       {mode === 'playlist' && <PlaylistMode />}
       {mode === 'friend' && <FriendMode key={room ?? ''} code={room} />}
     </main>

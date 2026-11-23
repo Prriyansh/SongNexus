@@ -406,6 +406,13 @@ function HowConnected({data}: {data: Comparison}) {
       ) : (
         <p className="cx-card__empty">{t('path.notConnected', {max: 6})}</p>
       )}
+      <Link
+        className="btn btn--text btn--compact cx-card__more"
+        to={`/map?a=${a}&b=${b}`}
+      >
+        <Icon name="spark" />
+        {t('compare.openMap')}
+      </Link>
     </section>
   );
 }

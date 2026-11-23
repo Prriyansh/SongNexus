@@ -24,6 +24,7 @@ import time
 from collections import OrderedDict
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
+from itertools import pairwise
 from typing import Any
 
 import httpx
@@ -422,6 +423,102 @@ def _worst(*statuses: api.MapSourceStatus) -> api.MapSourceStatus:
     if api.MapSourceStatus.UNAVAILABLE in s:
         return api.MapSourceStatus.UNAVAILABLE
     return api.MapSourceStatus.NO_MATCH
+
+
+# --- Two artists ------------------------------------------------------------------------------
+
+COMPARE_PER_SIDE = 18
+
+
+def compare_map(
+    session: Session, graph: ArtistGraph, a: str, b: str, path: Sequence[str]
+) -> api.CompareMap:
+    """Two artists, the credit path between them, and who listeners play with each or both.
+
+    The team app's two-artist Connection Web (Helen): the pair at either end, documented
+    credits along the middle, and the artists around each, closest first, so zooming in
+    reveals more of them.
+    """
+    rows = repo.colistening(session, [a, b], COMPARE_PER_SIDE * 2)
+    scores = {side: {o: s for o, s in rows[side] if o in graph.nodes} for side in (a, b)}
+    tops = {side: max(scores[side].values(), default=0.0) or 1.0 for side in (a, b)}
+    names = {side: graph.nodes[side].name for side in (a, b)}
+    on_path = [p for p in path if p in graph.nodes]
+    taken = {a, b, *on_path}
+    nodes = [
+        _artist_node(graph, a, similarity=1.0, group=api.MapGroup.CENTER),
+        _artist_node(graph, b, similarity=1.0, group=api.MapGroup.CENTER),
+    ]
+    links: list[api.MapLink] = []
+    for step in on_path[1:-1]:
+        nodes.append(
+            _artist_node(
+                graph,
+                step,
+                similarity=1.0,
+                group=api.MapGroup.SHARED,
+                weight=3,
+                reasons=[
+                    api.MapReason(kind=api.ReasonKind.CREDIT_PATH, artists=[names[a], names[b]])
+                ],
+            )
+        )
+    for x, y in pairwise(on_path):
+        links.append(api.MapLink(a=f"artists/{x}", b=f"artists/{y}", kind=api.MapLinkKind.CREDIT))
+
+    def both_score(o: str) -> float:
+        return (scores[a][o] / tops[a] + scores[b][o] / tops[b]) / 2
+
+    both = sorted((o for o in scores[a] if o in scores[b] and o not in taken), key=both_score)
+    for other in list(reversed(both))[:COMPARE_PER_SIDE]:
+        taken.add(other)
+        nodes.append(
+            _artist_node(
+                graph,
+                other,
+                similarity=both_score(other),
+                group=api.MapGroup.SHARED,
+                weight=2,
+                reasons=[
+                    api.MapReason(kind=api.ReasonKind.CO_LISTENED, artists=[names[a], names[b]])
+                ],
+            )
+        )
+        for side in (a, b):
+            links.append(
+                api.MapLink(
+                    a=f"artists/{side}",
+                    b=f"artists/{other}",
+                    kind=api.MapLinkKind.SIMILAR,
+                    strength=_rounded(scores[side][other] / tops[side]),
+                )
+            )
+    for side, group in ((a, api.MapGroup.MINE), (b, api.MapGroup.THEIRS)):
+        ranked = sorted((o for o in scores[side] if o not in taken), key=lambda o: -scores[side][o])
+        for other in ranked[:COMPARE_PER_SIDE]:
+            taken.add(other)
+            similarity = scores[side][other] / tops[side]
+            reasons = [api.MapReason(kind=api.ReasonKind.CO_LISTENED, artists=[names[side]])]
+            if genres := shared_genres(graph, side, other):
+                reasons.append(api.MapReason(kind=api.ReasonKind.SHARED_GENRES, genres=genres))
+            nodes.append(
+                _artist_node(graph, other, similarity=similarity, group=group, reasons=reasons)
+            )
+            links.append(
+                api.MapLink(
+                    a=f"artists/{side}",
+                    b=f"artists/{other}",
+                    kind=api.MapLinkKind.SIMILAR,
+                    strength=_rounded(similarity),
+                )
+            )
+    found = bool(scores[a] or scores[b])
+    return api.CompareMap(
+        nodes=nodes,
+        links=links,
+        path=[f"artists/{p}" for p in on_path],
+        sources=[_source(api.MapSourceStatus.OK if found else api.MapSourceStatus.NO_MATCH)],
+    )
 
 
 # --- Playlist maps -----------------------------------------------------------------------------

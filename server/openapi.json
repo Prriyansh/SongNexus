@@ -2231,6 +2231,49 @@
         "title": "CompareArtistsResponse",
         "type": "object"
       },
+      "CompareMap": {
+        "description": "Two artists on one map.\n\nThe credit path between them, who listeners play with each (`MINE` for the first,\n`THEIRS` for the second) and with both (`SHARED`).",
+        "properties": {
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/MapLink"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "nodes": {
+            "description": "The two artists first (group CENTER).",
+            "items": {
+              "$ref": "#/components/schemas/MapNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "path": {
+            "description": "Node IDs of the credit path, first artist to second.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Path",
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/MapSource"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "nodes",
+          "links",
+          "path",
+          "sources"
+        ],
+        "title": "CompareMap",
+        "type": "object"
+      },
       "CompareRecordingsResponse": {
         "description": "CompareRecordings: structure side by side, an explained similarity, shared credits.",
         "properties": {
@@ -5441,7 +5484,8 @@
           "CO_LISTENED",
           "PERFORMED",
           "CONTAINS",
-          "RECOMMENDED"
+          "RECOMMENDED",
+          "CREDIT"
         ],
         "title": "MapLinkKind",
         "type": "string"
@@ -6478,7 +6522,8 @@
           "ON_PLAYLIST",
           "ON_BOTH",
           "CLOSE_TO_OTHER",
-          "NEW_TO_YOU"
+          "NEW_TO_YOU",
+          "CREDIT_PATH"
         ],
         "title": "ReasonKind",
         "type": "string"
@@ -9646,6 +9691,60 @@
         "summary": "CompareArtists",
         "tags": [
           "analysis"
+        ]
+      }
+    },
+    "/v1/artists/{artist}:compareMap": {
+      "get": {
+        "description": "Two artists on one map: the credit path between them, and who listeners play with each.",
+        "operationId": "GetCompareMap",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "artist",
+            "required": true,
+            "schema": {
+              "title": "Artist",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Resource name of the artist to compare with.",
+            "in": "query",
+            "name": "other",
+            "required": true,
+            "schema": {
+              "description": "Resource name of the artist to compare with.",
+              "title": "Other",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareMap"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "GetCompareMap",
+        "tags": [
+          "maps"
         ]
       }
     },

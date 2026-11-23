@@ -474,3 +474,10 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.smap-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}

@@ -286,3 +286,80 @@ export function placeDiscovered(
   }
   return {placed, lines};
 }
+
+/**
+ * Two artists on one map (Helen's comparison web): the pair at either end, the credit path
+ * along the middle, who listeners play with both between them, and each one's own neighbours
+ * around them, closer the more similar. Ranked closest first, so zooming in reveals more.
+ */
+export function layoutCompare(
+  nodes: readonly MapNode[],
+  path: readonly string[],
+  width: number,
+  height: number,
+): Placed[] {
+  const world = Math.max(width, 1000);
+  const y0 = height / 2;
+  const left = {x: world * 0.16, y: y0};
+  const right = {x: world * 0.84, y: y0};
+  const [a, b, ...rest] = nodes;
+  if (!a || !b) return [];
+  const placed: Placed[] = [
+    {...a, ...left, isCenter: true, rank: -1},
+    {...b, ...right, isCenter: true, rank: -1},
+  ];
+  const steps = path.slice(1, -1);
+  steps.forEach((id, i) => {
+    const node = rest.find(n => n.id === id);
+    if (!node) return;
+    const t = (i + 1) / (steps.length + 1);
+    placed.push({
+      ...node,
+      x: left.x + (right.x - left.x) * t,
+      y: y0 + (i % 2 ? 36 : -36),
+      isCenter: false,
+      rank: -1,
+    });
+  });
+  const others = rest
+    .filter(n => !steps.includes(n.id))
+    .sort((x, y) => y.similarity - x.similarity || x.id.localeCompare(y.id));
+  const rx = Math.max(220, world * 0.3);
+  const ry = Math.max(180, height * 0.44);
+  others.forEach((node, rank) => {
+    const seed = seedOf(node.id);
+    const base = distanceFactor(node.similarity);
+    const origin =
+      node.group === 'MINE'
+        ? left
+        : node.group === 'THEIRS'
+          ? right
+          : {x: world / 2, y: y0};
+    // Each side fans out away from the middle; shared artists sit above and below the path.
+    const sector =
+      node.group === 'MINE'
+        ? [Math.PI * 0.5, Math.PI * 1.5]
+        : node.group === 'THEIRS'
+          ? [-Math.PI * 0.5, Math.PI * 0.5]
+          : [0, Math.PI * 2];
+    let spot = {x: origin.x, y: origin.y + ry * 2};
+    search: for (let ring = 0; ring < 40; ring++) {
+      const factor =
+        (node.group === 'SHARED' ? 0.35 + base * 0.4 : base) + ring * 0.05;
+      for (let turn = 0; turn < 24; turn++) {
+        const along = (seed + turn * 0.381966) % 1;
+        const angle = sector[0]! + (sector[1]! - sector[0]!) * along;
+        const x = origin.x + Math.cos(angle) * rx * factor;
+        const y = origin.y + Math.sin(angle) * ry * factor;
+        if (isClear(placed, x, y)) {
+          spot = {x, y};
+          break search;
+        }
+      }
+    }
+    placed.push({...node, ...spot, isCenter: false, rank});
+  });
+  return placed;
+}
+
+export const COMPARE_WORLD_WIDTH = 1000;

@@ -133,6 +133,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/artists/{artist}:compareMap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GetCompareMap
+         * @description Two artists on one map: the credit path between them, and who listeners play with each.
+         */
+        get: operations["GetCompareMap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/artists/{artist}:findPath": {
         parameters: {
             query?: never;
@@ -2935,6 +2955,29 @@ export interface components {
             sharedGenres: components["schemas"]["SharedGenre"][];
         };
         /**
+         * CompareMap
+         * @description Two artists on one map.
+         *
+         *     The credit path between them, who listeners play with each (`MINE` for the first,
+         *     `THEIRS` for the second) and with both (`SHARED`).
+         */
+        CompareMap: {
+            /** Links */
+            links: components["schemas"]["MapLink"][];
+            /**
+             * Nodes
+             * @description The two artists first (group CENTER).
+             */
+            nodes: components["schemas"]["MapNode"][];
+            /**
+             * Path
+             * @description Node IDs of the credit path, first artist to second.
+             */
+            path: string[];
+            /** Sources */
+            sources: components["schemas"]["MapSource"][];
+        };
+        /**
          * CompareRecordingsResponse
          * @description CompareRecordings: structure side by side, an explained similarity, shared credits.
          */
@@ -4515,7 +4558,7 @@ export interface components {
          * @description What a line between two nodes means. Never a credit.
          * @enum {string}
          */
-        MapLinkKind: "SIMILAR" | "CO_LISTENED" | "PERFORMED" | "CONTAINS" | "RECOMMENDED";
+        MapLinkKind: "SIMILAR" | "CO_LISTENED" | "PERFORMED" | "CONTAINS" | "RECOMMENDED" | "CREDIT";
         /**
          * MapNode
          * @description An artist or a song on a map.
@@ -5040,7 +5083,7 @@ export interface components {
          * @description Why a node is on the map. The client words each kind; the fields carry the facts.
          * @enum {string}
          */
-        ReasonKind: "CO_LISTENED" | "SHARED_GENRES" | "SOUND_MATCH" | "ON_PLAYLIST" | "ON_BOTH" | "CLOSE_TO_OTHER" | "NEW_TO_YOU";
+        ReasonKind: "CO_LISTENED" | "SHARED_GENRES" | "SOUND_MATCH" | "ON_PLAYLIST" | "ON_BOTH" | "CLOSE_TO_OTHER" | "NEW_TO_YOU" | "CREDIT_PATH";
         /**
          * RecommendArtistsResponse
          * @description RecommendArtists.
@@ -6499,6 +6542,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompareArtistsResponse"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    GetCompareMap: {
+        parameters: {
+            query: {
+                /** @description Resource name of the artist to compare with. */
+                other: string;
+            };
+            header?: never;
+            path: {
+                artist: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareMap"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */

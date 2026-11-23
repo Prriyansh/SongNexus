@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest';
 
 import {
   distanceFactor,
+  layoutCompare,
   layoutSimilar,
   layoutTaste,
   linkedNames,
@@ -172,5 +173,27 @@ describe('presets', () => {
   it('offers presets matching your genres first', () => {
     expect(presetsFor(['Hip Hop'])[0]!.id).toBe('hiphop');
     expect(presetsFor([]).map(p => p.id)).toEqual(PRESETS.map(p => p.id));
+  });
+});
+
+describe('two-artist maps', () => {
+  it('puts the pair at either end and the credit path between them', () => {
+    const placed = layoutCompare(
+      [
+        node('a', 1, {group: 'CENTER'}),
+        node('b', 1, {group: 'CENTER'}),
+        node('step', 1, {group: 'SHARED'}),
+        node('mine', 0.9, {group: 'MINE'}),
+        node('theirs', 0.9, {group: 'THEIRS'}),
+      ],
+      ['a', 'step', 'b'],
+      1000,
+      600,
+    );
+    const x = Object.fromEntries(placed.map(p => [p.id, p.x]));
+    expect(x.a!).toBeLessThan(x.step!);
+    expect(x.step!).toBeLessThan(x.b!);
+    expect(x.mine!).toBeLessThanOrEqual(x.a! + 1);
+    expect(x.theirs!).toBeGreaterThanOrEqual(x.b! - 1);
   });
 });
