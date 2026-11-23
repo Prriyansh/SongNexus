@@ -11,7 +11,7 @@ import {
 import MusicAccounts from './components/MusicAccounts';
 import type { ArtistDetails, RecordingDetails, TrackRef } from '@/lib/types';
 import { formatDuration, partitionGenres } from '@/lib/types';
-import { artistDetails, artistInsights, collaborators, moreCredits, songDetails, soundComparison, topTrack } from './api';
+import { artistDetails, artistInsights, audioComparison, collaborators, moreCredits, songDetails, soundComparison, topTrack } from './api';
 import type { SimilarSong } from '@/lib/sound';
 import { findRecording } from './resolve';
 import { SearchChooser } from './components/SearchChooser';
@@ -32,6 +32,8 @@ import { ConnectionWeb } from './components/ConnectionWeb';
 import { Friends } from './components/TasteWeb';
 import { ComparisonDetails } from './components/ComparisonDetails';
 import { ArtistInsightsPanel } from './components/ArtistInsightsPanel';
+import { AcousticBrainzPanel } from './components/AcousticBrainzPanel';
+import { DataSources } from './components/DataSources';
 import { Modal } from './components/Modal';
 import { TasteSetup } from './components/TasteSetup';
 import { applyAnswers, needsSetup, playlistFrom, readSetup, storeSetup } from './setup';
@@ -132,6 +134,7 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
   // Song pairs also get sound and lyrics: tempo, key, mood, a match score and similar-sounding songs.
   const songs = kind === 'song' && a && b ? [a as RecordingDetails, b as RecordingDetails] as [RecordingDetails, RecordingDetails] : null;
   const sound = useAsync(songs ? `sound:${songs[0].id}:${songs[1].id}` : null, () => soundComparison(songs![0], songs![1]));
+  const acoustic = useAsync(songs ? `acousticbrainz:${songs[0].id}:${songs[1].id}` : null, () => audioComparison(songs![0].id, songs![1].id));
   const soundResult = sound.data?.status === 'ok' ? sound.data.comparison : null;
   const [pick, setPick] = useState<{ id?: string; error?: string }>({});
   // A similar-sounding song comes from the Spotify dataset; find it on MusicBrainz to compare it.
@@ -178,6 +181,7 @@ function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissN
     </section>
     {/* Songs: the sound and lyrics analysis is the comparison; release details and credits follow. */}
     {kind === 'song' && (songs ? <SongAnalysis sound={sound} songs={songs} onPickSimilar={song => void compareWithSimilar(song)} busyId={pick.id} pickError={pick.error} /> : <section className="panel match-panel" aria-busy="true"><p className="loading-text">Loading the songs…</p><div className="skeleton-lines"><span /><span /></div></section>)}
+    {songs && <AcousticBrainzPanel state={acoustic} titles={[songs[0].title, songs[1].title]} />}
     {kind === 'artist' && <ArtistInsightsPanel state={insights} names={[a ? nameOf(a) : 'Artist one', b ? nameOf(b) : 'Artist two']} />}
     <ComparisonDetails kind={kind} a={a} b={b} collab={pair ? collab : null} more={kind === 'artist' ? more : undefined} role={role} onSelect={onDetails} onCompareSongs={compareSongs} />
     <div className="content-columns"><section className="panel graph-panel"><div className="graph-heading"><div><h2>How they’re connected</h2><p>Solid lines are credits on MusicBrainz; dotted is a songwriting credit alone; dashed is shared genre tags. Select a person to see the songs that connect them.</p></div><RoleSelect value={role} onChange={onRole} /></div>
@@ -305,7 +309,7 @@ function App() {
       <main className={`main-content ${page === 'connections' || page === 'friends' ? 'web-main-content' : ''}`}>{page === 'accounts' ? <MusicAccounts onDiscovery={() => go({ page: 'connections', manual: false, comparison, web: { ...web, mode: 'playlist' }, note: '' })} /> : page === 'about' ? <>{shared && <div className="shared-note"><CircleUserRound size={20} /><div><strong>Shared About Me</strong><p>{note || 'You’re viewing a shared music taste profile.'}</p></div><button className="secondary-button" onClick={() => navigate('about')}>View my About Me</button></div>}<AboutMe key={shared ? 'shared' : 'own'} onSelect={setDetail} profile={shared || profile} onProfileChange={setProfile} readOnly={!!shared} manual={route.manual} onManual={open => go({ ...route, manual: open, profile: undefined, note: '' }, { scroll: false })} name={shared ? '' : setup.name} /></>
         : page === 'friends' ? <Friends profile={profile} onExploreArtist={artist => go({ page: 'connections', manual: false, comparison, web: { ...web, mode: 'artist', artist }, note: '' })} onExploreSong={song => go({ page: 'connections', manual: false, comparison, web: { ...web, mode: 'song', song }, note: '' })} onDetails={setDetail} />
         : page === 'connections' ? <ConnectionWeb selection={web} onChange={next => go({ ...route, web: next, note: '' }, { scroll: false })} onSelect={setDetail} onCompare={(kind, a, b) => go({ page: 'explore', manual: false, comparison: comparisonFor(kind, a, b), note: '' })} note={note} profile={profile} /> : <Explore comparison={comparison} onComparison={updateComparison} onRole={role => go({ ...route, comparison: { ...comparison, role } }, { replace: true, scroll: false })} onDetails={setDetail} note={note} onDismissNote={() => go({ ...route, note: '' }, { replace: true, scroll: false })} profile={profile} />}
-        {page !== 'connections' && page !== 'friends' && <footer><span>SONG NEXUS</span><span>Data from <a href="https://musicbrainz.org" target="_blank" rel="noreferrer">MusicBrainz</a> and the <a href="https://coverartarchive.org" target="_blank" rel="noreferrer">Cover Art Archive</a>; top songs, related artists and artist photos from <a href="https://www.deezer.com" target="_blank" rel="noreferrer">Deezer</a>; artist facts from <a href="https://www.wikidata.org" target="_blank" rel="noreferrer">Wikidata</a>, <a href="https://en.wikipedia.org" target="_blank" rel="noreferrer">Wikipedia</a> (CC BY-SA), <a href="https://listenbrainz.org" target="_blank" rel="noreferrer">ListenBrainz</a> and <a href="https://www.last.fm" target="_blank" rel="noreferrer">Last.fm</a>; more credits from <a href="https://genius.com" target="_blank" rel="noreferrer">Genius</a> and <a href="https://www.discogs.com" target="_blank" rel="noreferrer">Discogs</a>; sound from the <a href="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset" target="_blank" rel="noreferrer">Spotify tracks dataset</a> and Genius lyrics.</span></footer>}</main>
+        {page !== 'connections' && page !== 'friends' && <footer><span>SONG NEXUS</span><span>Data from <a href="https://musicbrainz.org" target="_blank" rel="noreferrer">MusicBrainz</a> and the <a href="https://coverartarchive.org" target="_blank" rel="noreferrer">Cover Art Archive</a>; top songs, related artists and artist photos from <a href="https://www.deezer.com" target="_blank" rel="noreferrer">Deezer</a>; artist facts from <a href="https://www.wikidata.org" target="_blank" rel="noreferrer">Wikidata</a>, <a href="https://en.wikipedia.org" target="_blank" rel="noreferrer">Wikipedia</a> (CC BY-SA), <a href="https://commons.wikimedia.org" target="_blank" rel="noreferrer">Wikimedia Commons</a> (credited per photo), <a href="https://listenbrainz.org" target="_blank" rel="noreferrer">ListenBrainz</a> and <a href="https://www.last.fm" target="_blank" rel="noreferrer">Last.fm</a>; more credits from <a href="https://genius.com" target="_blank" rel="noreferrer">Genius</a> and <a href="https://www.discogs.com" target="_blank" rel="noreferrer">Discogs</a>; sound from the <a href="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset" target="_blank" rel="noreferrer">Spotify tracks dataset</a>, Genius lyrics and <a href="https://acousticbrainz.org" target="_blank" rel="noreferrer">AcousticBrainz</a>.</span><DataSources /></footer>}</main>
     </div>{detail && <DetailDrawer selected={detail} onClose={() => setDetail(null)} onSelect={setDetail} profile={profile} onProfileChange={setProfile} onCompare={compareFrom} />}{shareOpen && <ShareModal route={{ ...route, web }} profile={shared || profile} onClose={() => setShareOpen(false)} />}{showSetup && <TasteSetup onFinish={finishSetup} />}</div>;
 }
 export default App;

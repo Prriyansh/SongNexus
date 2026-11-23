@@ -1,6 +1,6 @@
 // Facts about each artist from outside MusicBrainz, with every one linked to where it came from.
 // Wikidata and Wikipedia are community-edited, so lists read "listed on Wikidata", never as a full record.
-import type { ArtistInsight, ArtistInsights, WikiLabelled } from '@/lib/types';
+import type { ArtistInsight, ArtistInsights, CommonsPhoto, WikiLabelled } from '@/lib/types';
 import type { Loadable } from './ComparisonDetails';
 import { sourceNote } from '../credits';
 
@@ -14,15 +14,24 @@ function Listed({ label, items, url }: { label: string; items: WikiLabelled[]; u
   return <div className="insight-fact"><span>{label} listed on Wikidata · {items.length}</span><p>{items.slice(0, AWARDS_SHOWN).map(dated).join(' · ')}{rest > 0 && ` · and ${rest} more`}</p><small><a className="inline-link" href={url} target="_blank" rel="noreferrer">Wikidata ↗</a></small></div>;
 }
 
+/** Commons photos are free to show only with their author, license and a link to the file. */
+function PhotoCredit({ photo }: { photo: CommonsPhoto }) {
+  const license = photo.licenseUrl ? <a className="inline-link" href={photo.licenseUrl} target="_blank" rel="noreferrer">{photo.license}</a> : photo.license;
+  return <small className="insight-photo-credit">Photo{photo.author && <> by {photo.author}</>}, {license}, via <a className="inline-link" href={photo.pageUrl} target="_blank" rel="noreferrer">Wikimedia Commons ↗</a></small>;
+}
+
 function Side({ name, insight }: { name: string; insight: ArtistInsight }) {
   const { facts, audience } = insight;
   const wiki = facts?.wikipedia;
+  const photo = facts?.photo;
+  const imageUrl = photo?.url ?? wiki?.imageUrl;
   return <div className="insight-side">
     <div className="insight-side-head">
-      {/* eslint-disable-next-line @next/next/no-img-element -- remote Wikipedia image, sized by CSS */}
-      {wiki?.imageUrl && <img className="insight-photo" src={wiki.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" />}
+      {/* eslint-disable-next-line @next/next/no-img-element -- remote Wikimedia image, sized by CSS */}
+      {imageUrl && <img className="insight-photo" src={imageUrl} alt={photo ? `Photo of ${name}` : ''} loading="lazy" referrerPolicy="no-referrer" />}
       <div><strong>{name}</strong>{facts?.description && <small>{facts.description}</small>}</div>
     </div>
+    {photo && <PhotoCredit photo={photo} />}
     {wiki ? <p className="insight-bio">{wiki.extract} <a className="inline-link" href={wiki.url} target="_blank" rel="noreferrer">Wikipedia ↗</a></p> : <p className="insight-bio">No Wikipedia summary linked for this artist.</p>}
     {facts?.activeFrom && <div className="insight-fact"><span>Active since</span><p>{facts.activeFrom}</p></div>}
     {facts && <Listed label="Awards" items={facts.awards} url={facts.wikidataUrl} />}

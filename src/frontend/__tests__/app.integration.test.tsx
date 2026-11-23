@@ -5,7 +5,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SimilarWeb, Song, TasteMap } from '@/lib/types';
+import type { AudioComparison, SimilarWeb, Song, TasteMap } from '@/lib/types';
 import {
   collab, SOUR_ART, EXPECTATIONS, expectationsDetails, killBill, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, PATIENT_ZERO,
   patientZeroDetails, PHOEBE, phoebe, phoebeDetails, PUNISHER, soundOk, TAYLOR, taylorDetails, VAMPIRE, vampireDetails,
@@ -23,6 +23,12 @@ const DETAILS: Record<string, unknown> = {
 const vampireSong: Song = { ...vampireDetails };
 let failures: Record<string, number> = {};
 let soundReply: SoundResult = soundOk;
+const audioOk: AudioComparison = {
+  a: { url: 'https://acousticbrainz.org/a', bpm: 138, key: 'F major', classes: [{ name: 'Danceable', probability: 0.42 }, { name: 'Sad', probability: 0.8 }] },
+  b: null,
+  source: { source: 'AcousticBrainz', status: 'no-match' },
+};
+let audioReply: AudioComparison = audioOk;
 let soundSearchReply: unknown = { status: 'unavailable' };
 const defaultFetch = async (input: string) => {
   const url = new URL(input, 'http://localhost');
@@ -41,6 +47,7 @@ const defaultFetch = async (input: string) => {
     case '/api/credits': return reply({ credits: moreCreditsReply });
     case '/api/artist-insights': return reply({ insights: insightsReply });
     case '/api/top-track': return reply({ track: q.get('id') === OLIVIA ? expectationsDetails : patientZeroDetails });
+    case '/api/acousticbrainz': return reply({ audio: audioReply });
     case '/api/sound': return reply(soundReply);
     case '/api/sound/search': return reply(soundSearchReply);
     case '/api/musicbrainz/search': {
@@ -60,7 +67,8 @@ const moreCreditsReply = {
 };
 const insightsReply = {
   a: { id: OLIVIA, facts: { wikidataUrl: 'https://www.wikidata.org/wiki/Q1', description: 'American singer', activeFrom: '2015', awards: [{ id: 'Q9', name: 'Grammy Award for Best New Artist', year: '2022' }], nominations: [], labels: [],
-    wikipedia: { url: 'https://en.wikipedia.org/wiki/Olivia_Rodrigo', extract: 'Olivia Rodrigo is a singer.', imageUrl: null } }, audience: { listenBrainz: { listeners: 18915, listens: 1329454, url: 'https://listenbrainz.org/artist/x' }, lastFm: null } },
+    wikipedia: { url: 'https://en.wikipedia.org/wiki/Olivia_Rodrigo', extract: 'Olivia Rodrigo is a singer.', imageUrl: null },
+    photo: { url: 'https://thumb.wikimedia.org/olivia.jpg', pageUrl: 'https://commons.wikimedia.org/wiki/File:Olivia.jpg', author: 'Jane Photographer', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0' } }, audience: { listenBrainz: { listeners: 18915, listens: 1329454, url: 'https://listenbrainz.org/artist/x' }, lastFm: null } },
   b: { id: 'b', facts: null, audience: { listenBrainz: null, lastFm: null } },
   shared: {
     awards: [{ id: 'Q10', name: 'Billboard 21 Under 21', year: '' }, { id: 'Q11', name: 'Grammy Award for Best Pop Vocal Album', year: '' }],
@@ -93,6 +101,7 @@ beforeEach(async () => {
   roomsUnavailable = false;
   roomReply = { host: { name: 'Priya', songs: samplePlaylist }, guest: null };
   soundReply = soundOk;
+  audioReply = audioOk;
   soundSearchReply = { status: 'unavailable' };
   fetchMock.mockReset();
   fetchMock.mockImplementation(defaultFetch);
@@ -167,6 +176,12 @@ describe('Explore: artists', () => {
     await settle();
     const facts = document.querySelector('.artist-insights')!;
     expect(facts.textContent).toContain('Olivia Rodrigo is a singer.');
+    // A Commons photo is shown only with its credit: author, license and file page.
+    expect(facts.querySelector('img.insight-photo')?.getAttribute('src')).toBe('https://thumb.wikimedia.org/olivia.jpg');
+    const credit = facts.querySelector('.insight-photo-credit')!;
+    expect(credit.textContent).toContain('Photo by Jane Photographer, CC BY-SA 4.0, via Wikimedia Commons');
+    expect(credit.querySelector('a[href="https://commons.wikimedia.org/wiki/File:Olivia.jpg"]')).not.toBeNull();
+    expect(facts.querySelectorAll('.insight-photo-credit')).toHaveLength(1);
     expect(facts.textContent).toContain('Grammy Award for Best New Artist (2022)');
     expect(facts.textContent).toContain('18,915 listeners');
     expect(facts.textContent).toContain('Republic Records');
@@ -308,6 +323,9 @@ describe('Connection Web workspace', () => {
     await click(button('About Me'));
     expect(document.querySelector('.app-shell.is-connection-web')).toBeNull();
     expect(document.querySelector('main footer')).not.toBeNull();
+    const sources = document.querySelector('main footer .data-sources')!;
+    expect(sources.querySelector('summary')?.textContent).toBe('Data sources and licenses');
+    for (const name of ['MusicBrainz', 'Wikimedia Commons', 'AcousticBrainz', 'ListenBrainz', 'Discogs']) expect(sources.textContent).toContain(name);
   });
 
   it('has one search from an artist, and Helen\'s two-artist Comparison alongside', async () => {
@@ -689,6 +707,28 @@ describe('Explore: songs, sound and lyrics', () => {
     await click(button('2 Artists'));
     expect(window.location.pathname).toBe('/compare/artists');
     expect(button('Explore').getAttribute('aria-current')).toBe('page');
+  });
+
+  it('adds what AcousticBrainz measured, labelled as its own, and says which song it has no data for', async () => {
+    await render(songs);
+    await settle();
+    expect(called(`/api/acousticbrainz?a=${VAMPIRE}&b=${OPHELIA}`)).toBe(true);
+    const panel = document.querySelector('.acousticbrainz-panel')!;
+    expect(panel.querySelector('h3')?.textContent).toBe('Measured by AcousticBrainz');
+    expect(panel.textContent).toContain('138 / — BPM');
+    expect(panel.textContent).toContain('F major / —');
+    expect(panel.textContent).toContain('Danceable42 / —');
+    expect(panel.textContent).toContain('It has no data for The Fate of Ophelia');
+    expect(panel.querySelector('a[href="https://acousticbrainz.org/a"]')).not.toBeNull();
+  });
+
+  it('says plainly when AcousticBrainz has nothing for either song', async () => {
+    audioReply = { a: null, b: null, source: { source: 'AcousticBrainz', status: 'no-match' } };
+    await render(songs);
+    await settle();
+    const panel = document.querySelector('.acousticbrainz-panel')!;
+    expect(panel.textContent).toContain('AcousticBrainz has no measurements for either song.');
+    expect(panel.querySelector('.audio-bar')).toBeNull();
   });
 
   it('leads with the sound and lyrics analysis; MusicBrainz details come after it', async () => {

@@ -21,6 +21,11 @@ Server-side integration layer. Everything that knows about MusicBrainz or Deezer
 - `credit-sources.ts` — shared by other sources: requests, label-to-role mapping, common people.
 - `discogs.ts`, `genius.ts` — album and song credits; `more-credits.ts` runs both and reports on each.
 - `wikidata.ts`, `listenbrainz.ts`, `lastfm.ts` — facts and audience; `artist-insights.ts` combines them.
+- `commons.ts` — the artist photo Wikidata names (P18) from Wikimedia Commons, kept only under a
+  free license (public domain, CC0, CC BY, CC BY-SA) and returned with its author, license and file
+  page; `wikidata.ts` adds it to `ArtistFacts.photo`.
+- `acousticbrainz.ts` — tempo, key and mood-classifier estimates for two recordings by MBID
+  (`compareAudio`). The dataset stops in 2022: a song without data is reported, never filled in.
 - `similar.ts` — similar artists and songs with reasons; `taste.ts` — playlist maps; `rooms.ts` — short codes and their storage.
 - `CLAUDE.md` — this guide.
 

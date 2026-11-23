@@ -17,6 +17,7 @@ Thin route handlers over `src/lib`. Each one validates input, calls the lib, and
   - `top-track/route.ts` — an artist's top song (Deezer rank → MusicBrainz recording)
   - `sound/route.ts` — sound & lyrics comparison of two songs from the song_compare service
   - `sound/search/route.ts` — songs in the sound dataset, for the song pickers
+  - `acousticbrainz/route.ts` — what AcousticBrainz measured for two recordings
 
 ## Routes
 
@@ -30,6 +31,7 @@ Thin route handlers over `src/lib`. Each one validates input, calls the lib, and
 | `GET /api/top-track` | `id` (artist MBID), `name` | `{ track }` (or `null`) | 1 h |
 | `GET /api/sound/search` | `q` (2–200 chars), `limit` (≤25) | `{ status: "ok", results }` or `{ status: "unavailable" }` | 1 h (`no-store` when unavailable) |
 | `GET /api/sound` | `aTitle`, `bTitle` (required), `aArtist`, `bArtist` | `{ status, comparison?, similar?, missing?, hint? }` | 1 h (`no-store` when unavailable) |
+| `GET /api/acousticbrainz` | `a`, `b` (two different recording MBIDs) | `{ audio }` (AudioComparison; `source.status` says `ok`, `no-match` or `failed`) | 1 day (`no-store` if it failed) |
 
 Pattern for every handler:
 
