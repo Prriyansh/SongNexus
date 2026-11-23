@@ -35,6 +35,16 @@ for (const locale of ['en-XA', 'ar-XB']) {
       );
       expect(overflow, `${path} scrolls sideways`).toBeLessThanOrEqual(0);
 
+      // Judge the settled page: entrance animations fade content in.
+      await page.evaluate(() =>
+        Promise.all(
+          document
+            .getAnimations()
+            // Skip endless ones (loading shimmer): they never finish.
+            .filter(a => a.effect?.getComputedTiming().endTime !== Infinity)
+            .map(a => a.finished.catch(() => undefined)),
+        ),
+      );
       const serious = (
         await new AxeBuilder({page})
           .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])

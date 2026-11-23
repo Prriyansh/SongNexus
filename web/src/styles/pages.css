@@ -171,5 +171,8 @@
 
 .you__personalize {
   align-self: flex-start;
+  max-inline-size: 100%;
   margin-block-start: var(--space-3);
+  white-space: normal; /* long translations wrap instead of widening the page */
+  text-align: start;
 }
