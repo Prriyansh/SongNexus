@@ -24,6 +24,15 @@ import {
   type PickedArtist,
   type PickedGenre,
 } from '../taste/picks';
+import {
+  DISCOVER,
+  MAX_SONGS,
+  nextStop,
+  saveSetup,
+  useSetup,
+  type Discover,
+  type SavedSong,
+} from '../taste/setup';
 
 const GENRES_SHOWN = 18;
 const SUGGESTIONS_SHOWN = 18;
@@ -261,6 +270,129 @@ function ArtistPicker({
   );
 }
 
+/** Songs you love (Lakadia's setup): they fill "Use my saved songs" on the maps. */
+function SongPicker({
+  chosen,
+  onChange,
+}: {
+  chosen: SavedSong[];
+  onChange: (songs: SavedSong[]) => void;
+}) {
+  const {t} = useI18n();
+  return (
+    <section className="cx-card" aria-labelledby="pz-songs">
+      <div className="cx-card__head">
+        <h2 id="pz-songs" className="cx-card__title">
+          {t('personalize.songs.title')}
+        </h2>
+        <span className="cx-card__count">
+          {t('personalize.count', {count: chosen.length, max: MAX_SONGS})}
+        </span>
+      </div>
+      <p className="cx-card__note">{t('personalize.songs.lead')}</p>
+      <div className="pz-search">
+        <SearchBox
+          label={t('personalize.songs.search')}
+          placeholder={t('personalize.songs.placeholder')}
+          types={['RECORDING']}
+          clearOnPick
+          onPick={result => {
+            if (
+              chosen.length >= MAX_SONGS ||
+              chosen.some(s => s.name === result.name)
+            )
+              return;
+            onChange([
+              ...chosen,
+              {
+                name: result.name,
+                title: result.displayName,
+                artist: result.subtitle,
+              },
+            ]);
+          }}
+        />
+      </div>
+      {chosen.length > 0 && (
+        <ul
+          className="chips pz-chips"
+          aria-label={t('personalize.songs.yours')}
+        >
+          {chosen.map(song => (
+            <li key={song.name}>
+              <button
+                type="button"
+                className="chip"
+                aria-pressed
+                onClick={() =>
+                  onChange(chosen.filter(s => s.name !== song.name))
+                }
+              >
+                <Icon name="note" />
+                {t('personalize.songs.chip', {
+                  title: song.title,
+                  artist: song.artist,
+                })}
+                <Icon name="close" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/** How you like to find new music, and what to call you (Lakadia's setup). */
+function AboutYou({
+  name,
+  discover,
+  onName,
+  onDiscover,
+}: {
+  name: string;
+  discover: Discover | null;
+  onName: (name: string) => void;
+  onDiscover: (discover: Discover | null) => void;
+}) {
+  const {t} = useI18n();
+  return (
+    <section className="cx-card" aria-labelledby="pz-you">
+      <h2 id="pz-you" className="cx-card__title">
+        {t('personalize.you.title')}
+      </h2>
+      <label className="pz-name">
+        <span>{t('personalize.you.name')}</span>
+        <input
+          className="pz-name__input"
+          maxLength={40}
+          autoComplete="given-name"
+          placeholder={t('personalize.you.namePlaceholder')}
+          value={name}
+          onChange={event => onName(event.target.value)}
+        />
+      </label>
+      <fieldset className="pz-discover">
+        <legend>{t('personalize.discover.title')}</legend>
+        {DISCOVER.map(option => (
+          <label key={option} className="choice">
+            <input
+              type="radio"
+              name="discover"
+              checked={discover === option}
+              onChange={() => onDiscover(option)}
+            />
+            <span>
+              <strong>{t(`personalize.discover.${option}`)}</strong>
+              <small>{t(`personalize.discover.${option}.body`)}</small>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+    </section>
+  );
+}
+
 export default function PersonalizeScreen() {
   const {t} = useI18n();
   const navigate = useNavigate();
@@ -269,12 +401,17 @@ export default function PersonalizeScreen() {
   const follow = useFollowArtists();
   const [genres, setGenres] = useState<PickedGenre[]>(stored.genres);
   const [artists, setArtists] = useState<PickedArtist[]>(stored.artists);
+  const setup = useSetup();
+  const [songs, setSongs] = useState<SavedSong[]>(setup.songs);
+  const [name, setName] = useState(setup.name);
+  const [discover, setDiscover] = useState<Discover | null>(setup.discover);
   const [problem, setProblem] = useState(false);
   usePageTitle(t('personalize.title'));
   const signedIn = auth.status === 'signedIn';
 
   async function save() {
     savePicks({genres, artists, done: true});
+    saveSetup({name, songs, discover});
     if (signedIn && artists.length > 0) {
       try {
         await follow.mutateAsync(artists.map(a => a.name));
@@ -283,7 +420,8 @@ export default function PersonalizeScreen() {
         return;
       }
     }
-    void navigate('/#for-you');
+    const next = nextStop(discover);
+    void navigate(next === '/' ? '/#for-you' : next);
   }
 
   function skip() {
@@ -302,6 +440,13 @@ export default function PersonalizeScreen() {
       <div className="cx-board">
         <GenrePicker chosen={genres} onChange={setGenres} />
         <ArtistPicker genres={genres} chosen={artists} onChange={setArtists} />
+        <SongPicker chosen={songs} onChange={setSongs} />
+        <AboutYou
+          name={name}
+          discover={discover}
+          onName={setName}
+          onDiscover={setDiscover}
+        />
       </div>
       <div className="pz-bar">
         <p className="pz-bar__note">
@@ -324,7 +469,12 @@ export default function PersonalizeScreen() {
             type="button"
             className="btn btn--filled"
             disabled={
-              follow.isPending || (genres.length === 0 && artists.length === 0)
+              follow.isPending ||
+              (genres.length === 0 &&
+                artists.length === 0 &&
+                songs.length === 0 &&
+                !name.trim() &&
+                !discover)
             }
             onClick={() => void save()}
           >

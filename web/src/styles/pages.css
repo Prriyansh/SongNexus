@@ -176,3 +176,37 @@
   white-space: normal; /* long translations wrap instead of widening the page */
   text-align: start;
 }
+
+/* Personalize: the "About you" questions. */
+.pz-name {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 16px;
+  font: var(--label-large);
+}
+.pz-name__input {
+  max-width: 360px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--md-outline);
+  background: var(--md-surface-container-lowest);
+  color: var(--md-on-surface);
+  font: var(--body-large);
+}
+.pz-discover {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.pz-discover legend {
+  margin-bottom: 6px;
+  font: var(--label-large);
+}
+.pz-discover .choice span {
+  display: grid;
+}
+.pz-discover small {
+  color: var(--md-on-surface-variant);
+}

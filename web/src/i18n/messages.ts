@@ -102,6 +102,27 @@ export const messages = {
   'personalize.privacy.link': 'Privacy',
   'personalize.followFailed':
     'Your picks are saved in this browser, but following them didn’t work. Try saving again.',
+  'personalize.songs.title': 'Songs you love',
+  'personalize.songs.lead':
+    'They fill your playlist on the similar-music maps, with one tap.',
+  'personalize.songs.search': 'Add a song',
+  'personalize.songs.placeholder': 'Search songs',
+  'personalize.songs.yours': 'Songs you added',
+  'personalize.songs.chip': '{title} \u00b7 {artist}',
+  'personalize.you.title': 'About you',
+  'personalize.you.name': 'What should we call you?',
+  'personalize.you.namePlaceholder': 'Your first name (optional)',
+  'personalize.discover.title': 'How do you like to find new music?',
+  'personalize.discover.similar': 'More like what I play',
+  'personalize.discover.similar.body':
+    'Start on a map of music like your playlist.',
+  'personalize.discover.new': 'Something new',
+  'personalize.discover.new.body':
+    'Start on For you, with picks that stretch your taste.',
+  'personalize.discover.friends': 'From friends',
+  'personalize.discover.friends.body':
+    'Start by comparing playlists with a friend.',
+  'home.greeting': 'Hi, {name}',
   'personalize.skip': 'Skip for now',
   'personalize.save': 'Save my picks',
   'personalize.saving': 'Saving…',
