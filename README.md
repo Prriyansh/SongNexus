@@ -150,3 +150,8 @@ It is generated from the data-source registry
 This repository first held the team's Next.js app (Explore, Connection Web, Friends, About Me and
 music accounts). It was merged into this app, which took over its features; the Next.js code
 remains in the git history. Ishita's `song_compare` service carries on unchanged.
+
+## License
+
+The code is licensed under the [Apache License 2.0](LICENSE). The data each source provides
+stays under its own license; see [docs/data-sources.md](docs/data-sources.md).

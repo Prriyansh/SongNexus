@@ -1,0 +1,27 @@
+name: New data source
+description: Propose a dataset or API for SongNexus to read.
+labels: [data]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Source
+      description: Name and homepage.
+    validations: {required: true}
+  - type: input
+    id: license
+    attributes:
+      label: License
+      description: The license and a link to where it is stated. Sources are registered with their license before any code reads them.
+    validations: {required: true}
+  - type: textarea
+    id: feeds
+    attributes:
+      label: What it would feed
+      description: Which pages or features, and how its records match the catalog (by ID, never by guessing a name).
+    validations: {required: true}
+  - type: textarea
+    id: access
+    attributes:
+      label: Access and limits
+      description: API or download, rate limits, size, and whether it may be stored or only read live.
