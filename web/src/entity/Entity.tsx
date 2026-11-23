@@ -170,7 +170,7 @@ export function PhotoCredit({photo}: {photo: Photo}) {
   );
 }
 
-/** Long lists show a few and a "Show all" (v5 rule: no more than ~8 rows at once). */
+/** Long lists show a few and a "Show all" (no more than ~8 rows at once). */
 export function useShowAll<T>(items: T[], limit: number) {
   const [all, setAll] = useState(false);
   const collapsible = items.length > limit + 1;

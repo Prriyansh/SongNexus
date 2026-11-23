@@ -1,5 +1,5 @@
 /**
- * The genre filter (US-12), shared by Explore, Six degrees, Compare and Collaborations.
+ * The genre filter, shared by Explore, Six degrees, Compare and Collaborations.
  *
  * Kept in the URL where a screen is shareable, so a link shows the same filtered
  * result to anyone: `genres` (comma-separated resource names), `unknown=0` to drop

@@ -1,4 +1,4 @@
-"""Genres from several sources, the genre hierarchy, and genre filtering (R2-1)."""
+"""Genres from several sources, the genre hierarchy, and genre filtering."""
 
 import pytest
 from hypothesis import given

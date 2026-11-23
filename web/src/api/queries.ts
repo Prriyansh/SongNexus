@@ -370,7 +370,7 @@ export async function fetchAllDataSources(): Promise<Schemas['DataSource'][]> {
   return sources;
 }
 
-/** The data-source registry (ADR 0005), for the Resources section. */
+/** The data-source registry, for the Resources section. */
 export function useDataSources() {
   return useQuery({
     queryKey: ['dataSources'],
@@ -491,7 +491,7 @@ export function useUpdateProfile() {
 }
 
 // ---------------------------------------------------------------------------
-// Playlist analysis (US-10)
+// Playlist analysis
 // ---------------------------------------------------------------------------
 
 export type PlaylistAnalysis = Schemas['AnalyzePlaylistResponse'];
@@ -509,7 +509,7 @@ export function useAnalyzePlaylist() {
 }
 
 // ---------------------------------------------------------------------------
-// Play (US-04)
+// Play
 // ---------------------------------------------------------------------------
 
 export function usePuzzle(date: string, enabled = true) {
@@ -557,7 +557,7 @@ export function useReveal(date: string, enabled: boolean) {
 }
 
 // ---------------------------------------------------------------------------
-// Linked listening accounts (R2-6, ADR 0006)
+// Linked listening accounts
 // ---------------------------------------------------------------------------
 
 export type ListeningProvider = Schemas['ListeningProvider'];

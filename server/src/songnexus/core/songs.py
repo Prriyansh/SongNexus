@@ -1,4 +1,4 @@
-"""Song comparison (R2-4, S1): descriptors side by side, an explained similarity, shared credits.
+"""Song comparison: descriptors side by side, an explained similarity, shared credits.
 
 Similarity is a documented weighted mean of four named parts, each in [0, 1].
 Each part is shown with its contribution, so the score is never opaque:
@@ -19,7 +19,7 @@ pairs above chance (AUC - 0.5), rounded to 0.05 (``weight_study``, run with
 AcousticBrainz snapshot, they score AUC 0.601 against 0.581 for the first,
 hand-picked weights (0.40/0.25/0.15/0.20); refitting on the complete data scored
 lower (0.590), so these stand. Key carries almost no genre signal but stays
-visible at a small weight. See docs/handoff/evaluations.md.
+visible at a small weight.
 
 A part counts only when both songs have its inputs; the score is the weighted
 mean of the parts present, and ``None`` when no part is.

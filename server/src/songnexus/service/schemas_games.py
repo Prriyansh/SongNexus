@@ -1,4 +1,4 @@
-"""API schemas for game scores, leaderboards (ADR 0010), friend paths and weekly movers.
+"""API schemas for game scores, leaderboards, friend paths and weekly movers.
 
 Campus leaderboards carry ranks, rounded averages and player ranges only; a
 person appears only on the friends leaderboard, which only accepted friends see.

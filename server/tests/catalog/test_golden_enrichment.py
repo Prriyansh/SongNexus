@@ -1,7 +1,7 @@
 """Golden tests: the committed MusicBrainz, Wikidata and Discogs snapshots ingest together.
 
 The coverage floors are set just under the first measurement (2026-11-01, recorded
-in docs/handoff/evaluations.md): they catch a broken join or mapping, not noise.
+in the evaluation notes): they catch a broken join or mapping, not noise.
 """
 
 from pathlib import Path

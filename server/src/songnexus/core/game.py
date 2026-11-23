@@ -1,4 +1,4 @@
-"""The daily connection puzzle (US-04): rules, fairness and hints. Pure and deterministic.
+"""The daily connection puzzle: rules, fairness and hints. Pure and deterministic.
 
 Rules: get from the start artist to the target by naming artists who are
 directly connected, one step at a time; every accepted step shows the credit

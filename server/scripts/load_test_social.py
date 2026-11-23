@@ -1,4 +1,4 @@
-"""Closed-loop load test of the signed-in R2 endpoints (R2-8): friends, inbox, linked accounts.
+"""Closed-loop load test of the signed-in social endpoints: friends, inbox, linked accounts.
 
 Development only: it signs in through ``POST /v1/sessions:local``, so the API must run with
 ``SONGNEXUS_ENVIRONMENT=development`` and no Firebase project, on a scratch database copy,

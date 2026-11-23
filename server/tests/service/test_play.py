@@ -1,4 +1,4 @@
-"""Play (US-04) on the real reference catalog: fairness, rules and the API contract."""
+"""Play on the real reference catalog: fairness, rules and the API contract."""
 
 import logging
 from collections.abc import Iterator
@@ -56,7 +56,7 @@ def check(client: TestClient, day: str, a: str, b: str) -> dict[str, Any]:
 
 
 def test_every_day_for_a_year_is_fair_and_the_same_for_everyone(client: TestClient) -> None:
-    """AC-4.1: identical for all players, solvable, par 3-4 (checked for 365 days)."""
+    """Identical for all players, solvable, par 3-4 (checked for 365 days)."""
     model = client.app.state.songnexus.holder.current()  # type: ignore[attr-defined]
     adjacency = model.graph.adjacency(KINDS)
     for offset in range(365):
@@ -91,7 +91,6 @@ def test_dates_outside_the_window_are_refused() -> None:
 
 
 def test_a_wrong_move_reveals_nothing(client: TestClient) -> None:
-    """AC-4.2."""
     puzzle = client.get(f"/v1/puzzles/{today()}").json()
     # The target itself is never directly connected to the start (par >= 3).
     result = check(client, today(), puzzle["start"]["name"], puzzle["target"]["name"])
@@ -105,7 +104,7 @@ def test_a_wrong_move_reveals_nothing(client: TestClient) -> None:
 
 
 def test_solving_with_the_revealed_route(client: TestClient) -> None:
-    """AC-4.2: each correct move shows evidence and the steps left, down to the target."""
+    """Each correct move shows evidence and the steps left, down to the target."""
     puzzle = client.get(f"/v1/puzzles/{today()}").json()
     reveal = client.get(f"/v1/puzzles/{today()}:reveal").json()
     assert len(reveal["steps"]) == puzzle["par"]

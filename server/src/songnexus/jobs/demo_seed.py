@@ -11,7 +11,7 @@ Everything it writes is labeled: accounts carry ``users.synthetic_source =
 "seed-demo"``, memberships ``synthetic``, so charts built from them say
 ``demoData``. Names are obviously fictional handles ("Velvet Heron (demo)"); no
 emails exist. ``--reset`` removes exactly what it created. It refuses to run
-outside development and never runs automatically. See docs/synthetic-data.md.
+outside development and never runs automatically.
 
 Charts are not written here: the caller builds them through the production
 path (``community_job.compute``) at three points in time while the tallies are

@@ -5,7 +5,7 @@ import {useI18n} from '../i18n/i18n';
 export default function PrivacyScreen() {
   const {t} = useI18n();
   usePageTitle(t('privacy.title'));
-  // Long-form copy is English-only in R1; it moves into the message catalog with R2 locales.
+  // Long-form copy is English-only; it moves into the message catalog when other locales ship.
   return (
     <article className="stack" lang="en" style={{maxInlineSize: '70ch'}}>
       <h1>{t('privacy.title')}</h1>

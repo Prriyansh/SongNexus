@@ -1,6 +1,6 @@
 /**
  * Google Sign-In through Firebase Authentication. Imported lazily on the first
- * sign-in, so the Firebase SDK never weighs on the initial page load (plan §23).
+ * sign-in, so the Firebase SDK never weighs on the initial page load.
  *
  * Configuration comes from VITE_FIREBASE_* variables. For local development
  * set VITE_FIREBASE_AUTH_EMULATOR=http://127.0.0.1:9099.

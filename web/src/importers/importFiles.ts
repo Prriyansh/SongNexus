@@ -1,7 +1,7 @@
 /**
  * The import pipeline: unpack ZIPs, enforce limits, detect and parse each file.
- * Every input file gets a result, recognized or rejected with a reason (AC-10.3:
- * no silent drops). Runs inside the import Web Worker; pure enough to test directly.
+ * Every input file gets a result, recognized or rejected with a reason (no silent
+ * drops). Runs inside the import Web Worker; pure enough to test directly.
  */
 import {unzipSync} from 'fflate';
 
@@ -12,7 +12,7 @@ import {
   type RejectReason,
 } from './formats';
 
-export const MAX_FILE_BYTES = 100 * 1024 * 1024; // plan §15.5
+export const MAX_FILE_BYTES = 100 * 1024 * 1024;
 export const MAX_IMPORT_BYTES = 500 * 1024 * 1024;
 
 export interface InputFile {

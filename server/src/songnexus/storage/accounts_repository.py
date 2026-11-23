@@ -1,4 +1,4 @@
-"""Linked accounts, listening tallies and OAuth flows (ADR 0006)."""
+"""Linked accounts, listening tallies and OAuth flows."""
 
 from __future__ import annotations
 

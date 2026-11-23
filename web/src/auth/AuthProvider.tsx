@@ -1,5 +1,5 @@
 /**
- * Signed-in state for the whole app (ADR 0002).
+ * Signed-in state for the whole app.
  *
  * The session lives in an HttpOnly cookie the page can't read; on load we ask
  * the server who we are and receive the CSRF token for writes.

@@ -1,4 +1,4 @@
-"""Closed-loop load test of the read endpoints against a running API (plan §23, M8-01).
+"""Closed-loop load test of the read endpoints against a running API.
 
     uv run python scripts/load_test.py --base http://127.0.0.1:8790 --concurrency 8 --seconds 15
 

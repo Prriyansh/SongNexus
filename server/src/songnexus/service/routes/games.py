@@ -1,4 +1,4 @@
-"""Game scores and leaderboards (ADR 0010): opt-in, validated, aggregate by campus.
+"""Game scores and leaderboards: opt-in, validated, aggregate by campus.
 
 Submitting is the opt-in: a signed-in player sends their play (puzzle moves or
 quiz answers) for today, the server computes the points against the day's

@@ -1,4 +1,4 @@
-"""Sync job: reads new plays for every linked account that is due (ADR 0006, decision 5).
+"""Sync job: reads new plays for every linked account that is due.
 
 Run on a schedule (``songnexus sync-accounts``, every 15 to 60 minutes).
 Each account is committed on its own, so one failure or a crash mid-run never

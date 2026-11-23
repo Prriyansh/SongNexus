@@ -1,5 +1,5 @@
 {
-  "description": "Labeled search queries for the lexical search evaluation. Each case lists the entity (by source ID) a user typing the query is looking for. Labels identify entities by MusicBrainz IDs so they survive re-ingestion. Authored by the development team; small and not held out, so treat results as a regression signal, not a claim of general quality. Extend with queries from real usage (docs/evaluation.md).",
+  "description": "Labeled search queries for the lexical search evaluation. Each case lists the entity (by source ID) a user typing the query is looking for. Labels identify entities by MusicBrainz IDs so they survive re-ingestion. Authored by the development team; small and not held out, so treat results as a regression signal, not a claim of general quality. Extend with queries from real usage.",
   "cases": [
     {"query": "Kendrick Lamar", "category": "exact", "relevant": [{"type": "artist", "mbid": "381086ea-f511-4aba-bdf9-71c753dc5077"}]},
     {"query": "SZA", "category": "exact", "relevant": [{"type": "artist", "mbid": "272989c8-5535-492d-a25c-9f58803e027f"}]},

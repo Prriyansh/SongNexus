@@ -1,4 +1,4 @@
-"""Storage for For You and Z-star (ADR 0010): follows, feedback, events, feeds, artifacts.
+"""Storage for For You and Z-star: follows, feedback, events, feeds, artifacts.
 
 Every read is scoped to one user except the training and artifact functions,
 which the offline jobs use.

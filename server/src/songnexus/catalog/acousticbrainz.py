@@ -8,7 +8,7 @@ verbatim from the first submission (offset 0).
 
 Not used: the voice-gender classifier (it labels people, and song comparison
 does not need it) and the genre classifiers (genres come from Discogs and
-MusicBrainz, ADR 0005).
+MusicBrainz).
 """
 
 from __future__ import annotations

@@ -1,5 +1,5 @@
 /**
- * Friends (R2-7): inviting is the hero (a link and a code, copy or share),
+ * Friends: inviting is the hero (a link and a code, copy or share),
  * then what friends sent you as cards, your friends, how your music connects
  * to theirs (friend paths), and blocks, open invites and sharing tucked into
  * "Privacy and safety". Friends join only through an invite you send: there is

@@ -56,7 +56,7 @@ def _endpoints(graph: ArtistGraph, *names: tuple[str, str]) -> list[str]:
     """Parses and checks the artists a method starts from.
 
     Endpoints are the viewer's explicit choice, so they are allowed even when
-    blocked; blocks apply to everything in between (US-17).
+    blocked; blocks apply to everything in between.
     """
     ids = []
     for value, field in names:

@@ -1,5 +1,5 @@
 /**
- * Ask (ADR 0008): a question typed into the search bar, answered from our data.
+ * Ask: a question typed into the search bar, answered from our data.
  *
  * The server reads the question (its own parser, or a model that only picks an
  * intent) and answers from the graph and credits. Only the question text and

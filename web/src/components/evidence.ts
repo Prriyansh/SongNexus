@@ -2,7 +2,7 @@
  * Turns an evidence line from the API into a sentence.
  *
  * The server sends a message ID, both artists, their roles and the subject; the
- * client picks the wording (plan §8: "credit", never "fact"). Pure, so every
+ * client picks the wording ("credit", never "fact"). Pure, so every
  * message is unit-tested.
  */
 import type {Evidence} from '../api/client';

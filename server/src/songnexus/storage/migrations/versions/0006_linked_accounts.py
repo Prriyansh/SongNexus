@@ -1,4 +1,4 @@
-"""Linked listening accounts, their tallies, and OAuth flows (R2-6, ADR 0006).
+"""Linked listening accounts, their tallies, and OAuth flows.
 
 Revision ID: 0006
 Revises: 0005

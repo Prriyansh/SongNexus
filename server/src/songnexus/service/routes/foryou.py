@@ -1,4 +1,4 @@
-"""For You (ADR 0010): the feed, interaction events, follows, taste feedback, imports.
+"""For You: the feed, interaction events, follows, taste feedback, imports.
 
 The feed is made by Z-star (``core.zstar``) once per refresh: the whole ranked
 list is stored with the features the ranker saw (``feed_items``), pages are

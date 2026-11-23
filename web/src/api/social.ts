@@ -1,4 +1,4 @@
-/** Friends and sharing hooks (R2-7, ADR 0007). Everything is the signed-in user's own. */
+/** Friends and sharing hooks. Everything is the signed-in user's own. */
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 
 import {api, unwrap, type Schemas} from './client';

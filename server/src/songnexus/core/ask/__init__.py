@@ -1,4 +1,4 @@
-"""Ask: questions typed into the search bar, interpreted into fixed intents (ADR 0008).
+"""Ask: questions typed into the search bar, interpreted into fixed intents.
 
 The model interprets, our data answers. A question becomes one ``Interpretation``
 (an intent plus entity names), first by the deterministic ``parser`` and, when

@@ -1,5 +1,5 @@
 /**
- * The answer to a question asked in the search bar (ADR 0008): one line from
+ * The answer to a question asked in the search bar: one line from
  * our data, the names it understood, up to three supporting rows, the page
  * with the full answer, and how the answer was made one tap away.
  */

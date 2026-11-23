@@ -13,7 +13,7 @@
  *    - the university's own small logo (P8972), logo (P154) and seal (P158).
  * 2. Files. Commons gives size, MIME type and license. Only SVG and PNG, and
  *    only public domain, CC0, CC BY and CC BY-SA files that are not marked
- *    non-free (the rule of ADR 0009).
+ *    non-free.
  * 3. Looks. Each candidate's 330 px thumbnail is drawn in a headless browser:
  *    is the background transparent, and do its pixels stand out against the
  *    app's dark (#111) and light (#f6f6f6) card surfaces? A transparent mark

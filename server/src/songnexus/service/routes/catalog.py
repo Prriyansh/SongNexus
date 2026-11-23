@@ -684,7 +684,7 @@ def search_catalog(
     entity_types = frozenset(CoreEntityType(t.value.lower()) for t in types) or None
     hits = model.search.search(query, limit=page_size or 10, entity_types=entity_types)
     # Blocked artists never appear as suggestions, except as an exact-name match,
-    # flagged so the client can offer to unblock (AC-17.2).
+    # flagged so the client can offer to unblock.
     hits = [h for h in hits if h.entity_id not in who.blocked or h.match_type is MatchType.EXACT]
     collections = {"artist": "artists", "release": "releases", "recording": "recordings"}
     set_cache_control(response, who)

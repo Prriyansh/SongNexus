@@ -133,13 +133,12 @@ class ArtistSummary(ApiModel):
     artist_type: str | None = None
     country: str | None = None
     genre_known: bool = Field(
-        default=False, description="Whether our data has genres for this artist (AC-12.2)."
+        default=False, description="Whether our data has genres for this artist."
     )
     image_url: str | None = Field(
         default=None,
         description="A freely licensed photo about 330 px wide (Wikimedia Commons), or null. "
-        "Its author and license are in `image` on GetArtist and must be shown with it "
-        "(ADR 0009).",
+        "Its author and license are in `image` on GetArtist and must be shown with it.",
     )
     listeners: int | None = Field(
         default=None,
@@ -150,7 +149,7 @@ class ArtistSummary(ApiModel):
 
 
 class ArtistImage(ApiModel):
-    """A freely licensed artist photo from Wikimedia Commons, with its attribution (ADR 0009)."""
+    """A freely licensed artist photo from Wikimedia Commons, with its attribution."""
 
     url: str = Field(description="The photo about 960 px wide, on a Wikimedia media host.")
     thumbnail_url: str = Field(description="The photo about 330 px wide.")
@@ -688,7 +687,7 @@ class SearchResult(ApiModel):
     blocked: bool = Field(
         default=False,
         description="The viewer blocked this artist. Blocked artists appear only for an "
-        "exact-name search, so they can be unblocked (AC-17.2).",
+        "exact-name search, so they can be unblocked.",
     )
     image_url: str | None = Field(
         default=None,
@@ -758,7 +757,7 @@ class Label(ApiModel):
 
 
 class ListeningProvider(enum.StrEnum):
-    """A listening service (ADR 0006)."""
+    """A listening service."""
 
     LISTENBRAINZ = "LISTENBRAINZ"
     LASTFM = "LASTFM"
@@ -866,7 +865,7 @@ class ListListeningResponse(ApiModel):
 
 
 class LicenseTier(enum.StrEnum):
-    """What a data source's license allows (ADR 0005)."""
+    """What a data source's license allows."""
 
     PRODUCTION = "PRODUCTION"
     NON_COMMERCIAL = "NON_COMMERCIAL"
@@ -921,7 +920,7 @@ class ListDataSourcesResponse(ApiModel):
 
 
 class Limits(ApiModel):
-    """Request limits clients should respect (plan §14)."""
+    """Request limits clients should respect."""
 
     max_query_length: int
     max_path_steps: int
@@ -1058,13 +1057,13 @@ class ListBlockedArtistsResponse(ApiModel):
 
 
 class Visibility(enum.StrEnum):
-    """Who can see a profile. Only PRIVATE exists in R1."""
+    """Who can see a profile. Only PRIVATE exists for now."""
 
     PRIVATE = "PRIVATE"
 
 
 class Profile(ApiModel):
-    """GetProfile / UpdateProfile: Top 5 artists (US-09)."""
+    """GetProfile / UpdateProfile: Top 5 artists."""
 
     name: str = ""
     top_artists: list[str] = Field(default_factory=list, description="Up to 5 `artists/{artist}`.")
@@ -1078,7 +1077,7 @@ class Empty(ApiModel):
 
 
 # ---------------------------------------------------------------------------
-# Playlist analysis (US-10)
+# Playlist analysis
 # ---------------------------------------------------------------------------
 
 
@@ -1164,7 +1163,7 @@ class AnalyzePlaylistResponse(ApiModel):
 
 
 # ---------------------------------------------------------------------------
-# Play: the daily puzzle (US-04)
+# Play: the daily puzzle
 # ---------------------------------------------------------------------------
 
 
@@ -1219,7 +1218,7 @@ class RevealResponse(ApiModel):
 
 
 # ---------------------------------------------------------------------------
-# Friends and sharing (R2-7, ADR 0007)
+# Friends and sharing
 # ---------------------------------------------------------------------------
 
 

@@ -1,5 +1,5 @@
 /**
- * Importer fuzzing (M8-04): malformed, truncated, mutated and adversarial files must each
+ * Importer fuzzing: malformed, truncated, mutated and adversarial files must each
  * produce an outcome (recognized or rejected with a reason), never an exception or a hang.
  * Seeded, so a failure reproduces; raise FUZZ_ROUNDS for a longer nightly run.
  */

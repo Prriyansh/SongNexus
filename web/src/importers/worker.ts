@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 /**
  * The import Web Worker: parses files off the main thread, so the page stays
- * responsive even for 100 MB exports (plan §23). Cancel by terminating it.
+ * responsive even for 100 MB exports. Cancel by terminating it.
  */
 import {importFiles, type FileOutcome, type Progress} from './importFiles';
 

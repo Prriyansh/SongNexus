@@ -1,7 +1,7 @@
 """Campus leaderboards and friend paths: game scores, first trivia answers, sharing opt-in.
 
 Also marks synthetic development accounts (``users.synthetic_source``) so demo data
-can be told apart from real accounts and removed (docs/synthetic-data.md).
+can be told apart from real accounts and removed.
 
 Revision ID: 0010
 Revises: 0009

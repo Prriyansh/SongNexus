@@ -1,4 +1,4 @@
-"""AnalyzePlaylist (US-10): how a playlist's artists connect. Stateless; nothing is stored."""
+"""AnalyzePlaylist: how a playlist's artists connect. Stateless; nothing is stored."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ router = APIRouter(
     prefix="/v1", tags=["analysis"], dependencies=[Depends(rate_limited(MethodClass.ANALYZE))]
 )
 
-MAX_DISTINCT_ARTISTS = 2000  # plan §14
+MAX_DISTINCT_ARTISTS = 2000
 MAX_CANDIDATES = 3
 
 _STATUS = {

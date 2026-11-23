@@ -188,7 +188,7 @@ def small_catalog() -> list[RawRecord]:
 
 
 # ---------------------------------------------------------------------------
-# Enrichment: the MusicBrainz genre list, Wikidata and Discogs (R2-1)
+# Enrichment: the MusicBrainz genre list, Wikidata and Discogs
 # ---------------------------------------------------------------------------
 
 # Genre MBIDs for the vocabulary used by the enrichment fixtures.
@@ -277,7 +277,7 @@ def discogs_records() -> list[RawRecord]:
 
 
 # ---------------------------------------------------------------------------
-# AcousticBrainz bulk responses (R2-4)
+# AcousticBrainz bulk responses
 # ---------------------------------------------------------------------------
 
 

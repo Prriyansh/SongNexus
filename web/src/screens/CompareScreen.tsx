@@ -1,5 +1,5 @@
 /**
- * Compare artists (S3, US-05), head to head: two portraits facing each other,
+ * Compare artists, head to head: two portraits facing each other,
  * the overlap in the middle (who worked with both, shared genres, shared
  * audience, how they connect), and what each has on their own.
  */

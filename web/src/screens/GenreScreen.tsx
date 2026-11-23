@@ -1,5 +1,5 @@
 /**
- * Genre (v5): a hero whose art is a mosaic of the genre's most connected
+ * Genre: a hero whose art is a mosaic of the genre's most connected
  * artists, where it sits (parent genres, subgenres), then its artists: the
  * top ten as photo covers, the rest as ranked rows a page at a time.
  */

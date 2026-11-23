@@ -1,4 +1,4 @@
-"""Encryption of linked-account tokens at rest (ADR 0006, decision 3).
+"""Encryption of linked-account tokens at rest.
 
 AES-256-GCM with a random 96-bit nonce per value. The key ID is part of the
 ciphertext (``v1.<key id>.<nonce>.<ciphertext>``, base64url), so keys can be

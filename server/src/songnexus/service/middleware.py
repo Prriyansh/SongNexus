@@ -124,7 +124,7 @@ class SecurityHeadersMiddleware:
         await self.app(scope, receive, send_with_headers)
 
 
-MAX_BODY_BYTES = 1024 * 1024  # plan §14: payloads ≤ 1 MB
+MAX_BODY_BYTES = 1024 * 1024  # payloads ≤ 1 MB
 
 
 class BodySizeLimitMiddleware:

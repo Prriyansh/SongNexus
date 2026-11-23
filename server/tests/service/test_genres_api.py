@@ -1,4 +1,4 @@
-"""Genres in the API with Discogs and Wikidata enrichment (R2-1)."""
+"""Genres in the API with Discogs and Wikidata enrichment."""
 
 from collections.abc import Iterator
 from pathlib import Path

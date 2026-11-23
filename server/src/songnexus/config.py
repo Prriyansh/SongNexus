@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     # redis://10.0.0.3:6379/0 shares cached catalog responses between instances.
     redis_url: str = ""
 
-    # Identity (ADR 0002).
+    # Identity.
     firebase_project_id: str = ""
     # Sign-in (Firebase). False for a hosted demo without accounts: no Firebase project is
     # needed, and every sign-in is refused, so the app is used signed out.
@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     listenbrainz_api_url: str = "https://api.listenbrainz.org"
     listenbrainz_labs_url: str = "https://labs.api.listenbrainz.org"
 
-    # Linked listening accounts (ADR 0006). Tokens are encrypted with these keys
+    # Linked listening accounts. Tokens are encrypted with these keys
     # ({"key id": "base64 32-byte key"}); generate one with `songnexus new-token-key`.
     # Without keys, no provider is offered. A provider is offered only when its own
     # keys are set too (ListenBrainz needs none).
@@ -107,11 +107,11 @@ class Settings(BaseSettings):
     # on read or by `songnexus community-charts`; leaving or joining shows up at the
     # next recompute, which also keeps one person's change from being singled out.
     community_chart_ttl_minutes: int = 60
-    # For You (ADR 0010): an A/B experiment over Z-star arms, as "name:arm=share,...",
+    # For You: an A/B experiment over Z-star arms, as "name:arm=share,...",
     # e.g. "zstar-diversity:diverse=0.1". Empty: everyone gets the control arm.
     zstar_experiment: str = ""
 
-    # Ask (AI in the search bar, ADR 0008). The model only interprets questions; answers
+    # Ask (AI in the search bar). The model only interprets questions; answers
     # come from the catalog. Providers: gemini (default), openrouter, ollama; "none" or a
     # hosted provider without a key means the built-in parser alone. Only the question
     # text is sent. The model defaults per provider (core/ask/llm.py DEFAULT_MODELS).
@@ -138,7 +138,7 @@ class Settings(BaseSettings):
         """Development only: where a generated token key is kept (git-ignored)."""
         return self.raw_dir("local") / "token-key.json"
 
-    # Which genre sources the read model uses (ADR 0003, ADR 0005). A commercial
+    # Which genre sources the read model uses. A commercial
     # build sets ["discogs"] to drop the non-commercial MusicBrainz genres.
     genre_sources: list[str] = Field(
         default_factory=lambda: ["musicbrainz-supplementary", "discogs"]

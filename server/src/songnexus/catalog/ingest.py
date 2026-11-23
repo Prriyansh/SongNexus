@@ -70,7 +70,7 @@ class QualityGateError(RuntimeError):
 
 
 class UnregisteredSourceError(ValueError):
-    """A fact names a source that is not an in-use catalog source in the registry (ADR 0005)."""
+    """A fact names a source that is not an in-use catalog source in the registry."""
 
 
 # The sources ingest writes; each must be an in-use catalog source in the registry.

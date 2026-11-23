@@ -1,5 +1,5 @@
 /**
- * Artist page (S4, v5): an immersive hero (photo or generated cover, name,
+ * Artist page: an immersive hero (photo or generated cover, name,
  * key numbers, listen and explore), then collaborations, who listeners play
  * alongside, labels, other names and links grouped by what they are for.
  */
@@ -50,7 +50,7 @@ function typeLabel(type: string | null | undefined): MessageId {
   ) as MessageId;
 }
 
-/** Names the data sources behind an artist's genres (ADR 0005). */
+/** Names the data sources behind an artist's genres. */
 function GenreSources({
   ids,
   sources,

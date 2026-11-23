@@ -1,4 +1,4 @@
-"""Friends and sharing: display names, invites, friendships, blocks, shares, reports (R2-7).
+"""Friends and sharing: display names, invites, friendships, blocks, shares, reports.
 
 Revision ID: 0007
 Revises: 0006

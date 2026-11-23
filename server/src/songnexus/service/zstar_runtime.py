@@ -1,4 +1,4 @@
-"""Z-star at serving time: cached artifacts and listener signals (ADR 0010).
+"""Z-star at serving time: cached artifacts and listener signals.
 
 - The catalog view and the artist embeddings are derived once per catalog
   version (kept in the read model's memo). Embeddings are read from storage

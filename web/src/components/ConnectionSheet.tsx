@@ -1,4 +1,4 @@
-/** Every credit connecting two artists, each with its source. Evidence is one tap away (plan §8). */
+/** Every credit connecting two artists, each with its source. Evidence is one tap away. */
 import {useMemo, useState} from 'react';
 import {Link} from 'react-router';
 

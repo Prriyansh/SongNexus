@@ -1,4 +1,4 @@
-"""Audio descriptors per recording, for song comparison (R2-4).
+"""Audio descriptors per recording, for song comparison.
 
 Revision ID: 0004
 Revises: 0003

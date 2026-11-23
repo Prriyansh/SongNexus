@@ -98,7 +98,7 @@ def test_search_meets_the_mrr_gate(engine: Engine) -> None:
 
 
 def test_import_matching_meets_the_precision_gate(engine: Engine) -> None:
-    """AC-10.2: precision >= 0.98 on the labeled names; homonyms are never auto-matched."""
+    """Precision >= 0.98 on the labeled names; homonyms are never auto-matched."""
     from songnexus.cli import MIN_IMPORT_PRECISION, import_match_report
 
     report = import_match_report(engine, SNAPSHOT.parents[1] / "eval" / "import_match_cases.json")

@@ -1,4 +1,4 @@
-"""Node filters: genre selection (US-12) and artist blocks (US-17).
+"""Node filters: genre selection and artist blocks.
 
 A filter becomes a node predicate that graph algorithms apply inside the search,
 so a filtered-out artist is never part of a result, including as an
@@ -24,7 +24,7 @@ class NodeFilter:
             ``min_genre_share`` of its genre votes in these genres combined.
             Callers expand a selection with ``ArtistGraph.with_subgenres`` first
             when subgenres should count.
-        min_genre_share: The share threshold (tunable, plan US-12).
+        min_genre_share: The share threshold (tunable).
         include_unknown_genre: Whether artists with no genre data pass a genre
             filter. They often are the producers and session players who bridge
             scenes, so the default is to keep them.

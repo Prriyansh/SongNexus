@@ -21,13 +21,13 @@ from songnexus.storage import user_repository as users
 from songnexus.storage.db import session_scope
 
 DELETED_ACCOUNT_RETENTION = timedelta(days=30)
-# Abuse reports keep a copy of the reported note for moderators, then go (ADR 0007).
+# Abuse reports keep a copy of the reported note for moderators, then go.
 REPORT_RETENTION = timedelta(days=90)
 # Community charts (aggregates only) are kept for movement and rising: a week plus 28 days.
 COMMUNITY_CHART_RETENTION = timedelta(days=36)
 # Game scores feed the day and week leaderboards; a little over a week back is enough.
 GAME_SCORE_RETENTION = timedelta(days=15)
-# First trivia answers only matter until the day's score window closes (ADR 0010).
+# First trivia answers only matter until the day's score window closes.
 TRIVIA_ANSWER_RETENTION = timedelta(days=2)
 # Margin so the 30-day promise holds even if a daily run is missed.
 _SAFETY_MARGIN = timedelta(days=2)

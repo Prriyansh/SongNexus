@@ -1,4 +1,4 @@
-"""Playlist analysis (US-10): how a playlist's artists connect.
+"""Playlist analysis: how a playlist's artists connect.
 
 - Cohesion: the share of artist pairs within 2 steps of each other.
 - Connectors: artists outside the playlist linked to at least two of its
@@ -10,7 +10,7 @@ Pairs within 2 steps are found by enumerating, for every artist x, the
 playlist artists adjacent to x: all of them are within 2 steps of each other
 through x. That costs the sum over x of (playlist neighbors of x)², far less
 than a search per pair. Filtered artists (blocks, genres) never serve as the
-intermediate x or appear on the thread (plan §16.4).
+intermediate x or appear on the thread.
 """
 
 from __future__ import annotations

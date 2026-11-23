@@ -1,5 +1,5 @@
 /**
- * An artist's collaborations (US-16), by type, with evidence one tap away.
+ * An artist's collaborations, by type, with evidence one tap away.
  *
  * Compact on the artist page; `full` on the collaborations page adds the
  * timeline, a year range and a chronological order. State lives in the URL

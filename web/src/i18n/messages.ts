@@ -1,6 +1,6 @@
 /**
  * The en-US message catalog (ICU MessageFormat). Every user-visible string
- * lives here, including empty, error and limitation states (plan §8).
+ * lives here, including empty, error and limitation states.
  *
  * Wording rules: "connection", never "edge"; "steps apart", never "hops";
  * "not in our data yet", never "not connected". Sentence case. Digits.
@@ -405,7 +405,7 @@ export const messages = {
   'block.done': '{name} hidden',
   'block.undone': '{name} shown again',
 
-  // Library and import (US-10, US-08)
+  // Library and import
   'library.title': 'Library',
   'library.lead': 'Map your playlists and listening history.',
   'library.privacy.title': 'Your files stay on this device',
@@ -480,7 +480,7 @@ export const messages = {
   'analysis.links':
     '{count, plural, =0 {No artists here worked together directly.} one {# pair worked together directly.} other {# pairs worked together directly.}}',
 
-  // Play (US-04)
+  // Play
   'play.title': 'Daily puzzle',
   'play.archive': 'Puzzle archive',
   'play.date': 'Puzzle date',
@@ -675,7 +675,7 @@ export const messages = {
   'about.resources.license': 'License: {license}',
   'about.resources.feeds': 'Used for: {feeds}',
   'privacy.title': 'Privacy',
-  // Connected services (R2-6)
+  // Connected services
   'accounts.title': 'Connected services',
   'accounts.lead':
     'Link a service and your listening flows in automatically, every {minutes} minutes or when you tap sync. We keep only how often you play each artist: no song titles, no play times.',
@@ -731,7 +731,7 @@ export const messages = {
   'library.listening.empty':
     'Connect a service on the You page and your most-played artists appear here.',
   'library.listening.connect': 'Connect a service',
-  // Friends and sharing (R2-7)
+  // Friends and sharing
   'friends.title': 'Friends',
   'friends.lead':
     'Share artists, songs and paths with people you invite. No search, no contacts: friends join only with your invite.',
@@ -993,7 +993,7 @@ export const messages = {
     'We only draw connections we can back with published credits. Try another name, or start from someone we know well.',
   'explore.listen': 'Listen on YouTube Music',
   'explore.listenTo': 'Listen to {name} on YouTube Music (opens in a new tab)',
-  // Explore hub (v5)
+  // Explore hub
   'explore.hub.hero.overline': 'The connection web',
   'explore.hub.hero.title': 'Every credit, connected.',
   'explore.hub.hero.body':
@@ -1004,7 +1004,7 @@ export const messages = {
   'explore.hub.starters.title': 'Start with someone we know well',
   'explore.hub.starters.subtitle': 'Open their web',
   'explore.hub.tool.open': 'Open',
-  // Find a path (v5)
+  // Find a path
   'path.hero.body':
     'Pick two artists. We find a chain of real credits between them, and show the proof for every step.',
   'path.surprise': 'Surprise me',
@@ -1026,7 +1026,7 @@ export const messages = {
   'path.notConnected.body':
     'Try the other kind of route, more kinds of connection, or two different artists.',
   'path.options': 'Route options',
-  // Compare artists (v5)
+  // Compare artists
   'compare.lead':
     'Two artists, head to head: who they both worked with, what they share, and how they connect.',
   'compare.vs': 'vs',
@@ -1049,7 +1049,7 @@ export const messages = {
   'compare.empty.title': 'Choose two artists to compare',
   'compare.empty.body':
     'See who they have both worked with, the genres they share and how their listeners overlap.',
-  // Compare songs (v5)
+  // Compare songs
   'songCompare.lead':
     'Two songs side by side: how alike they sound, and the people who worked on both.',
   'songCompare.pick.empty': 'Choose a song',
@@ -1060,7 +1060,7 @@ export const messages = {
     'We compare their sound (tempo, key, energy, mood) and the credits they share.',
   'connection.showAll':
     'Show all {count, plural, one {# credit} other {# credits}}',
-  // <connect> Explore hub, find a path, compare (v5). Add keys below this line.
+  // <connect> Explore hub, find a path, compare. Add keys below this line.
   'connect.listen': 'Listen on YouTube Music',
   'connect.listenTo': 'Listen to {name} on YouTube Music (opens in a new tab)',
   'connect.listenToSong':
@@ -1409,7 +1409,7 @@ export const messages = {
     'The campus and city whose charts your plays count toward in Around you.',
   'around.you.none': 'You haven’t joined a campus or a city.',
   'around.you.open': 'Open Around you',
-  // v5: Around you as a destination.
+  // Around you as a destination.
   'around.off': 'Around you is switched off right now. Check back soon.',
   'around.promise': 'Opt-in. Counted as ranges. Never who plays what.',
   'around.overline.CAMPUS': 'Campus chart',

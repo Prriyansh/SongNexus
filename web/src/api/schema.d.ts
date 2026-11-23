@@ -665,7 +665,7 @@ export interface paths {
         put?: never;
         /**
          * CheckMove
-         * @description Checks one step. A wrong step reveals nothing about the puzzle (AC-4.2).
+         * @description Checks one step. A wrong step reveals nothing about the puzzle.
          */
         post: operations["CheckMove"];
         delete?: never;
@@ -1106,7 +1106,7 @@ export interface paths {
          * @description Checks one answer. The verdict comes with the right option and its credits.
          *
          *     For a signed-in player the first answer to each question is kept for two days,
-         *     so a score submitted later counts that answer (ADR 0010).
+         *     so a score submitted later counts that answer.
          */
         post: operations["CheckTrivia"];
         delete?: never;
@@ -1154,7 +1154,7 @@ export interface paths {
         post?: never;
         /**
          * DeleteUser
-         * @description Deletes the account (AC-18.4): signed out everywhere, data gone now, purged in 30 days.
+         * @description Deletes the account: signed out everywhere, data gone now, purged in 30 days.
          */
         delete: operations["DeleteUser"];
         options?: never;
@@ -1521,7 +1521,7 @@ export interface paths {
          * ListInbox
          * @description Lists shares received, newest first.
          *
-         *     Shares about an artist the listener blocked are left out (US-17 applies here too).
+         *     Shares about an artist the listener blocked are left out (blocks apply here too).
          */
         get: operations["ListInbox"];
         put?: never;
@@ -1725,7 +1725,7 @@ export interface paths {
         head?: never;
         /**
          * UpdatePreferences
-         * @description Updates preferences. Stale ETags are rejected with ABORTED (AC-18.3).
+         * @description Updates preferences. Stale ETags are rejected with ABORTED.
          */
         patch: operations["UpdatePreferences"];
         trace?: never;
@@ -1739,7 +1739,7 @@ export interface paths {
         };
         /**
          * GetProfile
-         * @description Returns the user's profile. Profiles are private: only the owner can read one (AC-9.2).
+         * @description Returns the user's profile. Profiles are private: only the owner can read one.
          */
         get: operations["GetProfile"];
         put?: never;
@@ -1749,7 +1749,7 @@ export interface paths {
         head?: never;
         /**
          * UpdateProfile
-         * @description Updates the Top 5. A sixth artist is rejected (AC-9.1).
+         * @description Updates the Top 5. A sixth artist is rejected.
          */
         patch: operations["UpdateProfile"];
         trace?: never;
@@ -1855,7 +1855,7 @@ export interface paths {
         };
         /**
          * ExportUserData
-         * @description Returns everything we store about the user, as JSON (target M4-07).
+         * @description Returns everything we store about the user, as JSON.
          */
         get: operations["ExportUserData"];
         put?: never;
@@ -1962,7 +1962,7 @@ export interface components {
             displayName: string;
             /**
              * Genreknown
-             * @description Whether our data has genres for this artist (AC-12.2).
+             * @description Whether our data has genres for this artist.
              * @default false
              */
             genreKnown: boolean;
@@ -1974,7 +1974,7 @@ export interface components {
             image: components["schemas"]["ArtistImage"] | null;
             /**
              * Imageurl
-             * @description A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it (ADR 0009).
+             * @description A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it.
              */
             imageUrl: string | null;
             /**
@@ -2065,7 +2065,7 @@ export interface components {
         };
         /**
          * ArtistImage
-         * @description A freely licensed artist photo from Wikimedia Commons, with its attribution (ADR 0009).
+         * @description A freely licensed artist photo from Wikimedia Commons, with its attribution.
          */
         ArtistImage: {
             /**
@@ -2156,13 +2156,13 @@ export interface components {
             displayName: string;
             /**
              * Genreknown
-             * @description Whether our data has genres for this artist (AC-12.2).
+             * @description Whether our data has genres for this artist.
              * @default false
              */
             genreKnown: boolean;
             /**
              * Imageurl
-             * @description A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it (ADR 0009).
+             * @description A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it.
              */
             imageUrl: string | null;
             /**
@@ -3898,13 +3898,13 @@ export interface components {
         LeaderboardPeriod: "DAY" | "WEEK";
         /**
          * LicenseTier
-         * @description What a data source's license allows (ADR 0005).
+         * @description What a data source's license allows.
          * @enum {string}
          */
         LicenseTier: "PRODUCTION" | "NON_COMMERCIAL" | "EVALUATION";
         /**
          * Limits
-         * @description Request limits clients should respect (plan §14).
+         * @description Request limits clients should respect.
          */
         Limits: {
             /** Maxalternatives */
@@ -4308,7 +4308,7 @@ export interface components {
         };
         /**
          * ListeningProvider
-         * @description A listening service (ADR 0006).
+         * @description A listening service.
          * @enum {string}
          */
         ListeningProvider: "LISTENBRAINZ" | "LASTFM" | "LIBREFM" | "SPOTIFY" | "DEEZER" | "APPLE_MUSIC" | "YOUTUBE_MUSIC";
@@ -4642,7 +4642,7 @@ export interface components {
         ProductionDirection: "PRODUCED_FOR" | "PRODUCED_BY" | "CO_PRODUCED";
         /**
          * Profile
-         * @description GetProfile / UpdateProfile: Top 5 artists (US-09).
+         * @description GetProfile / UpdateProfile: Top 5 artists.
          */
         "Profile-Input": {
             /**
@@ -4667,7 +4667,7 @@ export interface components {
         };
         /**
          * Profile
-         * @description GetProfile / UpdateProfile: Top 5 artists (US-09).
+         * @description GetProfile / UpdateProfile: Top 5 artists.
          */
         "Profile-Output": {
             /**
@@ -4906,7 +4906,7 @@ export interface components {
         SearchResult: {
             /**
              * Blocked
-             * @description The viewer blocked this artist. Blocked artists appear only for an exact-name search, so they can be unblocked (AC-17.2).
+             * @description The viewer blocked this artist. Blocked artists appear only for an exact-name search, so they can be unblocked.
              * @default false
              */
             blocked: boolean;
@@ -5847,7 +5847,7 @@ export interface components {
         ViewerCampusState: "RANKED" | "NEEDS_PLAYERS" | "NO_CAMPUS";
         /**
          * Visibility
-         * @description Who can see a profile. Only PRIVATE exists in R1.
+         * @description Who can see a profile. Only PRIVATE exists for now.
          * @enum {string}
          */
         Visibility: "PRIVATE";

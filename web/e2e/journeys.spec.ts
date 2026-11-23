@@ -1,6 +1,6 @@
 /**
- * End-to-end journeys for the committed screens (M5-07), each with an axe scan:
- * zero serious or critical accessibility issues (plan §10).
+ * End-to-end journeys for the committed screens, each with an axe scan:
+ * zero serious or critical accessibility issues.
  *
  * Needs the API on :8790 with the reference catalog and `vite preview` (e2e/README.md).
  */
@@ -87,7 +87,7 @@ test('artist page shows collaborations with evidence and sources', async ({
   await expect(sheet).toBeHidden();
 });
 
-test('genres name their sources, and collaborations filter by genre with subgenres (R2-1)', async ({
+test('genres name their sources, and collaborations filter by genre with subgenres', async ({
   page,
 }) => {
   await openArtist(page, 'Kendrick Lamar', 'Kendrick Lamar');
@@ -108,7 +108,7 @@ test('genres name their sources, and collaborations filter by genre with subgenr
   await expectAccessible(page);
 });
 
-test('compare filters who worked with both by genre (R2-1)', async ({page}) => {
+test('compare filters who worked with both by genre', async ({page}) => {
   await page.goto('/compare');
   await page.getByRole('combobox', {name: 'From'}).fill('Kendrick Lamar');
   await page
@@ -133,7 +133,7 @@ test('compare filters who worked with both by genre (R2-1)', async ({page}) => {
   await expectAccessible(page);
 });
 
-test('labels: an artist page lists labels, and a label page shows its roster by era (R2-2)', async ({
+test('labels: an artist page lists labels, and a label page shows its roster by era', async ({
   page,
 }) => {
   await openArtist(page, 'Kendrick Lamar', 'Kendrick Lamar');
@@ -156,7 +156,7 @@ test('labels: an artist page lists labels, and a label page shows its roster by 
   await expectAccessible(page);
 });
 
-test('production collaborations can be narrowed to who produced whom (R2-2)', async ({
+test('production collaborations can be narrowed to who produced whom', async ({
   page,
 }) => {
   await openArtist(page, 'Kendrick Lamar', 'Kendrick Lamar');
@@ -171,7 +171,7 @@ test('production collaborations can be narrowed to who produced whom (R2-2)', as
   await expectAccessible(page);
 });
 
-test('explore keeps a trail of expanded artists and can undo (R2-2)', async ({
+test('explore keeps a trail of expanded artists and can undo', async ({
   page,
 }) => {
   await openArtist(page, 'Kendrick Lamar', 'Kendrick Lamar');
@@ -187,7 +187,7 @@ test('explore keeps a trail of expanded artists and can undo (R2-2)', async ({
   await expectAccessible(page);
 });
 
-test('the collaborations page has a timeline, a year range and a table view (R2-3)', async ({
+test('the collaborations page has a timeline, a year range and a table view', async ({
   page,
 }) => {
   await openArtist(page, 'Kendrick Lamar', 'Kendrick Lamar');
@@ -221,7 +221,7 @@ test('the collaborations page has a timeline, a year range and a table view (R2-
   await expectAccessible(page);
 });
 
-test('compare shows a shared audience from aggregate listening (R2-5)', async ({
+test('compare shows a shared audience from aggregate listening', async ({
   page,
 }) => {
   await page.goto('/compare');
@@ -242,7 +242,7 @@ test('compare shows a shared audience from aggregate listening (R2-5)', async ({
   await expectAccessible(page);
 });
 
-test('a song page shows its sound and compares with another song (R2-4)', async ({
+test('a song page shows its sound and compares with another song', async ({
   page,
 }) => {
   await page.goto('/compare/songs');
@@ -293,7 +293,7 @@ test('six degrees connects two artists and the link is shareable', async ({
   const chain = await page.getByRole('list').first().innerText();
   await expectAccessible(page);
 
-  // AC-3.4: the same link shows the same chain.
+  // The same link shows the same chain.
   const url = page.url();
   const other = await page.context().newPage();
   await other.goto(url);
@@ -355,9 +355,7 @@ test('navigation moves focus to the new page (QA Q17)', async ({page}) => {
   ).toBeFocused();
 });
 
-test('About lists every data source with its license (ADR 0005)', async ({
-  page,
-}) => {
+test('About lists every data source with its license', async ({page}) => {
   await page.goto('/about');
   const resources = page.getByRole('region', {name: 'Resources'});
   await expect(
@@ -372,7 +370,7 @@ test('About lists every data source with its license (ADR 0005)', async ({
   await expectAccessible(page);
 });
 
-test('a playlist export is mapped on the device, sending only artist names (US-10)', async ({
+test('a playlist export is mapped on the device, sending only artist names', async ({
   page,
 }) => {
   await page.goto('/library');
@@ -391,7 +389,7 @@ test('a playlist export is mapped on the device, sending only artist names (US-1
   const sent = (await request).postDataJSON() as {
     tracks: {artists: string[]}[];
   };
-  // AC-10.1: only artist names leave the device; no titles, albums or IDs.
+  // Only artist names leave the device; no titles, albums or IDs.
   expect(sent).toEqual({
     tracks: [
       {artists: ['Thundercat']},
@@ -413,7 +411,7 @@ test('a playlist export is mapped on the device, sending only artist names (US-1
   await expectAccessible(page);
 });
 
-test('unsupported files are listed with a reason (AC-10.3)', async ({page}) => {
+test('unsupported files are listed with a reason', async ({page}) => {
   await page.goto('/library');
   await page.locator('input[type=file]').setInputFiles({
     name: 'notes.pdf',
@@ -437,7 +435,7 @@ async function name(page: Page, artist: string) {
   await page.getByRole('option').filter({hasText: artist}).first().click();
 }
 
-test('the daily puzzle: a wrong move reveals nothing; solving shares no spoilers (US-04)', async ({
+test('the daily puzzle: a wrong move reveals nothing; solving shares no spoilers', async ({
   page,
 }) => {
   await page.clock.setFixedTime(new Date(2026, 9, 8, 12));
@@ -620,7 +618,7 @@ test('only completed shares are reported, and telemetry failure does not block c
   expect(shares).toBe(1);
 });
 
-test('friends explain invites and ask signed-out visitors to sign in (R2-7)', async ({
+test('friends explain invites and ask signed-out visitors to sign in', async ({
   page,
 }) => {
   await page.goto('/friends');
@@ -639,7 +637,7 @@ test('friends explain invites and ask signed-out visitors to sign in (R2-7)', as
   await expectAccessible(page);
 });
 
-test('asking a question in the search bar answers from our data (ADR 0008)', async ({
+test('asking a question in the search bar answers from our data', async ({
   page,
   request,
 }) => {

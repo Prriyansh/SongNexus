@@ -250,7 +250,7 @@ class ArtistLink(ProvenanceMixin, Base):
 
 
 class ArtistGenre(ProvenanceMixin, Base):
-    """A genre association with its vote count, per source (ADR 0003, ADR 0005).
+    """A genre association with its vote count, per source.
 
     Sources count votes in their own unit (MusicBrainz tag votes, Discogs masters
     tagged), so the source is part of the key and shares are computed per source.
@@ -328,7 +328,7 @@ class ArtistCoListening(ProvenanceMixin, Base):
 
 
 class ArtistImage(Base):
-    """A freely licensed photo of an artist from Wikimedia Commons (ADR 0009).
+    """A freely licensed photo of an artist from Wikimedia Commons.
 
     Found through the artist's Wikidata item (P434 MusicBrainz ID, P18 image).
     One row per artist; ``songnexus fetch-images`` replaces it on each run.
@@ -572,7 +572,7 @@ ENTITY_MODELS: dict[str, type[Base]] = {
 
 
 # ---------------------------------------------------------------------------
-# User data (plan §15.2). Personal data lives only here, never in logs.
+# User data. Personal data lives only here, never in logs.
 # ---------------------------------------------------------------------------
 
 
@@ -590,13 +590,13 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     age_confirmed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
-    # Development demo data only (docs/synthetic-data.md): the command that created
+    # Development demo data only: the command that created
     # this synthetic account ("seed-demo"); None for every real account.
     synthetic_source: Mapped[str | None] = mapped_column(String(32), index=True)
 
 
 class UserSession(Base):
-    """A signed-in browser. Only the SHA-256 of the session token is stored (ADR 0002)."""
+    """A signed-in browser. Only the SHA-256 of the session token is stored."""
 
     __tablename__ = "user_sessions"
 
@@ -618,7 +618,7 @@ class Preferences(Base):
     genre_ids: Mapped[list[str]] = mapped_column(JsonType, default=list)
     categories: Mapped[list[str]] = mapped_column(JsonType, default=list)
     theme: Mapped[str] = mapped_column(String(16))
-    # For You (ADR 0010): learn from what the listener does in the app. Off means
+    # For You: learn from what the listener does in the app. Off means
     # no interaction events are stored and the feed uses explicit signals only.
     personalize: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     etag: Mapped[str] = mapped_column(String(32))
@@ -626,7 +626,7 @@ class Preferences(Base):
 
 
 class BlockedArtist(Base):
-    """An artist a user never wants to see in lists or paths (US-17)."""
+    """An artist a user never wants to see in lists or paths."""
 
     __tablename__ = "blocked_artists"
 
@@ -639,7 +639,7 @@ class BlockedArtist(Base):
 
 
 class Profile(Base):
-    """A user's profile: Top 5 artists, private by default (US-09)."""
+    """A user's profile: Top 5 artists, private by default."""
 
     __tablename__ = "profiles"
 
@@ -653,7 +653,7 @@ class Profile(Base):
 
 
 class LinkedAccount(Base):
-    """A listening service a user linked (ADR 0006). Tokens are ciphertext, never plain."""
+    """A listening service a user linked. Tokens are ciphertext, never plain."""
 
     __tablename__ = "linked_accounts"
 
@@ -705,7 +705,7 @@ class OAuthFlow(Base):
 
 
 class SocialProfile(Base):
-    """The name a user shows to friends (R2-7). Chosen by the user, never from Firebase."""
+    """The name a user shows to friends. Chosen by the user, never from Firebase."""
 
     __tablename__ = "social_profiles"
 
@@ -795,7 +795,7 @@ class AbuseReport(Base):
 
 
 class AuditEntry(Base):
-    """An account-changing action, for disputes (plan §19, repudiation).
+    """An account-changing action, for disputes.
 
     Holds no IP addresses or request bodies; removed with the account.
     """
@@ -850,7 +850,7 @@ class CommunityChart(Base):
 
 
 # ---------------------------------------------------------------------------
-# Game scores (ADR 0010): opt-in, one per player per game per day.
+# Game scores: opt-in, one per player per game per day.
 # ---------------------------------------------------------------------------
 
 
@@ -894,7 +894,7 @@ class TriviaAnswer(Base):
 
 
 # ---------------------------------------------------------------------------
-# For You and Z-star (ADR 0010). Personal data: exported and deleted with the
+# For You and Z-star. Personal data: exported and deleted with the
 # account; raw events are kept 180 days, served feeds 30 days.
 # ---------------------------------------------------------------------------
 

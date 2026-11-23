@@ -250,7 +250,7 @@
           },
           "genreKnown": {
             "default": false,
-            "description": "Whether our data has genres for this artist (AC-12.2).",
+            "description": "Whether our data has genres for this artist.",
             "title": "Genreknown",
             "type": "boolean"
           },
@@ -285,7 +285,7 @@
                 "type": "null"
               }
             ],
-            "description": "A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it (ADR 0009).",
+            "description": "A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it.",
             "title": "Imageurl"
           },
           "labels": {
@@ -501,7 +501,7 @@
         "type": "object"
       },
       "ArtistImage": {
-        "description": "A freely licensed artist photo from Wikimedia Commons, with its attribution (ADR 0009).",
+        "description": "A freely licensed artist photo from Wikimedia Commons, with its attribution.",
         "properties": {
           "author": {
             "anyOf": [
@@ -685,7 +685,7 @@
           },
           "genreKnown": {
             "default": false,
-            "description": "Whether our data has genres for this artist (AC-12.2).",
+            "description": "Whether our data has genres for this artist.",
             "title": "Genreknown",
             "type": "boolean"
           },
@@ -698,7 +698,7 @@
                 "type": "null"
               }
             ],
-            "description": "A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it (ADR 0009).",
+            "description": "A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it.",
             "title": "Imageurl"
           },
           "listeners": {
@@ -4434,7 +4434,7 @@
         "type": "string"
       },
       "LicenseTier": {
-        "description": "What a data source's license allows (ADR 0005).",
+        "description": "What a data source's license allows.",
         "enum": [
           "PRODUCTION",
           "NON_COMMERCIAL",
@@ -4444,7 +4444,7 @@
         "type": "string"
       },
       "Limits": {
-        "description": "Request limits clients should respect (plan §14).",
+        "description": "Request limits clients should respect.",
         "properties": {
           "maxAlternatives": {
             "title": "Maxalternatives",
@@ -5264,7 +5264,7 @@
         "type": "object"
       },
       "ListeningProvider": {
-        "description": "A listening service (ADR 0006).",
+        "description": "A listening service.",
         "enum": [
           "LISTENBRAINZ",
           "LASTFM",
@@ -5927,7 +5927,7 @@
         "type": "string"
       },
       "Profile-Input": {
-        "description": "GetProfile / UpdateProfile: Top 5 artists (US-09).",
+        "description": "GetProfile / UpdateProfile: Top 5 artists.",
         "properties": {
           "etag": {
             "default": "",
@@ -5967,7 +5967,7 @@
         "type": "object"
       },
       "Profile-Output": {
-        "description": "GetProfile / UpdateProfile: Top 5 artists (US-09).",
+        "description": "GetProfile / UpdateProfile: Top 5 artists.",
         "properties": {
           "etag": {
             "default": "",
@@ -6504,7 +6504,7 @@
         "properties": {
           "blocked": {
             "default": false,
-            "description": "The viewer blocked this artist. Blocked artists appear only for an exact-name search, so they can be unblocked (AC-17.2).",
+            "description": "The viewer blocked this artist. Blocked artists appear only for an exact-name search, so they can be unblocked.",
             "title": "Blocked",
             "type": "boolean"
           },
@@ -8398,7 +8398,7 @@
         "type": "string"
       },
       "Visibility": {
-        "description": "Who can see a profile. Only PRIVATE exists in R1.",
+        "description": "Who can see a profile. Only PRIVATE exists for now.",
         "enum": [
           "PRIVATE"
         ],
@@ -10406,7 +10406,7 @@
     },
     "/v1/puzzles/{date}:checkMove": {
       "post": {
-        "description": "Checks one step. A wrong step reveals nothing about the puzzle (AC-4.2).",
+        "description": "Checks one step. A wrong step reveals nothing about the puzzle.",
         "operationId": "CheckMove",
         "parameters": [
           {
@@ -11327,7 +11327,7 @@
     },
     "/v1/trivia/{date}:check": {
       "post": {
-        "description": "Checks one answer. The verdict comes with the right option and its credits.\n\nFor a signed-in player the first answer to each question is kept for two days,\nso a score submitted later counts that answer (ADR 0010).",
+        "description": "Checks one answer. The verdict comes with the right option and its credits.\n\nFor a signed-in player the first answer to each question is kept for two days,\nso a score submitted later counts that answer.",
         "operationId": "CheckTrivia",
         "parameters": [
           {
@@ -11433,7 +11433,7 @@
     },
     "/v1/users/{user}": {
       "delete": {
-        "description": "Deletes the account (AC-18.4): signed out everywhere, data gone now, purged in 30 days.",
+        "description": "Deletes the account: signed out everywhere, data gone now, purged in 30 days.",
         "operationId": "DeleteUser",
         "parameters": [
           {
@@ -12629,7 +12629,7 @@
     },
     "/v1/users/{user}/inbox": {
       "get": {
-        "description": "Lists shares received, newest first.\n\nShares about an artist the listener blocked are left out (US-17 applies here too).",
+        "description": "Lists shares received, newest first.\n\nShares about an artist the listener blocked are left out (blocks apply here too).",
         "operationId": "ListInbox",
         "parameters": [
           {
@@ -13274,7 +13274,7 @@
         ]
       },
       "patch": {
-        "description": "Updates preferences. Stale ETags are rejected with ABORTED (AC-18.3).",
+        "description": "Updates preferences. Stale ETags are rejected with ABORTED.",
         "operationId": "UpdatePreferences",
         "parameters": [
           {
@@ -13359,7 +13359,7 @@
     },
     "/v1/users/{user}/profile": {
       "get": {
-        "description": "Returns the user's profile. Profiles are private: only the owner can read one (AC-9.2).",
+        "description": "Returns the user's profile. Profiles are private: only the owner can read one.",
         "operationId": "GetProfile",
         "parameters": [
           {
@@ -13400,7 +13400,7 @@
         ]
       },
       "patch": {
-        "description": "Updates the Top 5. A sixth artist is rejected (AC-9.1).",
+        "description": "Updates the Top 5. A sixth artist is rejected.",
         "operationId": "UpdateProfile",
         "parameters": [
           {
@@ -13768,7 +13768,7 @@
     },
     "/v1/users/{user}:export": {
       "get": {
-        "description": "Returns everything we store about the user, as JSON (target M4-07).",
+        "description": "Returns everything we store about the user, as JSON.",
         "operationId": "ExportUserData",
         "parameters": [
           {

@@ -1,1 +1,1 @@
-"""Linked listening accounts (ADR 0006): connectors, OAuth, token encryption and sync."""
+"""Linked listening accounts: connectors, OAuth, token encryption and sync."""

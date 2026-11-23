@@ -4,7 +4,7 @@
  * the API already returns; nothing is guessed.
  */
 
-/** A freely licensed photo of an artist (Wikimedia Commons, ADR 0009). */
+/** A freely licensed photo of an artist (Wikimedia Commons). */
 export interface Photo {
   url: string;
   thumbnailUrl?: string | null;

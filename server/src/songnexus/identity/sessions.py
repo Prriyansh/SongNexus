@@ -1,4 +1,4 @@
-"""Session and CSRF tokens (ADR 0002).
+"""Session and CSRF tokens.
 
 The session token is 256 random bits, sent only in an HttpOnly cookie; the
 database stores its SHA-256. The CSRF token is derived from the session token

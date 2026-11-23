@@ -1,5 +1,5 @@
 /**
- * Share with a friend (R2-7): an artist, a song, a comparison or a path, with
+ * Share with a friend: an artist, a song, a comparison or a path, with
  * an optional note (140 characters). Friends only; the server moderates notes
  * and limits how often anyone can send.
  */

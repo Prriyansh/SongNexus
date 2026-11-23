@@ -53,7 +53,7 @@ class Alias(_Model):
 
 
 class GenreTag(_Model):
-    """A genre associated with an artist and its vote count (CC BY-NC-SA, ADR 0003)."""
+    """A genre associated with an artist and its vote count (CC BY-NC-SA)."""
 
     name: str
     count: int = 0

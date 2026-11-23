@@ -1,4 +1,4 @@
-"""One interface for every listening service (ADR 0006, decision 1).
+"""One interface for every listening service.
 
 ``fetch(http, credentials, cursor)`` returns the plays since ``cursor`` and the
 next cursor. Connectors never write responses to disk (a listener's history is

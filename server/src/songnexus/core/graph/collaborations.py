@@ -1,4 +1,4 @@
-"""An artist's collaborations, grouped the way listeners think about them (US-16).
+"""An artist's collaborations, grouped the way listeners think about them.
 
 Counts are "based on releases in our data": one item per collaborating artist
 and type, counting the distinct recordings, releases or relations behind it.
@@ -23,7 +23,7 @@ class CollaborationType(enum.StrEnum):
 
 
 class ProductionDirection(enum.StrEnum):
-    """Who produced whom, from the artist's side (the producer view, R2-2)."""
+    """Who produced whom, from the artist's side (the producer view)."""
 
     PRODUCED_FOR = "PRODUCED_FOR"  # the artist produced the collaborator's music
     PRODUCED_BY = "PRODUCED_BY"  # the collaborator produced the artist's music

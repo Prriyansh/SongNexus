@@ -336,8 +336,8 @@ def _cmd_eval_songs(settings: Settings, args: argparse.Namespace) -> int:
         _print(asdict(weight_study(recordings)))
         return EXIT_OK
     report = genre_separation(recordings)
-    # No gate yet: this is the first measurement (plan R2-4); it is recorded in
-    # docs/handoff/evaluations.md and a floor is set from it, never before it.
+    # No gate yet: this is the first measurement; it is recorded in
+    # the evaluation notes and a floor is set from it, never before it.
     _print({**asdict(report), "recordingsWithDescriptors": len(rows)})
     return EXIT_OK
 
@@ -373,8 +373,8 @@ def _cmd_eval_genres(settings: Settings, _args: argparse.Namespace) -> int:
     musicbrainz = load_read_model(engine, [SUPPLEMENTARY_SOURCE_ID]).graph
     discogs = load_read_model(engine, [DISCOGS_SOURCE_ID]).graph
     report = genre_agreement(musicbrainz, discogs)
-    # No gate yet: this is the first measurement (plan R2-1). It is recorded in
-    # docs/handoff/evaluations.md and a gate is set from it, never before it.
+    # No gate yet: this is the first measurement. It is recorded in
+    # the evaluation notes and a gate is set from it, never before it.
     _print({"a": SUPPLEMENTARY_SOURCE_ID, "b": DISCOGS_SOURCE_ID, **asdict(report)})
     return EXIT_OK
 
@@ -483,7 +483,7 @@ def _cmd_openapi(_settings: Settings, args: argparse.Namespace) -> int:
     return _write_generated(OPENAPI_PATH, openapi_document(), command="openapi", check=args.check)
 
 
-# --- Artist photos (ADR 0009) -----------------------------------------------------------
+# --- Artist photos -----------------------------------------------------------
 
 
 def _cmd_fetch_images(settings: Settings, args: argparse.Namespace) -> int:
@@ -494,7 +494,7 @@ def _cmd_fetch_images(settings: Settings, args: argparse.Namespace) -> int:
     from songnexus.catalog.wikidata.images import CommonsClient, http_client, run_fetch_images
     from songnexus.storage.db import make_engine
 
-    # Both clients get the generic User-Agent; no contact is ever sent (ADR 0009).
+    # Both clients get the generic User-Agent; no contact is ever sent.
     wikidata = WikidataClient(
         sparql_url=settings.wikidata_sparql_url,
         cache_dir=settings.raw_dir("wikidata-images"),
@@ -773,7 +773,7 @@ def _add_community_commands(commands: Any) -> None:
     demo = commands.add_parser(
         "seed-demo",
         help="DEVELOPMENT ONLY: create (or --reset) the labeled synthetic demo cohort and the "
-        "local demo account (docs/synthetic-data.md)",
+        "local demo account",
     )
     demo.add_argument("--reset", action="store_true", help="remove everything seed-demo created")
     demo.set_defaults(handler=_cmd_seed_demo)

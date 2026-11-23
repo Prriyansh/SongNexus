@@ -1,7 +1,7 @@
 """User data: account, preferences, blocked artists, profile, export and deletion.
 
 Every method resolves ``users/{user}`` through ``authorize_user``: a viewer can
-only ever reach their own data (AC-18.2), and ``users/me`` is an alias for it.
+only ever reach their own data, and ``users/me`` is an alias for it.
 Writes check Origin and the CSRF token, use ETags against lost updates
 (AIP-154), and append to the audit log.
 """
@@ -85,7 +85,7 @@ def _update_mask(mask: str | None, body_fields: set[str], allowed: frozenset[str
 
 
 def _check_etag(current: str, presented_body: str, presented_header: str | None) -> None:
-    """Rejects a stale write (AC-18.3). An empty ETag means "overwrite unconditionally".
+    """Rejects a stale write. An empty ETag means "overwrite unconditionally".
 
     Raises:
         ApiError: ABORTED when the presented ETag is stale.
@@ -125,7 +125,7 @@ def get_user(user: str, who: ViewerDep, session: SessionDep, response: Response)
 def delete_user(
     user: str, request: Request, response: Response, who: ViewerDep, session: SessionDep
 ) -> api.Empty:
-    """Deletes the account (AC-18.4): signed out everywhere, data gone now, purged in 30 days."""
+    """Deletes the account: signed out everywhere, data gone now, purged in 30 days."""
     user_id = authorize_user(user, who)
     check_write_origin(request, who)
     now = datetime.now(UTC)
@@ -140,7 +140,7 @@ def delete_user(
 def export_user_data(
     user: str, who: ViewerDep, session: SessionDep, response: Response
 ) -> dict[str, Any]:
-    """Returns everything we store about the user, as JSON (target M4-07)."""
+    """Returns everything we store about the user, as JSON."""
     user_id = authorize_user(user, who)
     account = users.get_live_user(session, user_id)
     if account is None:
@@ -162,7 +162,7 @@ def export_user_data(
             "topArtists": [f"artists/{a}" for a in profile.top_artist_ids],
             "visibility": profile.visibility,
         },
-        # Linked accounts (ADR 0006): never tokens; the per-artist counts are all we keep.
+        # Linked accounts: never tokens; the per-artist counts are all we keep.
         "linkedAccounts": [
             {
                 "provider": a.provider,
@@ -185,10 +185,10 @@ def export_user_data(
                 accounts.listening(session, user_id), key=lambda t: (t.provider, t.artist_id)
             )
         ],
-        # For You (ADR 0010): what Z-star learns from. Imported listening is in "listening"
+        # For You: what Z-star learns from. Imported listening is in "listening"
         # (provider IMPORT).
         "forYou": _for_you_export(session, user_id),
-        # Friends and sharing (R2-7): invite codes are never stored, so never exported.
+        # Friends and sharing: invite codes are never stored, so never exported.
         "social": _social_export(session, user_id),
         # Around you: the campus and city the listener opted in to.
         "communities": [
@@ -201,7 +201,7 @@ def export_user_data(
                 community_repository.memberships(session, user_id).values(), key=lambda r: r.kind
             )
         ],
-        # Game scores (ADR 0010) and first Credit check answers (kept two days).
+        # Game scores and first Credit check answers (kept two days).
         "gameScores": [
             {
                 "game": s.game,
@@ -357,7 +357,7 @@ def update_preferences(
     update_mask: Annotated[str | None, Query(alias="updateMask")] = None,
     if_match: Annotated[str | None, Header()] = None,
 ) -> api.Preferences:
-    """Updates preferences. Stale ETags are rejected with ABORTED (AC-18.3)."""
+    """Updates preferences. Stale ETags are rejected with ABORTED."""
     user_id = authorize_user(user, who)
     check_write_origin(request, who)
     current = _preferences(user_id, session.get(m.Preferences, user_id))
@@ -401,7 +401,7 @@ def update_preferences(
 
 
 # ---------------------------------------------------------------------------
-# Blocked artists (US-17)
+# Blocked artists
 # ---------------------------------------------------------------------------
 
 
@@ -509,7 +509,7 @@ def delete_blocked_artist(
 
 
 # ---------------------------------------------------------------------------
-# Profile: Top 5 (US-09, target)
+# Profile: Top 5 (target)
 # ---------------------------------------------------------------------------
 
 
@@ -531,7 +531,7 @@ def _profile(user_id: str, row: m.Profile | None) -> api.Profile:
     "/users/{user:rid}/profile", response_model=api.Profile, summary="GetProfile", dependencies=Read
 )
 def get_profile(user: str, who: ViewerDep, session: SessionDep, response: Response) -> api.Profile:
-    """Returns the user's profile. Profiles are private: only the owner can read one (AC-9.2)."""
+    """Returns the user's profile. Profiles are private: only the owner can read one."""
     user_id = authorize_user(user, who)
     _private(response)
     return _profile(user_id, session.get(m.Profile, user_id))
@@ -554,7 +554,7 @@ def update_profile(
     update_mask: Annotated[str | None, Query(alias="updateMask")] = None,
     if_match: Annotated[str | None, Header()] = None,
 ) -> api.Profile:
-    """Updates the Top 5. A sixth artist is rejected (AC-9.1)."""
+    """Updates the Top 5. A sixth artist is rejected."""
     user_id = authorize_user(user, who)
     check_write_origin(request, who)
     current = _profile(user_id, session.get(m.Profile, user_id))

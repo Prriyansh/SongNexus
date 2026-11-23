@@ -2,7 +2,7 @@
 
 Every account written here carries ``users.synthetic_source``; removal goes
 through the same erase path as account deletion, so nothing synthetic is left
-behind in any user table. See docs/synthetic-data.md.
+behind in any user table.
 """
 
 from __future__ import annotations
