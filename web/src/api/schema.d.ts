@@ -2002,6 +2002,8 @@ export interface components {
             oftenPlayedWith: components["schemas"]["CoListener"][];
             /** Sources */
             sources: components["schemas"]["SourceLink"][];
+            /** @description Concerts and festivals, or null when none are known. */
+            stage: components["schemas"]["ArtistStage"] | null;
         };
         /**
          * ArtistAbout
@@ -2125,6 +2127,19 @@ export interface components {
             lastYear: number | null;
             /** Releasecount */
             releaseCount: number;
+        };
+        /**
+         * ArtistStage
+         * @description The events MusicBrainz lists for an artist (seed artists only).
+         */
+        ArtistStage: {
+            /**
+             * Recent
+             * @description Newest first, up to 6.
+             */
+            recent: components["schemas"]["EventSummary"][];
+            /** Total */
+            total: number;
         };
         /**
          * ArtistSummary
@@ -2788,6 +2803,11 @@ export interface components {
              * @description Awards Wikidata lists for both artists (the same award, any year), with the first artist's most recent year.
              */
             sharedAwards: components["schemas"]["Honor"][];
+            /**
+             * Sharedevents
+             * @description Concerts and festivals both artists performed at, newest first (up to 8).
+             */
+            sharedEvents: components["schemas"]["EventSummary"][];
             /** Sharedgenres */
             sharedGenres: components["schemas"]["SharedGenre"][];
         };
@@ -3223,6 +3243,36 @@ export interface components {
          * @enum {string}
          */
         EventKind: "IMPRESSION" | "OPEN" | "LISTEN" | "SKIP" | "HIDE" | "SHARE";
+        /**
+         * EventSummary
+         * @description A concert or festival, from MusicBrainz.
+         */
+        EventSummary: {
+            /**
+             * Date
+             * @description As precise as known: 2019 or 2019-07-12.
+             */
+            date: string | null;
+            /** Displayname */
+            displayName: string;
+            /**
+             * Kind
+             * @description Concert, Festival, ...
+             */
+            kind: string | null;
+            /**
+             * Performers
+             * @description Catalog artists who performed at it.
+             */
+            performers: components["schemas"]["ArtistSummary"][];
+            /** Place */
+            place: string | null;
+            /**
+             * Url
+             * @description The event on MusicBrainz.
+             */
+            url: string;
+        };
         /**
          * Evidence
          * @description One reason two artists are connected, as a localizable message.

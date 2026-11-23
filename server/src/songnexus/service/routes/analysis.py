@@ -39,6 +39,7 @@ from songnexus.service.routes.common import (
 )
 from songnexus.storage import catalog_repository as repo
 from songnexus.storage.artist_facts import read_artist_facts
+from songnexus.storage.events import shared_events
 
 router = APIRouter(
     prefix="/v1", tags=["analysis"], dependencies=[Depends(rate_limited(MethodClass.ANALYZE))]
@@ -48,6 +49,7 @@ ReadModelDep = Annotated[ReadModel, Depends(read_model)]
 ViewerDep = Annotated[Viewer, Depends(viewer)]
 SessionDep = Annotated[Session, Depends(db_session, scope="function")]
 EVIDENCE_PER_STEP = 3
+SHARED_EVENTS = 8
 
 
 def _endpoints(graph: ArtistGraph, *names: tuple[str, str]) -> list[str]:
@@ -215,6 +217,9 @@ def compare_artists(
                 url="https://listenbrainz.org/",
             ),
         ),
+        shared_events=[
+            convert.event_summary(graph, e) for e in shared_events(session, a, b, SHARED_EVENTS)
+        ],
         shared_awards=convert.shared_awards(facts.get(a), facts.get(b)),
         graph_version=model.version,
     )

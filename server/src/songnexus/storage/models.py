@@ -431,6 +431,32 @@ class ArtistChart(Base):
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class Event(Base):
+    """A concert or festival from MusicBrainz (CC0), found through a catalog artist."""
+
+    __tablename__ = "events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # the MusicBrainz event ID
+    name: Mapped[str] = mapped_column(NAME)
+    kind: Mapped[str | None] = mapped_column(String(64))
+    date: Mapped[str | None] = mapped_column(DATE)
+    place: Mapped[str | None] = mapped_column(NAME)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class EventPerformer(Base):
+    """A catalog artist who performed at an event (main act, support or guest)."""
+
+    __tablename__ = "event_performers"
+
+    event_id: Mapped[str] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"), primary_key=True
+    )
+    artist_id: Mapped[str] = mapped_column(
+        ForeignKey("artists.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+
+
 class GenreParent(ProvenanceMixin, Base):
     """``genre_id`` is a kind of ``parent_genre_id`` (e.g. trap is a kind of hip hop)."""
 

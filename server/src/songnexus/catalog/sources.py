@@ -93,6 +93,7 @@ SOURCES: tuple[DataSource, ...] = (
             "artists, recordings, releases and labels",
             "credits and artist relationships (every connection)",
             "collaborations, six degrees, compare, the daily puzzle",
+            "concerts and festivals: artists who shared a bill",
         ),
         attribution="Data from MusicBrainz",
         checked_on="2026-10-07",

@@ -174,6 +174,9 @@ export const messages = {
   'artist.honors.note':
     'Wikidata is community-edited: its lists can be incomplete, so this isn’t a total.',
   'artist.honors.wikidata': 'See it on Wikidata',
+  'artist.stage':
+    'On stage: {count, plural, one {# event} other {# events}} on MusicBrainz',
+  'artist.stage.source': 'Recent concerts and festivals, from MusicBrainz.',
   'artist.legalName': 'Legal name',
   'artist.links.listen': 'Streaming',
   'artist.links.official': 'Official',
@@ -1139,6 +1142,9 @@ export const messages = {
     '{source} doesn’t know one of these artists for sure, so it was skipped.',
   'moreCredits.check.failed': '{source} couldn’t be reached just now.',
   'compare.awards': 'Both received',
+  'compare.events': 'Shared the bill',
+  'compare.events.note':
+    'Concerts and festivals where MusicBrainz lists both as performers.',
   'compare.awards.note':
     'The same award, in any year, as Wikidata lists it for both. Community-edited, so not a total.',
   'compare.overlap.value': '{percent, number, ::percent}',

@@ -593,6 +593,35 @@ def _cmd_fetch_billboard(settings: Settings, _args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_fetch_events(settings: Settings, args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
+    from songnexus.catalog.http import SourceRequestError
+    from songnexus.catalog.musicbrainz.client import MusicBrainzClient
+    from songnexus.catalog.musicbrainz.events import run_fetch_events
+    from songnexus.storage.db import make_engine
+
+    client = MusicBrainzClient(
+        base_url=settings.musicbrainz_base_url,
+        cache_dir=settings.raw_cache_dir,
+        contact=settings.musicbrainz_contact,
+        min_interval_s=settings.musicbrainz_min_interval_s,
+    )
+    try:
+        result = run_fetch_events(
+            make_engine(settings.database_url),
+            client,
+            now=datetime.now(UTC),
+            limit=args.limit,
+            dry_run=args.dry_run,
+        )
+    except SourceRequestError as exc:
+        print(f"fetch-events failed, nothing written: {exc}", file=sys.stderr)
+        return EXIT_FAILED
+    _print(result)
+    return EXIT_OK
+
+
 def _add_image_commands(commands: Any) -> None:
     facts = commands.add_parser(
         "fetch-facts",
@@ -611,6 +640,14 @@ def _add_image_commands(commands: Any) -> None:
         "--dry-run", action="store_true", help="report coverage without writing to the database"
     )
     covers.set_defaults(handler=_cmd_fetch_covers)
+    events = commands.add_parser(
+        "fetch-events", help="concerts and festivals of the seed artists from MusicBrainz"
+    )
+    events.add_argument("--limit", type=int, help="only the first N seed artists")
+    events.add_argument(
+        "--dry-run", action="store_true", help="report coverage without writing to the database"
+    )
+    events.set_defaults(handler=_cmd_fetch_events)
     commands.add_parser(
         "fetch-billboard",
         help="match the Billboard Hot 100 history (1958 on) to catalog songs and artists",

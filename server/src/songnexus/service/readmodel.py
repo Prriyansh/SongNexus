@@ -36,6 +36,7 @@ from songnexus.storage.catalog_reader import (
 )
 from songnexus.storage.charts import charts_stamp
 from songnexus.storage.db import session_scope
+from songnexus.storage.events import events_stamp
 from songnexus.storage.release_covers import (
     covers_stamp,
     read_recording_covers,
@@ -233,6 +234,7 @@ def _version(session: Session) -> str | None:
         ("fx", facts_stamp(session)),
         ("cv", covers_stamp(session)),
         ("ch", charts_stamp(session)),
+        ("ev", events_stamp(session)),
     )
     return version + "".join(f".{tag}{stamp}" for tag, stamp in stamps if stamp)
 

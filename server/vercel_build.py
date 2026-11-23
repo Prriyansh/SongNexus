@@ -64,8 +64,9 @@ def build() -> int:
         for command in ("fetch-images", "fetch-facts", "fetch-covers"):
             if _run(command, "--limit", limit):
                 print(f"{command} failed; continuing without it", file=sys.stderr)
-        if _run("fetch-billboard"):
-            print("fetch-billboard failed; continuing without it", file=sys.stderr)
+        for command in ("fetch-billboard", "fetch-events"):
+            if _run(command):
+                print(f"{command} failed; continuing without it", file=sys.stderr)
     if bundled:
         with sqlite3.connect(CATALOG) as db:
             db.execute("VACUUM")

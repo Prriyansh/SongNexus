@@ -144,6 +144,38 @@ function Mutual({data}: {data: Comparison}) {
   );
 }
 
+/** Concerts and festivals both performed at (MusicBrainz); shown only when there are some. */
+function SharedBills({data}: {data: Comparison}) {
+  const {t} = useI18n();
+  if (data.sharedEvents.length === 0) return null;
+  return (
+    <section className="cx-card" aria-labelledby="cx-events">
+      <div className="cx-card__head">
+        <h2 id="cx-events" className="cx-card__title">
+          {t('compare.events')}
+        </h2>
+        <span className="cx-card__count">{data.sharedEvents.length}</span>
+      </div>
+      <ul className="entity-honors">
+        {data.sharedEvents.map(event => (
+          <li key={event.url} className="entity-honor">
+            <a href={event.url} target="_blank" rel="noreferrer">
+              {event.displayName}
+              {event.place && ` · ${event.place}`}
+            </a>
+            {event.date && (
+              <span className="entity-honor__year">
+                {event.date.slice(0, 4)}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="cx-card__note">{t('compare.events.note')}</p>
+    </section>
+  );
+}
+
 /** Awards Wikidata lists for both (the same award, any year); shown only when there are some. */
 function SharedAwards({data}: {data: Comparison}) {
   const {t} = useI18n();
@@ -608,6 +640,7 @@ export default function CompareScreen() {
           <Genres data={data} />
           <Audience data={data} />
           <SharedAwards data={data} />
+          <SharedBills data={data} />
           <HowConnected data={data} />
           <OnTheirOwn data={data} />
           <div className="cx-listen-pair">

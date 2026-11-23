@@ -337,6 +337,17 @@
             },
             "title": "Sources",
             "type": "array"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtistStage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Concerts and festivals, or null when none are known."
           }
         },
         "required": [
@@ -358,6 +369,7 @@
           "oftenPlayedWith",
           "sources",
           "image",
+          "stage",
           "charts",
           "about",
           "graphVersion"
@@ -606,6 +618,29 @@
           "lastYear"
         ],
         "title": "ArtistLabel",
+        "type": "object"
+      },
+      "ArtistStage": {
+        "description": "The events MusicBrainz lists for an artist (seed artists only).",
+        "properties": {
+          "recent": {
+            "description": "Newest first, up to 6.",
+            "items": {
+              "$ref": "#/components/schemas/EventSummary"
+            },
+            "title": "Recent",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "recent"
+        ],
+        "title": "ArtistStage",
         "type": "object"
       },
       "ArtistSummary": {
@@ -2162,6 +2197,14 @@
             "title": "Sharedawards",
             "type": "array"
           },
+          "sharedEvents": {
+            "description": "Concerts and festivals both artists performed at, newest first (up to 8).",
+            "items": {
+              "$ref": "#/components/schemas/EventSummary"
+            },
+            "title": "Sharedevents",
+            "type": "array"
+          },
           "sharedGenres": {
             "items": {
               "$ref": "#/components/schemas/SharedGenre"
@@ -2181,6 +2224,7 @@
           "countsA",
           "countsB",
           "listening",
+          "sharedEvents",
           "sharedAwards",
           "graphVersion"
         ],
@@ -3064,6 +3108,73 @@
         ],
         "title": "EventKind",
         "type": "string"
+      },
+      "EventSummary": {
+        "description": "A concert or festival, from MusicBrainz.",
+        "properties": {
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "As precise as known: 2019 or 2019-07-12.",
+            "title": "Date"
+          },
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Concert, Festival, ...",
+            "title": "Kind"
+          },
+          "performers": {
+            "description": "Catalog artists who performed at it.",
+            "items": {
+              "$ref": "#/components/schemas/ArtistSummary"
+            },
+            "title": "Performers",
+            "type": "array"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
+          "url": {
+            "description": "The event on MusicBrainz.",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "kind",
+          "date",
+          "place",
+          "url",
+          "performers"
+        ],
+        "title": "EventSummary",
+        "type": "object"
       },
       "Evidence": {
         "description": "One reason two artists are connected, as a localizable message.",

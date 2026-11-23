@@ -253,6 +253,24 @@ class ArtistAbout(ApiModel):
     )
 
 
+class EventSummary(ApiModel):
+    """A concert or festival, from MusicBrainz."""
+
+    display_name: str
+    kind: str | None = Field(default=None, description="Concert, Festival, ...")
+    date: str | None = Field(default=None, description="As precise as known: 2019 or 2019-07-12.")
+    place: str | None = None
+    url: str = Field(description="The event on MusicBrainz.")
+    performers: list[ArtistSummary] = Field(description="Catalog artists who performed at it.")
+
+
+class ArtistStage(ApiModel):
+    """The events MusicBrainz lists for an artist (seed artists only)."""
+
+    total: int
+    recent: list[EventSummary] = Field(description="Newest first, up to 6.")
+
+
 class ArtistCharts(ApiModel):
     """An artist's Billboard Hot 100 history as the lead performer (all songs, catalog or not)."""
 
@@ -294,6 +312,9 @@ class Artist(ArtistSummary):
     sources: list[SourceLink]
     image: ArtistImage | None = Field(
         default=None, description="The artist's photo and its attribution, or null."
+    )
+    stage: ArtistStage | None = Field(
+        default=None, description="Concerts and festivals, or null when none are known."
     )
     charts: ArtistCharts | None = Field(
         default=None, description="Billboard Hot 100 history, or null when they never charted."
@@ -527,6 +548,10 @@ class CompareArtistsResponse(ApiModel):
     listening: ListenerOverlap | None = Field(
         default=None,
         description="Null when either artist has fewer than 50 listeners or no data.",
+    )
+    shared_events: list[EventSummary] = Field(
+        default_factory=list,
+        description="Concerts and festivals both artists performed at, newest first (up to 8).",
     )
     shared_awards: list[Honor] = Field(
         default_factory=list,

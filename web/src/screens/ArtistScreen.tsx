@@ -167,6 +167,34 @@ function Intro({about}: {about: Schemas['ArtistAbout']}) {
   );
 }
 
+/** Concerts and festivals MusicBrainz lists for the artist, newest first. */
+function Stage({stage}: {stage: Schemas['ArtistStage']}) {
+  const {t} = useI18n();
+  return (
+    <div className="entity-about__block">
+      <h3 className="entity-about__title">
+        {t('artist.stage', {count: stage.total})}
+      </h3>
+      <ul className="entity-honors">
+        {stage.recent.map(event => (
+          <li key={event.url} className="entity-honor">
+            <a href={event.url} target="_blank" rel="noreferrer">
+              {event.displayName}
+              {event.place && ` · ${event.place}`}
+            </a>
+            {event.date && (
+              <span className="entity-honor__year">
+                {event.date.slice(0, 4)}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="entity-intro__source">{t('artist.stage.source')}</p>
+    </div>
+  );
+}
+
 /** Awards or nominations as Wikidata lists them: community-edited, so never called a total. */
 function Honors({
   title,
@@ -476,6 +504,7 @@ export default function ArtistScreen() {
       {a.labels.length > 0 && <Labels labels={a.labels} />}
 
       {(a.about ||
+        a.stage ||
         a.aliases.length > 0 ||
         a.links.length > 0 ||
         a.sources.length > 0) && (
@@ -500,6 +529,7 @@ export default function ArtistScreen() {
                 wikidataUrl={a.about.wikidataUrl}
               />
             )}
+            {a.stage && <Stage stage={a.stage} />}
             {a.aliases.length > 0 && <Aliases aliases={a.aliases} />}
             <Links artist={a} />
           </div>
