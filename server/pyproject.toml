@@ -1,6 +1,6 @@
 [project]
 name = "songnexus"
-version = "0.1.0"
+version = "0.2.0a1"
 description = "The people behind the music and how they connect: core library, catalog pipeline and API."
 readme = "README.md"
 requires-python = ">=3.12"

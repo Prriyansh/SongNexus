@@ -7,7 +7,21 @@
 import AxeBuilder from '@axe-core/playwright';
 import {expect, test, type Page} from '@playwright/test';
 
+/** Waits for running animations (entrances fade rows in), so scans judge the settled page. */
+async function settled(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        // Skip endless ones (loading shimmer): they never finish.
+        .filter(a => a.effect?.getComputedTiming().endTime !== Infinity)
+        .map(a => a.finished.catch(() => undefined)),
+    ),
+  );
+}
+
 async function expectAccessible(page: Page) {
+  await settled(page);
   const results = await new AxeBuilder({page})
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
     .analyze();

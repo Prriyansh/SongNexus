@@ -72,6 +72,16 @@
           "excludeFiles": "{tests/**,scripts/**,.venv/**,**/__pycache__/**,.mypy_cache/**,.ruff_cache/**,.pytest_cache/**,.hypothesis/**,htmlcov/**}"
         }
       }
+    },
+    "sound": {
+      "root": "song_compare/",
+      "entrypoint": "index:app",
+      "functions": {
+        "index.py": {
+          "maxDuration": 30,
+          "excludeFiles": "{tests/**,pytest.ini,requirements-*.txt,data/raw/**,**/__pycache__/**,.pytest_cache/**,.venv/**}"
+        }
+      }
     }
   },
   "rewrites": [
@@ -85,6 +95,12 @@
       "source": "/healthz",
       "destination": {
         "service": "api"
+      }
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "sound"
       }
     },
     {

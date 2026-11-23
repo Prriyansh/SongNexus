@@ -101,4 +101,30 @@ describe('AuthProvider', () => {
     act(() => auth!.cancelSignIn());
     await screen.findByText('status: signedOut');
   });
+
+  it('does not look for a session when the server serves without accounts', async () => {
+    const fetchMock = vi.fn((input: Request | string) => {
+      const url = typeof input === 'string' ? input : input.url;
+      if (url.includes('/v1/sessions'))
+        return Promise.resolve(
+          error(401, 'UNAUTHENTICATED', 'SIGN_IN_REQUIRED'),
+        );
+      return Promise.resolve(
+        json({flags: {signIn: false}, limits: {}, graphVersion: null}),
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthProvider>
+          <Probe />
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+    await screen.findByText('status: signedOut');
+    const asked = fetchMock.mock.calls.map(([input]) =>
+      typeof input === 'string' ? input : input.url,
+    );
+    expect(asked.some(url => url.includes('/v1/sessions'))).toBe(false);
+  });
 });
