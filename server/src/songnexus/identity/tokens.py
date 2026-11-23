@@ -70,3 +70,16 @@ class FirebaseIdTokenVerifier:
         if not isinstance(uid, str) or not uid:
             raise InvalidIdTokenError("token has no subject")
         return VerifiedIdentity(uid)
+
+
+class SignInDisabledVerifier:
+    """Refuses every token: this deployment serves without accounts (``sign_in`` is off)."""
+
+    def verify(self, id_token: str) -> VerifiedIdentity:
+        """Never returns.
+
+        Raises:
+            InvalidIdTokenError: Always.
+        """
+        del id_token
+        raise InvalidIdTokenError("sign-in is not offered on this deployment")

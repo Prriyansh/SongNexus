@@ -10,6 +10,7 @@ app (`web/`, Vite + TypeScript), with the `song_compare/` sound & lyrics service
 | --- | --- |
 | `README.md` | Overview, how to run it, checks, layout (for people) |
 | `CLAUDE.md` | This guide |
+| `vercel.json` | The Vercel deployment: the web and API services and their routes (see README) |
 | `compose.yaml` | Optional local PostgreSQL for the API |
 | `firebase.json` | Firebase Hosting config (the Cloud Run deployment in `deploy/`) |
 | `.editorconfig`, `.gitattributes`, `.gitignore`, `.dockerignore` | Editor, line-ending and ignore rules |

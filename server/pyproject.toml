@@ -156,3 +156,11 @@ branch = true
 [tool.coverage.report]
 skip_covered = true
 show_missing = true
+
+# Vercel (the `api` service in ../vercel.json): the app object, and the build that ingests the
+# catalog into catalog.db once dependencies are installed.
+[tool.vercel]
+entrypoint = "main:app"
+
+[tool.vercel.scripts]
+build = "python vercel_build.py"

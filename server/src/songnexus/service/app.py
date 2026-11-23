@@ -19,7 +19,11 @@ from starlette.middleware.gzip import GZipMiddleware
 
 from songnexus import __version__
 from songnexus.config import Settings, get_settings, validate_for_serving
-from songnexus.identity.tokens import FirebaseIdTokenVerifier
+from songnexus.identity.tokens import (
+    FirebaseIdTokenVerifier,
+    IdTokenVerifier,
+    SignInDisabledVerifier,
+)
 from songnexus.logs import configure_logging
 from songnexus.service.cache import build_cache
 from songnexus.service.deps import AppState
@@ -151,14 +155,19 @@ def build_state(settings: Settings) -> AppState:
             MethodClass.WRITE: settings.rate_limit_write_per_minute,
         }
     )
-    verifier = FirebaseIdTokenVerifier(settings.firebase_project_id)
+    verifier: IdTokenVerifier = (
+        FirebaseIdTokenVerifier(settings.firebase_project_id)
+        if settings.sign_in
+        else SignInDisabledVerifier()
+    )
     return AppState(
         settings,
         engine,
         holder,
         limiter,
         verifier,
-        resolve_flags(settings.flags),
+        # A deployment without accounts says so, so clients don't offer sign-in.
+        {**resolve_flags(settings.flags), **({} if settings.sign_in else {"signIn": False})},
         cipher=cipher_from(settings),
     )
 

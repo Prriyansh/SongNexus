@@ -121,13 +121,15 @@ function AgeConfirmation() {
 function Account() {
   const {t} = useI18n();
   const auth = useAuth();
+  const flags = useConfigFlags();
   if (auth.status === 'signedIn')
     return (
       <Link className="account" to="/you" aria-label={t('shell.account')}>
         <Cover name={auth.user ?? ''} round icon="person" />
       </Link>
     );
-  if (auth.status === 'signedOut')
+  // A deployment without accounts turns the signIn flag off: nothing to offer.
+  if (auth.status === 'signedOut' && flags.signIn !== false)
     return (
       <button
         type="button"
@@ -337,7 +339,7 @@ export function Shell() {
           ))}
         </div>
         <div className="nav__extra">
-          {auth.status === 'signedOut' && (
+          {auth.status === 'signedOut' && flags.signIn !== false && (
             <div className="nav__prompt">
               <p>{t('shell.prompt')}</p>
               <button

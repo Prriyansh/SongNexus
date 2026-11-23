@@ -51,3 +51,6 @@ next-env.d.ts
 
 # song_compare/: raw datasets are downloaded, not committed (see song_compare/README.md)
 song_compare/data/raw/
+
+# Built by vercel_build.py for the Vercel deployment.
+catalog.db

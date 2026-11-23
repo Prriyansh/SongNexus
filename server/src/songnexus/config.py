@@ -50,6 +50,9 @@ class Settings(BaseSettings):
 
     # Identity (ADR 0002).
     firebase_project_id: str = ""
+    # Sign-in (Firebase). False for a hosted demo without accounts: no Firebase project is
+    # needed, and every sign-in is refused, so the app is used signed out.
+    sign_in: bool = True
     session_ttl_days: int = 14
     # Origins allowed to make state-changing requests (CSRF defense, with the token).
     allowed_origins: list[str] = Field(
@@ -216,8 +219,11 @@ def validate_for_serving(settings: Settings, env: Mapping[str, str]) -> None:
         not origin.startswith("https://") for origin in settings.allowed_origins
     ):
         problems.append("SONGNEXUS_ALLOWED_ORIGINS must list the app's https:// origins")
-    if not settings.firebase_project_id:
-        problems.append("SONGNEXUS_FIREBASE_PROJECT_ID is required for sign-in")
+    if settings.sign_in and not settings.firebase_project_id:
+        problems.append(
+            "SONGNEXUS_FIREBASE_PROJECT_ID is required for sign-in "
+            "(or set SONGNEXUS_SIGN_IN=false to serve without accounts)"
+        )
     if env.get("FIREBASE_AUTH_EMULATOR_HOST"):
         problems.append("FIREBASE_AUTH_EMULATOR_HOST must not be set outside development")
     if problems:

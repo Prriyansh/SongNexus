@@ -70,6 +70,39 @@ snapshot changes. Stop each server with **Ctrl+C** in its terminal. If a port is
 existing SongNexus server before restarting; the web proxy expects the API on 8790. Avoid switching
 the web port because saved progress belongs to the browser origin.
 
+## Deploy on Vercel
+
+`vercel.json` deploys the whole app as one Vercel project with two
+[services](https://vercel.com/docs/services) (in beta on every plan): the web app from `web/` at
+`/`, and the API from `server/` at `/v1/*` and `/healthz`. The API's build
+(`server/vercel_build.py`) ingests the committed snapshots into a SQLite catalog, adds photos and
+Wikipedia/Wikidata facts for the best-known artists, and bundles it with the function.
+
+1. In Vercel, import `Prriyansh/SongNexus` (or open the existing project) with **Root Directory**
+   `./`. `vercel.json` sets the builds; if the project still has the old Next.js framework preset,
+   set **Framework Preset** to **Other**.
+2. Deploy. With no environment variables at all, it serves signed out (no accounts), accepts
+   writes only from the deployment's own `https://` URLs, and shows "not set up" where an
+   optional service is missing.
+3. Optional environment variables (Project → Settings → Environment Variables), then redeploy:
+
+| Variable | Adds |
+| --- | --- |
+| `SONGNEXUS_SONG_COMPARE_URL` | The sound & lyrics analysis in song comparisons: the URL of the `song_compare` project (below) |
+| `SONGNEXUS_DISCOGS_TOKEN` | A higher Discogs rate limit for "More credits" (Discogs works without it) |
+| `SONGNEXUS_GENIUS_ACCESS_TOKEN` | Genius in "More credits" |
+| `SONGNEXUS_FIREBASE_PROJECT_ID`, and `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_AUTH_DOMAIN` | Sign-in with Google (Firebase) |
+| `SONGNEXUS_DATABASE_URL` | Accounts that persist: a PostgreSQL database with the catalog ingested into it (`songnexus ingest` against that URL). Without it, the bundled catalog is copied to the instance's `/tmp` and anything written there lasts only as long as the instance |
+| `SONGNEXUS_BUILD_FETCH_LIMIT` | How many artists get photos and facts at build time (default 1500; `SONGNEXUS_BUILD_FETCH=0` skips the fetch) |
+
+The sound & lyrics service is its own Vercel project from the same repository: **Root Directory**
+`song_compare` (see [song_compare/README.md](song_compare/README.md)); put its URL in
+`SONGNEXUS_SONG_COMPARE_URL`.
+
+To check a deployment's catalog locally: `cd server && uv run python vercel_build.py`, then serve
+it as Vercel would with `uv run --project server uvicorn main:app --app-dir server` from the root.
+`deploy/` keeps the Cloud Run alternative.
+
 ## Checks
 
 Every change must pass these (`.github/workflows/ci.yml` runs them all, plus the browser journeys
