@@ -107,6 +107,7 @@ Wikipedia/Wikidata facts for the best-known artists, and bundles it with the fun
 | `SONGNEXUS_SONG_COMPARE_URL` | Only to use a different sound & lyrics service: by default the API calls this project's own `sound` service on the production domain |
 | `SONGNEXUS_DISCOGS_TOKEN` | A higher Discogs rate limit for "More credits" (Discogs works without it) |
 | `SONGNEXUS_GENIUS_ACCESS_TOKEN` | Genius in "More credits" |
+| `SONGNEXUS_LASTFM_API_KEY` | Last.fm listeners and "similar to both" in artist comparisons (free key from last.fm/api) |
 | `SONGNEXUS_DATABASE_URL` | Only for a database other than the Neon integration's (any PostgreSQL URL; load the catalog with `songnexus ingest` against it). With no database at all, the bundled catalog is copied to the instance's `/tmp` and anything written there lasts only as long as the instance |
 | `SONGNEXUS_BUILD_FETCH_LIMIT` | How many artists get photos and facts at build time (default 1500; `SONGNEXUS_BUILD_FETCH=0` skips the fetch) |
 
@@ -143,11 +144,12 @@ data/          samples/ source snapshots · seeds/ seed artists, pinned decision
 
 ## Data and licensing
 
-SongNexus reads 17 sources: MusicBrainz for the catalog (artists, songs, releases, credits,
+SongNexus reads 19 sources: MusicBrainz for the catalog (artists, songs, releases, credits,
 concerts), Wikidata, Wikipedia and Wikimedia Commons for facts, introductions, readership and
 photos, the Cover Art Archive for album covers, the Billboard Hot 100 archive (every weekly chart
-since 1958) for chart history, Discogs, Genius, ListenBrainz and AcousticBrainz for comparisons,
-and the Spotify Tracks and Genius lyrics datasets behind `song_compare`.
+since 1958) for chart history, ListenBrainz for similar music, Discogs, Genius, Last.fm and
+AcousticBrainz for comparisons, Deezer for which song is an artist's top song, and the Spotify
+Tracks and Genius lyrics datasets behind `song_compare`.
 [docs/data-sources.md](docs/data-sources.md) lists each one with its license and what it feeds.
 It is generated from the data-source registry
 ([server/src/songnexus/catalog/sources.py](server/src/songnexus/catalog/sources.py)) with
