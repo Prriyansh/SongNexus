@@ -293,6 +293,23 @@ export function useMoreCredits(a: string | undefined, b: string | undefined) {
   });
 }
 
+/** The artist’s most popular song we have (Deezer ranks; no Deezer numbers are shown). */
+export function useTopRecording(id: string | undefined) {
+  return useQuery({
+    queryKey: ['topRecording', id],
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/artists/{artist}:topRecording', {
+          params: {path: {artist: id!}},
+        }),
+      ),
+    enabled: Boolean(id),
+    ...CATALOG_CACHE,
+    staleTime: query =>
+      query.state.data?.status === 'UNAVAILABLE' ? 0 : CATALOG_CACHE.staleTime,
+  });
+}
+
 export function useLabel(id: string | undefined) {
   return useQuery({
     queryKey: ['label', id],

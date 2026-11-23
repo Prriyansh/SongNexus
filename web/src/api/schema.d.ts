@@ -246,6 +246,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/artists/{artist}:topRecording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GetTopRecording
+         * @description The artist's most popular song that our catalog has, by Deezer's ranking.
+         */
+        get: operations["GetTopRecording"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/artists:featured": {
         parameters: {
             query?: never;
@@ -6185,6 +6205,28 @@ export interface components {
             year: number;
         };
         /**
+         * TopRecording
+         * @description GetTopRecording: which song to open first. Deezer picks it; no Deezer numbers are shown.
+         */
+        TopRecording: {
+            /** Displayname */
+            displayName: string | null;
+            /** Recording */
+            recording: string | null;
+            /**
+             * Source
+             * @default dataSources/deezer
+             */
+            source: string;
+            status: components["schemas"]["TopRecordingStatus"];
+        };
+        /**
+         * TopRecordingStatus
+         * @description Whether a top song was found.
+         * @enum {string}
+         */
+        TopRecordingStatus: "OK" | "NO_MATCH" | "UNAVAILABLE";
+        /**
          * TriviaAnswer
          * @description One answered Credit check question.
          */
@@ -6774,6 +6816,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SimilarMap"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    GetTopRecording: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                artist: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopRecording"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */

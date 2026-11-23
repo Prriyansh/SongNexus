@@ -156,6 +156,27 @@ SOURCES: tuple[DataSource, ...] = (
         "read.",
     ),
     DataSource(
+        id="deezer",
+        name="Deezer API",
+        homepage="https://developers.deezer.com/api",
+        license="Deezer API Terms of Use",
+        license_url="https://developers.deezer.com/termsofuse",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.API,
+        feeds=(
+            "artist pages: which song the 'Top song' shortcut opens",
+            "shared Deezer links: which artist or playlist a pasted link names",
+        ),
+        attribution="Song ranking from Deezer",
+        checked_on="2026-11-23",
+        notes="Public endpoints, no key. For the Top song shortcut, the artist is the Deezer "
+        "artist named exactly as ours (most fans if several share the name) and their top "
+        "tracks are matched to the artist's own songs in our catalog by title; Deezer only "
+        "picks which song, and no Deezer numbers (fans, ranks, plays) are shown or stored. "
+        "Answers are cached in memory for a day. Non-commercial use under Deezer's terms.",
+    ),
+    DataSource(
         id="wikidata",
         name="Wikidata",
         homepage="https://www.wikidata.org",

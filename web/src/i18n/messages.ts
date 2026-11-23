@@ -1930,6 +1930,9 @@ export const messages = {
   'tool.similar.body':
     'Map what listeners play with an artist, a song or your playlist.',
   'artist.similar': 'Similar music',
+  'artist.topSong': 'Top song: {title}',
+  'artist.topSong.source':
+    'The most popular of their songs we have, ranked by Deezer',
   'song.similar': 'Similar songs',
   'friends.maps.title': 'Compare playlists',
   'friends.maps.body':

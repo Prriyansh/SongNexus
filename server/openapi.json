@@ -8784,6 +8784,59 @@
         "title": "TimelineYear",
         "type": "object"
       },
+      "TopRecording": {
+        "description": "GetTopRecording: which song to open first. Deezer picks it; no Deezer numbers are shown.",
+        "properties": {
+          "displayName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Displayname"
+          },
+          "recording": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recording"
+          },
+          "source": {
+            "default": "dataSources/deezer",
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TopRecordingStatus"
+          }
+        },
+        "required": [
+          "status",
+          "recording",
+          "displayName",
+          "source"
+        ],
+        "title": "TopRecording",
+        "type": "object"
+      },
+      "TopRecordingStatus": {
+        "description": "Whether a top song was found.",
+        "enum": [
+          "OK",
+          "NO_MATCH",
+          "UNAVAILABLE"
+        ],
+        "title": "TopRecordingStatus",
+        "type": "string"
+      },
       "TriviaAnswer": {
         "description": "One answered Credit check question.",
         "properties": {
@@ -10106,6 +10159,49 @@
         "summary": "GetSimilarToArtist",
         "tags": [
           "maps"
+        ]
+      }
+    },
+    "/v1/artists/{artist}:topRecording": {
+      "get": {
+        "description": "The artist's most popular song that our catalog has, by Deezer's ranking.",
+        "operationId": "GetTopRecording",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "artist",
+            "required": true,
+            "schema": {
+              "title": "Artist",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopRecording"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An error (AIP-193): see `error.status` and `error.details[0].reason`."
+          }
+        },
+        "summary": "GetTopRecording",
+        "tags": [
+          "catalog"
         ]
       }
     },

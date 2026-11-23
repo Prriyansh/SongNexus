@@ -7,7 +7,12 @@ import {useEffect, useMemo, type CSSProperties} from 'react';
 import {Link, useParams} from 'react-router';
 
 import {idOf, type Schemas} from '../api/client';
-import {useArtist, useCollaborations, useDataSources} from '../api/queries';
+import {
+  useArtist,
+  useCollaborations,
+  useDataSources,
+  useTopRecording,
+} from '../api/queries';
 import {useAmbient} from '../app/ambient';
 import {NO_GENRE_FILTER} from '../app/genreSelection';
 import {rememberArtist} from '../app/recent';
@@ -397,6 +402,24 @@ function useArtistStats(id: string, artist: Schemas['Artist'] | undefined) {
   ];
 }
 
+/** The artist’s top song, when Deezer’s ranking finds one we have (Priyansh’s shortcut). */
+function TopSong({id}: {id: string}) {
+  const {t} = useI18n();
+  const top = useTopRecording(id);
+  const data = top.data;
+  if (data?.status !== 'OK' || !data.recording) return null;
+  return (
+    <Link
+      className="btn btn--tonal"
+      to={`/song/${idOf(data.recording)}`}
+      title={t('artist.topSong.source')}
+    >
+      <Icon name="note" />
+      {t('artist.topSong', {title: data.displayName ?? ''})}
+    </Link>
+  );
+}
+
 export default function ArtistScreen() {
   const {t, locale} = useI18n();
   const {id = ''} = useParams();
@@ -450,6 +473,7 @@ export default function ArtistScreen() {
               {t('artist.explore')}
             </Link>
             <ListenLink query={a.displayName} />
+            <TopSong id={id} />
             <Link className="btn btn--tonal" to={`/six-degrees?from=${id}`}>
               <Icon name="route" />
               {t('artist.findPath')}
