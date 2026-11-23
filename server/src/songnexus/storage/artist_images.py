@@ -1,4 +1,4 @@
-"""Reads and writes artist photos (table ``artist_images``, ADR 0009)."""
+"""Reads and writes artist photos (table ``artist_images``)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Times batch name matching for a realistic 2,000-name playlist (plan §23, AnalyzePlaylist).
+"""Times batch name matching for a realistic 2,000-name playlist.
 
     SONGNEXUS_DATABASE_URL=sqlite:///path/to/catalog.db uv run python scripts/bench_resolve.py
 

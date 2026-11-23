@@ -24,7 +24,7 @@ from typing import Protocol
 # How much one order of magnitude of listeners is worth against doubling the
 # credits two artists share. At 1.6, an artist with 10x the listeners outranks
 # one with about 3x the strength; checked against the dev catalog so that
-# headliners appear early without pushing out frequent producers (connection-web-v5.md).
+# headliners appear early without pushing out frequent producers.
 REACH_WEIGHT = 1.6
 
 # Words that mark a recording as a variant of a song, when they appear inside

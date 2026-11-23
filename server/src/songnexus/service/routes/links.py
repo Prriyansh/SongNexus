@@ -83,6 +83,7 @@ def _response(model: ReadModel, result: Resolution) -> api.ResolveLinkResponse:
             name=f"recordings/{doc.entity_id}",
             display_name=doc.name,
             artists=[convert.artist_summary(graph, a) for a in doc.artist_ids if a in graph.nodes],
+            cover_url=model.recording_covers.get(doc.entity_id),
         )
         artist_ids = artist_ids or [a for a in doc.artist_ids if a in graph.nodes]
     release = None

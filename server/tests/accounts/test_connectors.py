@@ -262,11 +262,6 @@ def test_apple_music_counts_only_tracks_not_seen_last_time() -> None:
     assert again.plays == ()
 
 
-def test_youtube_music_is_a_first_party_seam() -> None:
-    with pytest.raises(NotImplementedError, match="first-party"):
-        c.YouTubeMusicFirstPartyAdapter().fetch(_http(_json({})), CREDS, None)
-
-
 def test_tokens_are_encrypted_bound_to_their_account_and_rotatable() -> None:
     old = TokenCipher.from_config({"k1": new_key()}, "k1")
     sealed = old.encrypt("refresh-token", context="users/u1/SPOTIFY")

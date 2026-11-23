@@ -1,4 +1,4 @@
-"""Queries over friends and sharing (R2-7). Authorization happens in callers.
+"""Queries over friends and sharing. Authorization happens in callers.
 
 Friendships are stored as two rows (one per direction) so "my friends" is one
 indexed lookup. A block hides both people from each other, so most reads take

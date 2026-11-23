@@ -1,4 +1,4 @@
-/** Block or unblock an artist with an Undo snackbar (US-17). Signed-in users only in R1. */
+/** Block or unblock an artist with an Undo snackbar. Signed-in users only. */
 import {useCallback} from 'react';
 
 import type {ArtistSummary} from '../api/client';

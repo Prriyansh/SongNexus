@@ -1,4 +1,4 @@
-/** Connection-category toggles (doubling as the legend) and the genre filter (US-12). */
+/** Connection-category toggles (doubling as the legend) and the genre filter. */
 import {useId, useMemo, useState} from 'react';
 
 import {useGenres} from '../api/queries';
@@ -81,7 +81,7 @@ interface GenreFilterProps {
   selection: GenreSelection;
   /** Receives only the fields that changed. */
   onChange: (change: Partial<GenreSelection>) => void;
-  /** Share of artists in view with genre data, shown honestly (AC-12.2). */
+  /** Share of artists in view with genre data, shown honestly. */
   coverage?: number | undefined;
 }
 

@@ -133,6 +133,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/artists/{artist}:compareMap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GetCompareMap
+         * @description Two artists on one map: the credit path between them, and who listeners play with each.
+         */
+        get: operations["GetCompareMap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/artists/{artist}:compareOnLastFm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * CompareOnLastFm
+         * @description Both artists on Last.fm: listeners, plays, and artists similar to both.
+         */
+        get: operations["CompareOnLastFm"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/artists/{artist}:findPath": {
         parameters: {
             query?: never;
@@ -198,6 +238,46 @@ export interface paths {
          *     asked about is the viewer's choice and is allowed even when blocked.
          */
         get: operations["RecommendArtists"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/artists/{artist}:similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GetSimilarToArtist
+         * @description Artists and songs people play with this artist, placed by how similar they are.
+         */
+        get: operations["GetSimilarToArtist"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/artists/{artist}:topRecording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GetTopRecording
+         * @description The artist's most popular song that our catalog has, by Deezer's ranking.
+         */
+        get: operations["GetTopRecording"];
         put?: never;
         post?: never;
         delete?: never;
@@ -665,7 +745,7 @@ export interface paths {
         put?: never;
         /**
          * CheckMove
-         * @description Checks one step. A wrong step reveals nothing about the puzzle (AC-4.2).
+         * @description Checks one step. A wrong step reveals nothing about the puzzle.
          */
         post: operations["CheckMove"];
         delete?: never;
@@ -821,6 +901,26 @@ export interface paths {
          *     plain-language reasons. Similar songs link to our catalog only when matched unambiguously.
          */
         get: operations["CompareRecordingSound"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/recordings/{recording}:similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GetSimilarToRecording
+         * @description Songs people play with this song, and artists people play with its lead artist.
+         */
+        get: operations["GetSimilarToRecording"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1025,6 +1125,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sound:search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SearchSound
+         * @description Songs with the full sound analysis (and usually lyrics) that our catalog also has.
+         *
+         *     For the song pickers: each dataset song is linked to our catalog by title and an
+         *     unambiguous artist, never guessed; songs we can't link are left out.
+         */
+        get: operations["SearchSound"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/stories": {
         parameters: {
             query?: never;
@@ -1042,6 +1165,29 @@ export interface paths {
         get: operations["ListStories"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tasteMaps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * CreateTasteMap
+         * @description Maps one playlist, or two: what each holds, what both share, and what to try next.
+         *
+         *     Receives track titles and artist names only (files are parsed on the device) and stores
+         *     nothing. Artists are matched to the catalog by exact name, as in AnalyzePlaylist.
+         */
+        post: operations["CreateTasteMap"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1066,6 +1212,66 @@ export interface paths {
          *     catalog, or blocked, are skipped and counted.
          */
         post: operations["ComputeTasteProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tasteRooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * CreateTasteRoom
+         * @description Opens a room with your playlist; a friend joins with its code within a week.
+         */
+        post: operations["CreateTasteRoom"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tasteRooms/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GetTasteRoom
+         * @description A room's playlists (anyone with the code can read it, as with a shared link).
+         */
+        get: operations["GetTasteRoom"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/tasteRooms/{code}:join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * JoinTasteRoom
+         * @description Adds your playlist to a friend's room. A room holds two people.
+         */
+        post: operations["JoinTasteRoom"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1106,7 +1312,7 @@ export interface paths {
          * @description Checks one answer. The verdict comes with the right option and its credits.
          *
          *     For a signed-in player the first answer to each question is kept for two days,
-         *     so a score submitted later counts that answer (ADR 0010).
+         *     so a score submitted later counts that answer.
          */
         post: operations["CheckTrivia"];
         delete?: never;
@@ -1154,7 +1360,7 @@ export interface paths {
         post?: never;
         /**
          * DeleteUser
-         * @description Deletes the account (AC-18.4): signed out everywhere, data gone now, purged in 30 days.
+         * @description Deletes the account: signed out everywhere, data gone now, purged in 30 days.
          */
         delete: operations["DeleteUser"];
         options?: never;
@@ -1521,7 +1727,7 @@ export interface paths {
          * ListInbox
          * @description Lists shares received, newest first.
          *
-         *     Shares about an artist the listener blocked are left out (US-17 applies here too).
+         *     Shares about an artist the listener blocked are left out (blocks apply here too).
          */
         get: operations["ListInbox"];
         put?: never;
@@ -1725,7 +1931,7 @@ export interface paths {
         head?: never;
         /**
          * UpdatePreferences
-         * @description Updates preferences. Stale ETags are rejected with ABORTED (AC-18.3).
+         * @description Updates preferences. Stale ETags are rejected with ABORTED.
          */
         patch: operations["UpdatePreferences"];
         trace?: never;
@@ -1739,7 +1945,7 @@ export interface paths {
         };
         /**
          * GetProfile
-         * @description Returns the user's profile. Profiles are private: only the owner can read one (AC-9.2).
+         * @description Returns the user's profile. Profiles are private: only the owner can read one.
          */
         get: operations["GetProfile"];
         put?: never;
@@ -1749,7 +1955,7 @@ export interface paths {
         head?: never;
         /**
          * UpdateProfile
-         * @description Updates the Top 5. A sixth artist is rejected (AC-9.1).
+         * @description Updates the Top 5. A sixth artist is rejected.
          */
         patch: operations["UpdateProfile"];
         trace?: never;
@@ -1855,7 +2061,7 @@ export interface paths {
         };
         /**
          * ExportUserData
-         * @description Returns everything we store about the user, as JSON (target M4-07).
+         * @description Returns everything we store about the user, as JSON.
          */
         get: operations["ExportUserData"];
         put?: never;
@@ -1890,7 +2096,7 @@ export interface components {
             /** Categories */
             categories?: components["schemas"]["ConnectionCategory"][];
             /** Tracks */
-            tracks: components["schemas"]["PlaylistTrack"][];
+            tracks: components["schemas"]["PlaylistTrack-Input"][];
         };
         /**
          * AnalyzePlaylistResponse
@@ -1913,6 +2119,11 @@ export interface components {
          * @description A release a recording appears on.
          */
         Appearance: {
+            /**
+             * Coverurl
+             * @description The release's front cover (Cover Art Archive), or null.
+             */
+            coverUrl: string | null;
             /** Discnumber */
             discNumber: number;
             /** Displayname */
@@ -1937,6 +2148,8 @@ export interface components {
             artistType: string | null;
             /** Begindate */
             beginDate: string | null;
+            /** @description Billboard Hot 100 history, or null when they never charted. */
+            charts: components["schemas"]["ArtistCharts"] | null;
             /**
              * Connectioncount
              * @description Direct connections under the default categories.
@@ -1955,7 +2168,7 @@ export interface components {
             displayName: string;
             /**
              * Genreknown
-             * @description Whether our data has genres for this artist (AC-12.2).
+             * @description Whether our data has genres for this artist.
              * @default false
              */
             genreKnown: boolean;
@@ -1967,7 +2180,7 @@ export interface components {
             image: components["schemas"]["ArtistImage"] | null;
             /**
              * Imageurl
-             * @description A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it (ADR 0009).
+             * @description A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it.
              */
             imageUrl: string | null;
             /**
@@ -1995,6 +2208,8 @@ export interface components {
             oftenPlayedWith: components["schemas"]["CoListener"][];
             /** Sources */
             sources: components["schemas"]["SourceLink"][];
+            /** @description Concerts and festivals, or null when none are known. */
+            stage: components["schemas"]["ArtistStage"] | null;
         };
         /**
          * ArtistAbout
@@ -2014,6 +2229,11 @@ export interface components {
              */
             description: string | null;
             /**
+             * Monthlywikipediaviews
+             * @description Average monthly human views of the Wikipedia article over the last 12 complete months (Wikimedia pageviews, CC0): how widely read about the artist is.
+             */
+            monthlyWikipediaViews: number | null;
+            /**
              * Nominations
              * @description Newest first; up to 100.
              */
@@ -2029,8 +2249,29 @@ export interface components {
             wikipediaUrl: string | null;
         };
         /**
+         * ArtistCharts
+         * @description An artist's Billboard Hot 100 history as the lead performer (all songs, catalog or not).
+         */
+        ArtistCharts: {
+            /** Bestpeak */
+            bestPeak: number;
+            /**
+             * Entries
+             * @description Songs that reached the Hot 100.
+             */
+            entries: number;
+            /** Firstyear */
+            firstYear: number;
+            /** Lastyear */
+            lastYear: number;
+            /** Numberones */
+            numberOnes: number;
+            /** Topten */
+            topTen: number;
+        };
+        /**
          * ArtistImage
-         * @description A freely licensed artist photo from Wikimedia Commons, with its attribution (ADR 0009).
+         * @description A freely licensed artist photo from Wikimedia Commons, with its attribution.
          */
         ArtistImage: {
             /**
@@ -2094,6 +2335,19 @@ export interface components {
             releaseCount: number;
         };
         /**
+         * ArtistStage
+         * @description The events MusicBrainz lists for an artist (seed artists only).
+         */
+        ArtistStage: {
+            /**
+             * Recent
+             * @description Newest first, up to 6.
+             */
+            recent: components["schemas"]["EventSummary"][];
+            /** Total */
+            total: number;
+        };
+        /**
          * ArtistSummary
          * @description An artist as shown in lists.
          */
@@ -2108,13 +2362,13 @@ export interface components {
             displayName: string;
             /**
              * Genreknown
-             * @description Whether our data has genres for this artist (AC-12.2).
+             * @description Whether our data has genres for this artist.
              * @default false
              */
             genreKnown: boolean;
             /**
              * Imageurl
-             * @description A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it (ADR 0009).
+             * @description A freely licensed photo about 330 px wide (Wikimedia Commons), or null. Its author and license are in `image` on GetArtist and must be shown with it.
              */
             imageUrl: string | null;
             /**
@@ -2755,8 +3009,52 @@ export interface components {
              * @description Awards Wikidata lists for both artists (the same award, any year), with the first artist's most recent year.
              */
             sharedAwards: components["schemas"]["Honor"][];
+            /**
+             * Sharedevents
+             * @description Concerts and festivals both artists performed at, newest first (up to 8).
+             */
+            sharedEvents: components["schemas"]["EventSummary"][];
             /** Sharedgenres */
             sharedGenres: components["schemas"]["SharedGenre"][];
+            /**
+             * Sharedlabels
+             * @description Labels both artists released on, with the first artist's releases there.
+             */
+            sharedLabels: components["schemas"]["ArtistLabel"][];
+        };
+        /**
+         * CompareMap
+         * @description Two artists on one map.
+         *
+         *     The credit path between them, who listeners play with each (`MINE` for the first,
+         *     `THEIRS` for the second) and with both (`SHARED`).
+         */
+        CompareMap: {
+            /** Links */
+            links: components["schemas"]["MapLink"][];
+            /**
+             * Nodes
+             * @description The two artists first (group CENTER).
+             */
+            nodes: components["schemas"]["MapNode"][];
+            /**
+             * Path
+             * @description Node IDs of the credit path, first artist to second.
+             */
+            path: string[];
+            /** Sources */
+            sources: components["schemas"]["MapSource"][];
+        };
+        /**
+         * CompareOnLastFm
+         * @description CompareOnLastFm: both artists' Last.fm audience, and who Last.fm finds similar to both.
+         */
+        CompareOnLastFm: {
+            audienceA: components["schemas"]["LastFmAudience"] | null;
+            audienceB: components["schemas"]["LastFmAudience"] | null;
+            /** Similartoboth */
+            similarToBoth: components["schemas"]["LastFmSimilar"][];
+            status: components["schemas"]["LastFmStatus"];
         };
         /**
          * CompareRecordingsResponse
@@ -3190,6 +3488,36 @@ export interface components {
          * @enum {string}
          */
         EventKind: "IMPRESSION" | "OPEN" | "LISTEN" | "SKIP" | "HIDE" | "SHARE";
+        /**
+         * EventSummary
+         * @description A concert or festival, from MusicBrainz.
+         */
+        EventSummary: {
+            /**
+             * Date
+             * @description As precise as known: 2019 or 2019-07-12.
+             */
+            date: string | null;
+            /** Displayname */
+            displayName: string;
+            /**
+             * Kind
+             * @description Concert, Festival, ...
+             */
+            kind: string | null;
+            /**
+             * Performers
+             * @description Catalog artists who performed at it.
+             */
+            performers: components["schemas"]["ArtistSummary"][];
+            /** Place */
+            place: string | null;
+            /**
+             * Url
+             * @description The event on MusicBrainz.
+             */
+            url: string;
+        };
         /**
          * Evidence
          * @description One reason two artists are connected, as a localizable message.
@@ -3808,6 +4136,39 @@ export interface components {
             year: number | null;
         };
         /**
+         * LastFmAudience
+         * @description An artist's listeners and plays on Last.fm (its own community, not all listeners).
+         */
+        LastFmAudience: {
+            /** Listeners */
+            listeners: number;
+            /** Plays */
+            plays: number;
+            /** Url */
+            url: string;
+        };
+        /**
+         * LastFmSimilar
+         * @description An artist Last.fm lists as similar to both: listener behaviour, not a collaboration.
+         */
+        LastFmSimilar: {
+            /**
+             * Artist
+             * @description `artists/{artist}` when in our catalog.
+             */
+            artist: string | null;
+            /** Displayname */
+            displayName: string;
+            /** Url */
+            url: string;
+        };
+        /**
+         * LastFmStatus
+         * @description Whether Last.fm could be asked.
+         * @enum {string}
+         */
+        LastFmStatus: "OK" | "NO_KEY" | "UNAVAILABLE";
+        /**
          * LeaderboardPeriod
          * @description One day, or the ISO week (Monday to Sunday) containing the date.
          * @enum {string}
@@ -3815,13 +4176,13 @@ export interface components {
         LeaderboardPeriod: "DAY" | "WEEK";
         /**
          * LicenseTier
-         * @description What a data source's license allows (ADR 0005).
+         * @description What a data source's license allows.
          * @enum {string}
          */
         LicenseTier: "PRODUCTION" | "NON_COMMERCIAL" | "EVALUATION";
         /**
          * Limits
-         * @description Request limits clients should respect (plan §14).
+         * @description Request limits clients should respect.
          */
         Limits: {
             /** Maxalternatives */
@@ -4225,7 +4586,7 @@ export interface components {
         };
         /**
          * ListeningProvider
-         * @description A listening service (ADR 0006).
+         * @description A listening service.
          * @enum {string}
          */
         ListeningProvider: "LISTENBRAINZ" | "LASTFM" | "LIBREFM" | "SPOTIFY" | "DEEZER" | "APPLE_MUSIC" | "YOUTUBE_MUSIC";
@@ -4282,6 +4643,150 @@ export interface components {
             /** Words */
             words: number;
         };
+        /**
+         * MapGroup
+         * @description Where a node belongs on the map (playlist maps color by it).
+         * @enum {string}
+         */
+        MapGroup: "CENTER" | "SIMILAR" | "MINE" | "THEIRS" | "SHARED" | "FOR_ME" | "FOR_THEM" | "NEW";
+        /**
+         * MapLink
+         * @description A line between two nodes.
+         */
+        MapLink: {
+            /** A */
+            a: string;
+            /** B */
+            b: string;
+            kind: components["schemas"]["MapLinkKind"];
+            /**
+             * Strength
+             * @default 1
+             */
+            strength: number;
+        };
+        /**
+         * MapLinkKind
+         * @description What a line between two nodes means. Never a credit.
+         * @enum {string}
+         */
+        MapLinkKind: "SIMILAR" | "CO_LISTENED" | "PERFORMED" | "CONTAINS" | "RECOMMENDED" | "CREDIT";
+        /**
+         * MapNode
+         * @description An artist or a song on a map.
+         */
+        MapNode: {
+            /**
+             * Artist
+             * @description `artists/{artist}` when in the catalog.
+             */
+            artist: string | null;
+            /** Displayname */
+            displayName: string;
+            /** @default SIMILAR */
+            group: components["schemas"]["MapGroup"];
+            /**
+             * Id
+             * @description Unique on the map: a resource name or a map-local key.
+             */
+            id: string;
+            /** Imageurl */
+            imageUrl: string | null;
+            kind: components["schemas"]["MapNodeKind"];
+            /**
+             * Listeners
+             * @description ListenBrainz listeners, if known.
+             */
+            listeners: number | null;
+            /** Reasons */
+            reasons: components["schemas"]["MapReason"][];
+            /**
+             * Recording
+             * @description `recordings/{recording}` when in the catalog.
+             */
+            recording: string | null;
+            /**
+             * Similarity
+             * @description 0–1, relative to the closest match on this map (1 for the center).
+             */
+            similarity: number;
+            /**
+             * Sourceurl
+             * @description Where the node itself is listed.
+             */
+            sourceUrl: string | null;
+            /**
+             * Subtitle
+             * @description For songs, the credited artists.
+             * @default
+             */
+            subtitle: string;
+            /**
+             * Weight
+             * @description Songs on the playlists, for playlist maps.
+             * @default 1
+             */
+            weight: number;
+        };
+        /**
+         * MapNodeKind
+         * @description What a node is.
+         * @enum {string}
+         */
+        MapNodeKind: "ARTIST" | "SONG";
+        /**
+         * MapReason
+         * @description One reason a node is on the map.
+         */
+        MapReason: {
+            /**
+             * Artists
+             * @description Display names.
+             */
+            artists: string[];
+            /** Count */
+            count: number | null;
+            /**
+             * Genres
+             * @description Genre display names.
+             */
+            genres: string[];
+            kind: components["schemas"]["ReasonKind"];
+            /**
+             * Otherartists
+             * @description Display names.
+             */
+            otherArtists: string[];
+            /** Othercount */
+            otherCount: number | null;
+            /** Score */
+            score: number | null;
+            /** Sourceurl */
+            sourceUrl: string | null;
+            /**
+             * Theirs
+             * @default false
+             */
+            theirs: boolean;
+        };
+        /**
+         * MapSource
+         * @description A source a map used, and how that went.
+         */
+        MapSource: {
+            /**
+             * Source
+             * @description A data-source ID (see ListDataSources).
+             */
+            source: string;
+            status: components["schemas"]["MapSourceStatus"];
+        };
+        /**
+         * MapSourceStatus
+         * @description What happened when a map asked a source.
+         * @enum {string}
+         */
+        MapSourceStatus: "OK" | "PARTIAL" | "NO_MATCH" | "UNAVAILABLE";
         /**
          * MarkAllReadResponse
          * @description MarkInboxRead: how many shares were marked read.
@@ -4461,7 +4966,7 @@ export interface components {
          * PlaylistTrack
          * @description A track as the device parsed it: a title and its artist names, nothing else.
          */
-        PlaylistTrack: {
+        "PlaylistTrack-Input": {
             /**
              * Artists
              * @description Artist names as written, or `artists/{artist}` for a choice the user made.
@@ -4472,6 +4977,22 @@ export interface components {
              * @default
              */
             title?: string;
+        };
+        /**
+         * PlaylistTrack
+         * @description A track as the device parsed it: a title and its artist names, nothing else.
+         */
+        "PlaylistTrack-Output": {
+            /**
+             * Artists
+             * @description Artist names as written, or `artists/{artist}` for a choice the user made.
+             */
+            artists: string[];
+            /**
+             * Title
+             * @default
+             */
+            title: string;
         };
         /**
          * Preferences
@@ -4559,7 +5080,7 @@ export interface components {
         ProductionDirection: "PRODUCED_FOR" | "PRODUCED_BY" | "CO_PRODUCED";
         /**
          * Profile
-         * @description GetProfile / UpdateProfile: Top 5 artists (US-09).
+         * @description GetProfile / UpdateProfile: Top 5 artists.
          */
         "Profile-Input": {
             /**
@@ -4584,7 +5105,7 @@ export interface components {
         };
         /**
          * Profile
-         * @description GetProfile / UpdateProfile: Top 5 artists (US-09).
+         * @description GetProfile / UpdateProfile: Top 5 artists.
          */
         "Profile-Output": {
             /**
@@ -4670,6 +5191,12 @@ export interface components {
             };
         };
         /**
+         * ReasonKind
+         * @description Why a node is on the map. The client words each kind; the fields carry the facts.
+         * @enum {string}
+         */
+        ReasonKind: "CO_LISTENED" | "SHARED_GENRES" | "SOUND_MATCH" | "ON_PLAYLIST" | "ON_BOTH" | "CLOSE_TO_OTHER" | "NEW_TO_YOU" | "CREDIT_PATH";
+        /**
          * RecommendArtistsResponse
          * @description RecommendArtists.
          */
@@ -4735,6 +5262,8 @@ export interface components {
         Recording: {
             /** Appearances */
             appearances: components["schemas"]["Appearance"][];
+            /** @description Its Billboard Hot 100 run, or null when it never charted. */
+            chart: components["schemas"]["SongChart"] | null;
             /** Credits */
             credits: components["schemas"]["Credit"][];
             /** @description Absent when AcousticBrainz has no data for the recording. */
@@ -4760,6 +5289,11 @@ export interface components {
              * @description Primary artists.
              */
             artists: components["schemas"]["ArtistSummary"][];
+            /**
+             * Coverurl
+             * @description Its earliest release's front cover, about 250 px, hot-linked from the Cover Art Archive (the image stays its rights holder's), or null.
+             */
+            coverUrl: string | null;
             /** Displayname */
             displayName: string;
             /** Firstreleasedate */
@@ -4800,6 +5334,32 @@ export interface components {
             steps: components["schemas"]["PathStep"][];
         };
         /**
+         * RoomMember
+         * @description One person's side of a room: a first name and a playlist.
+         */
+        "RoomMember-Input": {
+            /**
+             * Displayname
+             * @default
+             */
+            displayName?: string;
+            /** Tracks */
+            tracks: components["schemas"]["PlaylistTrack-Input"][];
+        };
+        /**
+         * RoomMember
+         * @description One person's side of a room: a first name and a playlist.
+         */
+        "RoomMember-Output": {
+            /**
+             * Displayname
+             * @default
+             */
+            displayName: string;
+            /** Tracks */
+            tracks: components["schemas"]["PlaylistTrack-Output"][];
+        };
+        /**
          * SearchCatalogResponse
          * @description SearchCatalog.
          */
@@ -4816,7 +5376,7 @@ export interface components {
         SearchResult: {
             /**
              * Blocked
-             * @description The viewer blocked this artist. Blocked artists appear only for an exact-name search, so they can be unblocked (AC-17.2).
+             * @description The viewer blocked this artist. Blocked artists appear only for an exact-name search, so they can be unblocked.
              * @default false
              */
             blocked: boolean;
@@ -4839,6 +5399,16 @@ export interface components {
             name: string;
             /** Subtitle */
             subtitle: string;
+        };
+        /**
+         * SearchSoundResponse
+         * @description SearchSound: songs with the full sound (and usually lyrics) analysis, for song pickers.
+         */
+        SearchSoundResponse: {
+            /** Results */
+            results: components["schemas"]["SoundSearchHit"][];
+            /** @description OK, or UNAVAILABLE when the service isn't reachable. */
+            status: components["schemas"]["SoundStatus"];
         };
         /**
          * SeedKind
@@ -5053,6 +5623,19 @@ export interface components {
             year: number | null;
         };
         /**
+         * SimilarMap
+         * @description Similar artists and songs around an artist or a song.
+         */
+        SimilarMap: {
+            center: components["schemas"]["MapNode"];
+            /** Links */
+            links: components["schemas"]["MapLink"][];
+            /** Nodes */
+            nodes: components["schemas"]["MapNode"][];
+            /** Sources */
+            sources: components["schemas"]["MapSource"][];
+        };
+        /**
          * SimilarSong
          * @description A song from the dataset that sounds like one of the two.
          */
@@ -5119,6 +5702,29 @@ export interface components {
             shareTopArtists: boolean;
         };
         /**
+         * SongChart
+         * @description A song's run on the Billboard Hot 100.
+         */
+        SongChart: {
+            /**
+             * Firstweek
+             * @description First chart week, ISO date.
+             */
+            firstWeek: string;
+            /** Lastweek */
+            lastWeek: string;
+            /**
+             * Peak
+             * @description Best position, 1 to 100.
+             */
+            peak: number;
+            /**
+             * Weeks
+             * @description Weeks on the chart.
+             */
+            weeks: number;
+        };
+        /**
          * SoundComparison
          * @description The comparison: an explained similarity, both songs' profiles, and why.
          */
@@ -5146,6 +5752,28 @@ export interface components {
          * @enum {string}
          */
         SoundFeature: "ENERGY" | "DANCEABILITY" | "VALENCE" | "ACOUSTICNESS" | "SPEECHINESS" | "LIVENESS" | "INSTRUMENTALNESS";
+        /**
+         * SoundSearchHit
+         * @description A song in the sound dataset that our catalog also has.
+         */
+        SoundSearchHit: {
+            /** Artists */
+            artists: string[];
+            /** Genre */
+            genre: string | null;
+            /**
+             * Haslyrics
+             * @description Whether the lyrics analysis covers it too.
+             */
+            hasLyrics: boolean;
+            /**
+             * Recording
+             * @description `recordings/{id}`, matched without guessing.
+             */
+            recording: string;
+            /** Title */
+            title: string;
+        };
         /**
          * SoundStatus
          * @description Whether the sound & lyrics comparison could be made.
@@ -5513,6 +6141,34 @@ export interface components {
             share: number;
         };
         /**
+         * TasteMap
+         * @description A map of one or two playlists: what each holds, what they share, what to try.
+         */
+        TasteMap: {
+            /** Links */
+            links: components["schemas"]["MapLink"][];
+            /** Nodes */
+            nodes: components["schemas"]["MapNode"][];
+            /** Sources */
+            sources: components["schemas"]["MapSource"][];
+            stats: components["schemas"]["TasteStats"];
+        };
+        /**
+         * TasteMapRequest
+         * @description One playlist, or two to compare. Parsed on the device; nothing is stored.
+         */
+        TasteMapRequest: {
+            /** Friend */
+            friend?: components["schemas"]["PlaylistTrack-Input"][] | null;
+            /**
+             * Friendname
+             * @default
+             */
+            friendName?: string;
+            /** Mine */
+            mine: components["schemas"]["PlaylistTrack-Input"][];
+        };
+        /**
          * TastePair
          * @description Two profiled artists far apart: open them with FindPath.
          */
@@ -5564,6 +6220,42 @@ export interface components {
             unknownGenreArtistCount: number;
         };
         /**
+         * TasteRoom
+         * @description Two playlists joined by a short code. Rooms are deleted a week after they open.
+         */
+        TasteRoom: {
+            /**
+             * Code
+             * @description Six characters, no 0/O or 1/I/L.
+             */
+            code: string;
+            /**
+             * Expiretime
+             * Format: date-time
+             */
+            expireTime: string;
+            guest: components["schemas"]["RoomMember-Output"] | null;
+            host: components["schemas"]["RoomMember-Output"];
+        };
+        /**
+         * TasteStats
+         * @description What the playlists hold.
+         */
+        TasteStats: {
+            /** Friendartists */
+            friendArtists: number;
+            /** Friendsongs */
+            friendSongs: number;
+            /** Mineartists */
+            mineArtists: number;
+            /** Minesongs */
+            mineSongs: number;
+            /** Sharedartists */
+            sharedArtists: number;
+            /** Sharedsongs */
+            sharedSongs: number;
+        };
+        /**
          * Theme
          * @description Color theme.
          * @enum {string}
@@ -5581,6 +6273,28 @@ export interface components {
             /** Year */
             year: number;
         };
+        /**
+         * TopRecording
+         * @description GetTopRecording: which song to open first. Deezer picks it; no Deezer numbers are shown.
+         */
+        TopRecording: {
+            /** Displayname */
+            displayName: string | null;
+            /** Recording */
+            recording: string | null;
+            /**
+             * Source
+             * @default dataSources/deezer
+             */
+            source: string;
+            status: components["schemas"]["TopRecordingStatus"];
+        };
+        /**
+         * TopRecordingStatus
+         * @description Whether a top song was found.
+         * @enum {string}
+         */
+        TopRecordingStatus: "OK" | "NO_MATCH" | "UNAVAILABLE";
         /**
          * TriviaAnswer
          * @description One answered Credit check question.
@@ -5734,7 +6448,7 @@ export interface components {
         ViewerCampusState: "RANKED" | "NEEDS_PLAYERS" | "NO_CAMPUS";
         /**
          * Visibility
-         * @description Who can see a profile. Only PRIVATE exists in R1.
+         * @description Who can see a profile. Only PRIVATE exists for now.
          * @enum {string}
          */
         Visibility: "PRIVATE";
@@ -6007,6 +6721,74 @@ export interface operations {
             };
         };
     };
+    GetCompareMap: {
+        parameters: {
+            query: {
+                /** @description Resource name of the artist to compare with. */
+                other: string;
+            };
+            header?: never;
+            path: {
+                artist: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareMap"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CompareOnLastFm: {
+        parameters: {
+            query: {
+                /** @description Resource name of the artist to compare with. */
+                other: string;
+            };
+            header?: never;
+            path: {
+                artist: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareOnLastFm"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     FindPath: {
         parameters: {
             query: {
@@ -6106,6 +6888,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RecommendArtistsResponse"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    GetSimilarToArtist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                artist: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimilarMap"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    GetTopRecording: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                artist: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopRecording"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
@@ -7055,6 +7899,37 @@ export interface operations {
             };
         };
     };
+    GetSimilarToRecording: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimilarMap"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     CreateReport: {
         parameters: {
             query?: never;
@@ -7368,6 +8243,39 @@ export interface operations {
             };
         };
     };
+    SearchSound: {
+        parameters: {
+            query: {
+                /** @description Title or artist. */
+                query: string;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchSoundResponse"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     ListStories: {
         parameters: {
             query?: {
@@ -7387,6 +8295,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListStoriesResponse"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CreateTasteMap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TasteMapRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TasteMap"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
@@ -7420,6 +8361,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TasteProfile"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    CreateTasteRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoomMember-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TasteRoom"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    GetTasteRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TasteRoom"];
+                };
+            };
+            /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    JoinTasteRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoomMember-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TasteRoom"];
                 };
             };
             /** @description An error (AIP-193): see `error.status` and `error.details[0].reason`. */

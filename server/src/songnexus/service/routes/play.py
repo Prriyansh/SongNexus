@@ -1,4 +1,4 @@
-"""Play (US-04): the casual daily puzzle. Stateless: progress lives on the device.
+"""Play: the casual daily puzzle. Stateless: progress lives on the device.
 
 The server derives each day's start and target from the date; clients only send
 their moves, so the API never answers "how far is X from any artist I choose".
@@ -117,7 +117,7 @@ def check_move(
     model: ModelDep,
     session: Annotated[Session, Depends(db_session, scope="function")],
 ) -> api.CheckMoveResponse:
-    """Checks one step. A wrong step reveals nothing about the puzzle (AC-4.2)."""
+    """Checks one step. A wrong step reveals nothing about the puzzle."""
     puzzle = _puzzle(model, _day(date))
     graph = model.graph
     current = parse_name(body.from_artist, "artists", field="fromArtist")

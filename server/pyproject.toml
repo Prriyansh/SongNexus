@@ -11,7 +11,7 @@ dependencies = [
     "fastapi>=0.115",
     "firebase-admin>=6.6",
     "httpx>=0.28",
-    # Z-star (ADR 0010): artist embeddings, ranking and offline evaluation.
+    # Z-star: artist embeddings, ranking and offline evaluation.
     "numpy>=2.1",
     "psycopg[binary]>=3.2",
     "pydantic>=2.9",
@@ -98,7 +98,7 @@ module = ["networkx.*", "firebase_admin.*", "google.*"]
 ignore_missing_imports = true
 
 # ---------------------------------------------------------------------------
-# Layering: enforced dependency rules (plan §12).
+# Layering: enforced dependency rules.
 # ---------------------------------------------------------------------------
 [tool.importlinter]
 root_package = "songnexus"

@@ -1,4 +1,4 @@
-"""Linked listening accounts (R2-6, ADR 0006): offer, link, sync, unlink, and the listening view.
+"""Linked listening accounts: offer, link, sync, unlink, and the listening view.
 
 Writes check Origin and the CSRF token like every user write. The OAuth callback
 is a top-level GET from the provider; it is protected instead by the flow's state,

@@ -162,7 +162,7 @@ def test_genre_coverage(graph: ArtistGraph) -> None:
 def test_filtered_artists_never_appear_on_paths(
     source: str, target: str, blocked: frozenset[str], genres: frozenset[str]
 ) -> None:
-    """AC-3.3 and AC-17.1: no step passes through an excluded artist."""
+    """No step passes through an excluded artist."""
     graph = build_graph(facts(), "prop")
     node_filter = NodeFilter(genre_ids=genres, blocked=blocked)
     allowed = node_filter.predicate(graph)
@@ -213,7 +213,7 @@ def test_collaborations_by_type(graph: ArtistGraph) -> None:
 
 
 def test_compare_mutual_collaborators_is_exact_intersection(graph: ArtistGraph) -> None:
-    """AC-5.1, checked for every pair."""
+    """Mutual collaborators are exactly the shared neighbors, for every pair."""
     adjacency = graph.adjacency(DEFAULT)
     for a, b in itertools.combinations(ARTISTS, 2):
         result = compare(graph, a, b, DEFAULT)

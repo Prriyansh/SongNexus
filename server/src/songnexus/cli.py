@@ -336,8 +336,8 @@ def _cmd_eval_songs(settings: Settings, args: argparse.Namespace) -> int:
         _print(asdict(weight_study(recordings)))
         return EXIT_OK
     report = genre_separation(recordings)
-    # No gate yet: this is the first measurement (plan R2-4); it is recorded in
-    # docs/handoff/evaluations.md and a floor is set from it, never before it.
+    # No gate yet: this is the first measurement; it is recorded in
+    # the evaluation notes and a floor is set from it, never before it.
     _print({**asdict(report), "recordingsWithDescriptors": len(rows)})
     return EXIT_OK
 
@@ -373,8 +373,8 @@ def _cmd_eval_genres(settings: Settings, _args: argparse.Namespace) -> int:
     musicbrainz = load_read_model(engine, [SUPPLEMENTARY_SOURCE_ID]).graph
     discogs = load_read_model(engine, [DISCOGS_SOURCE_ID]).graph
     report = genre_agreement(musicbrainz, discogs)
-    # No gate yet: this is the first measurement (plan R2-1). It is recorded in
-    # docs/handoff/evaluations.md and a gate is set from it, never before it.
+    # No gate yet: this is the first measurement. It is recorded in
+    # the evaluation notes and a gate is set from it, never before it.
     _print({"a": SUPPLEMENTARY_SOURCE_ID, "b": DISCOGS_SOURCE_ID, **asdict(report)})
     return EXIT_OK
 
@@ -434,6 +434,7 @@ def _cmd_eval_search(settings: Settings, args: argparse.Namespace) -> int:
 
 
 OPENAPI_PATH = Path(__file__).resolve().parents[2] / "openapi.json"
+SOURCES_DOC_PATH = Path(__file__).resolve().parents[3] / "docs" / "data-sources.md"
 
 
 def openapi_document() -> str:
@@ -482,7 +483,7 @@ def _cmd_openapi(_settings: Settings, args: argparse.Namespace) -> int:
     return _write_generated(OPENAPI_PATH, openapi_document(), command="openapi", check=args.check)
 
 
-# --- Artist photos (ADR 0009) -----------------------------------------------------------
+# --- Artist photos -----------------------------------------------------------
 
 
 def _cmd_fetch_images(settings: Settings, args: argparse.Namespace) -> int:
@@ -493,7 +494,7 @@ def _cmd_fetch_images(settings: Settings, args: argparse.Namespace) -> int:
     from songnexus.catalog.wikidata.images import CommonsClient, http_client, run_fetch_images
     from songnexus.storage.db import make_engine
 
-    # Both clients get the generic User-Agent; no contact is ever sent (ADR 0009).
+    # Both clients get the generic User-Agent; no contact is ever sent.
     wikidata = WikidataClient(
         sparql_url=settings.wikidata_sparql_url,
         cache_dir=settings.raw_dir("wikidata-images"),
@@ -520,7 +521,7 @@ def _cmd_fetch_facts(settings: Settings, args: argparse.Namespace) -> int:
     from datetime import UTC, datetime
 
     from songnexus.catalog.http import SourceRequestError
-    from songnexus.catalog.wikidata.facts import WikipediaClient, run_fetch_facts
+    from songnexus.catalog.wikidata.facts import PageviewsClient, WikipediaClient, run_fetch_facts
     from songnexus.catalog.wikidata.fetch import WikidataClient
     from songnexus.catalog.wikidata.images import http_client
     from songnexus.storage.db import make_engine
@@ -538,6 +539,7 @@ def _cmd_fetch_facts(settings: Settings, args: argparse.Namespace) -> int:
             wikidata,
             wikipedia,
             now=datetime.now(UTC),
+            pageviews=PageviewsClient(cache_dir=settings.raw_dir("wikimedia-pageviews")),
             limit=args.limit,
             dry_run=args.dry_run,
         )
@@ -545,6 +547,95 @@ def _cmd_fetch_facts(settings: Settings, args: argparse.Namespace) -> int:
         print(f"fetch-facts failed, nothing written: {exc}", file=sys.stderr)
         return EXIT_FAILED
     _print(result)
+    return EXIT_OK
+
+
+def _cmd_fetch_covers(settings: Settings, args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
+    from songnexus.catalog.coverart import CoverArtClient, run_fetch_covers
+    from songnexus.catalog.http import SourceRequestError
+    from songnexus.storage.db import make_engine
+
+    client = CoverArtClient(cache_dir=settings.raw_dir("cover-art-archive"))
+    try:
+        result = run_fetch_covers(
+            make_engine(settings.database_url),
+            client,
+            now=datetime.now(UTC),
+            limit=args.limit,
+            dry_run=args.dry_run,
+        )
+    except SourceRequestError as exc:
+        print(f"fetch-covers failed, nothing written: {exc}", file=sys.stderr)
+        return EXIT_FAILED
+    _print(result)
+    return EXIT_OK
+
+
+def _cmd_fetch_billboard(settings: Settings, _args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
+    import httpx
+
+    from songnexus.catalog.billboard import download, read_chart_songs
+    from songnexus.service.billboard_job import run_billboard
+    from songnexus.service.readmodel import load_read_model
+    from songnexus.storage.db import make_engine
+
+    try:
+        path = download(settings.raw_dir("billboard"))
+    except httpx.HTTPError as exc:
+        print(f"fetch-billboard failed, nothing written: {exc}", file=sys.stderr)
+        return EXIT_FAILED
+    engine = make_engine(settings.database_url)
+    model = load_read_model(engine, settings.genre_sources)
+    _print(run_billboard(engine, model, read_chart_songs(path), now=datetime.now(UTC)))
+    return EXIT_OK
+
+
+def _cmd_fetch_events(settings: Settings, args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
+    from songnexus.catalog.http import SourceRequestError
+    from songnexus.catalog.musicbrainz.client import MusicBrainzClient
+    from songnexus.catalog.musicbrainz.events import run_fetch_events
+    from songnexus.storage.db import make_engine
+
+    client = MusicBrainzClient(
+        base_url=settings.musicbrainz_base_url,
+        cache_dir=settings.raw_cache_dir,
+        contact=settings.musicbrainz_contact,
+        min_interval_s=settings.musicbrainz_min_interval_s,
+    )
+    try:
+        result = run_fetch_events(
+            make_engine(settings.database_url),
+            client,
+            now=datetime.now(UTC),
+            limit=args.limit,
+            dry_run=args.dry_run,
+        )
+    except SourceRequestError as exc:
+        print(f"fetch-events failed, nothing written: {exc}", file=sys.stderr)
+        return EXIT_FAILED
+    _print(result)
+    return EXIT_OK
+
+
+def _cmd_sources(_settings: Settings, args: argparse.Namespace) -> int:
+    from songnexus.catalog.sources import render_markdown
+
+    text = render_markdown() + "\n"
+    if args.check:
+        current = SOURCES_DOC_PATH.read_text(encoding="utf-8") if SOURCES_DOC_PATH.exists() else ""
+        if current != text:
+            print("docs/data-sources.md is out of date: run `songnexus sources`", file=sys.stderr)
+            return EXIT_FAILED
+        return EXIT_OK
+    SOURCES_DOC_PATH.parent.mkdir(parents=True, exist_ok=True)
+    SOURCES_DOC_PATH.write_text(text, encoding="utf-8", newline="\n")
+    _print({"written": str(SOURCES_DOC_PATH)})
     return EXIT_OK
 
 
@@ -558,6 +649,33 @@ def _add_image_commands(commands: Any) -> None:
         "--dry-run", action="store_true", help="report coverage without writing to the database"
     )
     facts.set_defaults(handler=_cmd_fetch_facts)
+    covers = commands.add_parser(
+        "fetch-covers", help="find album covers on the Cover Art Archive (hot-linked, never copied)"
+    )
+    covers.add_argument("--limit", type=int, help="only the first N releases")
+    covers.add_argument(
+        "--dry-run", action="store_true", help="report coverage without writing to the database"
+    )
+    covers.set_defaults(handler=_cmd_fetch_covers)
+    sources = commands.add_parser(
+        "sources", help="write docs/data-sources.md from the data-source registry"
+    )
+    sources.add_argument(
+        "--check", action="store_true", help="fail if docs/data-sources.md is out of date"
+    )
+    sources.set_defaults(handler=_cmd_sources)
+    events = commands.add_parser(
+        "fetch-events", help="concerts and festivals of the seed artists from MusicBrainz"
+    )
+    events.add_argument("--limit", type=int, help="only the first N seed artists")
+    events.add_argument(
+        "--dry-run", action="store_true", help="report coverage without writing to the database"
+    )
+    events.set_defaults(handler=_cmd_fetch_events)
+    commands.add_parser(
+        "fetch-billboard",
+        help="match the Billboard Hot 100 history (1958 on) to catalog songs and artists",
+    ).set_defaults(handler=_cmd_fetch_billboard)
     images = commands.add_parser(
         "fetch-images",
         help="find freely licensed artist photos on Wikimedia Commons through Wikidata",
@@ -655,7 +773,7 @@ def _add_community_commands(commands: Any) -> None:
     demo = commands.add_parser(
         "seed-demo",
         help="DEVELOPMENT ONLY: create (or --reset) the labeled synthetic demo cohort and the "
-        "local demo account (docs/synthetic-data.md)",
+        "local demo account",
     )
     demo.add_argument("--reset", action="store_true", help="remove everything seed-demo created")
     demo.set_defaults(handler=_cmd_seed_demo)

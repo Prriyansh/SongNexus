@@ -1,6 +1,6 @@
-"""Sync job: reads new plays for every linked account that is due (ADR 0006, decision 5).
+"""Sync job: reads new plays for every linked account that is due.
 
-Scheduled every 15 minutes (Cloud Scheduler -> Cloud Run job ``songnexus-sync``).
+Run on a schedule (``songnexus sync-accounts``, every 15 to 60 minutes).
 Each account is committed on its own, so one failure or a crash mid-run never
 loses the others' progress, and a second run simply continues.
 """

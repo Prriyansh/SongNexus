@@ -1,4 +1,4 @@
-"""For You (ADR 0010): follows, taste feedback, interaction events, served feeds, Z-star artifacts.
+"""For You: follows, taste feedback, interaction events, served feeds, Z-star artifacts.
 
 Also adds ``preferences.personalize`` (learn from activity; on by default).
 

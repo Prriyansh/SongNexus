@@ -2,7 +2,7 @@
 
 An independent re-derivation, deliberately not reusing the pipeline's parsers or
 projection: collaborators are read straight from the raw JSON with the product's
-own definitions (US-16), then compared with what ``collaborations`` returns.
+own definitions, then compared with what ``collaborations`` returns.
 
 * **Feature**: artists credited together on a recording's artist credit.
 * **Production**: an artist with a ``producer`` relation on a recording, paired

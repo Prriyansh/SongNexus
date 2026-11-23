@@ -1,5 +1,5 @@
 /**
- * Artist page (S4, v5): an immersive hero (photo or generated cover, name,
+ * Artist page: an immersive hero (photo or generated cover, name,
  * key numbers, listen and explore), then collaborations, who listeners play
  * alongside, labels, other names and links grouped by what they are for.
  */
@@ -7,7 +7,12 @@ import {useEffect, useMemo, type CSSProperties} from 'react';
 import {Link, useParams} from 'react-router';
 
 import {idOf, type Schemas} from '../api/client';
-import {useArtist, useCollaborations, useDataSources} from '../api/queries';
+import {
+  useArtist,
+  useCollaborations,
+  useDataSources,
+  useTopRecording,
+} from '../api/queries';
 import {useAmbient} from '../app/ambient';
 import {NO_GENRE_FILTER} from '../app/genreSelection';
 import {rememberArtist} from '../app/recent';
@@ -50,7 +55,7 @@ function typeLabel(type: string | null | undefined): MessageId {
   ) as MessageId;
 }
 
-/** Names the data sources behind an artist's genres (ADR 0005). */
+/** Names the data sources behind an artist's genres. */
 function GenreSources({
   ids,
   sources,
@@ -132,8 +137,9 @@ function Labels({labels}: {labels: Schemas['ArtistLabel'][]}) {
 
 /** Wikidata's description and the Wikipedia introduction, always with its link and license. */
 function Intro({about}: {about: Schemas['ArtistAbout']}) {
-  const {t} = useI18n();
+  const {t, formatNumber} = useI18n();
   if (!about.summary && !about.description) return null;
+  const readers = about.monthlyWikipediaViews;
   return (
     <div className="entity-about__block entity-about__block--wide">
       <h3 className="entity-about__title">{t('artist.intro')}</h3>
@@ -143,6 +149,13 @@ function Intro({about}: {about: Schemas['ArtistAbout']}) {
         </p>
       ) : (
         <p className="entity-intro">{about.description}</p>
+      )}
+      {readers !== null && readers > 0 && (
+        <p className="entity-readers">
+          {t('artist.readers', {
+            count: formatNumber(readers, {notation: 'compact'}),
+          })}
+        </p>
       )}
       <p className="entity-intro__source">
         {about.summary && about.wikipediaUrl ? (
@@ -155,6 +168,34 @@ function Intro({about}: {about: Schemas['ArtistAbout']}) {
           </a>
         )}
       </p>
+    </div>
+  );
+}
+
+/** Concerts and festivals MusicBrainz lists for the artist, newest first. */
+function Stage({stage}: {stage: Schemas['ArtistStage']}) {
+  const {t} = useI18n();
+  return (
+    <div className="entity-about__block">
+      <h3 className="entity-about__title">
+        {t('artist.stage', {count: stage.total})}
+      </h3>
+      <ul className="entity-honors">
+        {stage.recent.map(event => (
+          <li key={event.url} className="entity-honor">
+            <a href={event.url} target="_blank" rel="noreferrer">
+              {event.displayName}
+              {event.place && ` · ${event.place}`}
+            </a>
+            {event.date && (
+              <span className="entity-honor__year">
+                {event.date.slice(0, 4)}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="entity-intro__source">{t('artist.stage.source')}</p>
     </div>
   );
 }
@@ -339,7 +380,44 @@ function useArtistStats(id: string, artist: Schemas['Artist'] | undefined) {
       value: spanText(years),
       label: t('artist.stat.years'),
     },
+    // Billboard Hot 100, as the lead performer: shown only for artists who charted.
+    ...(artist.charts
+      ? [
+          {
+            key: 'hot100',
+            value: formatNumber(artist.charts.entries),
+            label: t('artist.stat.hot100', {count: artist.charts.entries}),
+          },
+          {
+            key: 'numberOnes',
+            value: artist.charts.numberOnes
+              ? formatNumber(artist.charts.numberOnes)
+              : null,
+            label: t('artist.stat.numberOnes', {
+              count: artist.charts.numberOnes,
+            }),
+          },
+        ]
+      : []),
   ];
+}
+
+/** The artist’s top song, when Deezer’s ranking finds one we have (Priyansh’s shortcut). */
+function TopSong({id}: {id: string}) {
+  const {t} = useI18n();
+  const top = useTopRecording(id);
+  const data = top.data;
+  if (data?.status !== 'OK' || !data.recording) return null;
+  return (
+    <Link
+      className="btn btn--tonal"
+      to={`/song/${idOf(data.recording)}`}
+      title={t('artist.topSong.source')}
+    >
+      <Icon name="note" />
+      {t('artist.topSong', {title: data.displayName ?? ''})}
+    </Link>
+  );
 }
 
 export default function ArtistScreen() {
@@ -395,6 +473,7 @@ export default function ArtistScreen() {
               {t('artist.explore')}
             </Link>
             <ListenLink query={a.displayName} />
+            <TopSong id={id} />
             <Link className="btn btn--tonal" to={`/six-degrees?from=${id}`}>
               <Icon name="route" />
               {t('artist.findPath')}
@@ -402,6 +481,10 @@ export default function ArtistScreen() {
             <Link className="btn btn--tonal" to={`/compare?a=${id}`}>
               <Icon name="compare" />
               {t('artist.compare')}
+            </Link>
+            <Link className="btn btn--tonal" to={`/map?artist=${id}`}>
+              <Icon name="spark" />
+              {t('artist.similar')}
             </Link>
             <ShareButton
               kind="ARTIST"
@@ -449,6 +532,7 @@ export default function ArtistScreen() {
       {a.labels.length > 0 && <Labels labels={a.labels} />}
 
       {(a.about ||
+        a.stage ||
         a.aliases.length > 0 ||
         a.links.length > 0 ||
         a.sources.length > 0) && (
@@ -473,6 +557,7 @@ export default function ArtistScreen() {
                 wikidataUrl={a.about.wikidataUrl}
               />
             )}
+            {a.stage && <Stage stage={a.stage} />}
             {a.aliases.length > 0 && <Aliases aliases={a.aliases} />}
             <Links artist={a} />
           </div>

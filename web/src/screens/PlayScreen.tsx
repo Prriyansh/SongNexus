@@ -1,5 +1,5 @@
 /**
- * Play (S6, US-04): the daily connection puzzle.
+ * Play: the daily connection puzzle.
  *
  * Get from the start artist to the target by naming direct collaborators; every
  * correct step shows its credit. The route grows on a board of portraits, with

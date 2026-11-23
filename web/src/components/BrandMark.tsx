@@ -8,7 +8,7 @@
  * 3.0) are their Wikimedia Commons logo files, served from /brands. The marks
  * stay the brands' trademarks: they are used only to name the service, as the
  * services' guidelines allow for "works with" and "listen on" links, never
- * recolored, cropped or combined with our own mark. See docs/resources.md.
+ * recolored, cropped or combined with our own mark.
  */
 import type {ListeningProvider} from '../api/queries';
 

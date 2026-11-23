@@ -204,6 +204,8 @@ export function SongCover({
   song: {
     displayName: string;
     artists: readonly {displayName: string; imageUrl?: string | null}[];
+    /** The album cover (Cover Art Archive), laid over the generated art when there is one. */
+    coverUrl?: string | null;
   };
   size?: 's' | 'm' | 'xl';
   /** Shown instead of the title's initial. */
@@ -212,7 +214,12 @@ export function SongCover({
   const lead = song.artists[0];
   return (
     <span className="cx-song-cover" data-size={size} aria-hidden="true">
-      <Cover name={song.displayName} icon={icon} />
+      <Cover
+        name={song.displayName}
+        icon={icon}
+        image={song.coverUrl}
+        eager={size === 'xl'}
+      />
       {lead && (
         <span className="cx-song-cover__artist">
           <Cover

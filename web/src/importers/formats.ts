@@ -1,5 +1,5 @@
 /**
- * Listening-data formats (plan §15.5): detection by shape, parsing, aggregation.
+ * Listening-data formats: detection by shape, parsing, aggregation.
  *
  * Everything here runs on the device (in a Web Worker); raw files are never
  * uploaded. Parsers return playlists (artists per track) or per-artist

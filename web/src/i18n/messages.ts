@@ -1,6 +1,6 @@
 /**
  * The en-US message catalog (ICU MessageFormat). Every user-visible string
- * lives here, including empty, error and limitation states (plan §8).
+ * lives here, including empty, error and limitation states.
  *
  * Wording rules: "connection", never "edge"; "steps apart", never "hops";
  * "not in our data yet", never "not connected". Sentence case. Digits.
@@ -102,6 +102,27 @@ export const messages = {
   'personalize.privacy.link': 'Privacy',
   'personalize.followFailed':
     'Your picks are saved in this browser, but following them didn’t work. Try saving again.',
+  'personalize.songs.title': 'Songs you love',
+  'personalize.songs.lead':
+    'They fill your playlist on the similar-music maps, with one tap.',
+  'personalize.songs.search': 'Add a song',
+  'personalize.songs.placeholder': 'Search songs',
+  'personalize.songs.yours': 'Songs you added',
+  'personalize.songs.chip': '{title} \u00b7 {artist}',
+  'personalize.you.title': 'About you',
+  'personalize.you.name': 'What should we call you?',
+  'personalize.you.namePlaceholder': 'Your first name (optional)',
+  'personalize.discover.title': 'How do you like to find new music?',
+  'personalize.discover.similar': 'More like what I play',
+  'personalize.discover.similar.body':
+    'Start on a map of music like your playlist.',
+  'personalize.discover.new': 'Something new',
+  'personalize.discover.new.body':
+    'Start on For you, with picks that stretch your taste.',
+  'personalize.discover.friends': 'From friends',
+  'personalize.discover.friends.body':
+    'Start by comparing playlists with a friend.',
+  'home.greeting': 'Hi, {name}',
   'personalize.skip': 'Skip for now',
   'personalize.save': 'Save my picks',
   'personalize.saving': 'Saving…',
@@ -154,10 +175,19 @@ export const messages = {
     '{count, plural, one {Collaborator} other {Collaborators}}',
   'artist.stat.labels': '{count, plural, one {Label} other {Labels}}',
   'artist.stat.years': 'Years in our data',
+  'artist.stat.hot100':
+    '{count, plural, one {Billboard Hot 100 hit} other {Billboard Hot 100 hits}}',
+  'artist.stat.numberOnes':
+    '{count, plural, one {Number one} other {Number ones}}',
   'artist.about': 'About',
   'artist.intro': 'In brief',
   'artist.intro.wikipedia': 'From Wikipedia · CC BY-SA 4.0',
   'artist.intro.wikidata': 'From Wikidata',
+  'song.coversCredit': 'Covers from the Cover Art Archive',
+  'song.stat.peak':
+    'Billboard Hot 100 peak, {weeks, plural, one {# week} other {# weeks}} on the chart',
+  'artist.readers':
+    'About {count} people read their Wikipedia page each month (average of the last 12 months, Wikimedia pageviews).',
   'artist.honors.awards':
     '{count, plural, one {# award} other {# awards}} listed on Wikidata',
   'artist.honors.nominations':
@@ -165,6 +195,9 @@ export const messages = {
   'artist.honors.note':
     'Wikidata is community-edited: its lists can be incomplete, so this isn’t a total.',
   'artist.honors.wikidata': 'See it on Wikidata',
+  'artist.stage':
+    'On stage: {count, plural, one {# event} other {# events}} on MusicBrainz',
+  'artist.stage.source': 'Recent concerts and festivals, from MusicBrainz.',
   'artist.legalName': 'Legal name',
   'artist.links.listen': 'Streaming',
   'artist.links.official': 'Official',
@@ -393,7 +426,7 @@ export const messages = {
   'block.done': '{name} hidden',
   'block.undone': '{name} shown again',
 
-  // Library and import (US-10, US-08)
+  // Library and import
   'library.title': 'Library',
   'library.lead': 'Map your playlists and listening history.',
   'library.privacy.title': 'Your files stay on this device',
@@ -468,7 +501,7 @@ export const messages = {
   'analysis.links':
     '{count, plural, =0 {No artists here worked together directly.} one {# pair worked together directly.} other {# pairs worked together directly.}}',
 
-  // Play (US-04)
+  // Play
   'play.title': 'Daily puzzle',
   'play.archive': 'Puzzle archive',
   'play.date': 'Puzzle date',
@@ -663,7 +696,7 @@ export const messages = {
   'about.resources.license': 'License: {license}',
   'about.resources.feeds': 'Used for: {feeds}',
   'privacy.title': 'Privacy',
-  // Connected services (R2-6)
+  // Connected services
   'accounts.title': 'Connected services',
   'accounts.lead':
     'Link a service and your listening flows in automatically, every {minutes} minutes or when you tap sync. We keep only how often you play each artist: no song titles, no play times.',
@@ -719,7 +752,7 @@ export const messages = {
   'library.listening.empty':
     'Connect a service on the You page and your most-played artists appear here.',
   'library.listening.connect': 'Connect a service',
-  // Friends and sharing (R2-7)
+  // Friends and sharing
   'friends.title': 'Friends',
   'friends.lead':
     'Share artists, songs and paths with people you invite. No search, no contacts: friends join only with your invite.',
@@ -981,7 +1014,7 @@ export const messages = {
     'We only draw connections we can back with published credits. Try another name, or start from someone we know well.',
   'explore.listen': 'Listen on YouTube Music',
   'explore.listenTo': 'Listen to {name} on YouTube Music (opens in a new tab)',
-  // Explore hub (v5)
+  // Explore hub
   'explore.hub.hero.overline': 'The connection web',
   'explore.hub.hero.title': 'Every credit, connected.',
   'explore.hub.hero.body':
@@ -992,7 +1025,7 @@ export const messages = {
   'explore.hub.starters.title': 'Start with someone we know well',
   'explore.hub.starters.subtitle': 'Open their web',
   'explore.hub.tool.open': 'Open',
-  // Find a path (v5)
+  // Find a path
   'path.hero.body':
     'Pick two artists. We find a chain of real credits between them, and show the proof for every step.',
   'path.surprise': 'Surprise me',
@@ -1014,7 +1047,7 @@ export const messages = {
   'path.notConnected.body':
     'Try the other kind of route, more kinds of connection, or two different artists.',
   'path.options': 'Route options',
-  // Compare artists (v5)
+  // Compare artists
   'compare.lead':
     'Two artists, head to head: who they both worked with, what they share, and how they connect.',
   'compare.vs': 'vs',
@@ -1037,7 +1070,7 @@ export const messages = {
   'compare.empty.title': 'Choose two artists to compare',
   'compare.empty.body':
     'See who they have both worked with, the genres they share and how their listeners overlap.',
-  // Compare songs (v5)
+  // Compare songs
   'songCompare.lead':
     'Two songs side by side: how alike they sound, and the people who worked on both.',
   'songCompare.pick.empty': 'Choose a song',
@@ -1048,7 +1081,7 @@ export const messages = {
     'We compare their sound (tempo, key, energy, mood) and the credits they share.',
   'connection.showAll':
     'Show all {count, plural, one {# credit} other {# credits}}',
-  // <connect> Explore hub, find a path, compare (v5). Add keys below this line.
+  // <connect> Explore hub, find a path, compare. Add keys below this line.
   'connect.listen': 'Listen on YouTube Music',
   'connect.listenTo': 'Listen to {name} on YouTube Music (opens in a new tab)',
   'connect.listenToSong':
@@ -1130,6 +1163,9 @@ export const messages = {
     '{source} doesn’t know one of these artists for sure, so it was skipped.',
   'moreCredits.check.failed': '{source} couldn’t be reached just now.',
   'compare.awards': 'Both received',
+  'compare.events': 'Shared the bill',
+  'compare.events.note':
+    'Concerts and festivals where MusicBrainz lists both as performers.',
   'compare.awards.note':
     'The same award, in any year, as Wikidata lists it for both. Community-edited, so not a total.',
   'compare.overlap.value': '{percent, number, ::percent}',
@@ -1394,7 +1430,7 @@ export const messages = {
     'The campus and city whose charts your plays count toward in Around you.',
   'around.you.none': 'You haven’t joined a campus or a city.',
   'around.you.open': 'Open Around you',
-  // v5: Around you as a destination.
+  // Around you as a destination.
   'around.off': 'Around you is switched off right now. Check back soon.',
   'around.promise': 'Opt-in. Counted as ranges. Never who plays what.',
   'around.overline.CAMPUS': 'Campus chart',
@@ -1889,6 +1925,185 @@ export const messages = {
   'taste.note.skipped':
     '{count, plural, one {# artist isn’t in our data yet.} other {# artists aren’t in our data yet.}}',
   // </library-v2>
+  'compare.openMap': 'See both on a map',
+  'compare.labels': 'Both released on',
+  'compare.lastfm': 'On Last.fm',
+  'compare.lastfm.audience': '{listeners} listeners \u00b7 {plays} plays',
+  'compare.lastfm.unknown': 'Not on Last.fm',
+  'compare.lastfm.similar': 'Last.fm lists as similar to both',
+  'compare.lastfm.note':
+    'Last.fm counts its own community, not all listeners. Similar means listeners play them alike, not that they worked together.',
+  'compare.lastfm.unavailable': 'Last.fm isn\u2019t reachable right now.',
+  'tool.similar.title': 'Similar music',
+  'tool.similar.body':
+    'Map what listeners play with an artist, a song or your playlist.',
+  'artist.similar': 'Similar music',
+  'artist.topSong': 'Top song: {title}',
+  'artist.topSong.source':
+    'The most popular of their songs we have, ranked by Deezer',
+  'song.similar': 'Similar songs',
+  'friends.maps.title': 'Compare playlists',
+  'friends.maps.body':
+    'Put your playlist and a friend’s on one map: what only you play, what you share, and what each of you should try. Join with a six-character code; no account needed.',
+  'friends.maps.start': 'Compare with a friend',
+  'friends.maps.mine': 'Map my playlist',
+  'songCompare.analyzed.title': 'Songs with the full analysis',
+  'songCompare.analyzed.lead':
+    'These songs are in the sound and lyrics dataset, so the comparison can show how they sound and what their lyrics are about. Pick one to fill the next side.',
+  'songCompare.analyzed.label': 'Search songs with the full analysis',
+  'songCompare.analyzed.placeholder': 'Search by title or artist',
+  'songCompare.analyzed.full': 'Sound and lyrics',
+  'songCompare.analyzed.sound': 'Sound only',
+  'songCompare.analyzed.none':
+    'None of the matching songs are in our catalog yet.',
+  'songCompare.analyzed.unavailable':
+    'The sound analysis isn’t reachable right now.',
+  // <maps> Similar music: the Connection Web's map modes (artist, song, playlist, friend).
+  'map.overline': 'Similar music',
+  'map.heading': 'Map what sounds alike',
+  'map.lead':
+    'Start from an artist, a song or your playlist. The closer something sits, the more often listeners play it together. Select anything to see why it’s there.',
+  'map.title': 'Similar music',
+  'map.title.of': 'Similar to {name}',
+  'map.modes': 'What to start from',
+  'map.mode.artist': 'Artist',
+  'map.mode.song': 'Song',
+  'map.mode.pair': 'Two artists',
+  'map.mode.playlist': 'My playlist',
+  'map.pair.first': 'First artist',
+  'map.pair.second': 'Second artist',
+  'map.pair.path': 'Credit path: {names}',
+  'map.pair.noPath':
+    'No chain of credits connects them in our data; the map shows who listeners play with each.',
+  'map.pair.legend.a': 'Played with {name}',
+  'map.pair.legend.both': 'Credit path, or played with both',
+  'map.pair.legend.b': 'Played with {name}',
+  'map.label.pair':
+    'Map of two artists: the first on the left, the second on the right, the credit path and who listeners play with both in the middle. Zoom in to see more.',
+  'map.reason.creditPath':
+    'On the shortest chain of credits between {a} and {b}.',
+  'map.mode.friend': 'With a friend',
+  'map.pick.artist': 'Start from an artist',
+  'map.pick.song': 'Start from a song',
+  'map.label':
+    'Map of similar music. The closer something is to the center, the more similar it is. Drag to pan, scroll to zoom, arrow keys to move, plus or minus to zoom, zero to reset.',
+  'map.label.taste':
+    'Map of playlists: yours on the left, your friend’s on the right, what you share in the middle. Drag to pan, scroll to zoom.',
+  'map.roleDescription': 'interactive map',
+  'map.node.center': 'Selected: {name}',
+  'map.node.why': 'Why is this here: {name}',
+  'map.card.label': 'Why {name} is here',
+  'map.card.close': 'Close explanation',
+  'map.zoomIn': 'Zoom in',
+  'map.zoomOut': 'Zoom out',
+  'map.zoomLevel': 'Map zoom',
+  'map.fit': 'Reset the map',
+  'map.center.artist':
+    'Everything on this map is placed by how similar it is to this artist.',
+  'map.center.song':
+    'Everything on this map is placed by how similar it is to this song.',
+  'map.closeness': '{value} of the closest match',
+  'map.closeness.title':
+    'Calculated: relative to the closest match on this map, not an absolute score.',
+  'map.source': 'Source',
+  'map.listeners':
+    '{count, plural, one {# listener} other {# listeners}} on ListenBrainz (its own community, not all listeners)',
+  'map.near':
+    '{more, plural, =0 {Also connected to {names}.} other {Also connected to {names} and # more.}}',
+  'map.legend.similar':
+    'Closer means more often played together. Lines join what listeners connect; zoom in near an artist to find more around it.',
+  'map.legend.label': 'What the colors mean',
+  'map.status.loading': 'Finding similar music…',
+  'map.status.error': 'We couldn’t load this map. Try again in a moment.',
+  'map.status.partial':
+    'Some listening data couldn’t be loaded just now. What we have is shown.',
+  'map.notFound': 'That isn’t in our data.',
+  'map.empty':
+    'The listening data doesn’t cover this one yet. Try someone more widely played.',
+  'map.action.mapFromHere': 'Map from here',
+  'map.action.artist': 'Artist page',
+  'map.action.song': 'Song page',
+  'map.action.source': 'On MusicBrainz',
+  'map.reason.coListened':
+    'People who play {played} often play this in the same listening sessions.',
+  'map.reason.sharedGenres': 'Both are tagged {genres}.',
+  'map.reason.soundMatch': 'Calculated sound match: {score}.',
+  'map.reason.onMine':
+    'On your playlist ({count, plural, one {# song} other {# songs}}).',
+  'map.reason.onMine.song': 'On your playlist.',
+  'map.reason.onTheirs':
+    'On {friend}’s playlist ({count, plural, one {# song} other {# songs}}).',
+  'map.reason.onTheirs.song': 'On {friend}’s playlist.',
+  'map.reason.onBoth':
+    'On both playlists: {count, plural, one {# song} other {# songs}} of yours and {other, plural, one {# song} other {# songs}} of {friend}’s.',
+  'map.reason.onBoth.song': 'On both of your playlists.',
+  'map.reason.forMe':
+    'You might like this: people who play {names}, on your playlist, often play {name} too.',
+  'map.reason.forThem':
+    '{friend} might like this: people who play {names}, on {friend}’s playlist, often play {name} too.',
+  'map.reason.newToYou':
+    'New to you: people who play {names} often play {name} too.',
+  'map.reason.newToBoth':
+    'New to both of you: people who play {names} often play {name} too.',
+  'map.reason.newToBoth.split':
+    'New to both of you: people who play {mine} (yours) and {theirs} ({friend}’s) often play {name} too.',
+  'map.group.MINE': 'On your playlist',
+  'map.group.THEIRS': 'Only {friend}’s',
+  'map.group.SHARED': 'On both',
+  'map.group.FOR_ME': 'You should listen',
+  'map.group.FOR_THEM': '{friend} should listen',
+  'map.group.NEW': 'New to you',
+  'map.taste.stats':
+    '{artists, plural, one {# artist} other {# artists}} and {songs, plural, one {# song} other {# songs}} on your playlist',
+  'map.taste.statsFriend':
+    'You and {friend} share {shared, plural, one {# artist} other {# artists}} and {songs, plural, one {# song} other {# songs}}',
+  'map.playlist.title': 'Your playlist',
+  'map.playlist.label': 'Choose a CSV, JSON or TXT file, or paste lines like',
+  'map.playlist.format.hint': '“Song - Artist”.',
+  'map.playlist.autofill':
+    'your {count, plural, one {saved song} other {# saved songs}}',
+  'map.playlist.paste': 'Paste a playlist, one “Song - Artist” per line',
+  'map.playlist.placeholder': 'Song - Artist',
+  'map.playlist.file': 'Playlist file',
+  'map.playlist.use': 'Map these songs',
+  'map.playlist.chooseFile': 'Choose a file',
+  'map.playlist.presets': 'Or start from a preset:',
+  'map.playlist.sample': 'Try a sample playlist',
+  'map.playlist.change': 'Change playlist',
+  'map.playlist.noArtists':
+    'These songs have no artist names. Use “Song - Artist” lines, or a file with an Artist column.',
+  'map.playlist.skipped':
+    '{count, plural, one {# line had no artist and was left out.} other {# lines had no artist and were left out.}}',
+  'map.playlist.tooBig': 'Please choose a file under 2 MB.',
+  'map.playlist.format': 'Please choose a CSV, JSON or TXT file.',
+  'map.preset.pop': 'Pop',
+  'map.preset.hiphop': 'Hip hop',
+  'map.preset.rnb': 'R&B',
+  'map.preset.indie': 'Indie & rock',
+  'map.preset.latin': 'Latin',
+  'map.friend.default': 'your friend',
+  'map.friend.name': 'Your first name (optional)',
+  'map.friend.start': 'Start a room',
+  'map.friend.startLead':
+    'Add your playlist and we’ll give you a six-character code. When your friend adds theirs, you both see one map. Rooms are deleted after a week.',
+  'map.friend.join': 'Have a code?',
+  'map.friend.joinLead': 'Enter the code your friend shared.',
+  'map.friend.code': 'Room code',
+  'map.friend.codePlaceholder': 'ABC234',
+  'map.friend.open': 'Open',
+  'map.friend.failed': 'We couldn’t open a room just now. Try again.',
+  'map.friend.missing':
+    'This room doesn’t exist or has expired (rooms last a week).',
+  'map.friend.again': 'Start a new room',
+  'map.friend.share': 'Share this code with your friend',
+  'map.friend.waiting':
+    'We’ll show the map here as soon as they add their playlist.',
+  'map.friend.copy': 'Copy the link',
+  'map.friend.copied': 'Link copied',
+  'map.friend.joining': 'Compare your playlist with {name}’s',
+  'map.friend.full': 'Someone already joined this room. Ask for a new code.',
+  'map.friend.new': 'New room',
+  // </maps>
 } as const;
 
 export type MessageId = keyof typeof messages;

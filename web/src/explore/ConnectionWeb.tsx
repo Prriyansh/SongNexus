@@ -1,7 +1,7 @@
 /**
  * The connection web, drawn on a canvas (SVG doesn't hold up past ~300 nodes).
  *
- * Layout (docs/design/connection-web-v5.md): the starting artist is pinned in
+ * Layout: the starting artist is pinned in
  * the middle and their direct connections sit on orbits by role (performed
  * together, made the music, other credits), so the web has a shape a listener
  * can read at a glance. Artists opened later bloom around themselves with the
@@ -18,7 +18,7 @@
  *
  * The canvas is focusable: arrow keys move between artists, Enter opens one,
  * Escape clears, + and - zoom, 0 fits. The list view next to it carries the
- * same content for screen-reader users (AC-2.3).
+ * same content for screen-reader users.
  *
  * Frames are cheap on purpose: covers, photos and glows are pre-rendered
  * sprites, lines of one style are stroked as one path, and the per-frame

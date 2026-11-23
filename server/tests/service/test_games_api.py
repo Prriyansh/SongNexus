@@ -1,4 +1,4 @@
-"""Game scores and leaderboards through the API (ADR 0010).
+"""Game scores and leaderboards through the API.
 
 Covers: scores computed server side from the play (cheating attempts rejected),
 one score per game per day, the score window, the trivia first-answer lock, the

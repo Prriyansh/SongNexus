@@ -1,4 +1,4 @@
-/** AC-8.1: each supported export format yields exactly the expected aggregates. */
+/** Each supported export format yields exactly the expected aggregates. */
 import {strToU8, zipSync} from 'fflate';
 import {describe, expect, it} from 'vitest';
 

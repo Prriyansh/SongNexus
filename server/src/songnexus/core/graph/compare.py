@@ -1,4 +1,4 @@
-"""Two-artist comparison (US-05): shared genres, mutual collaborators, the path between."""
+"""Two-artist comparison: shared genres, mutual collaborators, the path between."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class Comparison:
             the smaller of the two shares. None when either has no genre data.
         shared_genres: Genres both carry, by combined share.
         mutual_collaborators: Exactly the intersection of the two artists' direct
-            connections under the enabled kinds (AC-5.1), by name.
+            connections under the enabled kinds, by name.
         directly_connected: Whether the two are themselves connected.
         path: The fewest-steps path between them.
         counts_a: ``artist_a``'s collaborator counts by type.

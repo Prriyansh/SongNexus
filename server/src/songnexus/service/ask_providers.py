@@ -1,4 +1,4 @@
-"""Model providers for Ask (ADR 0008): the HTTP half of ``core.ask.llm``.
+"""Model providers for Ask: the HTTP half of ``core.ask.llm``.
 
 ``core`` stays pure (no network): it owns the instructions, the schema, the
 validation and the ``Provider`` interface. This module implements that interface

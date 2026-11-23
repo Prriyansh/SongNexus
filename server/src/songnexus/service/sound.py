@@ -40,6 +40,7 @@ from songnexus.service.readmodel import ReadModel
 log = logging.getLogger(__name__)
 
 SIMILAR_PER_SONG = 4
+SEARCH_ASK = 25  # dataset hits asked for; fewer are in the catalog
 CACHE_SIZE = 1024
 CACHE_TTL_S = 6 * 3600
 SOURCES = ["dataSources/kaggle-spotify-tracks", "dataSources/genius-lyrics-dataset"]
@@ -160,6 +161,14 @@ class _SimilarList(_Upstream):
 # --- Client -----------------------------------------------------------------------------------
 
 
+class _SearchHit(_Brief):
+    has_lyrics: bool = False
+
+
+class _SearchList(_Upstream):
+    results: list[_SearchHit] = []
+
+
 class _UnavailableError(Exception):
     """The service is missing, unreachable or answered with something unusable."""
 
@@ -192,6 +201,9 @@ class SoundCompareClient:
             OrderedDict()
         )
         self._lock = threading.Lock()
+        self._search_cache: OrderedDict[tuple[str, ...], tuple[float, api.SearchSoundResponse]] = (
+            OrderedDict()
+        )
 
     @property
     def configured(self) -> bool:
@@ -247,6 +259,50 @@ class SoundCompareClient:
             similar_b=[_similar(model, s) for s in lists[1]],
             sources=SOURCES,
         )
+
+    def search(self, model: ReadModel, query: str, limit: int) -> api.SearchSoundResponse:
+        """Dataset songs matching ``query`` that our catalog also has, most popular first."""
+        if not self.configured:
+            return api.SearchSoundResponse(status=api.SoundStatus.UNAVAILABLE)
+        key = (model.version, "search", query.casefold(), str(limit))
+        cached = self._cached_search(key)
+        if cached is not None:
+            return cached
+        try:
+            with self._http() as http:
+                raw = self._get(http, f"/api/search?q={quote(query, safe='')}&limit={SEARCH_ASK}")
+        except _UnavailableError:
+            return api.SearchSoundResponse(status=api.SoundStatus.UNAVAILABLE)
+        found = [] if raw is None else self._parse(_SearchList, raw).results
+        hits = []
+        for song in found:
+            artists = catalog_artists(model, song.artists[:1])
+            titles = (
+                catalog_titles(model, song.title, EntityType.RECORDING, artists) if artists else []
+            )
+            if titles:
+                hits.append(
+                    api.SoundSearchHit(
+                        recording=f"recordings/{titles[0]}",
+                        title=song.title,
+                        artists=song.artists,
+                        genre=song.genre,
+                        has_lyrics=song.has_lyrics,
+                    )
+                )
+        result = api.SearchSoundResponse(status=api.SoundStatus.OK, results=hits[:limit])
+        with self._lock:
+            self._search_cache[key] = (self._now(), result)
+            while len(self._search_cache) > CACHE_SIZE:
+                self._search_cache.popitem(last=False)
+        return result
+
+    def _cached_search(self, key: tuple[str, ...]) -> api.SearchSoundResponse | None:
+        with self._lock:
+            hit = self._search_cache.get(key)
+            if hit and self._now() - hit[0] < CACHE_TTL_S:
+                return hit[1]
+        return None
 
     def _match(self, http: httpx.Client, song: SongName) -> _Brief | None:
         title = base_title(song.title)

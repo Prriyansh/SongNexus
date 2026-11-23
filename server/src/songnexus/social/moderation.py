@@ -3,7 +3,7 @@
 ``Moderator`` is the seam. Locally, ``RuleModerator`` applies a few cheap,
 explainable rules: no links (the main spam and phishing vector in notes), no
 control or invisible characters, no long runs of one character. Production is
-meant to put a toxicity classifier behind the same interface (ADR 0007); until
+meant to put a toxicity classifier behind the same interface; until
 one is wired, the rules are what runs everywhere, and reports plus blocking
 are the backstop.
 """

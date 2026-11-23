@@ -1,4 +1,4 @@
-"""The data-source registry (ADR 0005): its invariants, and that ingest enforces it."""
+"""The data-source registry: its invariants, and that ingest enforces it."""
 
 import re
 from datetime import date
@@ -94,3 +94,10 @@ def test_every_stored_fact_traces_to_an_in_use_registered_source(ingested: Engin
         registered = set(session.scalars(select(m.DataSource.id)))
     in_use = {s.id for s in SOURCES if s.status is Status.IN_USE}
     assert used <= registered <= in_use
+
+
+def test_the_data_sources_doc_matches_the_registry() -> None:
+    doc = Path(__file__).resolve().parents[3] / "docs" / "data-sources.md"
+    assert doc.read_text(encoding="utf-8") == sources.render_markdown() + "\n", (
+        "docs/data-sources.md is out of date: run `uv run songnexus sources`"
+    )

@@ -138,11 +138,11 @@ def erase_user(session: Session, user_id: str, now: datetime) -> None:
         m.OAuthFlow,
     ):
         session.execute(delete(model).where(model.user_id == user_id))
-    # Friends and sharing (R2-7): their shares leave friends' inboxes now too.
+    # Friends and sharing: their shares leave friends' inboxes now too.
     social_repository.erase(session, user_id)
     # Around you: campus and city memberships.
     community_repository.erase(session, user_id)
-    # Game scores and first trivia answers (ADR 0010).
+    # Game scores and first trivia answers.
     games_repository.erase(session, user_id)
     session.execute(
         update(m.User).where(m.User.id == user_id).values(deleted_at=now, firebase_uid=None)

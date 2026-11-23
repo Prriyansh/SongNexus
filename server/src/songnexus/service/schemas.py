@@ -133,13 +133,12 @@ class ArtistSummary(ApiModel):
     artist_type: str | None = None
     country: str | None = None
     genre_known: bool = Field(
-        default=False, description="Whether our data has genres for this artist (AC-12.2)."
+        default=False, description="Whether our data has genres for this artist."
     )
     image_url: str | None = Field(
         default=None,
         description="A freely licensed photo about 330 px wide (Wikimedia Commons), or null. "
-        "Its author and license are in `image` on GetArtist and must be shown with it "
-        "(ADR 0009).",
+        "Its author and license are in `image` on GetArtist and must be shown with it.",
     )
     listeners: int | None = Field(
         default=None,
@@ -150,7 +149,7 @@ class ArtistSummary(ApiModel):
 
 
 class ArtistImage(ApiModel):
-    """A freely licensed artist photo from Wikimedia Commons, with its attribution (ADR 0009)."""
+    """A freely licensed artist photo from Wikimedia Commons, with its attribution."""
 
     url: str = Field(description="The photo about 960 px wide, on a Wikimedia media host.")
     thumbnail_url: str = Field(description="The photo about 330 px wide.")
@@ -246,6 +245,49 @@ class ArtistAbout(ApiModel):
     wikidata_url: str
     awards: list[Honor] = Field(description="Newest first; up to 100.")
     nominations: list[Honor] = Field(description="Newest first; up to 100.")
+    monthly_wikipedia_views: int | None = Field(
+        default=None,
+        description="Average monthly human views of the Wikipedia article over the last 12 "
+        "complete months (Wikimedia pageviews, CC0): how widely read about the artist is.",
+    )
+
+
+class EventSummary(ApiModel):
+    """A concert or festival, from MusicBrainz."""
+
+    display_name: str
+    kind: str | None = Field(default=None, description="Concert, Festival, ...")
+    date: str | None = Field(default=None, description="As precise as known: 2019 or 2019-07-12.")
+    place: str | None = None
+    url: str = Field(description="The event on MusicBrainz.")
+    performers: list[ArtistSummary] = Field(description="Catalog artists who performed at it.")
+
+
+class ArtistStage(ApiModel):
+    """The events MusicBrainz lists for an artist (seed artists only)."""
+
+    total: int
+    recent: list[EventSummary] = Field(description="Newest first, up to 6.")
+
+
+class ArtistCharts(ApiModel):
+    """An artist's Billboard Hot 100 history as the lead performer (all songs, catalog or not)."""
+
+    entries: int = Field(description="Songs that reached the Hot 100.")
+    top_ten: int
+    number_ones: int
+    best_peak: int
+    first_year: int
+    last_year: int
+
+
+class SongChart(ApiModel):
+    """A song's run on the Billboard Hot 100."""
+
+    peak: int = Field(description="Best position, 1 to 100.")
+    weeks: int = Field(description="Weeks on the chart.")
+    first_week: str = Field(description="First chart week, ISO date.")
+    last_week: str
 
 
 class Artist(ArtistSummary):
@@ -269,6 +311,12 @@ class Artist(ArtistSummary):
     sources: list[SourceLink]
     image: ArtistImage | None = Field(
         default=None, description="The artist's photo and its attribution, or null."
+    )
+    stage: ArtistStage | None = Field(
+        default=None, description="Concerts and festivals, or null when none are known."
+    )
+    charts: ArtistCharts | None = Field(
+        default=None, description="Billboard Hot 100 history, or null when they never charted."
     )
     about: ArtistAbout | None = Field(
         default=None,
@@ -500,6 +548,14 @@ class CompareArtistsResponse(ApiModel):
         default=None,
         description="Null when either artist has fewer than 50 listeners or no data.",
     )
+    shared_events: list[EventSummary] = Field(
+        default_factory=list,
+        description="Concerts and festivals both artists performed at, newest first (up to 8).",
+    )
+    shared_labels: list[ArtistLabel] = Field(
+        default_factory=list,
+        description="Labels both artists released on, with the first artist's releases there.",
+    )
     shared_awards: list[Honor] = Field(
         default_factory=list,
         description="Awards Wikidata lists for both artists (the same award, any year), with "
@@ -530,6 +586,9 @@ class Appearance(ApiModel):
     year: int | None = None
     disc_number: int
     position: int
+    cover_url: str | None = Field(
+        default=None, description="The release's front cover (Cover Art Archive), or null."
+    )
 
 
 class AudioDescriptors(ApiModel):
@@ -562,6 +621,9 @@ class Recording(ApiModel):
     descriptors: AudioDescriptors | None = Field(
         default=None, description="Absent when AcousticBrainz has no data for the recording."
     )
+    chart: SongChart | None = Field(
+        default=None, description="Its Billboard Hot 100 run, or null when it never charted."
+    )
     sources: list[SourceLink]
 
 
@@ -573,6 +635,11 @@ class RecordingSummary(ApiModel):
     artists: list[ArtistSummary] = Field(description="Primary artists.")
     first_release_date: str | None = None
     length_ms: int | None = None
+    cover_url: str | None = Field(
+        default=None,
+        description="Its earliest release's front cover, about 250 px, hot-linked from the Cover "
+        "Art Archive (the image stays its rights holder's), or null.",
+    )
 
 
 class SimilarityPart(ApiModel):
@@ -624,7 +691,7 @@ class SearchResult(ApiModel):
     blocked: bool = Field(
         default=False,
         description="The viewer blocked this artist. Blocked artists appear only for an "
-        "exact-name search, so they can be unblocked (AC-17.2).",
+        "exact-name search, so they can be unblocked.",
     )
     image_url: str | None = Field(
         default=None,
@@ -694,7 +761,7 @@ class Label(ApiModel):
 
 
 class ListeningProvider(enum.StrEnum):
-    """A listening service (ADR 0006)."""
+    """A listening service."""
 
     LISTENBRAINZ = "LISTENBRAINZ"
     LASTFM = "LASTFM"
@@ -802,7 +869,7 @@ class ListListeningResponse(ApiModel):
 
 
 class LicenseTier(enum.StrEnum):
-    """What a data source's license allows (ADR 0005)."""
+    """What a data source's license allows."""
 
     PRODUCTION = "PRODUCTION"
     NON_COMMERCIAL = "NON_COMMERCIAL"
@@ -857,7 +924,7 @@ class ListDataSourcesResponse(ApiModel):
 
 
 class Limits(ApiModel):
-    """Request limits clients should respect (plan §14)."""
+    """Request limits clients should respect."""
 
     max_query_length: int
     max_path_steps: int
@@ -994,13 +1061,13 @@ class ListBlockedArtistsResponse(ApiModel):
 
 
 class Visibility(enum.StrEnum):
-    """Who can see a profile. Only PRIVATE exists in R1."""
+    """Who can see a profile. Only PRIVATE exists for now."""
 
     PRIVATE = "PRIVATE"
 
 
 class Profile(ApiModel):
-    """GetProfile / UpdateProfile: Top 5 artists (US-09)."""
+    """GetProfile / UpdateProfile: Top 5 artists."""
 
     name: str = ""
     top_artists: list[str] = Field(default_factory=list, description="Up to 5 `artists/{artist}`.")
@@ -1014,7 +1081,7 @@ class Empty(ApiModel):
 
 
 # ---------------------------------------------------------------------------
-# Playlist analysis (US-10)
+# Playlist analysis
 # ---------------------------------------------------------------------------
 
 
@@ -1100,7 +1167,7 @@ class AnalyzePlaylistResponse(ApiModel):
 
 
 # ---------------------------------------------------------------------------
-# Play: the daily puzzle (US-04)
+# Play: the daily puzzle
 # ---------------------------------------------------------------------------
 
 
@@ -1155,7 +1222,7 @@ class RevealResponse(ApiModel):
 
 
 # ---------------------------------------------------------------------------
-# Friends and sharing (R2-7, ADR 0007)
+# Friends and sharing
 # ---------------------------------------------------------------------------
 
 

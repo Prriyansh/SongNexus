@@ -1,4 +1,4 @@
-"""Linked accounts end to end (ADR 0006): which providers are offered, linking, sync, unlinking.
+"""Linked accounts end to end: which providers are offered, linking, sync, unlinking.
 
 Routes call these functions; they hold no HTTP request state of their own, so
 the scheduled job (``songnexus sync-accounts``) and "Sync now" share one path.

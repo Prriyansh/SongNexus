@@ -1,4 +1,4 @@
-"""One interface for every listening service (ADR 0006, decision 1).
+"""One interface for every listening service.
 
 ``fetch(http, credentials, cursor)`` returns the plays since ``cursor`` and the
 next cursor. Connectors never write responses to disk (a listener's history is
@@ -435,19 +435,3 @@ class YouTubeConnector:
         # Keep earlier IDs too, so unliking the newest song does not replay the whole list.
         kept = newest + [v for v in (cursor.split(",") if cursor else []) if v not in newest]
         return Page(tuple(plays), ",".join(kept[: self.cursor_ids]) or None)
-
-
-class YouTubeMusicFirstPartyAdapter:
-    """The seam for YouTube Music's own history (no public API exists).
-
-    A YouTube Music integration implements ``fetch`` against the internal history
-    service with the same contract: plays after the cursor, oldest first or in any
-    order, artist names and (when known) MusicBrainz or catalog IDs. Until then,
-    listeners import Google Takeout files on the device (``web/src/importers``).
-    """
-
-    provider = Provider.YOUTUBE_MUSIC
-
-    def fetch(self, http: httpx.Client, credentials: Credentials, cursor: str | None) -> Page:
-        """Returns the plays after ``cursor``."""
-        raise NotImplementedError("YouTube Music history is first-party; see the integration guide")

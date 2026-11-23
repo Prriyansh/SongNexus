@@ -12,7 +12,7 @@ from songnexus.core.graph import collaborations as collab
 from songnexus.core.graph.algorithms import bidirectional_bfs_path
 from songnexus.core.graph.explain import explain_edge
 from songnexus.core.graph.filters import NodeFilter
-from songnexus.core.graph.model import DEFAULT_CATEGORIES, EdgeKind, kinds_for
+from songnexus.core.graph.model import DEFAULT_CATEGORIES, ArtistGraph, EdgeKind, kinds_for
 from songnexus.core.graph.relevance import best_songs_first, relevance
 from songnexus.core.search import EntityType as CoreEntityType
 from songnexus.core.search import MatchType
@@ -44,6 +44,8 @@ from songnexus.service.routes.common import (
 )
 from songnexus.storage import catalog_repository as repo
 from songnexus.storage.artist_facts import read_artist_facts
+from songnexus.storage.charts import artist_chart, song_chart
+from songnexus.storage.events import artist_events, count_artist_events
 
 router = APIRouter(
     prefix="/v1", tags=["catalog"], dependencies=[Depends(rate_limited(MethodClass.READ))]
@@ -63,6 +65,7 @@ HIGHLIGHTS_PER_CONNECTION = 2
 # Genres shown on an artist page; the graph keeps more for filtering.
 DISPLAY_GENRES = 5
 OFTEN_PLAYED_WITH = 10
+RECENT_EVENTS = 6
 
 
 def kinds_from(categories: list[api.ConnectionCategory]) -> frozenset[EdgeKind]:
@@ -123,6 +126,14 @@ def list_featured_artists(
     return FeaturedArtistsResponse(artists=artists, graph_version=model.version)
 
 
+def _stage(graph: ArtistGraph, session: Session, artist_id: str) -> api.ArtistStage | None:
+    total = count_artist_events(session, artist_id)
+    if not total:
+        return None
+    recent = artist_events(session, artist_id, RECENT_EVENTS)
+    return api.ArtistStage(total=total, recent=[convert.event_summary(graph, e) for e in recent])
+
+
 @router.get("/artists/{artist:rid}", response_model=api.Artist, summary="GetArtist")
 @cached_anonymous
 def get_artist(
@@ -171,6 +182,8 @@ def get_artist(
         ],
         sources=convert.source_links(details.sources),
         image=convert.artist_image(graph, artist_id),
+        stage=_stage(graph, session, artist_id),
+        charts=convert.artist_charts(artist_chart(session, artist_id)),
         about=convert.artist_about(read_artist_facts(session, [artist_id]).get(artist_id)),
         graph_version=model.version,
     )
@@ -541,10 +554,12 @@ def get_recording(
                 year=a.year,
                 disc_number=a.disc_number,
                 position=a.position,
+                cover_url=model.release_covers.get(a.release_id),
             )
             for a in details.appearances
         ],
         descriptors=_descriptors(repo.recording_descriptors(session, recording_id)),
+        chart=convert.song_chart(song_chart(session, recording_id)),
         sources=convert.source_links(details.sources),
     )
 
@@ -597,6 +612,7 @@ def compare_recordings(
             artists=[convert.artist_summary(graph, x) for x in primary(d)],
             first_release_date=d.first_release_date,
             length_ms=d.length_ms,
+            cover_url=model.recording_covers.get(d.id),
         )
 
     fields = [repo.recording_descriptors(session, d.id) for d in details]
@@ -668,7 +684,7 @@ def search_catalog(
     entity_types = frozenset(CoreEntityType(t.value.lower()) for t in types) or None
     hits = model.search.search(query, limit=page_size or 10, entity_types=entity_types)
     # Blocked artists never appear as suggestions, except as an exact-name match,
-    # flagged so the client can offer to unblock (AC-17.2).
+    # flagged so the client can offer to unblock.
     hits = [h for h in hits if h.entity_id not in who.blocked or h.match_type is MatchType.EXACT]
     collections = {"artist": "artists", "release": "releases", "recording": "recordings"}
     set_cache_control(response, who)

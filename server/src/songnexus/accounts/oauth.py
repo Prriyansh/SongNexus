@@ -1,4 +1,4 @@
-"""Linking flows: how each service proves the listener owns the account (ADR 0006).
+"""Linking flows: how each service proves the listener owns the account.
 
 * **Spotify**: OAuth 2 authorization code with PKCE (S256); refresh tokens.
 * **YouTube Music**: Google OAuth 2 authorization code with PKCE and the read-only

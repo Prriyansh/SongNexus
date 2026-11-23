@@ -1,4 +1,4 @@
-/** Loading, empty and error states. Every limitation gets an honest, specific message (plan §8). */
+/** Loading, empty and error states. Every limitation gets an honest, specific message. */
 import type {ReactNode} from 'react';
 
 import {ApiError} from '../api/client';

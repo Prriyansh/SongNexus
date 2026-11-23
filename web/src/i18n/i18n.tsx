@@ -1,7 +1,7 @@
 /**
  * Message formatting (ICU), locale and direction.
  *
- * R1 ships en-US plus two pseudo-locales for testing (plan §10):
+ * The app ships en-US plus two pseudo-locales for testing:
  *   en-XA  accented and ~40% longer text, to catch truncation and hard-coded strings;
  *   ar-XB  right-to-left, to catch layout that ignores direction.
  * Choose one with ?locale=en-XA (remembered for the session).

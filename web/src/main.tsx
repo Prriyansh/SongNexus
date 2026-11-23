@@ -17,6 +17,7 @@ import './styles/pages.css';
 import './styles/games.css';
 import './styles/stories.css';
 import './styles/connect.css';
+import './styles/maps.css';
 
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';

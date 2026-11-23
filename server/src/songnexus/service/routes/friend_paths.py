@@ -3,7 +3,7 @@
 Both people must have turned on ``shareTopArtists`` in their social profile
 (off by default), be friends, and not have blocked each other; anything else
 looks like "no such friend" except a sharing refusal, which says whose sharing
-is off. Artists the viewer blocked never appear (US-17), and artists the
+is off. Artists the viewer blocked never appear, and artists the
 friend blocked are left out of the friend's list. Under the ``friends`` flag.
 """
 

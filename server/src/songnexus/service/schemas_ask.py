@@ -1,4 +1,4 @@
-"""Schemas for AskCatalog: a question in the search bar, answered from our data (ADR 0008)."""
+"""Schemas for AskCatalog: a question in the search bar, answered from our data."""
 
 from __future__ import annotations
 

@@ -1,5 +1,5 @@
 /**
- * Label (R2-2, v5): a hero with the label's numbers, its releases per year,
+ * Label: a hero with the label's numbers, its releases per year,
  * the roster by era as covers, and the releases in our data.
  */
 import {Fragment, type CSSProperties} from 'react';

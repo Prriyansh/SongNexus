@@ -1,7 +1,7 @@
-"""Identity and user-data security tests (plan §21, M4-05).
+"""Identity and user-data security tests.
 
-Covers AC-18.1-18.4, AC-17.1-17.2 and AC-9.1 against the real application with
-a fake ID-token verifier (tokens are "uid:<firebase uid>").
+Covers sessions, owner-only data, blocks and profiles against the real application
+with a fake ID-token verifier (tokens are "uid:<firebase uid>").
 """
 
 from collections.abc import Iterator
@@ -77,7 +77,7 @@ def reason(response: Any) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Sign-in (AC-18.1)
+# Sign-in
 # ---------------------------------------------------------------------------
 
 
@@ -176,7 +176,7 @@ def test_writes_require_the_csrf_token_and_an_allowed_origin(client: TestClient)
 
 
 # ---------------------------------------------------------------------------
-# Authorization (AC-18.2)
+# Authorization
 # ---------------------------------------------------------------------------
 
 
@@ -213,7 +213,7 @@ def test_users_cannot_touch_each_others_data(state: AppState) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Preferences, ETags and update masks (AC-18.3)
+# Preferences, ETags and update masks
 # ---------------------------------------------------------------------------
 
 
@@ -257,7 +257,7 @@ def test_preferences_use_etags_and_update_masks(client: TestClient) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Blocks (AC-17.1, AC-17.2)
+# Blocks
 # ---------------------------------------------------------------------------
 
 
@@ -307,7 +307,7 @@ def test_blocked_artist_disappears_from_every_list(client: TestClient) -> None:
     song = ids.recording_id(f"song|{ALICE}")
     assert blocked_name not in names(client.get(f"/v1/recordings/{song}").json()["credits"])
 
-    # An exact search still finds the artist, flagged so it can be unblocked (AC-17.2).
+    # An exact search still finds the artist, flagged so it can be unblocked.
     exact = client.get("/v1/catalog:search", params={"query": "Alice"}).json()["results"]
     assert exact[0]["name"] == blocked_name
     assert exact[0]["blocked"] is True
@@ -339,7 +339,7 @@ def test_block_lifecycle(client: TestClient) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Profile (AC-9.1)
+# Profile
 # ---------------------------------------------------------------------------
 
 
@@ -357,7 +357,7 @@ def test_top_five_limit(client: TestClient) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Sign-out, revocation and deletion (AC-18.4)
+# Sign-out, revocation and deletion
 # ---------------------------------------------------------------------------
 
 
@@ -395,6 +395,7 @@ def test_delete_account(client: TestClient, state: AppState) -> None:
         "deletedAccounts": 1,
         "expiredLinkFlows": 0,
         "expiredInvites": 0,
+        "expiredTasteRooms": 0,
         "expiredReports": 0,
         "expiredCommunityCharts": 0,
         "expiredGameScores": 0,
@@ -450,7 +451,7 @@ def test_signed_in_users_have_their_own_rate_limit(state: AppState) -> None:
 
 
 def test_blocked_artists_are_never_hidden_links_in_playlists(client: TestClient) -> None:
-    """US-17 applies to AnalyzePlaylist: a blocked artist never links others."""
+    """Blocks apply to AnalyzePlaylist: a blocked artist never links others."""
     sign_in(client, "playlist-blocker")
     client.post("/v1/users/me/blockedArtists", json={"artist": f"artists/{ALICE}"})
     body = {"tracks": [{"artists": ["Bob"]}, {"artists": ["The Band"]}]}

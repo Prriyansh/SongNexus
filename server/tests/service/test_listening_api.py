@@ -1,4 +1,4 @@
-"""Listener overlap in Compare and "often played with" on artist pages (R2-5)."""
+"""Listener overlap in Compare and "often played with" on artist pages."""
 
 from collections.abc import Iterator
 from pathlib import Path

@@ -36,7 +36,7 @@
   font: var(--label-large);
 }
 
-/* ---------- Friends and sharing (R2-7) ---------- */
+/* ---------- Friends and sharing ---------- */
 
 .badge.badge--accent {
   background: var(--brand-strong);
@@ -711,7 +711,7 @@ button.list-row {
   font-variant-numeric: tabular-nums;
 }
 
-/* Collaborations timeline (R2-3): one series per the dataviz rules: one color,
+/* Collaborations timeline: one series per the dataviz rules: one color,
    bars <= 24px with a 4px rounded data end and a square baseline, 2px gaps,
    a solid hairline baseline, and a hit target the full height of the column. */
 .timeline {

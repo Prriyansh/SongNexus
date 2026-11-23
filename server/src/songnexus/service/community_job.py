@@ -3,8 +3,7 @@
 A chart is never computed per request over all users. Reading a chart returns
 the stored one while it is fresh; a stale or missing chart is recomputed from
 that one community's members only (lazily), and ``songnexus community-charts``
-recomputes every stale chart on a schedule (Cloud Scheduler -> Cloud Run job
-``songnexus-community``, hourly), like the sync job. Each community commits on
+recomputes every stale chart on a schedule (hourly), like the sync job. Each community commits on
 its own, so one failure never blocks the others.
 """
 

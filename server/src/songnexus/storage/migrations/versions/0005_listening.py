@@ -1,4 +1,4 @@
-"""Aggregate listening: artist audiences and co-listening (R2-5).
+"""Aggregate listening: artist audiences and co-listening.
 
 Revision ID: 0005
 Revises: 0004

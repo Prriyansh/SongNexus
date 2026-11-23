@@ -19,8 +19,8 @@ export function hueOf(name: string): number {
 }
 
 /**
- * The artist's photo, when we have a freely licensed one (Wikimedia Commons,
- * ADR 0009). Tolerant of summaries stored before photos existed.
+ * The artist's photo, when we have a freely licensed one (Wikimedia
+ * Commons). Tolerant of summaries stored before photos existed.
  */
 export function imageOf(subject: object | null | undefined): string | null {
   return (subject as {imageUrl?: string | null} | null)?.imageUrl ?? null;

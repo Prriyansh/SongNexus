@@ -293,6 +293,43 @@ export function useMoreCredits(a: string | undefined, b: string | undefined) {
   });
 }
 
+/** The artist’s most popular song we have (Deezer ranks; no Deezer numbers are shown). */
+export function useTopRecording(id: string | undefined) {
+  return useQuery({
+    queryKey: ['topRecording', id],
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/artists/{artist}:topRecording', {
+          params: {path: {artist: id!}},
+        }),
+      ),
+    enabled: Boolean(id),
+    ...CATALOG_CACHE,
+    staleTime: query =>
+      query.state.data?.status === 'UNAVAILABLE' ? 0 : CATALOG_CACHE.staleTime,
+  });
+}
+
+/** Both artists on Last.fm, read live by the server (only with a Last.fm key there). */
+export function useCompareOnLastFm(
+  a: string | undefined,
+  b: string | undefined,
+) {
+  return useQuery({
+    queryKey: ['compareOnLastFm', a, b],
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/artists/{artist}:compareOnLastFm', {
+          params: {path: {artist: a!}, query: {other: `artists/${b!}`}},
+        }),
+      ),
+    enabled: Boolean(a && b && a !== b),
+    ...CATALOG_CACHE,
+    staleTime: query =>
+      query.state.data?.status === 'UNAVAILABLE' ? 0 : CATALOG_CACHE.staleTime,
+  });
+}
+
 export function useLabel(id: string | undefined) {
   return useQuery({
     queryKey: ['label', id],
@@ -370,7 +407,7 @@ export async function fetchAllDataSources(): Promise<Schemas['DataSource'][]> {
   return sources;
 }
 
-/** The data-source registry (ADR 0005), for the Resources section. */
+/** The data-source registry, for the Resources section. */
 export function useDataSources() {
   return useQuery({
     queryKey: ['dataSources'],
@@ -491,7 +528,7 @@ export function useUpdateProfile() {
 }
 
 // ---------------------------------------------------------------------------
-// Playlist analysis (US-10)
+// Playlist analysis
 // ---------------------------------------------------------------------------
 
 export type PlaylistAnalysis = Schemas['AnalyzePlaylistResponse'];
@@ -509,7 +546,7 @@ export function useAnalyzePlaylist() {
 }
 
 // ---------------------------------------------------------------------------
-// Play (US-04)
+// Play
 // ---------------------------------------------------------------------------
 
 export function usePuzzle(date: string, enabled = true) {
@@ -557,7 +594,7 @@ export function useReveal(date: string, enabled: boolean) {
 }
 
 // ---------------------------------------------------------------------------
-// Linked listening accounts (R2-6, ADR 0006)
+// Linked listening accounts
 // ---------------------------------------------------------------------------
 
 export type ListeningProvider = Schemas['ListeningProvider'];

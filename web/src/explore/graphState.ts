@@ -6,7 +6,7 @@
 import type {ArtistSummary, Schemas} from '../api/client';
 import {idOf} from '../api/client';
 
-/** Above this, the web gets hard to read and slow on mid-tier phones (plan US-02). */
+/** Above this, the web gets hard to read and slow on mid-tier phones. */
 export const MAX_VISIBLE_NODES = 300;
 /** Undo depth: each step keeps a snapshot of the web, so it is bounded. */
 export const MAX_UNDO = 25;
@@ -259,7 +259,7 @@ export function graphReducer(
   }
 }
 
-/** Share of visible artists with genre data, for the genre filter (AC-12.2). */
+/** Share of visible artists with genre data, for the genre filter. */
 export function genreCoverage(state: GraphState): number | undefined {
   const all = Object.values(state.nodes);
   return all.length

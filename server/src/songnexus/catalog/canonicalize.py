@@ -26,7 +26,7 @@ from songnexus.core.model import CreditRole
 from songnexus.core.text import base_title, normalize
 
 SOURCE_ID = "musicbrainz"
-# Genre associations are licensed CC BY-NC-SA, unlike the CC0 core (ADR 0003).
+# Genre associations are licensed CC BY-NC-SA, unlike the CC0 core.
 SUPPLEMENTARY_SOURCE_ID = "musicbrainz-supplementary"
 
 Row = dict[str, Any]

@@ -1,5 +1,5 @@
 /**
- * Compare songs (R2-4, S1), head to head: two covers facing each other with
+ * Compare songs, head to head: two covers facing each other with
  * how alike they sound in the middle, the sound and lyrics analysis (song_compare),
  * the explained parts of the AcousticBrainz similarity, the structure side by
  * side, and the people who worked on both (and on only one).
@@ -28,6 +28,7 @@ import {useI18n} from '../i18n/i18n';
 import type {MessageId} from '../i18n/messages';
 import {MOODS, Meter, percent, useDescribe} from '../songs/Descriptors';
 import {ShareButton} from '../social/ShareSheet';
+import {AnalyzedPicker} from '../songs/AnalyzedPicker';
 import {SoundLyrics} from '../songs/SoundLyrics';
 
 const KNOWN_ROLES = new Set([
@@ -310,6 +311,9 @@ export default function SongCompareScreen() {
         )}
       </section>
 
+      {(!a || !b) && (
+        <AnalyzedPicker onPick={id => set(a ? {b: id} : {a: id})} />
+      )}
       {(!a || !b) && (
         <Moment
           icon="note"

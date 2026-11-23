@@ -1,4 +1,4 @@
-"""From plays to what is stored: per-artist aggregates only (ADR 0006, decision 2).
+"""From plays to what is stored: per-artist aggregates only.
 
 A play's artist is resolved to a catalog artist by MusicBrainz ID when the
 service gives one, otherwise by name with the same conservative matcher as file

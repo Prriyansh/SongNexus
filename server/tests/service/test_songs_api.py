@@ -1,4 +1,4 @@
-"""Song pages and song comparison with AcousticBrainz descriptors (R2-4)."""
+"""Song pages and song comparison with AcousticBrainz descriptors."""
 
 from collections.abc import Iterator
 from pathlib import Path

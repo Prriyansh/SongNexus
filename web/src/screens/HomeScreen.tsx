@@ -15,6 +15,7 @@ import {useRecentArtists} from '../app/recent';
 import {usePageTitle} from '../app/Shell';
 import {useStarterArtists, type Starter} from '../app/starters';
 import {useAuth} from '../auth/AuthProvider';
+import {useSetup} from '../taste/setup';
 import {artistPath, imageOf} from '../components/ArtistRow';
 import {Icon} from '../components/Icon';
 import {Cover, CoverCard, hueOf, Shelf} from '../components/Shelf';
@@ -126,6 +127,8 @@ function useSlides(flags: Record<string, boolean>, starters: Starter[]) {
   const p = puzzle.data;
   const c = challenge.data;
 
+  // The name you gave on Personalize, if any (kept in this browser).
+  const {name: greetName} = useSetup();
   const slides: Slide[] = [
     {
       id: 'intro',
@@ -134,7 +137,11 @@ function useSlides(flags: Record<string, boolean>, starters: Starter[]) {
       node: (
         <>
           <div className="stage__text">
-            <p className="stage__overline">{t('home.feature.strapline')}</p>
+            <p className="stage__overline">
+              {greetName
+                ? t('home.greeting', {name: greetName})
+                : t('home.feature.strapline')}
+            </p>
             <h1 className="stage__title">{t('home.feature.title')}</h1>
             <p className="stage__body">{t('home.feature.body')}</p>
             <div className="stage__actions">

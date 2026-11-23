@@ -403,7 +403,7 @@ def test_analyze_playlist_limits(client: TestClient) -> None:
 def test_playlist_contents_never_reach_the_logs(
     client: TestClient, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Plan §20.3: request bodies are never logged."""
+    """Request bodies are never logged."""
     secret = "Zzyzx Private Listening Name"
     with caplog.at_level("DEBUG"):
         client.post("/v1/playlists:analyze", json=playlist([secret], ["Bob"]))

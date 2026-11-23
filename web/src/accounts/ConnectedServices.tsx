@@ -1,5 +1,5 @@
 /**
- * Connected services (R2-6, ADR 0006): link Spotify, YouTube Music, Last.fm,
+ * Connected services: link Spotify, YouTube Music, Last.fm,
  * ListenBrainz and others; see when each last synced; sync now; disconnect.
  *
  * Honest about timing: sync is scheduled (every N minutes) plus "Sync now",

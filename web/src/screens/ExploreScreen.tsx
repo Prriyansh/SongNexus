@@ -1,11 +1,11 @@
 /**
- * The connection web (S1, US-02/06): start from an artist, open their
+ * The connection web: start from an artist, open their
  * connections, select a line for the credits behind it.
  *
  * The page is the web: the canvas fills it, glass tools float over it, and a
  * details panel answers "who is this?" and "why are they linked?" without
  * leaving (beside the web on wide screens, a bottom sheet on phones). The list
- * view carries the same content for keyboard and screen-reader users (AC-2.3).
+ * view carries the same content for keyboard and screen-reader users.
  */
 import {useQueryClient} from '@tanstack/react-query';
 import {

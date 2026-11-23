@@ -1,4 +1,4 @@
-/** You (S9): sign in, Top 5, hidden artists, theme, and data controls (US-18, US-17, US-09). */
+/** You: sign in, Top 5, hidden artists, theme, and data controls. */
 import {useState} from 'react';
 import {Link} from 'react-router';
 

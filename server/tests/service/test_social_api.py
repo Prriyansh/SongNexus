@@ -1,4 +1,4 @@
-"""Friends and sharing through the API (R2-7, ADR 0007).
+"""Friends and sharing through the API.
 
 Covers: invite codes (single use, hashed, expiring, revocable, forgiving to
 type), friendship, sharing (friends only, validated subjects, moderated notes,

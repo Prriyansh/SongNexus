@@ -1,5 +1,5 @@
 /**
- * Collaborations per year (R2-3): one column per year, oldest left, gaps as zero
+ * Collaborations per year: one column per year, oldest left, gaps as zero
  * so the time axis stays honest. One series, so one color and no legend; the
  * selected range is also conveyed by aria-pressed and the From/To controls.
  *

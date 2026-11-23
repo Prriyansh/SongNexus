@@ -1,4 +1,4 @@
-"""Linked accounts through the API (R2-6, ADR 0006), with every provider call mocked.
+"""Linked accounts through the API, with every provider call mocked.
 
 Covers: what is offered, token linking, the OAuth redirect flow (state bound to
 the session, single use), sync into per-artist tallies, token refresh, revoked

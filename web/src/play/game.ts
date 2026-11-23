@@ -1,5 +1,5 @@
 /**
- * The daily puzzle's client state (US-04): pure functions, unit-tested without React.
+ * The daily puzzle's client state: pure functions, unit-tested without React.
  *
  * Progress lives on this device (the casual puzzle is stateless on the server),
  * keyed by date and catalog version so a new catalog never resumes a stale game.
@@ -141,7 +141,7 @@ const SQUARES: Record<Move, string> = {
 
 /**
  * The share text: the puzzle, the result and the shape of the game, never the
- * artists in between (plan §16.3), so sharing doesn't spoil the puzzle.
+ * artists in between, so sharing doesn't spoil the puzzle.
  */
 export function shareText(
   state: GameState,

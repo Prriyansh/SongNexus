@@ -11,6 +11,8 @@ nothing is matched by name. Three steps, through the shared polite, cached HTTP 
 3. Wikipedia's Action API, at most 20 articles a request: the plain-text introduction (a few
    sentences) and the canonical URL. Wikipedia text is CC BY-SA 4.0, so the URL is stored with
    it and the app always shows it linked.
+4. The Wikimedia Analytics API (CC0): the article's average monthly human views over the last
+   12 complete months, a sign of how widely known the artist is.
 
 Requests carry the same generic User-Agent as the image fetch and nothing about the person
 running the command. Wikidata and Wikipedia are community-edited; the app says "listed on
@@ -27,7 +29,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 import httpx
 from sqlalchemy import Engine
@@ -42,6 +44,8 @@ from songnexus.storage.db import session_scope
 log = logging.getLogger(__name__)
 
 WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php"
+PAGEVIEWS_API_URL = "https://wikimedia.org/api/rest_v1"
+PAGEVIEW_MONTHS = 12
 WIKIPEDIA_PREFIX = "https://en.wikipedia.org/wiki/"
 SPARQL_BATCH = 200  # MusicBrainz IDs per query (honor queries return many rows each)
 WIKIPEDIA_BATCH = 20  # the API's limit on extracts per request
@@ -54,6 +58,69 @@ _QID = re.compile(r"Q\d+")
 
 class WikipediaError(SourceRequestError):
     """A Wikipedia request failed permanently."""
+
+
+class PageviewsError(SourceRequestError):
+    """A Wikimedia pageviews request failed permanently (a missing article is a 404)."""
+
+
+class PageviewsClient(PoliteClient):
+    """Calls the Wikimedia Analytics API for article pageviews (CC0)."""
+
+    error_type = PageviewsError
+
+    def __init__(
+        self,
+        *,
+        cache_dir: Path,
+        base_url: str = PAGEVIEWS_API_URL,
+        min_interval_s: float = 0.05,
+        http: httpx.Client | None = None,
+    ) -> None:
+        """Creates a client; ``http`` defaults to one with the generic User-Agent."""
+        super().__init__(
+            source="wikimedia-pageviews",
+            base_url=base_url,
+            cache_dir=cache_dir,
+            min_interval_s=min_interval_s,
+            max_retries=3,
+            http=http or http_client("application/json"),
+        )
+
+
+def pageview_window(now: datetime) -> tuple[str, str]:
+    """The last ``PAGEVIEW_MONTHS`` complete months as the API's (start, end) timestamps."""
+    year, month = now.year, now.month - 1  # the last complete month
+    if month == 0:
+        year, month = year - 1, 12
+    end = f"{year:04d}{month:02d}2800"  # any day of the month selects it, monthly granularity
+    start_index = year * 12 + (month - 1) - (PAGEVIEW_MONTHS - 1)
+    start = f"{start_index // 12:04d}{start_index % 12 + 1:02d}0100"
+    return start, end
+
+
+def monthly_views(client: PageviewsClient, title: str, window: tuple[str, str]) -> int | None:
+    """Average monthly human views of an English Wikipedia article over the window.
+
+    None when the article has no data (a 404: missing, or too new to have a full month).
+
+    Raises:
+        PageviewsError: The API failed in a way other than "no data".
+    """
+    article = quote(title.replace(" ", "_"), safe="")
+    path = (
+        "metrics/pageviews/per-article/en.wikipedia.org/all-access/user/"
+        f"{article}/monthly/{window[0]}/{window[1]}"
+    )
+    try:
+        body = client.get("pageviews", path, {}).body
+    except PageviewsError as error:
+        if "-> 404" in str(error):
+            return None
+        raise
+    views = [item.get("views") for item in body.get("items", [])]
+    counts = [v for v in views if isinstance(v, int)]
+    return round(sum(counts) / len(counts)) if counts else None
 
 
 class WikipediaClient(PoliteClient):
@@ -241,6 +308,7 @@ class FactsReport:
     with_summary: int = 0
     with_awards: int = 0
     with_nominations: int = 0
+    with_pageviews: int = 0
     honors: dict[str, int] = field(default_factory=lambda: {AWARD: 0, NOMINATION: 0})
 
     def as_dict(self) -> dict[str, Any]:
@@ -252,6 +320,7 @@ class FactsReport:
             "artistsWithWikipediaSummary": self.with_summary,
             "artistsWithAwards": self.with_awards,
             "artistsWithNominations": self.with_nominations,
+            "artistsWithPageviews": self.with_pageviews,
             "awards": self.honors[AWARD],
             "nominations": self.honors[NOMINATION],
         }
@@ -262,6 +331,9 @@ def find_facts(
     wikipedia: WikipediaClient,
     artists: Mapping[str, Sequence[str]],
     report: FactsReport,
+    *,
+    pageviews: PageviewsClient | None = None,
+    window: tuple[str, str] | None = None,
 ) -> dict[str, FactsRecord | None]:
     """Looks up every artist's facts; returns {artist ID: facts or None}.
 
@@ -291,6 +363,10 @@ def find_facts(
             out[artist_id] = None
             continue
         summary = summaries.get(facts.article_title or "")
+        views = None
+        if pageviews is not None and window is not None and summary:
+            canonical = wikipedia_title(summary[1])
+            views = monthly_views(pageviews, canonical, window) if canonical else None
         record = FactsRecord(
             wikidata_id=facts.item,
             description=facts.description,
@@ -298,6 +374,7 @@ def find_facts(
             summary=summary[0] if summary else None,
             awards=tuple(honors[AWARD].get(facts.item, [])),
             nominations=tuple(honors[NOMINATION].get(facts.item, [])),
+            monthly_views=views,
         )
         out[artist_id] = record
         report.with_item += 1
@@ -305,6 +382,7 @@ def find_facts(
         report.with_summary += bool(record.summary)
         report.with_awards += bool(record.awards)
         report.with_nominations += bool(record.nominations)
+        report.with_pageviews += record.monthly_views is not None
         report.honors[AWARD] += len(record.awards)
         report.honors[NOMINATION] += len(record.nominations)
     return out
@@ -316,6 +394,7 @@ def run_fetch_facts(
     wikipedia: WikipediaClient,
     *,
     now: datetime,
+    pageviews: PageviewsClient | None = None,
     limit: int | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
@@ -332,7 +411,9 @@ def run_fetch_facts(
         levels = detail_levels(session)
     artists = select_artists(mapping, levels, limit)
     report = FactsReport(artists_considered=len(artists))
-    found = find_facts(wikidata, wikipedia, artists, report)
+    found = find_facts(
+        wikidata, wikipedia, artists, report, pageviews=pageviews, window=pageview_window(now)
+    )
     result: dict[str, Any] = {"dryRun": dry_run, **report.as_dict()}
     if not dry_run:
         with session_scope(engine) as session:
@@ -343,7 +424,8 @@ def run_fetch_facts(
             "unchanged": stats.unchanged,
             "deleted": stats.deleted,
         }
-    result["networkRequests"] = wikidata.network_requests + wikipedia.network_requests
-    result["cacheHits"] = wikidata.cache_hits + wikipedia.cache_hits
+    clients: list[PoliteClient] = [wikidata, wikipedia, *([pageviews] if pageviews else [])]
+    result["networkRequests"] = sum(c.network_requests for c in clients)
+    result["cacheHits"] = sum(c.cache_hits for c in clients)
     log.info("fetch-facts finished", extra=result)
     return result

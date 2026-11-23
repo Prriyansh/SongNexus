@@ -1,4 +1,4 @@
-"""Structured logging: one JSON object per line, ready for Cloud Logging."""
+"""Structured logging: one JSON object per line (what log viewers such as Vercel's parse)."""
 
 from __future__ import annotations
 
@@ -13,15 +13,13 @@ from typing import Any
 request_id_var: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "request_id", default=None
 )
-# Cloud Logging trace resource ("projects/<p>/traces/<id>"), when known.
-trace_var: contextvars.ContextVar[str | None] = contextvars.ContextVar("trace", default=None)
 
 # Attributes every LogRecord has; anything else was passed via ``extra=``.
 _STANDARD_ATTRS = frozenset(vars(logging.makeLogRecord({}))) | {"message", "asctime"}
 
 
 class JsonFormatter(logging.Formatter):
-    """Formats records as JSON with Cloud Logging's ``severity`` field."""
+    """Formats records as JSON with a ``severity`` field."""
 
     def format(self, record: logging.LogRecord) -> str:
         """Returns the record as a single JSON line."""
@@ -40,8 +38,6 @@ class JsonFormatter(logging.Formatter):
         )
         if (request_id := request_id_var.get()) is not None:
             payload["requestId"] = request_id
-        if (trace := trace_var.get()) is not None:
-            payload["logging.googleapis.com/trace"] = trace
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload, default=str, ensure_ascii=False)

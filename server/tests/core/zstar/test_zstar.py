@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from songnexus.core.zstar import evaluate, experiments, ranker
+from songnexus.core.zstar import experiments, ranker
 from songnexus.core.zstar.catalog import Catalog, _walk_neighbors
 from songnexus.core.zstar.embed import Embeddings, build_embeddings
 from songnexus.core.zstar.pipeline import ReasonKind, recommend
@@ -181,40 +181,3 @@ def test_experiments_are_stable_and_split_traffic() -> None:
     assert experiments.assign("anyone", None) == "control"
     with pytest.raises(ValueError, match="Bad experiment"):
         experiments.parse("x:a=0.7,b=0.6")
-
-
-def test_training_learns_a_planted_signal() -> None:
-    rng = random.Random(5)
-    examples = []
-    for _ in range(3000):
-        f = {"bias": 1.0, "colisten": rng.random(), "explore": rng.random()}
-        opened = rng.random() < 0.05 + 0.6 * f["colisten"]
-        examples.append(ranker.Example(f, {"open": opened, "listen": False, "negative": False}))
-    model = ranker.train(examples, "trained-test")
-    assert model is not None
-    assert model.weights["open"]["colisten"] > 1.0
-    # Opens happen with probability 0.05 + 0.6 * colisten, so ~0.72 is the best any
-    # model can do; the trained head should get close and beat the prior.
-    assert model.metrics["auc_open"] > 0.69
-    assert model.metrics["auc_open"] >= model.metrics["baseline_auc_open"] - 0.005
-    assert ranker.better(model)
-    restored = ranker.Model.from_payload(model.to_payload())
-    assert restored.weights == model.weights
-    assert ranker.train(examples[:10], "too-small") is None
-
-
-def test_offline_metrics(catalog: Catalog, embeddings: Embeddings) -> None:
-    users = evaluate.split_users([dict.fromkeys(ROCK, 5)], hidden_share=0.25, min_artists=5)
-    assert len(users) == 1
-    assert len(users[0].hidden) == 3
-    report = evaluate.run(
-        "popularity",
-        evaluate.popularity_baseline(catalog),
-        users,
-        catalog=catalog,
-        embeddings=embeddings,
-        k=5,
-    )
-    assert 0.0 <= report.recall <= 1.0
-    assert report.coverage > 0
-    assert evaluate.ndcg(["x", "y"], frozenset({"x"}), 2) == 1.0

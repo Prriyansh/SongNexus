@@ -1,4 +1,4 @@
-"""Game scores and first trivia answers (ADR 0010). Authorization happens in callers.
+"""Game scores and first trivia answers. Authorization happens in callers.
 
 ``period_scores`` returns campus aggregation input with user IDs replaced by
 opaque integers; only ``friend_scores`` returns user IDs, and callers pass it

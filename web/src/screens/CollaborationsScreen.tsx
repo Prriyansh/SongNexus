@@ -1,5 +1,5 @@
 /**
- * Collaborations (R2-3, US-16, v5): every collaboration of one artist, with a
+ * Collaborations: every collaboration of one artist, with a
  * compact hero (who, how many of each kind, over which years), the timeline
  * and the filters.
  */

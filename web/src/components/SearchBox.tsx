@@ -1,18 +1,28 @@
 /**
- * Catalog search as an ARIA 1.2 combobox (M5-02): typing shows suggestions,
+ * Catalog search as an ARIA 1.2 combobox: typing shows suggestions,
  * arrow keys move, Enter picks, Escape closes. Works in any script.
  *
- * In the main search bar it also takes questions (Ask, ADR 0008): when the text
+ * In the main search bar it also takes questions (Ask): when the text
  * reads like a question, the first option is "Ask SongNexus: …", and Enter on it
  * (or the sparkle button) shows an answer from our data in a panel under the
  * bar. Focus stays in the input throughout; Escape closes the panel.
  */
-import {useDeferredValue, useEffect, useId, useRef, useState} from 'react';
+import {
+  useDeferredValue,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {readsLikeQuestion, useAsk, answerText} from '../api/ask';
 import {idOf, type Schemas} from '../api/client';
 import {useConfig, useSearch} from '../api/queries';
 import {useI18n} from '../i18n/i18n';
+import {usePicks} from '../taste/picks';
+import {rankByTaste} from '../taste/searchRanking';
+import {useSetup} from '../taste/setup';
 
 import {Avatar, imageOf} from './ArtistRow';
 import {AskAnswer, useListFormat, type AskState} from './AskAnswer';
@@ -38,7 +48,7 @@ interface Props {
   shortcutHint?: boolean;
 }
 
-/** Where a result leads. R1 has artist and song pages; releases are not searchable yet. */
+/** Where a result leads. There are artist and song pages; releases are not searchable yet. */
 export function resultPath(
   result: Pick<Result, 'name' | 'entityType'>,
 ): string {
@@ -78,7 +88,14 @@ export function SearchBox({
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const askToken = useRef(0);
-  const results = deferred.trim() ? (search.data?.results ?? []) : [];
+  const picks = usePicks();
+  const {songs} = useSetup();
+  const raw = deferred.trim() ? search.data?.results : undefined;
+  // Your saved music first, among results that match equally well (Helen's ranking).
+  const results = useMemo(
+    () => (raw ? rankByTaste(raw, picks, songs) : []),
+    [raw, picks, songs],
+  );
   const offerAsk = askEnabled && readsLikeQuestion(deferred);
   const options: Option[] = [
     ...(offerAsk ? [{kind: 'ask'} as const] : []),

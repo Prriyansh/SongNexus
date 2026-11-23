@@ -39,6 +39,7 @@ from songnexus.service.routes.common import (
 )
 from songnexus.storage import catalog_repository as repo
 from songnexus.storage.artist_facts import read_artist_facts
+from songnexus.storage.events import shared_events
 
 router = APIRouter(
     prefix="/v1", tags=["analysis"], dependencies=[Depends(rate_limited(MethodClass.ANALYZE))]
@@ -48,13 +49,14 @@ ReadModelDep = Annotated[ReadModel, Depends(read_model)]
 ViewerDep = Annotated[Viewer, Depends(viewer)]
 SessionDep = Annotated[Session, Depends(db_session, scope="function")]
 EVIDENCE_PER_STEP = 3
+SHARED_EVENTS = 8
 
 
 def _endpoints(graph: ArtistGraph, *names: tuple[str, str]) -> list[str]:
     """Parses and checks the artists a method starts from.
 
     Endpoints are the viewer's explicit choice, so they are allowed even when
-    blocked; blocks apply to everything in between (US-17).
+    blocked; blocks apply to everything in between.
     """
     ids = []
     for value, field in names:
@@ -215,6 +217,26 @@ def compare_artists(
                 url="https://listenbrainz.org/",
             ),
         ),
+        shared_events=[
+            convert.event_summary(graph, e) for e in shared_events(session, a, b, SHARED_EVENTS)
+        ],
+        shared_labels=_shared_labels(session, a, b),
         shared_awards=convert.shared_awards(facts.get(a), facts.get(b)),
         graph_version=model.version,
     )
+
+
+def _shared_labels(session: Session, a: str, b: str) -> list[api.ArtistLabel]:
+    """Labels both artists released on, as the first artist's label list orders them."""
+    theirs = {lb.label_id for lb in repo.artist_labels(session, b)}
+    return [
+        api.ArtistLabel(
+            label=f"labels/{lb.label_id}",
+            display_name=lb.name,
+            release_count=lb.release_count,
+            first_year=lb.first_year,
+            last_year=lb.last_year,
+        )
+        for lb in repo.artist_labels(session, a)
+        if lb.label_id in theirs
+    ]

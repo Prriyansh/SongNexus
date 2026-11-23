@@ -1,4 +1,4 @@
-"""Schemas for For You (ADR 0010): the feed, events, follows, taste feedback and imports."""
+"""Schemas for For You: the feed, events, follows, taste feedback and imports."""
 
 from __future__ import annotations
 

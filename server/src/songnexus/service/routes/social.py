@@ -1,4 +1,4 @@
-"""Friends and sharing (R2-7, ADR 0007).
+"""Friends and sharing.
 
 Friends join only by invite code: no search, no contact upload, no directory.
 Friends see each other's display name and what they share, nothing else.
@@ -51,7 +51,7 @@ INVITE_TTL = timedelta(days=7)
 MAX_ACTIVE_INVITES = 5
 MAX_INVITES_PER_DAY = 20
 MAX_FRIENDS = 500
-# Per-sender limits, counted in the database (ADR 0007).
+# Per-sender limits, counted in the database.
 SEND_LIMITS = ((timedelta(hours=1), 20), (timedelta(days=1), 100))
 
 _SUBJECTS: dict[api.ShareKind, tuple[str, int]] = {
@@ -658,7 +658,7 @@ def list_inbox(
 ) -> api.ListInboxResponse:
     """Lists shares received, newest first.
 
-    Shares about an artist the listener blocked are left out (US-17 applies here too).
+    Shares about an artist the listener blocked are left out (blocks apply here too).
     """
     _enabled(request)
     user_id = authorize_user(user, who)

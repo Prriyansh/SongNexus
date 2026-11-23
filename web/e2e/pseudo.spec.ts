@@ -1,5 +1,5 @@
 /**
- * Pseudo-localization sweep (M8-03): in the long-text (en-XA) and right-to-left (ar-XB)
+ * Pseudo-localization sweep: in the long-text (en-XA) and right-to-left (ar-XB)
  * pseudo-locales no screen scrolls sideways, has accessibility violations, or shows an
  * interface string that bypasses the message catalog.
  */
@@ -59,7 +59,7 @@ for (const locale of ['en-XA', 'ar-XB']) {
 
       if (locale === 'en-XA') {
         // Interface strings are pseudo-localized (wrapped in ⟦ ⟧); a plain one bypassed the catalog.
-        // Long-form legal copy is deliberately English-only and marked lang="en" (R2 translates it).
+        // Long-form legal copy is deliberately English-only and marked lang="en" (translated later).
         const plain = await page
           .locator('main h1, main h2, main button, main label')
           .evaluateAll(els =>

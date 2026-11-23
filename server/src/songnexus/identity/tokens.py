@@ -1,4 +1,4 @@
-"""Verification of Firebase ID tokens, once, at sign-in (ADR 0002)."""
+"""Verification of Firebase ID tokens, once, at sign-in."""
 
 from __future__ import annotations
 
@@ -6,9 +6,31 @@ import threading
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+GOOGLE_PROVIDER = "google.com"
+
 
 class InvalidIdTokenError(Exception):
-    """The ID token is malformed, expired, revoked or for another project."""
+    """The ID token is malformed, expired, revoked, for another project, or not from Google."""
+
+
+def require_google(claims: dict[str, Any]) -> str:
+    """The UID in verified token claims, provided the account signed in with Google.
+
+    Firebase records how the user signed in (``firebase.sign_in_provider``). SongNexus accounts
+    are Google accounts only, so a token from any other method (email and password, anonymous,
+    phone, a custom token) is refused even if the Firebase project allows that method.
+
+    Raises:
+        InvalidIdTokenError: The token has no subject or did not come from Google Sign-In.
+    """
+    firebase = claims.get("firebase")
+    provider = firebase.get("sign_in_provider") if isinstance(firebase, dict) else None
+    if provider != GOOGLE_PROVIDER:
+        raise InvalidIdTokenError(f"sign-in provider {provider!r} is not Google")
+    uid = claims.get("uid") or claims.get("sub")
+    if not isinstance(uid, str) or not uid:
+        raise InvalidIdTokenError("token has no subject")
+    return uid
 
 
 @dataclass(frozen=True)
@@ -33,7 +55,8 @@ class IdTokenVerifier(Protocol):
 class FirebaseIdTokenVerifier:
     """Verifies tokens with the Firebase Admin SDK.
 
-    Checks signature, audience (project), issuer and expiry. Set
+    Checks signature, audience (project), issuer and expiry, and that the user signed in with
+    Google (``require_google``). Set
     ``FIREBASE_AUTH_EMULATOR_HOST`` to verify emulator tokens locally; the SDK
     then accepts the emulator's unsigned tokens, so never set it in production.
     """
@@ -66,10 +89,7 @@ class FirebaseIdTokenVerifier:
             claims = auth.verify_id_token(id_token, app=self._firebase_app(), clock_skew_seconds=10)
         except (ValueError, auth.InvalidIdTokenError, auth.CertificateFetchError) as exc:
             raise InvalidIdTokenError(type(exc).__name__) from exc
-        uid = claims.get("uid") or claims.get("sub")
-        if not isinstance(uid, str) or not uid:
-            raise InvalidIdTokenError("token has no subject")
-        return VerifiedIdentity(uid)
+        return VerifiedIdentity(require_google(claims))
 
 
 class SignInDisabledVerifier:

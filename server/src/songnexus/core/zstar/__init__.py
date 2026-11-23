@@ -1,4 +1,4 @@
-"""Z-star: the For You recommender (ADR 0010, docs/design/for-you.md).
+"""Z-star: the For You recommender.
 
 A multi-stage recommender in the shape large feeds use, sized for this catalog:
 
@@ -22,5 +22,5 @@ A multi-stage recommender in the shape large feeds use, sized for this catalog:
    arms that change the configuration or the model.
 
 Everything here is pure and deterministic for a given input and seed: no
-database, no clock, no network. ``evaluate`` measures it offline.
+database, no clock, no network.
 """

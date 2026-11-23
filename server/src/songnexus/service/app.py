@@ -57,8 +57,11 @@ from songnexus.service.routes import credits as credits_routes
 from songnexus.service.routes import foryou as foryou_routes
 from songnexus.service.routes import friend_paths as friend_paths_routes
 from songnexus.service.routes import games as games_routes
+from songnexus.service.routes import lastfm as lastfm_routes
+from songnexus.service.routes import maps as maps_routes
 from songnexus.service.routes import recap as recap_routes
 from songnexus.service.routes import sound as sound_routes
+from songnexus.service.routes import top_song as top_song_routes
 from songnexus.service.schemas import ErrorResponse
 from songnexus.service.sync_job import run_sync
 from songnexus.storage.db import make_engine
@@ -241,12 +244,15 @@ def create_app(settings: Settings | None = None, state: AppState | None = None) 
         recap_routes.router,
         ask_routes.router,
         foryou_routes.router,
+        maps_routes.router,
+        lastfm_routes.router,
+        top_song_routes.router,
     ):
         app.include_router(router)
     # The middleware added last runs outermost, so security headers cover every
     # response, including errors raised by the request-context layer.
     app.add_middleware(BodySizeLimitMiddleware)
-    app.add_middleware(RequestContextMiddleware, gcp_project=settings.gcp_project)
+    app.add_middleware(RequestContextMiddleware)
     app.add_middleware(CacheHeadersMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=GZIP_MIN_BYTES, compresslevel=5)
     app.add_middleware(SecurityHeadersMiddleware)

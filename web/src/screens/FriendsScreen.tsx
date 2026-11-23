@@ -1,5 +1,5 @@
 /**
- * Friends (R2-7): inviting is the hero (a link and a code, copy or share),
+ * Friends: inviting is the hero (a link and a code, copy or share),
  * then what friends sent you as cards, your friends, how your music connects
  * to theirs (friend paths), and blocks, open invites and sharing tucked into
  * "Privacy and safety". Friends join only through an invite you send: there is
@@ -1142,6 +1142,27 @@ function SignedIn({name}: {name: string}) {
   );
 }
 
+/** Two playlists on one map, joined with a short code: no account needed (the team app's Friends). */
+function ComparePlaylists() {
+  const {t} = useI18n();
+  return (
+    <section className="card friends-maps">
+      <h2>{t('friends.maps.title')}</h2>
+      <p>{t('friends.maps.body')}</p>
+      <div className="friends-maps__actions">
+        <Link className="btn btn--filled" to="/map?mode=friend">
+          <Icon name="people" />
+          {t('friends.maps.start')}
+        </Link>
+        <Link className="btn btn--tonal" to="/map?mode=playlist">
+          <Icon name="library" />
+          {t('friends.maps.mine')}
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 export default function FriendsScreen() {
   const {t} = useI18n();
   const auth = useAuth();
@@ -1194,6 +1215,7 @@ export default function FriendsScreen() {
           art={<InvitePass friends={[]} />}
         />
         <HowFriendsWork />
+        <ComparePlaylists />
       </div>
     );
 
@@ -1236,12 +1258,14 @@ export default function FriendsScreen() {
         />
         <NameCard />
         <HowFriendsWork />
+        <ComparePlaylists />
       </div>
     );
 
   return (
     <div className="friends">
       <SignedIn name={profile.data.displayName} />
+      <ComparePlaylists />
     </div>
   );
 }

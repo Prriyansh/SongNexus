@@ -1,4 +1,4 @@
-"""How well two genre sources agree, and how many artists each covers (R2-1 evaluation).
+"""How well two genre sources agree, and how many artists each covers.
 
 Pure: takes two graphs built from the same catalog with different genre
 sources. Agreement is measured on artists both sources describe:

@@ -21,12 +21,13 @@ production.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import (
     JSON,
     Boolean,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -249,7 +250,7 @@ class ArtistLink(ProvenanceMixin, Base):
 
 
 class ArtistGenre(ProvenanceMixin, Base):
-    """A genre association with its vote count, per source (ADR 0003, ADR 0005).
+    """A genre association with its vote count, per source.
 
     Sources count votes in their own unit (MusicBrainz tag votes, Discogs masters
     tagged), so the source is part of the key and shares are computed per source.
@@ -327,7 +328,7 @@ class ArtistCoListening(ProvenanceMixin, Base):
 
 
 class ArtistImage(Base):
-    """A freely licensed photo of an artist from Wikimedia Commons (ADR 0009).
+    """A freely licensed photo of an artist from Wikimedia Commons.
 
     Found through the artist's Wikidata item (P434 MusicBrainz ID, P18 image).
     One row per artist; ``songnexus fetch-images`` replaces it on each run.
@@ -375,7 +376,85 @@ class ArtistFacts(Base):
     summary: Mapped[str | None] = mapped_column(Text)
     awards: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
     nominations: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
+    # Average monthly human views of the Wikipedia article (Wikimedia pageviews, CC0).
+    monthly_views: Mapped[int | None] = mapped_column(Integer)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class ReleaseCover(Base):
+    """A release group's front cover from the Cover Art Archive.
+
+    ``songnexus fetch-covers`` finds it by the release group's MusicBrainz ID. The images stay
+    their rights holders': they are hot-linked from the archive, never copied.
+    """
+
+    __tablename__ = "release_covers"
+
+    release_id: Mapped[str] = mapped_column(
+        ForeignKey("releases.id", ondelete="CASCADE"), primary_key=True
+    )
+    thumbnail_url: Mapped[str] = mapped_column(String(2048))
+    large_url: Mapped[str] = mapped_column(String(2048))
+    page_url: Mapped[str] = mapped_column(String(2048))
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class RecordingChart(Base):
+    """A catalog song's run on the Billboard Hot 100 (``songnexus fetch-billboard``)."""
+
+    __tablename__ = "recording_charts"
+
+    recording_id: Mapped[str] = mapped_column(
+        ForeignKey("recordings.id", ondelete="CASCADE"), primary_key=True
+    )
+    peak: Mapped[int] = mapped_column(Integer)
+    weeks: Mapped[int] = mapped_column(Integer)
+    first_week: Mapped[date] = mapped_column(Date)
+    last_week: Mapped[date] = mapped_column(Date)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class ArtistChart(Base):
+    """A catalog artist's Billboard Hot 100 history, as the lead performer."""
+
+    __tablename__ = "artist_charts"
+
+    artist_id: Mapped[str] = mapped_column(
+        ForeignKey("artists.id", ondelete="CASCADE"), primary_key=True
+    )
+    entries: Mapped[int] = mapped_column(Integer)
+    top_ten: Mapped[int] = mapped_column(Integer)
+    number_ones: Mapped[int] = mapped_column(Integer)
+    best_peak: Mapped[int] = mapped_column(Integer)
+    first_week: Mapped[date] = mapped_column(Date)
+    last_week: Mapped[date] = mapped_column(Date)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class Event(Base):
+    """A concert or festival from MusicBrainz (CC0), found through a catalog artist."""
+
+    __tablename__ = "events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # the MusicBrainz event ID
+    name: Mapped[str] = mapped_column(NAME)
+    kind: Mapped[str | None] = mapped_column(String(64))
+    date: Mapped[str | None] = mapped_column(DATE)
+    place: Mapped[str | None] = mapped_column(NAME)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class EventPerformer(Base):
+    """A catalog artist who performed at an event (main act, support or guest)."""
+
+    __tablename__ = "event_performers"
+
+    event_id: Mapped[str] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"), primary_key=True
+    )
+    artist_id: Mapped[str] = mapped_column(
+        ForeignKey("artists.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
 
 
 class GenreParent(ProvenanceMixin, Base):
@@ -493,7 +572,7 @@ ENTITY_MODELS: dict[str, type[Base]] = {
 
 
 # ---------------------------------------------------------------------------
-# User data (plan §15.2). Personal data lives only here, never in logs.
+# User data. Personal data lives only here, never in logs.
 # ---------------------------------------------------------------------------
 
 
@@ -511,13 +590,13 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     age_confirmed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
-    # Development demo data only (docs/synthetic-data.md): the command that created
+    # Development demo data only: the command that created
     # this synthetic account ("seed-demo"); None for every real account.
     synthetic_source: Mapped[str | None] = mapped_column(String(32), index=True)
 
 
 class UserSession(Base):
-    """A signed-in browser. Only the SHA-256 of the session token is stored (ADR 0002)."""
+    """A signed-in browser. Only the SHA-256 of the session token is stored."""
 
     __tablename__ = "user_sessions"
 
@@ -539,7 +618,7 @@ class Preferences(Base):
     genre_ids: Mapped[list[str]] = mapped_column(JsonType, default=list)
     categories: Mapped[list[str]] = mapped_column(JsonType, default=list)
     theme: Mapped[str] = mapped_column(String(16))
-    # For You (ADR 0010): learn from what the listener does in the app. Off means
+    # For You: learn from what the listener does in the app. Off means
     # no interaction events are stored and the feed uses explicit signals only.
     personalize: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
     etag: Mapped[str] = mapped_column(String(32))
@@ -547,7 +626,7 @@ class Preferences(Base):
 
 
 class BlockedArtist(Base):
-    """An artist a user never wants to see in lists or paths (US-17)."""
+    """An artist a user never wants to see in lists or paths."""
 
     __tablename__ = "blocked_artists"
 
@@ -560,7 +639,7 @@ class BlockedArtist(Base):
 
 
 class Profile(Base):
-    """A user's profile: Top 5 artists, private by default (US-09)."""
+    """A user's profile: Top 5 artists, private by default."""
 
     __tablename__ = "profiles"
 
@@ -574,7 +653,7 @@ class Profile(Base):
 
 
 class LinkedAccount(Base):
-    """A listening service a user linked (ADR 0006). Tokens are ciphertext, never plain."""
+    """A listening service a user linked. Tokens are ciphertext, never plain."""
 
     __tablename__ = "linked_accounts"
 
@@ -626,7 +705,7 @@ class OAuthFlow(Base):
 
 
 class SocialProfile(Base):
-    """The name a user shows to friends (R2-7). Chosen by the user, never from Firebase."""
+    """The name a user shows to friends. Chosen by the user, never from Firebase."""
 
     __tablename__ = "social_profiles"
 
@@ -647,6 +726,24 @@ class FriendInvite(Base):
     id: Mapped[str] = mapped_column(ID, primary_key=True)
     code_hash: Mapped[str] = mapped_column(String(64), unique=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class TasteRoom(Base):
+    """Two playlists joined by a short code, to map together. Deleted a week after opening.
+
+    Holds what each person chose to share: a first name and their tracks (titles and artist
+    names, parsed on their device). Not tied to an account.
+    """
+
+    __tablename__ = "taste_rooms"
+
+    code: Mapped[str] = mapped_column(String(6), primary_key=True)
+    host_name: Mapped[str] = mapped_column(String(30), default="")
+    host_tracks: Mapped[list[Any]] = mapped_column(JsonType)
+    guest_name: Mapped[str | None] = mapped_column(String(30))
+    guest_tracks: Mapped[list[Any] | None] = mapped_column(JsonType)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
@@ -716,7 +813,7 @@ class AbuseReport(Base):
 
 
 class AuditEntry(Base):
-    """An account-changing action, for disputes (plan §19, repudiation).
+    """An account-changing action, for disputes.
 
     Holds no IP addresses or request bodies; removed with the account.
     """
@@ -771,7 +868,7 @@ class CommunityChart(Base):
 
 
 # ---------------------------------------------------------------------------
-# Game scores (ADR 0010): opt-in, one per player per game per day.
+# Game scores: opt-in, one per player per game per day.
 # ---------------------------------------------------------------------------
 
 
@@ -815,7 +912,7 @@ class TriviaAnswer(Base):
 
 
 # ---------------------------------------------------------------------------
-# For You and Z-star (ADR 0010). Personal data: exported and deleted with the
+# For You and Z-star. Personal data: exported and deleted with the
 # account; raw events are kept 180 days, served feeds 30 days.
 # ---------------------------------------------------------------------------
 

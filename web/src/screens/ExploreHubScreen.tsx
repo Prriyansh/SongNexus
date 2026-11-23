@@ -111,7 +111,7 @@ function HeroWeb({people}: {people: Starter[]}) {
 }
 
 interface ToolTile {
-  id: 'path' | 'compare' | 'songs';
+  id: 'path' | 'compare' | 'songs' | 'similar';
   to: string;
   icon: IconName;
   title: MessageId;
@@ -153,6 +153,14 @@ function ToolTiles({starters}: {starters: Starter[]}) {
       title: 'tool.songs.title',
       body: 'tool.songs.body',
       flag: 'compare',
+    },
+    {
+      id: 'similar',
+      to: '/map',
+      icon: 'spark',
+      title: 'tool.similar.title',
+      body: 'tool.similar.body',
+      flag: 'explore',
     },
   ];
   return (

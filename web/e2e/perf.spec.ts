@@ -1,8 +1,8 @@
 /**
- * Explore frame rate with a large web, on a slowed CPU (R2-2 budget: >= 50 fps at
+ * Explore frame rate with a large web, on a slowed CPU (budget: >= 50 fps at
  * 300 nodes on a mid-range phone). Opt-in, because frame rates on shared CI
  * runners are noise: `SONGNEXUS_PERF=1 npx playwright test perf --project=mobile`.
- * The result is printed and recorded by hand in docs/perf/measurements.md.
+ * The result is printed to the test log.
  */
 import {expect, test} from '@playwright/test';
 

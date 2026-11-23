@@ -18,7 +18,7 @@ for the enabled kinds):
     engineered       mix, recording or mastering on the other's           0.25
 
 The weights are a documented heuristic, exposed so they can be evaluated and
-tuned (plan §16.1), not a claim of optimality.
+tuned, not a claim of optimality.
 """
 
 from __future__ import annotations
@@ -190,7 +190,7 @@ class ArtistNode:
 
 @dataclass(frozen=True)
 class ArtistImage:
-    """A freely licensed artist photo and the attribution its license requires (ADR 0009)."""
+    """A freely licensed artist photo and the attribution its license requires."""
 
     url: str  # about 960 px wide
     thumbnail_url: str  # about 330 px wide

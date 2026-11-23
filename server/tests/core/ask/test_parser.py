@@ -1,4 +1,4 @@
-"""The deterministic parser: common phrasings, no model (ADR 0008)."""
+"""The deterministic parser: common phrasings, no model."""
 
 import pytest
 

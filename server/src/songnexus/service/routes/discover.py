@@ -195,7 +195,7 @@ def check_trivia(
     """Checks one answer. The verdict comes with the right option and its credits.
 
     For a signed-in player the first answer to each question is kept for two days,
-    so a score submitted later counts that answer (ADR 0010).
+    so a score submitted later counts that answer.
     """
     day = _day(date)
     quiz = _quiz(model, session, day)

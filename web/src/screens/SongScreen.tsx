@@ -1,6 +1,6 @@
 /**
- * Song (S5, v5): a hero with generated cover art (we hold no album-art
- * rights), who made it, "Listen on YouTube Music"; then its sound, the
+ * Song: a hero with its album cover (hot-linked from the Cover Art Archive;
+ * generated art when there is none), who made it, "Listen on YouTube Music"; then its sound, the
  * performers as covers, every other credit grouped by role, and the releases
  * it appears on.
  */
@@ -144,7 +144,10 @@ function Appearances({items}: {items: Schemas['Appearance'][]}) {
             style={{'--i': index} as CSSProperties}
           >
             <div className="entity-card" data-static>
-              <Cover name={appearance.displayName} />
+              <Cover
+                name={appearance.displayName}
+                image={appearance.coverUrl}
+              />
               <span className="entity-card__text">
                 <span className="entity-card__title">
                   <bdi>{appearance.displayName}</bdi>
@@ -163,6 +166,17 @@ function Appearances({items}: {items: Schemas['Appearance'][]}) {
         ))}
       </ul>
       {toggle}
+      {items.some(a => a.coverUrl) && (
+        <p className="entity-intro__source">
+          <a
+            href="https://coverartarchive.org"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t('song.coversCredit')}
+          </a>
+        </p>
+      )}
     </EntitySection>
   );
 }
@@ -196,11 +210,19 @@ export default function SongScreen() {
     .join(' ');
   const firstRelease = song.appearances[0];
 
+  // The earliest release with a cover (Cover Art Archive), if any.
+  const cover = song.appearances.find(a => a.coverUrl)?.coverUrl ?? null;
+
   return (
     <article className="entity">
       <EntityHero
         kind="song"
         name={song.displayName}
+        art={
+          cover ? (
+            <Cover name={song.displayName} image={cover} eager />
+          ) : undefined
+        }
         overline={[t('search.type.RECORDING'), year]
           .filter(Boolean)
           .join(' · ')}
@@ -259,6 +281,15 @@ export default function SongScreen() {
                   count: song.appearances.length,
                 }),
               },
+              ...(song.chart
+                ? [
+                    {
+                      key: 'peak',
+                      value: `#${formatNumber(song.chart.peak)}`,
+                      label: t('song.stat.peak', {weeks: song.chart.weeks}),
+                    },
+                  ]
+                : []),
             ]}
           />
         }
@@ -268,6 +299,10 @@ export default function SongScreen() {
             <Link className="btn btn--tonal" to={`/compare/songs?a=${id}`}>
               <Icon name="compare" />
               {t('song.compare')}
+            </Link>
+            <Link className="btn btn--tonal" to={`/map?song=${id}`}>
+              <Icon name="spark" />
+              {t('song.similar')}
             </Link>
             <ShareButton
               kind="RECORDING"

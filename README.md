@@ -85,15 +85,30 @@ Wikipedia/Wikidata facts for the best-known artists, and bundles it with the fun
 2. Deploy. With no environment variables at all, it serves signed out (no accounts), accepts
    writes only from the deployment's own `https://` URLs, and shows "not set up" where an
    optional service is missing.
-3. Optional environment variables (Project → Settings → Environment Variables), then redeploy:
+3. A database (free): in Vercel, **Storage → Create Database → Neon**, connect it to this project,
+   then redeploy. Vercel sets `DATABASE_URL`; the app uses it, and each production deploy loads
+   the catalog into it (previews keep a bundled copy, so they never write to it). Accounts and
+   saved data then persist.
+4. Sign-in with Google (accounts are Google accounts only; the API refuses any other sign-in
+   method):
+   1. In the [Firebase console](https://console.firebase.google.com), create a project (free
+      Spark plan), then **Authentication → Sign-in method → Google → Enable**.
+   2. **Authentication → Settings → Authorized domains**: add the Vercel production domain
+      (e.g. `songnexus.vercel.app`) and any custom domain.
+   3. **Project settings → General → Your apps → Web app**: register one and copy its
+      `apiKey`, `projectId` and `authDomain`.
+   4. In Vercel, set `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID` and
+      `VITE_FIREBASE_AUTH_DOMAIN` (these are public client settings, not secrets), then
+      redeploy. The API uses the same project ID (`SONGNEXUS_FIREBASE_PROJECT_ID` overrides it).
+5. Optional environment variables (Project → Settings → Environment Variables), then redeploy:
 
 | Variable | Adds |
 | --- | --- |
 | `SONGNEXUS_SONG_COMPARE_URL` | Only to use a different sound & lyrics service: by default the API calls this project's own `sound` service on the production domain |
 | `SONGNEXUS_DISCOGS_TOKEN` | A higher Discogs rate limit for "More credits" (Discogs works without it) |
 | `SONGNEXUS_GENIUS_ACCESS_TOKEN` | Genius in "More credits" |
-| `SONGNEXUS_FIREBASE_PROJECT_ID`, and `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_AUTH_DOMAIN` | Sign-in with Google (Firebase) |
-| `SONGNEXUS_DATABASE_URL` | Accounts that persist: a PostgreSQL database with the catalog ingested into it (`songnexus ingest` against that URL). Without it, the bundled catalog is copied to the instance's `/tmp` and anything written there lasts only as long as the instance |
+| `SONGNEXUS_LASTFM_API_KEY` | Last.fm listeners and "similar to both" in artist comparisons (free key from last.fm/api) |
+| `SONGNEXUS_DATABASE_URL` | Only for a database other than the Neon integration's (any PostgreSQL URL; load the catalog with `songnexus ingest` against it). With no database at all, the bundled catalog is copied to the instance's `/tmp` and anything written there lasts only as long as the instance |
 | `SONGNEXUS_BUILD_FETCH_LIMIT` | How many artists get photos and facts at build time (default 1500; `SONGNEXUS_BUILD_FETCH=0` skips the fetch) |
 
 Preview deployments sit behind Vercel's login, so their API reaches the sound service on the
@@ -101,7 +116,6 @@ production domain; song comparisons in a preview therefore work once production 
 
 To check a deployment's catalog locally: `cd server && uv run python vercel_build.py`, then serve
 it as Vercel would with `uv run --project server uvicorn main:app --app-dir server` from the root.
-`deploy/` keeps the Cloud Run alternative.
 
 ## Checks
 
@@ -124,20 +138,32 @@ Quality gates on the reference catalog: `songnexus quality`, `songnexus eval-sea
 server/        Python 3.12: core library (pure), catalog pipeline, storage, identity, HTTP API  → server/README.md
 web/           React + TypeScript: the web client                                             → web/README.md
 song_compare/  Python (Flask): sound & lyrics comparison of two songs                         → song_compare/README.md
+docs/          data-sources.md: every data source and its license (generated)
 data/          samples/ source snapshots · seeds/ seed artists, pinned decisions, genre table · eval/ labeled sets
-deploy/        Cloud Run service and jobs
 ```
 
 ## Data and licensing
 
-Catalog data comes from [MusicBrainz](https://musicbrainz.org). Its core data is CC0; genre tags
-are CC BY-NC-SA and kept apart as a separate source. Every source, used or planned, is listed with
-its license and tier in the data-source registry
-([server/src/songnexus/catalog/sources.py](server/src/songnexus/catalog/sources.py)), which the
-ingest pipeline enforces and the API serves at `GET /v1/dataSources`.
+SongNexus reads 19 sources: MusicBrainz for the catalog (artists, songs, releases, credits,
+concerts), Wikidata, Wikipedia and Wikimedia Commons for facts, introductions, readership and
+photos, the Cover Art Archive for album covers, the Billboard Hot 100 archive (every weekly chart
+since 1958) for chart history, ListenBrainz for similar music, Discogs, Genius, Last.fm and
+AcousticBrainz for comparisons, Deezer for which song is an artist's top song, and the Spotify
+Tracks and Genius lyrics datasets behind `song_compare`.
+[docs/data-sources.md](docs/data-sources.md) lists each one with its license and what it feeds.
+It is generated from the data-source registry
+([server/src/songnexus/catalog/sources.py](server/src/songnexus/catalog/sources.py)) with
+`uv run songnexus sources`; the ingest pipeline enforces the registry and the API serves it at
+`GET /v1/dataSources`. Downloaded data stays in the git-ignored `data/raw/`; nothing copyrighted
+(lyrics, cover images, chart files) is committed.
 
 ## History
 
 This repository first held the team's Next.js app (Explore, Connection Web, Friends, About Me and
 music accounts). It was merged into this app, which took over its features; the Next.js code
 remains in the git history. Ishita's `song_compare` service carries on unchanged.
+
+## License
+
+The code is licensed under the [Apache License 2.0](LICENSE). The data each source provides
+stays under its own license; see [docs/data-sources.md](docs/data-sources.md).

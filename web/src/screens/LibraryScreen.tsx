@@ -1,5 +1,5 @@
 /**
- * Library (S8, US-10, US-08): bring your music (connect a service or import a
+ * Library: bring your music (connect a service or import a
  * file, read on this device), "Your Nexus" (what your artists say about your
  * taste), your listening as ranked rows and shelves, what friends sent, and
  * playlist maps. Files never leave the browser; matching sends artist names
@@ -544,7 +544,7 @@ function NexusSection() {
   );
 }
 
-/** Artists from linked accounts (R2-6): synced on the server, aggregates only. */
+/** Artists from linked accounts: synced on the server, aggregates only. */
 function Listening({onConnect}: {onConnect: () => void}) {
   const {t} = useI18n();
   const listening = useListening(true, 50);
@@ -627,7 +627,7 @@ function Listening({onConnect}: {onConnect: () => void}) {
   );
 }
 
-/** R2-7: what friends recommended, as a shelf; opens the Friends inbox for the rest. */
+/** What friends recommended, as a shelf; opens the Friends inbox for the rest. */
 function FromFriends() {
   const {t} = useI18n();
   const auth = useAuth();

@@ -1,4 +1,4 @@
-"""Listener overlap (R2-5, S2): how much two artists share an audience, from aggregate data.
+"""Listener overlap: how much two artists share an audience, from aggregate data.
 
 Inputs are public aggregates (ListenBrainz): each artist's listener count, and
 each artist's ranked list of the artists most often played in the same

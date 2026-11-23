@@ -8,7 +8,7 @@ import pytest
 from songnexus.config import ConfigError, Settings, validate_for_serving
 from songnexus.identity.tokens import InvalidIdTokenError, SignInDisabledVerifier
 from songnexus.service.app import build_state
-from songnexus.service.deploy import vercel_defaults
+from songnexus.service.deploy import hosted_database_url, vercel_defaults
 
 RUNTIME = PurePosixPath("/tmp/songnexus.db")
 
@@ -40,6 +40,19 @@ def test_explicit_settings_always_win() -> None:
         "VERCEL_PROJECT_PRODUCTION_URL": "songnexus.vercel.app",
     }
     assert vercel_defaults(env, RUNTIME) == {}
+
+
+def test_the_web_apps_firebase_project_turns_on_google_sign_in() -> None:
+    env = {"VERCEL_URL": "songnexus-abc.vercel.app", "VITE_FIREBASE_PROJECT_ID": "songnexus-app"}
+    out = vercel_defaults(env, RUNTIME)
+    assert out["SONGNEXUS_FIREBASE_PROJECT_ID"] == "songnexus-app"
+    assert "SONGNEXUS_SIGN_IN" not in out  # on by default
+    settings = Settings(
+        environment=out["SONGNEXUS_ENVIRONMENT"],
+        allowed_origins=json.loads(out["SONGNEXUS_ALLOWED_ORIGINS"]),
+        firebase_project_id=out["SONGNEXUS_FIREBASE_PROJECT_ID"],
+    )
+    validate_for_serving(settings, {})
 
 
 def test_the_defaults_pass_startup_validation() -> None:
@@ -78,10 +91,9 @@ def test_without_accounts_the_sign_in_flag_is_off() -> None:
     assert on.flags["signIn"] is True
 
 
-def test_vercel_serves_the_api_and_the_same_security_headers_as_firebase() -> None:
+def test_vercel_routes_each_service_and_sets_the_security_headers() -> None:
     root = Path(__file__).resolve().parents[3]
     vercel = json.loads((root / "vercel.json").read_text(encoding="utf-8"))
-    firebase = json.loads((root / "firebase.json").read_text(encoding="utf-8"))
     routes = {r["source"]: r["destination"] for r in vercel["rewrites"]}
     assert routes["/v1/(.*)"] == {"service": "api"}
     assert routes["/healthz"] == {"service": "api"}
@@ -95,5 +107,39 @@ def test_vercel_serves_the_api_and_the_same_security_headers_as_firebase() -> No
     assert "catalog.db" not in excluded
     assert "src/" not in excluded
     web_headers = next(h for h in vercel["services"]["web"]["headers"] if h["source"] == "/(.*)")
-    firebase_headers = next(h for h in firebase["hosting"]["headers"] if h["source"] == "**")
-    assert web_headers["headers"] == firebase_headers["headers"]
+    headers = {h["key"]: h["value"] for h in web_headers["headers"]}
+    csp = headers["Content-Security-Policy"]
+    for directive in ("default-src 'self'", "object-src 'none'", "frame-ancestors 'none'"):
+        assert directive in csp
+    assert headers["Strict-Transport-Security"].startswith("max-age=")
+    assert headers["X-Content-Type-Options"] == "nosniff"
+
+
+NEON = {
+    "DATABASE_URL": "postgresql://u:p@ep-pooler.neon.tech/neondb?sslmode=require",
+    "DATABASE_URL_UNPOOLED": "postgresql://u:p@ep-direct.neon.tech/neondb?sslmode=require",
+}
+
+
+def test_a_hosted_database_is_used_when_the_project_has_one() -> None:
+    out = vercel_defaults({**NEON, "VERCEL_URL": "x.vercel.app"}, RUNTIME)
+    # Serving uses the pooled connection, through psycopg.
+    assert out["SONGNEXUS_DATABASE_URL"] == (
+        "postgresql+psycopg://u:p@ep-pooler.neon.tech/neondb?sslmode=require"
+    )
+
+
+def test_bulk_work_uses_the_direct_connection() -> None:
+    assert hosted_database_url(NEON, direct=True) == (
+        "postgresql+psycopg://u:p@ep-direct.neon.tech/neondb?sslmode=require"
+    )
+    assert hosted_database_url({"POSTGRES_URL": "postgres://u:p@h/db"}) == (
+        "postgresql+psycopg://u:p@h/db"
+    )
+
+
+def test_anything_else_is_not_a_hosted_database() -> None:
+    assert hosted_database_url({"DATABASE_URL": "mysql://u:p@h/db"}) is None
+    assert hosted_database_url({}) is None
+    out = vercel_defaults({"DATABASE_URL": "mysql://u:p@h/db"}, RUNTIME)
+    assert out["SONGNEXUS_DATABASE_URL"] == "sqlite:////tmp/songnexus.db"

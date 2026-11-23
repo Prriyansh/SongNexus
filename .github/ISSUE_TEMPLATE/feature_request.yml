@@ -1,0 +1,19 @@
+name: Feature request
+description: An idea for something SongNexus could do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would it help with
+      description: Who needs it and what they are trying to find out about the music.
+    validations: {required: true}
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+  - type: textarea
+    id: data
+    attributes:
+      label: Data it needs
+      description: Which source provides the data (see docs/data-sources.md). SongNexus only shows what a source actually provides.

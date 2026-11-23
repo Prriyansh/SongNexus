@@ -5,9 +5,13 @@ GitHub configuration.
 ## Files at this level
 
 - `CLAUDE.md` — this guide.
+- `dependabot.yml` — weekly dependency updates for `server/` (uv), `web/` (npm), `song_compare/`
+  (pip) and the workflow actions; minor and patch updates are grouped.
+- `pull_request_template.md` — the checklist every pull request starts from.
 
 ## Folders
 
+- `ISSUE_TEMPLATE/` — issue forms: bug report, feature request, new data source.
 - `workflows/ci.yml` — on every pull request and push to `main`: `server` (uv; ruff format and
   lint, mypy, import layering, pytest against SQLite and a PostgreSQL service, OpenAPI contract,
   pip-audit), `web` (Node 22; API types match the contract, lint, typecheck, Vitest, build, bundle

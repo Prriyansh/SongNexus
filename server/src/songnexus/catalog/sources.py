@@ -1,4 +1,4 @@
-"""The data-source registry: every source SongNexus uses or evaluates, with its license (ADR 0005).
+"""The data-source registry: every source SongNexus uses or evaluates, with its license.
 
 This module is the single source of truth. The ingest pipeline registers sources
 from it and refuses facts from anything else; ``ListDataSources`` and the About
@@ -93,6 +93,7 @@ SOURCES: tuple[DataSource, ...] = (
             "artists, recordings, releases and labels",
             "credits and artist relationships (every connection)",
             "collaborations, six degrees, compare, the daily puzzle",
+            "concerts and festivals: artists who shared a bill",
         ),
         attribution="Data from MusicBrainz",
         checked_on="2026-10-07",
@@ -111,7 +112,7 @@ SOURCES: tuple[DataSource, ...] = (
         feeds=("artist genres", "genre filters and shared genres in compare"),
         attribution="Genre data from MusicBrainz (CC BY-NC-SA 3.0)",
         checked_on="2026-10-07",
-        notes="Tag-derived genre associations. Kept apart from core data (ADR 0003); replaced by "
+        notes="Tag-derived genre associations. Kept apart from core data; replaced by "
         "Discogs and Wikidata genres for commercial use.",
     ),
     DataSource(
@@ -155,6 +156,48 @@ SOURCES: tuple[DataSource, ...] = (
         "read.",
     ),
     DataSource(
+        id="deezer",
+        name="Deezer API",
+        homepage="https://developers.deezer.com/api",
+        license="Deezer API Terms of Use",
+        license_url="https://developers.deezer.com/termsofuse",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.API,
+        feeds=(
+            "artist pages: which song the 'Top song' shortcut opens",
+            "shared Deezer links: which artist or playlist a pasted link names",
+        ),
+        attribution="Song ranking from Deezer",
+        checked_on="2026-11-23",
+        notes="Public endpoints, no key. For the Top song shortcut, the artist is the Deezer "
+        "artist named exactly as ours (most fans if several share the name) and their top "
+        "tracks are matched to the artist's own songs in our catalog by title; Deezer only "
+        "picks which song, and no Deezer numbers (fans, ranks, plays) are shown or stored. "
+        "Answers are cached in memory for a day. Non-commercial use under Deezer's terms.",
+    ),
+    DataSource(
+        id="lastfm-api",
+        name="Last.fm API",
+        homepage="https://www.last.fm/api",
+        license="Last.fm API Terms of Service",
+        license_url="https://www.last.fm/api/tos",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.API,
+        feeds=(
+            "artist comparisons: Last.fm listeners and plays, and artists Last.fm lists as "
+            "similar to both",
+        ),
+        attribution="Listening data from Last.fm",
+        checked_on="2026-11-23",
+        notes="Only with SONGNEXUS_LASTFM_API_KEY (free). Artists are looked up by MusicBrainz "
+        "ID, never by name; read live when two artists are compared, cached in memory for an "
+        "hour and never stored. Counts are Last.fm's own community, not all listeners, and "
+        "'similar' is listener behaviour, never a collaboration. Non-commercial use only under "
+        "the Last.fm API terms.",
+    ),
+    DataSource(
         id="wikidata",
         name="Wikidata",
         homepage="https://www.wikidata.org",
@@ -196,6 +239,61 @@ SOURCES: tuple[DataSource, ...] = (
         "and is shown as written, never edited.",
     ),
     DataSource(
+        id="wikimedia-pageviews",
+        name="Wikimedia pageviews",
+        homepage="https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/",
+        license="CC0-1.0",
+        license_url="https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/documentation/access-policy.html",
+        tier=Tier.PRODUCTION,
+        status=Status.IN_USE,
+        kind=Kind.API,
+        feeds=("artist pages: how many people read about the artist on Wikipedia each month",),
+        attribution="Pageviews from Wikimedia",
+        checked_on="2026-11-23",
+        notes="The average monthly human (user-agent) views of the artist's English Wikipedia "
+        "article over the last 12 complete months, fetched with `songnexus fetch-facts`. Bots "
+        "and crawlers are excluded by the API; a missing or new article has no figure.",
+    ),
+    DataSource(
+        id="cover-art-archive",
+        name="Cover Art Archive",
+        homepage="https://coverartarchive.org",
+        license="Images stay their rights holders'; the archive's data is CC0",
+        license_url="https://musicbrainz.org/doc/Cover_Art_Archive/API",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.API,
+        feeds=("song pages and song comparisons: album covers",),
+        attribution="Cover art from the Cover Art Archive",
+        checked_on="2026-11-23",
+        notes="Front covers of the catalog's release groups, found by MusicBrainz ID with "
+        "`songnexus fetch-covers` and hot-linked from the archive (Internet Archive hosting), "
+        "never copied. Cover images are usually copyrighted artwork, shown as the archive "
+        "permits for identifying a release; a commercial launch would review that use.",
+    ),
+    DataSource(
+        id="billboard-hot-100",
+        name="Billboard Hot 100 history (utdata/rwd-billboard-data)",
+        homepage="https://github.com/utdata/rwd-billboard-data",
+        license="Charts are Billboard's; archived for teaching by UT Austin (code MIT)",
+        license_url="https://www.billboard.com/charts/hot-100/",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.DATASET,
+        feeds=(
+            "artist pages: Hot 100 entries, top tens and number ones",
+            "song pages: peak position and weeks on the chart",
+        ),
+        attribution="Chart data: Billboard Hot 100",
+        checked_on="2026-11-23",
+        notes="Every weekly Hot 100 since August 1958, archived from billboard.com and updated "
+        "weekly by UT Austin's data-journalism course (also on Kaggle as dhruvildave's "
+        "billboard-the-hot-100-songs, which stops in 2021). Downloaded by `songnexus "
+        "fetch-billboard` into the raw cache, never committed; only per-song summaries are "
+        "stored. Songs and lead performers are matched to the catalog by exact names, never "
+        "guessed. Non-commercial use only.",
+    ),
+    DataSource(
         id="wikimedia-commons",
         name="Wikimedia Commons",
         homepage="https://commons.wikimedia.org",
@@ -212,7 +310,7 @@ SOURCES: tuple[DataSource, ...] = (
         attribution="Each photo and logo is credited with its author, license and file page",
         checked_on="2026-11-16",
         notes="Found through the image (P18) on the artist's Wikidata item, matched by MusicBrainz "
-        "ID (P434); fetched with `songnexus fetch-images` (ADR 0009). Each file carries its own "
+        "ID (P434); fetched with `songnexus fetch-images`. Each file carries its own "
         "license: only public domain, CC0, CC BY and CC BY-SA raster images are kept; non-free, "
         "unlicensed and non-commercial files are skipped. Images are hot-linked from Wikimedia's "
         "media hosts (upload.wikimedia.org, thumb.wikimedia.org), never copied, and the API "
@@ -275,12 +373,16 @@ SOURCES: tuple[DataSource, ...] = (
         feeds=(
             "listener overlap in artist comparison",
             "'often played with' on artist pages",
+            "the Connection Web's similar-music maps: similar artists and songs around an artist, "
+            "a song or a playlist, and two friends' playlists on one map",
         ),
         attribution="Listening data from ListenBrainz",
-        checked_on="2026-11-01",
+        checked_on="2026-11-23",
         notes="Public listens are CC0. Only aggregates are fetched: listener and listen counts per "
         "artist, and the session-based similar-artists ranking. Overlap is shown only when both "
-        "artists have at least 50 listeners, always with the counts.",
+        "artists have at least 50 listeners, always with the counts. Similar songs (the Labs "
+        "session-based similar recordings) are read live for the maps and cached in memory for a "
+        "day, never stored; songs outside the catalog link to MusicBrainz.",
     ),
     # --- Sound & lyrics analysis (the song_compare service) ----------------------------------
     DataSource(
@@ -353,7 +455,7 @@ SOURCES: tuple[DataSource, ...] = (
         attribution="",
         checked_on="2026-10-07",
         notes="Imported files are parsed on the device; only artist names reach the server. Linked "
-        "accounts (R2-6) add each provider under its own API terms. Around you charts use only "
+        "accounts add each provider under its own API terms. Around you charts use only "
         "members who opted in, and only once 10 have listening data; an artist needs 3 listeners "
         "and counts are shown as ranges.",
     ),
@@ -361,7 +463,7 @@ SOURCES: tuple[DataSource, ...] = (
 
 BY_ID: dict[str, DataSource] = {s.id: s for s in SOURCES}
 
-# Sources that may assert artist-genre associations (ADR 0003, ADR 0005).
+# Sources that may assert artist-genre associations.
 GENRE_SOURCE_IDS = ("musicbrainz-supplementary", "discogs")
 
 
@@ -376,3 +478,38 @@ def catalog_sources() -> tuple[DataSource, ...]:
         for s in SOURCES
         if s.tier is not Tier.EVALUATION and s.kind not in (Kind.USER_ACCOUNT, Kind.SERVICE)
     )
+
+
+_TIER_TEXT = {
+    Tier.PRODUCTION: "Usable in a commercial product",
+    Tier.NON_COMMERCIAL: "Non-commercial use (dropped by ID for a commercial launch)",
+    Tier.EVALUATION: "Offline evaluation only; never stored or shown",
+}
+
+
+def render_markdown() -> str:
+    """The data-source reference (``docs/data-sources.md``), generated from ``SOURCES``."""
+    lines = [
+        "# Data sources",
+        "",
+        "Every source SongNexus reads, with its license and what it feeds. Generated from",
+        "`server/src/songnexus/catalog/sources.py` by `songnexus sources`; edit the registry,",
+        "not this file (CI checks they match). The API serves the same list at",
+        "`GET /v1/dataSources`.",
+        "",
+        "| Source | License | Use | How it is read | What it feeds |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for s in SOURCES:
+        feeds = "; ".join(s.feeds)
+        link = f"[{s.name}]({s.homepage})" if s.homepage.startswith("https://") else s.name
+        license_ = (
+            f"[{s.license}]({s.license_url})" if s.license_url.startswith("https://") else s.license
+        )
+        kind = s.kind.value.replace("_", " ").lower()
+        lines.append(f"| {link} | {license_} | {_TIER_TEXT[s.tier]} | {kind} | {feeds} |")
+    lines += ["", "## Notes", ""]
+    for s in SOURCES:
+        if s.notes:
+            lines += [f"**{s.name}** (checked {s.checked_on}). {s.notes}", ""]
+    return "\n".join(lines).rstrip()

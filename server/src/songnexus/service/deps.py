@@ -39,7 +39,7 @@ class AppState:
     limiter: RateLimiter
     verifier: IdTokenVerifier
     flags: dict[str, bool] = field(default_factory=dict)
-    # Linked accounts (ADR 0006): the token cipher (None: nothing is offered) and the
+    # Linked accounts: the token cipher (None: nothing is offered) and the
     # client for provider calls (tests inject a mock transport).
     cipher: TokenCipher | None = None
     # Identifies the project (no contact details) as ListenBrainz and others ask.
@@ -48,7 +48,7 @@ class AppState:
             timeout=httpx.Timeout(20.0, connect=5.0), headers={"User-Agent": user_agent()}
         )
     )
-    # Friends and sharing (ADR 0007): checks notes and display names.
+    # Friends and sharing: checks notes and display names.
     moderator: Moderator = field(default_factory=RuleModerator)
 
 
@@ -66,7 +66,7 @@ def read_model(request: Request) -> ReadModel:
 def client_key(request: Request, trusted_proxy_hops: int) -> str:
     """Identifies the client for rate limiting.
 
-    Behind Google's front end the client address is the entry ``trusted_proxy_hops``
+    Behind the hosting proxy the client address is the entry ``trusted_proxy_hops``
     from the end of ``X-Forwarded-For``; earlier entries are client-supplied and
     untrusted. Without the header, the socket peer is used.
     """
@@ -192,7 +192,7 @@ def authorize_user(user: str, who: Viewer) -> str:
 
     Raises:
         ApiError: UNAUTHENTICATED when signed out; PERMISSION_DENIED for any
-            other user's resources (AC-18.2), whether or not that user exists.
+            other user's resources, whether or not that user exists.
     """
     viewer_id = require_signed_in(who)
     requested = user.removeprefix("users/")

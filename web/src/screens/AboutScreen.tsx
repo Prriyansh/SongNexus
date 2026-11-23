@@ -68,7 +68,7 @@ function Resources() {
 export default function AboutScreen() {
   const {t} = useI18n();
   usePageTitle(t('about.title'));
-  // Long-form copy is English-only in R1; it moves into the message catalog with R2 locales.
+  // Long-form copy is English-only; it moves into the message catalog when other locales ship.
   return (
     <article className="stack" lang="en" style={{maxInlineSize: '70ch'}}>
       <h1>{t('about.title')}</h1>

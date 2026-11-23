@@ -1,4 +1,4 @@
-"""AskCatalog (ADR 0008): questions answered from the catalog, with and without a model."""
+"""AskCatalog: questions answered from the catalog, with and without a model."""
 
 import json
 import logging

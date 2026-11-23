@@ -1,10 +1,10 @@
 /**
- * Find a path (S2, US-03): pick two artists and see the chain of real credits
+ * Find a path: pick two artists and see the chain of real credits
  * between them as a journey of portraits, each step opening to its credits and
  * their sources, then the same path as a mixtape: one real song per step.
  *
  * All state lives in the URL, so a shared link shows the same path to anyone
- * (AC-3.4).
+ *.
  */
 import {useEffect, useMemo, useState, type CSSProperties} from 'react';
 import {Link, useSearchParams} from 'react-router';

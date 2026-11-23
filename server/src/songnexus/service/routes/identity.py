@@ -1,4 +1,4 @@
-"""Sessions (ADR 0002): sign in with a Firebase ID token, sign out, sign out everywhere."""
+"""Sessions: sign in with a Firebase ID token, sign out, sign out everywhere."""
 
 from __future__ import annotations
 

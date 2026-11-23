@@ -470,7 +470,7 @@ class LinkResolver:
                 self._sleep(wait)
             self._mb_last = self._clock()
         url = f"{self._config.musicbrainz_base_url.rstrip('/')}/{path}"
-        return self._json(http, url, {**params, "fmt": "json"}, not_found_ok=False)
+        return self._json(http, url, {**params, "fmt": "json"})
 
     # --- Services ------------------------------------------------------------------------------
 
@@ -540,8 +540,6 @@ class LinkResolver:
         http: httpx.Client,
         url: str,
         params: dict[str, str],
-        *,
-        not_found_ok: bool = False,
     ) -> dict[str, Any]:
         try:
             response = http.get(url, params=params, timeout=REQUEST_TIMEOUT_S)

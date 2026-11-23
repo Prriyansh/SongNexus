@@ -1,4 +1,4 @@
-"""Campus leaderboards for the daily puzzle and Credit check (ADR 0010). Pure.
+"""Campus leaderboards for the daily puzzle and Credit check. Pure.
 
 Scores are never taken from the client. A player submits their play (the
 puzzle moves, or the quiz answers) and the server computes the points here,

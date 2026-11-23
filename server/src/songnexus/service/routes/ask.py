@@ -1,4 +1,4 @@
-"""AskCatalog (ADR 0008): a question from the search bar, answered from our data.
+"""AskCatalog: a question from the search bar, answered from our data.
 
 The model (when configured) only interprets the question; the parser does so
 without one. Names are resolved against the catalog and the answer is composed

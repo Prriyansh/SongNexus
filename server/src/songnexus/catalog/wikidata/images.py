@@ -1,4 +1,4 @@
-"""Find freely licensed artist photos on Wikimedia Commons through Wikidata (ADR 0009).
+"""Find freely licensed artist photos on Wikimedia Commons through Wikidata.
 
 Two steps, both through the shared polite, cached HTTP client:
 
@@ -42,7 +42,7 @@ from songnexus.storage.db import session_scope
 log = logging.getLogger(__name__)
 
 # Generic on purpose: Wikimedia asks for an identifying User-Agent, and the
-# project name is enough. Never a personal name or address (ADR 0009).
+# project name is enough. Never a personal name or address.
 USER_AGENT = "SongNexus/0.2 (student capstone project)"
 COMMONS_API_URL = "https://commons.wikimedia.org/w/api.php"
 SPARQL_BATCH = 400  # MusicBrainz IDs per query, as in the artist-link fetch

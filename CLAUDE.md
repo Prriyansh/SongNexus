@@ -10,11 +10,11 @@ app (`web/`, Vite + TypeScript), with the `song_compare/` sound & lyrics service
 | --- | --- |
 | `README.md` | Overview, how to run it, checks, layout (for people) |
 | `CHANGELOG.md` | Release notes, newest first |
+| `LICENSE` | Apache License 2.0 (the code; data keeps its sources' licenses) |
 | `CLAUDE.md` | This guide |
 | `vercel.json` | The Vercel deployment: the web and API services and their routes (see README) |
 | `compose.yaml` | Optional local PostgreSQL for the API |
-| `firebase.json` | Firebase Hosting config (the Cloud Run deployment in `deploy/`) |
-| `.editorconfig`, `.gitattributes`, `.gitignore`, `.dockerignore` | Editor, line-ending and ignore rules |
+| `.editorconfig`, `.gitattributes`, `.gitignore` | Editor, line-ending and ignore rules |
 
 ## Folders
 
@@ -22,9 +22,10 @@ app (`web/`, Vite + TypeScript), with the `song_compare/` sound & lyrics service
 - `web/` — the web client; see `web/README.md`. Tooling: npm, Node 22.12+.
 - `song_compare/` — Ishita's Flask API for the sound & lyrics comparison of two songs; the API
   calls it (see `song_compare/CLAUDE.md`). Deployed as its own Vercel project.
+- `docs/` — `data-sources.md`, generated from the source registry by `uv run songnexus sources`
+  (a test fails when it is out of date).
 - `data/` — committed source snapshots (`samples/`), seeds and evaluation sets. `data/raw/` is a
   local, git-ignored cache.
-- `deploy/` — Cloud Run service and jobs.
 - `.github/` — CI.
 
 ## Working rules

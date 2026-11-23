@@ -3,7 +3,7 @@
 Flags are configuration, not code: set ``SONGNEXUS_FLAGS`` to a JSON object to
 override the defaults per environment (e.g. ``{"play": false}`` as a kill
 switch). Unknown names are rejected at startup so typos fail loudly. Remove a
-flag within two weeks of a full launch (plan §18).
+flag within two weeks of a full launch.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ DEFAULT_FLAGS: Mapping[str, bool] = MappingProxyType(
         "play": True,
         "stories": True,
         "community": True,  # Around you: campus and city charts
-        "ask": True,  # questions in the search bar (ADR 0008); works without a model
+        "ask": True,  # questions in the search bar; works without a model
         "browse": True,  # home shelves and genre pages
         "recommendations": True,  # explained recommendations on artist pages
         "tasteProfile": True,  # Your Nexus: taste profiles from listening or a playlist
@@ -30,7 +30,7 @@ DEFAULT_FLAGS: Mapping[str, bool] = MappingProxyType(
         "linkedAccounts": True,
         "linkResolver": True,  # open links shared from other music apps
         "friends": True,
-        "leaderboards": True,  # opt-in game scores and campus leaderboards (ADR 0010)
+        "leaderboards": True,  # opt-in game scores and campus leaderboards
     }
 )
 
