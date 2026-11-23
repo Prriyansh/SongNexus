@@ -1,6 +1,6 @@
 // Browser-side client for our own Next.js API routes. The page never calls MusicBrainz or
 // Deezer directly; the routes handle rate limits, retries and server caching.
-import type { Artist, ArtistDetails, ArtistInsights, ArtistNeighborhood, CollaboratorComparison, MoreCredits, RecordingDetails, SimilarWeb, Song, TasteMap, TasteRequest, TopTrack } from '@/lib/types';
+import type { Artist, ArtistDetails, ArtistInsights, AudioComparison, ArtistNeighborhood, CollaboratorComparison, MoreCredits, RecordingDetails, SimilarWeb, Song, TasteMap, TasteRequest, TopTrack } from '@/lib/types';
 import type { DiscoveryArtist } from './connection-web';
 import type { SoundResult, SoundSearch } from '@/lib/sound';
 import type { Room, RoomMember } from '@/lib/rooms';
@@ -154,3 +154,7 @@ export const soundComparison = (a: RecordingDetails, b: RecordingDetails) =>
 export const searchSoundSongs = (query: string, signal?: AbortSignal, limit = 10) =>
   getJson<SoundSearch>(`/api/sound/search?q=${encodeURIComponent(query)}&limit=${limit}`, signal);
 
+
+/** What AcousticBrainz measured for two recordings; its report says when it had no data or failed. */
+export const audioComparison = (a: string, b: string) =>
+  once(`acousticbrainz:${a}:${b}`, () => getJson<{ audio: AudioComparison }>(`/api/acousticbrainz?a=${a}&b=${b}`).then(r => r.audio));

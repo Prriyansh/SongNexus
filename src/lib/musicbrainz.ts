@@ -57,7 +57,7 @@ const RETRY_CAP_MS = 4_000;
 const MAX_RETRY_AFTER_MS = 5_000; // don't honor absurd Retry-After within a request
 const ALBUM_PAGE_SIZE = 100; // MusicBrainz browse maximum
 
-const UUID_RE =
+export const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Thrown for bad client input; maps to HTTP 400. */

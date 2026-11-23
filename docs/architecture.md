@@ -75,23 +75,32 @@ SongNexus compares two songs or two artists using real catalogue metadata.
   Matching a person *between* sources goes by name, so the UI says to check the links, and spellings can
   differ ("Mark Stent" and "Mark “Spike” Stent" appear as two people). Discogs' main releases are often
   thinly credited for recent digital albums, so it adds more for older catalogues.
-- **Artist insights** (`/api/artist-insights?a=&b=`) — bio and photo (Wikipedia), awards, nominations,
+- **Artist insights** (`/api/artist-insights?a=&b=`) — bio (Wikipedia), a photo (the artist's
+  Wikidata image on Wikimedia Commons, shown only under a free license and always with its author,
+  license and file page; otherwise Wikipedia's thumbnail), awards, nominations,
   labels and start year (Wikidata, through MusicBrainz's link), listener counts (ListenBrainz, and
   Last.fm with `LASTFM_API_KEY`), and what both share. Wikidata is community-edited and can be
   incomplete or wrong, so the UI says "listed on Wikidata", links to it, and never presents a total.
   Last.fm "similar" is labelled as listener similarity, never a collaboration.
+- **Measured by AcousticBrainz** (`/api/acousticbrainz?a=&b=`, two recording MBIDs) — tempo, key
+  and AcousticBrainz's mood-classifier estimates for two songs, labelled as its own calculations and
+  shown next to the song_compare analysis rather than merged with it. AcousticBrainz stopped
+  collecting in 2022 but still serves its final dataset (CC0); a song it lacks is named as missing.
+  Its gender and genre classifiers are not used.
 - **Shared genres** — genre tags both artists (or songs) have on MusicBrainz.
 - **Shareable URLs** — `/compare/artists?artistA=<mbid>&artistB=<mbid>` and
   `/compare/songs?songA=<mbid>&songB=<mbid>` open straight into a comparison.
 - **Not built (no data source):** monthly listeners and audio-feature radar charts.
 
-**Deliberately not shown.** Popularity, play counts, monthly listeners and audio
-features (tempo, energy, danceability, mood) are **not** provided by these
-sources, so they are omitted rather than estimated. AcousticBrainz (the former
-open audio-feature source) is discontinued. Spotify deprecated its audio-feature
-endpoints for new apps in November 2024, so new credentials cannot supply them
-either. Facts come from catalogued metadata; "insights" are derived from it and
-labelled as such.
+**Deliberately not shown.** Popularity, play counts and monthly listeners are
+**not** provided by these sources, so they are omitted rather than estimated.
+Audio features come only from sources that publish them: the song_compare
+dataset and AcousticBrainz's final (2022) dataset, each labelled with its
+source; songs outside them say so. Spotify deprecated its audio-feature
+endpoints for new apps in November 2024, so new credentials cannot supply them.
+Facts come from catalogued metadata; "insights" are derived from it and
+labelled as such. Every source and its terms are listed in the README's
+Data sources table and in the app's footer.
 
 **Future (optional, needs credentials).** A Spotify integration could add
 popularity, artist/album imagery and preview links via the Client Credentials

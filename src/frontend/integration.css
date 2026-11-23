@@ -101,6 +101,7 @@ a.inline-link { text-decoration: none; }
 .insight-photo { width: 72px; height: 72px; flex-shrink: 0; border-radius: 50%; object-fit: cover; object-position: top; }
 .insight-side-head strong { display: block; }
 .insight-side-head small { display: block; color: var(--muted); }
+.insight-photo-credit { display: block; font-size: 11px; line-height: 1.4; color: var(--muted); overflow-wrap: anywhere; }
 .insight-bio { font-size: 13px; line-height: 1.5; margin: 0; }
 .insight-fact { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
 .insight-fact > span { font-size: 11px; color: var(--muted); }
@@ -156,3 +157,11 @@ a.source-chip:hover { color: #fff; border-color: #c96c7b; }
 .setup-actions .secondary-button { margin-right: auto; }
 .setup-actions .primary-button:disabled { opacity: .45; cursor: not-allowed; }
 .share-modal .taste-setup .input-search input { border: 0; padding: 0; margin: 0; background: transparent; }
+
+/* "Data sources and licenses" under the footer credits: every source, its terms and its use. */
+.main-content footer { flex-wrap: wrap; }
+.data-sources { flex-basis: 100%; font-size: 11px; letter-spacing: 0; line-height: 1.5; }
+.data-sources summary { cursor: pointer; width: fit-content; }
+.data-sources ul { margin: 10px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px 24px; }
+.data-sources li span { display: block; color: var(--muted); }
+@media (max-width: 650px) { .data-sources { margin-top: 10px; } }

@@ -2,8 +2,9 @@
 
 Song Nexus is a music discovery app for listeners aged 15–35. Pick two artists or two songs and it
 shows how they connect: the producers, mixers and featured artists they share, the genres they
-have in common, and the songs that link them. All facts come from
-[MusicBrainz](https://musicbrainz.org) and the [Cover Art Archive](https://coverartarchive.org).
+have in common, and the songs that link them. Its core facts come from
+[MusicBrainz](https://musicbrainz.org) and the [Cover Art Archive](https://coverartarchive.org);
+every other source is listed under [Data sources](#data-sources).
 
 ## Run it locally
 
@@ -129,6 +130,38 @@ cd song_compare && pip install -r requirements.txt && python backend/app.py   # 
 Without it, everything else works and the comparison says the sound analysis isn't available.
 On Vercel it's a second project; see [Deploying the sound service](#deploying-the-sound-service-on-vercel).
 
+## Data sources
+
+Every source the app reads, its terms and what it's used for. The app shows the same list under
+**Data sources and licenses** in the page footer (from `src/frontend/sources.ts`; keep the two in
+step). Sources are reached through MusicBrainz ids and the links MusicBrainz holds, never matched
+by loose name, and a page says when a source had no data or failed.
+
+| Source | Terms | Used for |
+| --- | --- | --- |
+| [MusicBrainz](https://musicbrainz.org) | [CC0 core data; genres and tags CC BY-NC-SA 3.0](https://musicbrainz.org/doc/About/Data_License) | Search, artists, songs, releases, credits, genres and every connection |
+| [Cover Art Archive](https://coverartarchive.org) | Images stay their rights holders' | Album covers |
+| [Deezer](https://www.deezer.com) | [Deezer API terms](https://developers.deezer.com/termsofuse) | Ranking an artist's top song, related artists and their photos (no Deezer numbers are shown) |
+| [Wikidata](https://www.wikidata.org) | [CC0](https://www.wikidata.org/wiki/Wikidata:Licensing) | Artist descriptions, awards, nominations and record labels |
+| [Wikipedia](https://en.wikipedia.org) | [CC BY-SA 4.0](https://en.wikipedia.org/wiki/Wikipedia:Copyrights) | Artist summaries |
+| [Wikimedia Commons](https://commons.wikimedia.org) | [Per file: public domain, CC0, CC BY or CC BY-SA](https://commons.wikimedia.org/wiki/Commons:Licensing) | Artist photos (the artist's Wikidata image), each credited with author, license and file page; other licenses are skipped |
+| [ListenBrainz](https://listenbrainz.org) | [CC0](https://listenbrainz.org/terms-of-service/) | Listener counts and similar artists |
+| [AcousticBrainz](https://acousticbrainz.org) | [CC0](https://acousticbrainz.org/download) | Tempo, key and mood estimates in song comparisons ("Measured by AcousticBrainz"); its data stops in 2022, so newer songs often have none |
+| [Discogs](https://www.discogs.com) | [Discogs API terms](https://support.discogs.com/hc/en-us/articles/360009334593-API-Terms-of-Use) | More album credits for artist comparisons |
+| [Genius](https://genius.com) (needs `GENIUS_ACCESS_TOKEN`) | [Genius API terms](https://genius.com/static/terms) | More song credits for artist comparisons |
+| [Last.fm](https://www.last.fm) (needs `LASTFM_API_KEY`) | [Last.fm API terms](https://www.last.fm/api/tos) | Listener counts and artists similar to both |
+| [Spotify tracks dataset](https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset) | BSD, as stated by its publisher | The sound analysis in song comparisons ([song_compare](song_compare/README.md)) |
+| [Genius lyrics dataset](https://huggingface.co/datasets/theelderemo/genius-lyrics-cleaned) | As stated by its publisher | The lyrics analysis in song comparisons; lyrics are analysed, never stored in the repo or shown |
+
+Linked music accounts (`/accounts`) add a listener's own data from each provider under its terms;
+see [data-use restrictions](docs/integrations/compliance.md).
+
+SongNexus v2 keeps its own registry, served at `GET /v1/dataSources`
+([sources.py](songnexus-v2/server/src/songnexus/catalog/sources.py)). It uses the same open
+sources plus the Discogs data dumps (CC0), MusicBrainz genres and Simple Icons brand marks, and
+tests its listener-overlap numbers offline against the Last.fm 360K dataset (non-commercial
+research use; never shown).
+
 ## SongNexus v2 (songnexus-v2)
 
 A second version of the app, added next to this one rather than replacing it: a Python API
@@ -141,5 +174,6 @@ web app on http://127.0.0.1:5173. Its checks run in the `SongNexus v2` workflow.
 
 Next.js 16 (App Router), React 19, TypeScript, Vitest. Data: MusicBrainz and the Cover Art
 Archive, with Deezer used only to rank an artist's top song. Two-artist comparisons add Wikidata,
-Wikipedia, ListenBrainz, Discogs, and with keys Genius and Last.fm. See
+Wikipedia, Wikimedia Commons photos, ListenBrainz, Discogs, and with keys Genius and Last.fm;
+two-song comparisons add AcousticBrainz. See [Data sources](#data-sources), and
 [docs/architecture.md](docs/architecture.md) for how it fits together.

@@ -203,6 +203,40 @@ export type ArtistFacts = {
   nominations: WikiLabelled[];
   labels: WikiLabelled[];
   wikipedia: { url: string; extract: string; imageUrl: string | null } | null;
+  /** The artist's image on Wikidata (P18), when Wikimedia Commons offers it under a free license. */
+  photo: CommonsPhoto | null;
+};
+
+// --- Audio descriptors of one recording, from AcousticBrainz ------------------------------
+
+/** One AcousticBrainz classifier's estimate, e.g. how likely the song is "danceable" (0–1). */
+export type AudioClass = { name: string; probability: number };
+
+/** What AcousticBrainz measured for a recording. Its data stops in 2022, so many songs have none. */
+export type AudioDescriptors = {
+  /** The recording's page on AcousticBrainz. */
+  url: string;
+  bpm: number | null;
+  /** e.g. "D# major". */
+  key: string | null;
+  classes: AudioClass[];
+};
+
+export type AudioComparison = {
+  a: AudioDescriptors | null;
+  b: AudioDescriptors | null;
+  source: SourceReport;
+};
+
+/** A freely licensed Wikimedia Commons image, with what's needed to credit it. */
+export type CommonsPhoto = {
+  /** Thumbnail on Wikimedia's media host; linked, never copied. */
+  url: string;
+  /** The file's page on Commons, which holds the full credit. */
+  pageUrl: string;
+  author: string | null;
+  license: string;
+  licenseUrl: string | null;
 };
 
 export type ArtistAudience = {

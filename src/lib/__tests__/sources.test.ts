@@ -4,6 +4,7 @@ import { commonPeople, creditRole, normalizeName } from "../credit-sources";
 import { discogsCredits } from "../discogs";
 import { geniusCredits } from "../genius";
 import { artistFacts } from "../wikidata";
+import { commonsPhoto, isFreeLicense, plainText } from "../commons";
 import { listenBrainzAudience } from "../listenbrainz";
 import { lastFmAudience, lastFmSimilar } from "../lastfm";
 import { sharedEntries, sharedSimilar } from "../artist-insights";
@@ -168,6 +169,82 @@ describe("artistFacts", () => {
     const fetchImpl = vi.fn<FetchMock>();
     expect(await artistFacts("Q1&action=evil", { fetchImpl })).toBeNull();
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("adds the artist's Commons photo, preferring the image Wikidata marks preferred", async () => {
+    const image = (file: string, rank = "normal") => ({ rank, mainsnak: { datavalue: { value: file } } });
+    const withImage = { entities: { Q1: { ...entity.entities.Q1, claims: { ...entity.entities.Q1.claims, P18: [image("Old.jpg"), image("Best.jpg", "preferred")] } } } };
+    const fetchImpl = routes({ "props=claims": withImage, "props=labels": labels, "wikipedia.org": fail(404), "commons.wikimedia.org": commonsPage() });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const facts = await artistFacts("Q1", { fetchImpl, useCache: false });
+    warn.mockRestore();
+    expect(facts?.photo?.author).toBe("Jane Photographer");
+    const commonsUrl = fetchImpl.mock.calls.map(([url]) => String(url)).find((url) => url.includes("commons"));
+    expect(new URL(commonsUrl!).searchParams.get("titles")).toBe("File:Best.jpg");
+  });
+});
+
+/** A Commons imageinfo reply for one file; `meta` overrides the license metadata. */
+const commonsPage = (meta: Record<string, string> = {}, info: Record<string, unknown> = {}) => ({ query: { pages: [{ title: "File:Best.jpg", imageinfo: [{
+  thumburl: "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Best.jpg/330px-Best.jpg",
+  descriptionurl: "https://commons.wikimedia.org/wiki/File:Best.jpg",
+  mime: "image/jpeg",
+  extmetadata: Object.fromEntries(Object.entries({
+    Artist: '<a href="//commons.wikimedia.org/wiki/User:Jane">Jane Photographer</a>',
+    LicenseShortName: "CC BY-SA 4.0",
+    LicenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    NonFree: "false",
+    ...meta,
+  }).map(([key, value]) => [key, { value }])),
+  ...info,
+}] }] } });
+
+describe("commonsPhoto", () => {
+  it("returns a free photo with its author, license and file page", async () => {
+    const photo = await commonsPhoto("Best.jpg", { fetchImpl: routes({ "commons.wikimedia.org": commonsPage() }), useCache: false });
+    expect(photo).toEqual({
+      url: "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Best.jpg/330px-Best.jpg",
+      pageUrl: "https://commons.wikimedia.org/wiki/File:Best.jpg",
+      author: "Jane Photographer",
+      license: "CC BY-SA 4.0",
+      licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    });
+  });
+
+  it("skips non-free files, other formats and images off Wikimedia's media hosts", async () => {
+    const photo = (meta: Record<string, string>, info: Record<string, unknown> = {}) =>
+      commonsPhoto("Best.jpg", { fetchImpl: routes({ "commons.wikimedia.org": commonsPage(meta, info) }), useCache: false });
+    expect(await photo({ LicenseShortName: "CC BY-NC 2.0" })).toBeNull();
+    expect(await photo({ LicenseShortName: "Fair use" })).toBeNull();
+    expect(await photo({ NonFree: "true" })).toBeNull();
+    expect(await photo({}, { mime: "image/svg+xml" })).toBeNull();
+    expect(await photo({}, { thumburl: "https://example.com/Best.jpg" })).toBeNull();
+  });
+
+  it("is null for a missing file, and never asks about a name that could change the query", async () => {
+    const missing = routes({ "commons.wikimedia.org": { query: { pages: [{ title: "File:Gone.jpg", missing: true }] } } });
+    expect(await commonsPhoto("Gone.jpg", { fetchImpl: missing, useCache: false })).toBeNull();
+    const fetchImpl = vi.fn<FetchMock>();
+    expect(await commonsPhoto("A.jpg|File:B.jpg", { fetchImpl })).toBeNull();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe("isFreeLicense", () => {
+  it("allows public domain, CC0, CC BY and CC BY-SA in any version", () => {
+    for (const name of ["Public domain", "PD-US", "CC0", "CC BY 2.0", "CC BY-SA 4.0", "cc-by-sa-3.0-de"]) expect(isFreeLicense(name)).toBe(true);
+  });
+
+  it("refuses non-commercial, no-derivatives and unknown terms", () => {
+    for (const name of ["CC BY-NC 2.0", "CC BY-ND 4.0", "CC BY-NC-SA 3.0", "Fair use", "GFDL", ""]) expect(isFreeLicense(name)).toBe(false);
+  });
+});
+
+describe("plainText", () => {
+  it("drops tags, including ones rebuilt by a single pass, and decodes entities once", () => {
+    expect(plainText('<a href="x">Jane</a> &amp; <b>Joe</b>')).toBe("Jane & Joe");
+    expect(plainText("<scr<b>ipt>alert(1)")).not.toMatch(/[<>]/);
+    expect(plainText("&amp;quot;")).toBe("&quot;");
   });
 });
 
