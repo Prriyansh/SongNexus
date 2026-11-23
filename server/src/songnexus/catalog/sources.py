@@ -212,6 +212,23 @@ SOURCES: tuple[DataSource, ...] = (
         "and crawlers are excluded by the API; a missing or new article has no figure.",
     ),
     DataSource(
+        id="cover-art-archive",
+        name="Cover Art Archive",
+        homepage="https://coverartarchive.org",
+        license="Images stay their rights holders'; the archive's data is CC0",
+        license_url="https://musicbrainz.org/doc/Cover_Art_Archive/API",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.API,
+        feeds=("song pages and song comparisons: album covers",),
+        attribution="Cover art from the Cover Art Archive",
+        checked_on="2026-11-23",
+        notes="Front covers of the catalog's release groups, found by MusicBrainz ID with "
+        "`songnexus fetch-covers` and hot-linked from the archive (Internet Archive hosting), "
+        "never copied. Cover images are usually copyrighted artwork, shown as the archive "
+        "permits for identifying a release; a commercial launch would review that use.",
+    ),
+    DataSource(
         id="wikimedia-commons",
         name="Wikimedia Commons",
         homepage="https://commons.wikimedia.org",

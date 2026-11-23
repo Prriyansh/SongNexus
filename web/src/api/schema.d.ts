@@ -1913,6 +1913,11 @@ export interface components {
          * @description A release a recording appears on.
          */
         Appearance: {
+            /**
+             * Coverurl
+             * @description The release's front cover (Cover Art Archive), or null.
+             */
+            coverUrl: string | null;
             /** Discnumber */
             discNumber: number;
             /** Displayname */
@@ -4765,6 +4770,11 @@ export interface components {
              * @description Primary artists.
              */
             artists: components["schemas"]["ArtistSummary"][];
+            /**
+             * Coverurl
+             * @description Its earliest release's front cover, about 250 px, hot-linked from the Cover Art Archive (the image stays its rights holder's), or null.
+             */
+            coverUrl: string | null;
             /** Displayname */
             displayName: string;
             /** Firstreleasedate */

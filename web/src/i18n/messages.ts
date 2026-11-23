@@ -158,6 +158,7 @@ export const messages = {
   'artist.intro': 'In brief',
   'artist.intro.wikipedia': 'From Wikipedia · CC BY-SA 4.0',
   'artist.intro.wikidata': 'From Wikidata',
+  'song.coversCredit': 'Covers from the Cover Art Archive',
   'artist.readers':
     'About {count} people read their Wikipedia page each month (average of the last 12 months, Wikimedia pageviews).',
   'artist.honors.awards':

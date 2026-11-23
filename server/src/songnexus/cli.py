@@ -549,6 +549,29 @@ def _cmd_fetch_facts(settings: Settings, args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_fetch_covers(settings: Settings, args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
+    from songnexus.catalog.coverart import CoverArtClient, run_fetch_covers
+    from songnexus.catalog.http import SourceRequestError
+    from songnexus.storage.db import make_engine
+
+    client = CoverArtClient(cache_dir=settings.raw_dir("cover-art-archive"))
+    try:
+        result = run_fetch_covers(
+            make_engine(settings.database_url),
+            client,
+            now=datetime.now(UTC),
+            limit=args.limit,
+            dry_run=args.dry_run,
+        )
+    except SourceRequestError as exc:
+        print(f"fetch-covers failed, nothing written: {exc}", file=sys.stderr)
+        return EXIT_FAILED
+    _print(result)
+    return EXIT_OK
+
+
 def _add_image_commands(commands: Any) -> None:
     facts = commands.add_parser(
         "fetch-facts",
@@ -559,6 +582,14 @@ def _add_image_commands(commands: Any) -> None:
         "--dry-run", action="store_true", help="report coverage without writing to the database"
     )
     facts.set_defaults(handler=_cmd_fetch_facts)
+    covers = commands.add_parser(
+        "fetch-covers", help="find album covers on the Cover Art Archive (hot-linked, never copied)"
+    )
+    covers.add_argument("--limit", type=int, help="only the first N releases")
+    covers.add_argument(
+        "--dry-run", action="store_true", help="report coverage without writing to the database"
+    )
+    covers.set_defaults(handler=_cmd_fetch_covers)
     images = commands.add_parser(
         "fetch-images",
         help="find freely licensed artist photos on Wikimedia Commons through Wikidata",

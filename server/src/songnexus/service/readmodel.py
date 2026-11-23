@@ -35,6 +35,11 @@ from songnexus.storage.catalog_reader import (
     read_search_entries,
 )
 from songnexus.storage.db import session_scope
+from songnexus.storage.release_covers import (
+    covers_stamp,
+    read_recording_covers,
+    read_release_covers,
+)
 
 log = logging.getLogger(__name__)
 
@@ -102,6 +107,9 @@ class ReadModel:
     # Link key (core.links) -> artist ID: the artist pages other apps link to, from the
     # links MusicBrainz stores. Shared links resolve here without any network call.
     artist_links: dict[str, str] = field(default_factory=dict)
+    # Cover Art Archive thumbnails: recording ID -> its earliest release's cover, and by release.
+    recording_covers: dict[str, str] = field(default_factory=dict)
+    release_covers: dict[str, str] = field(default_factory=dict)
     memo: Memo = field(default_factory=Memo)
 
 
@@ -156,6 +164,8 @@ def load_read_model(engine: Engine, genre_sources: Sequence[str] | None = None) 
         images = read_artist_images(session)
         listeners = catalog_repository.audience_listeners(session)
         link_rows = catalog_repository.artist_link_urls(session)
+        recording_covers = read_recording_covers(session)
+        release_covers = read_release_covers(session)
     graph = build_graph(facts, version)
     graph.images = {
         artist_id: image for artist_id, image in images.items() if artist_id in graph.nodes
@@ -178,7 +188,14 @@ def load_read_model(engine: Engine, genre_sources: Sequence[str] | None = None) 
             "elapsedMs": round((time.perf_counter() - started) * 1000, 1),
         },
     )
-    return ReadModel(version, graph, search, artist_links=artist_links)
+    return ReadModel(
+        version,
+        graph,
+        search,
+        artist_links=artist_links,
+        recording_covers=recording_covers,
+        release_covers=release_covers,
+    )
 
 
 def link_index(rows: Sequence[tuple[str, str]], graph: ArtistGraph) -> dict[str, str]:
@@ -210,9 +227,12 @@ def _version(session: Session) -> str | None:
     version = catalog_version(session)
     if version is None:
         return None
-    images = images_stamp(session)
-    facts = facts_stamp(session)
-    return version + (f".img{images}" if images else "") + (f".fx{facts}" if facts else "")
+    stamps = (
+        ("img", images_stamp(session)),
+        ("fx", facts_stamp(session)),
+        ("cv", covers_stamp(session)),
+    )
+    return version + "".join(f".{tag}{stamp}" for tag, stamp in stamps if stamp)
 
 
 def probe_version(engine: Engine) -> str | None:

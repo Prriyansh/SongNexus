@@ -380,6 +380,24 @@ class ArtistFacts(Base):
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class ReleaseCover(Base):
+    """A release group's front cover from the Cover Art Archive.
+
+    ``songnexus fetch-covers`` finds it by the release group's MusicBrainz ID. The images stay
+    their rights holders': they are hot-linked from the archive, never copied.
+    """
+
+    __tablename__ = "release_covers"
+
+    release_id: Mapped[str] = mapped_column(
+        ForeignKey("releases.id", ondelete="CASCADE"), primary_key=True
+    )
+    thumbnail_url: Mapped[str] = mapped_column(String(2048))
+    large_url: Mapped[str] = mapped_column(String(2048))
+    page_url: Mapped[str] = mapped_column(String(2048))
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class GenreParent(ProvenanceMixin, Base):
     """``genre_id`` is a kind of ``parent_genre_id`` (e.g. trap is a kind of hip hop)."""
 

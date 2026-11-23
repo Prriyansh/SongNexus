@@ -5,8 +5,9 @@
    when the project has one (Vercel's Neon integration), else into ``catalog.db`` next to this
    file, bundled with the function.
 2. Unless ``SONGNEXUS_BUILD_FETCH=0``: fetches artist photos and facts (Wikimedia Commons,
-   Wikidata, Wikipedia) for the best-known artists, ``SONGNEXUS_BUILD_FETCH_LIMIT`` of them
-   (default 1500), so pages have photos and introductions. A failed fetch only leaves them out.
+   Wikidata, Wikipedia, Wikimedia pageviews) for the best-known artists,
+   ``SONGNEXUS_BUILD_FETCH_LIMIT`` of them (default 1500), and album covers (Cover Art Archive).
+   A failed fetch only leaves them out.
 3. Compacts ``catalog.db``, so the function bundle stays small.
 
 Run it locally with ``uv run python vercel_build.py`` to check a deployment's catalog.
@@ -60,7 +61,7 @@ def build() -> int:
         return code
     if os.environ.get("SONGNEXUS_BUILD_FETCH", "1") != "0":
         limit = os.environ.get("SONGNEXUS_BUILD_FETCH_LIMIT", "1500")
-        for command in ("fetch-images", "fetch-facts"):
+        for command in ("fetch-images", "fetch-facts", "fetch-covers"):
             if _run(command, "--limit", limit):
                 print(f"{command} failed; continuing without it", file=sys.stderr)
     if bundled:

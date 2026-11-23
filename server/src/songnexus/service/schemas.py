@@ -535,6 +535,9 @@ class Appearance(ApiModel):
     year: int | None = None
     disc_number: int
     position: int
+    cover_url: str | None = Field(
+        default=None, description="The release's front cover (Cover Art Archive), or null."
+    )
 
 
 class AudioDescriptors(ApiModel):
@@ -578,6 +581,11 @@ class RecordingSummary(ApiModel):
     artists: list[ArtistSummary] = Field(description="Primary artists.")
     first_release_date: str | None = None
     length_ms: int | None = None
+    cover_url: str | None = Field(
+        default=None,
+        description="Its earliest release's front cover, about 250 px, hot-linked from the Cover "
+        "Art Archive (the image stays its rights holder's), or null.",
+    )
 
 
 class SimilarityPart(ApiModel):

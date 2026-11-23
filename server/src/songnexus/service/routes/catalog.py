@@ -541,6 +541,7 @@ def get_recording(
                 year=a.year,
                 disc_number=a.disc_number,
                 position=a.position,
+                cover_url=model.release_covers.get(a.release_id),
             )
             for a in details.appearances
         ],
@@ -597,6 +598,7 @@ def compare_recordings(
             artists=[convert.artist_summary(graph, x) for x in primary(d)],
             first_release_date=d.first_release_date,
             length_ms=d.length_ms,
+            cover_url=model.recording_covers.get(d.id),
         )
 
     fields = [repo.recording_descriptors(session, d.id) for d in details]

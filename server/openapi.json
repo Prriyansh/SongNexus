@@ -107,6 +107,18 @@
       "Appearance": {
         "description": "A release a recording appears on.",
         "properties": {
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The release's front cover (Cover Art Archive), or null.",
+            "title": "Coverurl"
+          },
           "discNumber": {
             "title": "Discnumber",
             "type": "integer"
@@ -140,7 +152,8 @@
           "displayName",
           "year",
           "discNumber",
-          "position"
+          "position",
+          "coverUrl"
         ],
         "title": "Appearance",
         "type": "object"
@@ -6177,6 +6190,18 @@
             "title": "Artists",
             "type": "array"
           },
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its earliest release's front cover, about 250 px, hot-linked from the Cover Art Archive (the image stays its rights holder's), or null.",
+            "title": "Coverurl"
+          },
           "displayName": {
             "title": "Displayname",
             "type": "string"
@@ -6213,7 +6238,8 @@
           "displayName",
           "artists",
           "firstReleaseDate",
-          "lengthMs"
+          "lengthMs",
+          "coverUrl"
         ],
         "title": "RecordingSummary",
         "type": "object"
