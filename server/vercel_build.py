@@ -8,7 +8,9 @@
    Wikidata, Wikipedia, Wikimedia pageviews) for the best-known artists,
    ``SONGNEXUS_BUILD_FETCH_LIMIT`` of them (default 1500), and album covers (Cover Art Archive).
    A failed fetch only leaves them out.
-3. Compacts ``catalog.db``, so the function bundle stays small.
+3. Compacts ``catalog.db``, so the function bundle stays small: the raw source payloads (over
+   half the file) are emptied, since serving reads only their keys for provenance links; the
+   committed snapshots keep them in full, and every build ingests them afresh.
 
 Run it locally with ``uv run python vercel_build.py`` to check a deployment's catalog.
 """
@@ -30,6 +32,14 @@ def _run(*args: str) -> int:
 
     print(f"songnexus {' '.join(args)}", flush=True)
     return main(list(args))
+
+
+def compact(path: Path) -> None:
+    """Empties the raw payloads of a bundled catalog and reclaims the space."""
+    with sqlite3.connect(path) as db:
+        db.execute("UPDATE raw_records SET payload = '{}'")
+    with sqlite3.connect(path) as db:
+        db.execute("VACUUM")
 
 
 def target_database() -> tuple[str, bool]:
@@ -64,12 +74,16 @@ def build() -> int:
         for command in ("fetch-images", "fetch-facts", "fetch-covers"):
             if _run(command, "--limit", limit):
                 print(f"{command} failed; continuing without it", file=sys.stderr)
-        for command in ("fetch-billboard", "fetch-events"):
+        for command in (
+            "fetch-billboard",
+            "fetch-events",
+            "fetch-greatest-albums",
+            "fetch-eurovision",
+        ):
             if _run(command):
                 print(f"{command} failed; continuing without it", file=sys.stderr)
     if bundled:
-        with sqlite3.connect(CATALOG) as db:
-            db.execute("VACUUM")
+        compact(CATALOG)
         print(f"catalog.db: {CATALOG.stat().st_size / 1e6:.1f} MB", flush=True)
     return 0
 

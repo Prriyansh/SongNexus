@@ -143,3 +143,32 @@ def test_anything_else_is_not_a_hosted_database() -> None:
     assert hosted_database_url({}) is None
     out = vercel_defaults({"DATABASE_URL": "mysql://u:p@h/db"}, RUNTIME)
     assert out["SONGNEXUS_DATABASE_URL"] == "sqlite:////tmp/songnexus.db"
+
+
+def test_a_compacted_bundled_catalog_still_serves_with_provenance(tmp_path: Path) -> None:
+    import vercel_build
+    from fastapi.testclient import TestClient
+
+    from songnexus.catalog.ingest import ingest_snapshot
+    from songnexus.catalog.snapshot import write_snapshot
+    from songnexus.core import ids
+    from songnexus.service.app import create_app
+    from songnexus.storage import migrate
+    from songnexus.storage.db import make_engine
+    from tests.catalog import fixtures as fx
+
+    snapshot, catalog = tmp_path / "mb.jsonl.gz", tmp_path / "catalog.db"
+    write_snapshot(fx.small_catalog(), snapshot)
+    engine = make_engine(f"sqlite:///{catalog}")
+    migrate.upgrade(engine)
+    ingest_snapshot(engine, snapshot)
+    engine.dispose()
+    vercel_build.compact(catalog)
+
+    settings = Settings(
+        database_url=f"sqlite:///{catalog}", log_json=False, read_model_refresh_s=3600
+    )
+    with TestClient(create_app(settings, build_state(settings))) as client:
+        alice = client.get(f"/v1/artists/{ids.artist_id('mb-alice')}")
+        assert alice.status_code == 200
+        assert alice.json()["sources"]  # provenance links survive without the payloads
