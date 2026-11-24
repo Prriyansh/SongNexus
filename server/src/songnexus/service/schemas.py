@@ -290,6 +290,50 @@ class SongChart(ApiModel):
     last_week: str
 
 
+class AlbumChartRun(ApiModel):
+    """An album's run on the Billboard 200 (the title as the chart prints it)."""
+
+    title: str
+    peak: int = Field(description="Best position, 1 to 200.")
+    weeks: int = Field(description="Weeks on the chart.")
+    first_year: int
+
+
+class AlbumCharts(ApiModel):
+    """An artist's Billboard 200 history as the lead performer (all albums, catalog or not)."""
+
+    entries: int = Field(description="Albums that reached the Billboard 200.")
+    top_ten: int
+    number_ones: int
+    best_peak: int
+    first_year: int
+    last_year: int
+    top_albums: list[AlbumChartRun] = Field(
+        description="Best peak first, then most weeks; up to 6."
+    )
+
+
+class GreatestAlbum(ApiModel):
+    """An album on Rolling Stone's 500 Greatest Albums of All Time, with its rank per edition."""
+
+    title: str
+    release_year: int | None = None
+    rank_2003: int | None = Field(default=None, description="None: not on the 2003 list.")
+    rank_2012: int | None = None
+    rank_2020: int | None = None
+
+
+class EurovisionEntry(ApiModel):
+    """An entry in the Eurovision Song Contest."""
+
+    year: int
+    country: str = Field(description="The country the entry represented, in English.")
+    song: str
+    place_final: int | None = Field(default=None, description="None: didn't reach the final.")
+    points_final: int | None = None
+    place_semi_final: int | None = None
+
+
 class Artist(ArtistSummary):
     """GetArtist."""
 
@@ -317,6 +361,16 @@ class Artist(ArtistSummary):
     )
     charts: ArtistCharts | None = Field(
         default=None, description="Billboard Hot 100 history, or null when they never charted."
+    )
+    album_charts: AlbumCharts | None = Field(
+        default=None, description="Billboard 200 history, or null when no album charted."
+    )
+    greatest_albums: list[GreatestAlbum] = Field(
+        default_factory=list,
+        description="Their albums on Rolling Stone's 500 Greatest Albums list, oldest first.",
+    )
+    eurovision: list[EurovisionEntry] = Field(
+        default_factory=list, description="Eurovision Song Contest entries, oldest first."
     )
     about: ArtistAbout | None = Field(
         default=None,

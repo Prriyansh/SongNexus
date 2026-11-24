@@ -2077,6 +2077,52 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AlbumChartRun
+         * @description An album's run on the Billboard 200 (the title as the chart prints it).
+         */
+        AlbumChartRun: {
+            /** Firstyear */
+            firstYear: number;
+            /**
+             * Peak
+             * @description Best position, 1 to 200.
+             */
+            peak: number;
+            /** Title */
+            title: string;
+            /**
+             * Weeks
+             * @description Weeks on the chart.
+             */
+            weeks: number;
+        };
+        /**
+         * AlbumCharts
+         * @description An artist's Billboard 200 history as the lead performer (all albums, catalog or not).
+         */
+        AlbumCharts: {
+            /** Bestpeak */
+            bestPeak: number;
+            /**
+             * Entries
+             * @description Albums that reached the Billboard 200.
+             */
+            entries: number;
+            /** Firstyear */
+            firstYear: number;
+            /** Lastyear */
+            lastYear: number;
+            /** Numberones */
+            numberOnes: number;
+            /**
+             * Topalbums
+             * @description Best peak first, then most weeks; up to 6.
+             */
+            topAlbums: components["schemas"]["AlbumChartRun"][];
+            /** Topten */
+            topTen: number;
+        };
+        /**
          * Alias
          * @description Another name for an artist.
          */
@@ -2142,6 +2188,8 @@ export interface components {
         Artist: {
             /** @description Description, Wikipedia introduction, awards and nominations, or null when Wikidata has none for this artist. */
             about: components["schemas"]["ArtistAbout"] | null;
+            /** @description Billboard 200 history, or null when no album charted. */
+            albumCharts: components["schemas"]["AlbumCharts"] | null;
             /** Aliases */
             aliases: components["schemas"]["Alias"][];
             /** Artisttype */
@@ -2167,6 +2215,11 @@ export interface components {
             /** Displayname */
             displayName: string;
             /**
+             * Eurovision
+             * @description Eurovision Song Contest entries, oldest first.
+             */
+            eurovision: components["schemas"]["EurovisionEntry"][];
+            /**
              * Genreknown
              * @description Whether our data has genres for this artist.
              * @default false
@@ -2176,6 +2229,11 @@ export interface components {
             genres: components["schemas"]["GenreShare"][];
             /** Graphversion */
             graphVersion: string;
+            /**
+             * Greatestalbums
+             * @description Their albums on Rolling Stone's 500 Greatest Albums list, oldest first.
+             */
+            greatestAlbums: components["schemas"]["GreatestAlbum"][];
             /** @description The artist's photo and its attribution, or null. */
             image: components["schemas"]["ArtistImage"] | null;
             /**
@@ -3450,6 +3508,30 @@ export interface components {
             error: components["schemas"]["Status"];
         };
         /**
+         * EurovisionEntry
+         * @description An entry in the Eurovision Song Contest.
+         */
+        EurovisionEntry: {
+            /**
+             * Country
+             * @description The country the entry represented, in English.
+             */
+            country: string;
+            /**
+             * Placefinal
+             * @description None: didn't reach the final.
+             */
+            placeFinal: number | null;
+            /** Placesemifinal */
+            placeSemiFinal: number | null;
+            /** Pointsfinal */
+            pointsFinal: number | null;
+            /** Song */
+            song: string;
+            /** Year */
+            year: number;
+        };
+        /**
          * Event
          * @description One interaction.
          */
@@ -3994,6 +4076,25 @@ export interface components {
              * @description Data sources asserting it, `dataSources/{source}`.
              */
             sources: string[];
+        };
+        /**
+         * GreatestAlbum
+         * @description An album on Rolling Stone's 500 Greatest Albums of All Time, with its rank per edition.
+         */
+        GreatestAlbum: {
+            /**
+             * Rank2003
+             * @description None: not on the 2003 list.
+             */
+            rank2003: number | null;
+            /** Rank2012 */
+            rank2012: number | null;
+            /** Rank2020 */
+            rank2020: number | null;
+            /** Releaseyear */
+            releaseYear: number | null;
+            /** Title */
+            title: string;
         };
         /**
          * Health

@@ -23,6 +23,13 @@ sound & lyrics service (`song_compare/`), deployed together on Vercel.
   Wikipedia readership, and the awards and nominations Wikidata lists.
 - **Charts, covers and concerts**: Billboard Hot 100 history for artists and songs, album covers
   from the Cover Art Archive, and concerts and festivals from MusicBrainz ("shared the bill").
+- **Albums and contests on artist pages**: Billboard 200 history and an artist's biggest albums,
+  their albums on Rolling Stone's 500 Greatest Albums (2003, 2012 and 2020 editions) and their
+  Eurovision Song Contest entries. Chart and list credits are matched to an artist only by an
+  exact name, or by another name of theirs when the album or song is in the catalog, so a
+  namesake never gets someone else's history.
+- **A larger catalog**: 307 seed artists, adding the 200 lead performers with the most Hot 100
+  entries since 1958.
 - **Artist comparisons**: awards both received, labels both released on, artists Last.fm lists
   as similar to both (with a key), a two-artist map, and **More credits**: people Discogs (and
   Genius, with a key) credit on both artists' work.

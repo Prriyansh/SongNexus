@@ -431,6 +431,55 @@ class ArtistChart(Base):
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class AlbumChartRun(Base):
+    """An album's run on the Billboard 200, for its catalog lead artist (``fetch-billboard``)."""
+
+    __tablename__ = "album_chart_runs"
+
+    artist_id: Mapped[str] = mapped_column(
+        ForeignKey("artists.id", ondelete="CASCADE"), primary_key=True
+    )
+    title: Mapped[str] = mapped_column(String(512), primary_key=True)  # as the chart prints it
+    peak: Mapped[int] = mapped_column(Integer)
+    weeks: Mapped[int] = mapped_column(Integer)
+    first_week: Mapped[date] = mapped_column(Date)
+    last_week: Mapped[date] = mapped_column(Date)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class GreatestAlbum(Base):
+    """An album on Rolling Stone's 500 Greatest Albums list (``fetch-greatest-albums``)."""
+
+    __tablename__ = "greatest_albums"
+
+    artist_id: Mapped[str] = mapped_column(
+        ForeignKey("artists.id", ondelete="CASCADE"), primary_key=True
+    )
+    title: Mapped[str] = mapped_column(String(512), primary_key=True)
+    release_year: Mapped[int | None] = mapped_column(Integer)
+    rank_2003: Mapped[int | None] = mapped_column(Integer)
+    rank_2012: Mapped[int | None] = mapped_column(Integer)
+    rank_2020: Mapped[int | None] = mapped_column(Integer)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class EurovisionEntry(Base):
+    """A catalog artist's Eurovision Song Contest entry (``fetch-eurovision``); never lyrics."""
+
+    __tablename__ = "eurovision_entries"
+
+    artist_id: Mapped[str] = mapped_column(
+        ForeignKey("artists.id", ondelete="CASCADE"), primary_key=True
+    )
+    year: Mapped[int] = mapped_column(Integer, primary_key=True)
+    country: Mapped[str] = mapped_column(String(128), primary_key=True)
+    song: Mapped[str] = mapped_column(String(512))
+    place_final: Mapped[int | None] = mapped_column(Integer)
+    points_final: Mapped[int | None] = mapped_column(Integer)
+    place_semi_final: Mapped[int | None] = mapped_column(Integer)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class Event(Base):
     """A concert or festival from MusicBrainz (CC0), found through a catalog artist."""
 

@@ -43,6 +43,7 @@ from songnexus.service.routes.common import (
     set_cache_control,
 )
 from songnexus.storage import catalog_repository as repo
+from songnexus.storage.album_lists import album_runs, contest_entries, listed_albums
 from songnexus.storage.artist_facts import read_artist_facts
 from songnexus.storage.charts import artist_chart, song_chart
 from songnexus.storage.events import artist_events, count_artist_events
@@ -184,6 +185,9 @@ def get_artist(
         image=convert.artist_image(graph, artist_id),
         stage=_stage(graph, session, artist_id),
         charts=convert.artist_charts(artist_chart(session, artist_id)),
+        album_charts=convert.album_charts(album_runs(session, artist_id)),
+        greatest_albums=convert.greatest_albums(listed_albums(session, artist_id)),
+        eurovision=convert.eurovision(contest_entries(session, artist_id)),
         about=convert.artist_about(read_artist_facts(session, [artist_id]).get(artist_id)),
         graph_version=model.version,
     )

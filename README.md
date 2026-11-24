@@ -144,10 +144,12 @@ data/          samples/ source snapshots · seeds/ seed artists, pinned decision
 
 ## Data and licensing
 
-SongNexus reads 19 sources: MusicBrainz for the catalog (artists, songs, releases, credits,
+SongNexus reads 22 sources: MusicBrainz for the catalog (artists, songs, releases, credits,
 concerts), Wikidata, Wikipedia and Wikimedia Commons for facts, introductions, readership and
-photos, the Cover Art Archive for album covers, the Billboard Hot 100 archive (every weekly chart
-since 1958) for chart history, ListenBrainz for similar music, Discogs, Genius, Last.fm and
+photos, the Cover Art Archive for album covers, the Billboard Hot 100 and Billboard 200 archives
+(every weekly chart since 1958 and 1967) for chart history, Rolling Stone's 500 Greatest Albums
+and the Eurovision Song Contest Dataset for artist pages, ListenBrainz for similar music,
+Discogs, Genius, Last.fm and
 AcousticBrainz for comparisons, Deezer for which song is an artist's top song, and the Spotify
 Tracks and Genius lyrics datasets behind `song_compare`.
 [docs/data-sources.md](docs/data-sources.md) lists each one with its license and what it feeds.

@@ -1,6 +1,86 @@
 {
   "components": {
     "schemas": {
+      "AlbumChartRun": {
+        "description": "An album's run on the Billboard 200 (the title as the chart prints it).",
+        "properties": {
+          "firstYear": {
+            "title": "Firstyear",
+            "type": "integer"
+          },
+          "peak": {
+            "description": "Best position, 1 to 200.",
+            "title": "Peak",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "weeks": {
+            "description": "Weeks on the chart.",
+            "title": "Weeks",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "title",
+          "peak",
+          "weeks",
+          "firstYear"
+        ],
+        "title": "AlbumChartRun",
+        "type": "object"
+      },
+      "AlbumCharts": {
+        "description": "An artist's Billboard 200 history as the lead performer (all albums, catalog or not).",
+        "properties": {
+          "bestPeak": {
+            "title": "Bestpeak",
+            "type": "integer"
+          },
+          "entries": {
+            "description": "Albums that reached the Billboard 200.",
+            "title": "Entries",
+            "type": "integer"
+          },
+          "firstYear": {
+            "title": "Firstyear",
+            "type": "integer"
+          },
+          "lastYear": {
+            "title": "Lastyear",
+            "type": "integer"
+          },
+          "numberOnes": {
+            "title": "Numberones",
+            "type": "integer"
+          },
+          "topAlbums": {
+            "description": "Best peak first, then most weeks; up to 6.",
+            "items": {
+              "$ref": "#/components/schemas/AlbumChartRun"
+            },
+            "title": "Topalbums",
+            "type": "array"
+          },
+          "topTen": {
+            "title": "Topten",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "entries",
+          "topTen",
+          "numberOnes",
+          "bestPeak",
+          "firstYear",
+          "lastYear",
+          "topAlbums"
+        ],
+        "title": "AlbumCharts",
+        "type": "object"
+      },
       "Alias": {
         "description": "Another name for an artist.",
         "properties": {
@@ -172,6 +252,17 @@
             ],
             "description": "Description, Wikipedia introduction, awards and nominations, or null when Wikidata has none for this artist."
           },
+          "albumCharts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AlbumCharts"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Billboard 200 history, or null when no album charted."
+          },
           "aliases": {
             "items": {
               "$ref": "#/components/schemas/Alias"
@@ -248,6 +339,14 @@
             "title": "Displayname",
             "type": "string"
           },
+          "eurovision": {
+            "description": "Eurovision Song Contest entries, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/EurovisionEntry"
+            },
+            "title": "Eurovision",
+            "type": "array"
+          },
           "genreKnown": {
             "default": false,
             "description": "Whether our data has genres for this artist.",
@@ -264,6 +363,14 @@
           "graphVersion": {
             "title": "Graphversion",
             "type": "string"
+          },
+          "greatestAlbums": {
+            "description": "Their albums on Rolling Stone's 500 Greatest Albums list, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/GreatestAlbum"
+            },
+            "title": "Greatestalbums",
+            "type": "array"
           },
           "image": {
             "anyOf": [
@@ -371,6 +478,9 @@
           "image",
           "stage",
           "charts",
+          "albumCharts",
+          "greatestAlbums",
+          "eurovision",
           "about",
           "graphVersion"
         ],
@@ -3109,6 +3219,68 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "EurovisionEntry": {
+        "description": "An entry in the Eurovision Song Contest.",
+        "properties": {
+          "country": {
+            "description": "The country the entry represented, in English.",
+            "title": "Country",
+            "type": "string"
+          },
+          "placeFinal": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None: didn't reach the final.",
+            "title": "Placefinal"
+          },
+          "placeSemiFinal": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Placesemifinal"
+          },
+          "pointsFinal": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pointsfinal"
+          },
+          "song": {
+            "title": "Song",
+            "type": "string"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "country",
+          "song",
+          "placeFinal",
+          "pointsFinal",
+          "placeSemiFinal"
+        ],
+        "title": "EurovisionEntry",
+        "type": "object"
+      },
       "Event": {
         "description": "One interaction.",
         "properties": {
@@ -4218,6 +4390,69 @@
           "sources"
         ],
         "title": "GenreShare",
+        "type": "object"
+      },
+      "GreatestAlbum": {
+        "description": "An album on Rolling Stone's 500 Greatest Albums of All Time, with its rank per edition.",
+        "properties": {
+          "rank2003": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None: not on the 2003 list.",
+            "title": "Rank2003"
+          },
+          "rank2012": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank2012"
+          },
+          "rank2020": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank2020"
+          },
+          "releaseYear": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Releaseyear"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "releaseYear",
+          "rank2003",
+          "rank2012",
+          "rank2020"
+        ],
+        "title": "GreatestAlbum",
         "type": "object"
       },
       "Health": {
