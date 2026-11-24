@@ -1,10 +1,11 @@
-"""Billboard Hot 100 history (``songnexus fetch-billboard``): every weekly chart since August 1958.
+"""Billboard chart history (``songnexus fetch-billboard``): Hot 100 since 1958, 200 since 1967.
 
 The weekly charts come from the University of Texas data-journalism archive of billboard.com
 (``utdata/rwd-billboard-data``, updated weekly; the Kaggle copy stops in 2021). Billboard owns
-the charts, so the file is downloaded into the git-ignored raw cache, never committed, and only
-per-song summaries reach the database: peak position, weeks on the chart and the first and last
-chart weeks. Matching songs to the catalog happens in ``service.billboard_job``.
+the charts, so the files are downloaded into the git-ignored raw cache, never committed, and only
+summaries reach the database: per song (Hot 100) or album (Billboard 200), the peak position,
+weeks on the chart and the first and last chart weeks. Both files share one layout, so one parser
+reads them. Matching to the catalog happens in ``service.billboard_job``.
 """
 
 from __future__ import annotations
@@ -13,22 +14,16 @@ import csv
 import io
 import logging
 import re
-import time
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-import httpx
-
-from songnexus.catalog.wikidata.images import USER_AGENT
-
 log = logging.getLogger(__name__)
 
-HOT_100_URL = (
-    "https://raw.githubusercontent.com/utdata/rwd-billboard-data/main/data-out/hot-100-current.csv"
-)
-REFRESH_AFTER_S = 6 * 24 * 3600  # the archive updates weekly
+_ARCHIVE = "https://raw.githubusercontent.com/utdata/rwd-billboard-data/main/data-out/"
+HOT_100_URL = _ARCHIVE + "hot-100-current.csv"
+BILLBOARD_200_URL = _ARCHIVE + "billboard-200-current.csv"
 # Words that join a lead performer to others ("Lil Durk Featuring Morgan Wallen").
 _FEATURING = re.compile(r"\s+(?:featuring|feat\.?|ft\.?|with|duet with)\s+", re.IGNORECASE)
 _LIST = re.compile(r"\s*(?:,|&|\bx\b|\band\b|/)\s*", re.IGNORECASE)
@@ -36,7 +31,7 @@ _LIST = re.compile(r"\s*(?:,|&|\bx\b|\band\b|/)\s*", re.IGNORECASE)
 
 @dataclass(frozen=True)
 class ChartSong:
-    """One song's run on the Hot 100."""
+    """One song's run on the Hot 100, or one album's on the Billboard 200 (then ``title`` is it)."""
 
     title: str
     performer: str
@@ -44,22 +39,6 @@ class ChartSong:
     weeks: int
     first_week: date
     last_week: date
-
-
-def download(raw_dir: Path, *, url: str = HOT_100_URL, http: httpx.Client | None = None) -> Path:
-    """The weekly charts as a local CSV, downloaded again when the copy is a week old."""
-    target = raw_dir / "hot-100-current.csv"
-    if target.exists() and time.time() - target.stat().st_mtime < REFRESH_AFTER_S:
-        return target
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    client = http or httpx.Client(timeout=httpx.Timeout(120.0, connect=15.0))
-    with client:
-        response = client.get(url, headers={"User-Agent": USER_AGENT})
-        response.raise_for_status()
-    partial = target.with_suffix(".partial")
-    partial.write_bytes(response.content)
-    partial.replace(target)
-    return target
 
 
 def parse_weeks(text: str) -> list[ChartSong]:

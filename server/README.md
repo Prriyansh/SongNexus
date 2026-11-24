@@ -21,6 +21,10 @@ uv run songnexus <command>       # see below; results are JSON on stdout, logs o
 | `fetch-listenbrainz` | Fetches listener counts for all artists and co-listening rankings for artists with pages |
 | `fetch-images [--limit N] [--dry-run]` | Finds freely licensed artist photos on Wikimedia Commons through Wikidata and stores them with their attribution (best-known artists first) |
 | `fetch-facts [--limit N] [--dry-run]` | Stores artist descriptions and awards and nominations from Wikidata, and the Wikipedia introduction (CC BY-SA 4.0, kept with its link); about 25 minutes for the whole catalog, cached afterwards |
+| `fetch-covers`, `fetch-events` | Album covers from the Cover Art Archive (hot-linked) and the seed artists' concerts and festivals from MusicBrainz |
+| `fetch-billboard` | Downloads the Billboard Hot 100 (1958 on) and Billboard 200 (1967 on) archives into `data/raw/billboard` and stores per-song and per-album runs for catalog artists matched by exact name |
+| `fetch-greatest-albums` | Rolling Stone's 500 Greatest Albums (2003, 2012, 2020) for catalog artists, from TidyTuesday's copy of The Pudding's data |
+| `fetch-eurovision` | Eurovision Song Contest entries (1956–2023) for catalog artists whose song the catalog has; the dataset's lyrics are dropped on read |
 | `ingest [--snapshot PATH] [--no-enrichment]` | Migrates, then ingests the committed snapshots (MusicBrainz, Wikidata, Discogs). The quality gate runs inside the transaction: a failing catalog is rejected and the previous one keeps serving. `--snapshot` ingests one MusicBrainz snapshot alone |
 | `quality` | Runs the data-quality checks on the current catalog |
 | `eval-search` | Search MRR on `data/eval/search_cases.json` (gate ≥ 0.95) |

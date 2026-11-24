@@ -198,6 +198,28 @@ export const messages = {
   'artist.stage':
     'On stage: {count, plural, one {# event} other {# events}} on MusicBrainz',
   'artist.stage.source': 'Recent concerts and festivals, from MusicBrainz.',
+  'artist.albumCharts':
+    '{count, plural, one {# album} other {# albums}} on the Billboard 200',
+  'artist.albumCharts.summary':
+    '{topTen, plural, =0 {No top ten albums} one {# top ten album} other {# top ten albums}}, {numberOnes, plural, =0 {no number ones} one {# number one} other {# number ones}}; charted {first}–{last}.',
+  'artist.albumCharts.run':
+    'peaked at #{peak}, {weeks, plural, one {# week} other {# weeks}}',
+  'artist.albumCharts.source':
+    'Billboard 200 (archived by UT Austin), as the lead performer.',
+  'artist.greatest':
+    '{count, plural, one {# album} other {# albums}} on Rolling Stone’s 500 Greatest Albums',
+  'artist.greatest.rank': '#{rank} in {year}',
+  'artist.greatest.source':
+    'Rolling Stone’s lists of 2003, 2012 and 2020, as compiled by The Pudding.',
+  'artist.eurovision':
+    '{count, plural, one {# Eurovision entry} other {# Eurovision entries}}',
+  'artist.eurovision.entry': '“{song}” for {country}',
+  'artist.eurovision.won': 'won, {points} points',
+  'artist.eurovision.place': 'placed {place} in the final',
+  'artist.eurovision.semi': 'placed {place} in the semi-final',
+  'artist.eurovision.noFinal': 'did not reach the final',
+  'artist.eurovision.source':
+    'Eurovision Song Contest Dataset (Spijkervet and Burgoyne, CC BY 4.0).',
   'artist.legalName': 'Legal name',
   'artist.links.listen': 'Streaming',
   'artist.links.official': 'Official',

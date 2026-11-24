@@ -200,6 +200,114 @@ function Stage({stage}: {stage: Schemas['ArtistStage']}) {
   );
 }
 
+/** Billboard 200 history as the lead performer, with the biggest albums. */
+function AlbumCharts({charts}: {charts: Schemas['AlbumCharts']}) {
+  const {t} = useI18n();
+  return (
+    <div className="entity-about__block">
+      <h3 className="entity-about__title">
+        {t('artist.albumCharts', {count: charts.entries})}
+      </h3>
+      <p className="entity-readers">
+        {t('artist.albumCharts.summary', {
+          topTen: charts.topTen,
+          numberOnes: charts.numberOnes,
+          first: charts.firstYear,
+          last: charts.lastYear,
+        })}
+      </p>
+      <ul className="entity-honors">
+        {charts.topAlbums.map(album => (
+          <li key={album.title} className="entity-honor">
+            <span>
+              {album.title}
+              {' · '}
+              {t('artist.albumCharts.run', {
+                peak: album.peak,
+                weeks: album.weeks,
+              })}
+            </span>
+            <span className="entity-honor__year">{album.firstYear}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="entity-intro__source">{t('artist.albumCharts.source')}</p>
+    </div>
+  );
+}
+
+/** Rolling Stone's 500 Greatest Albums: the rank in each edition the album made. */
+function GreatestAlbums({albums}: {albums: Schemas['GreatestAlbum'][]}) {
+  const {t} = useI18n();
+  return (
+    <div className="entity-about__block">
+      <h3 className="entity-about__title">
+        {t('artist.greatest', {count: albums.length})}
+      </h3>
+      <ul className="entity-honors">
+        {albums.map(album => {
+          const ranks = (
+            [
+              [2003, album.rank2003],
+              [2012, album.rank2012],
+              [2020, album.rank2020],
+            ] as const
+          )
+            .filter(([, rank]) => rank !== null && rank !== undefined)
+            .map(([year, rank]) => t('artist.greatest.rank', {rank, year}));
+          return (
+            <li key={album.title} className="entity-honor">
+              <span>
+                {album.title}
+                {' · '}
+                {ranks.join(', ')}
+              </span>
+              {album.releaseYear && (
+                <span className="entity-honor__year">{album.releaseYear}</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="entity-intro__source">{t('artist.greatest.source')}</p>
+    </div>
+  );
+}
+
+/** Eurovision Song Contest entries: country, song and how it placed. */
+function Eurovision({entries}: {entries: Schemas['EurovisionEntry'][]}) {
+  const {t} = useI18n();
+  return (
+    <div className="entity-about__block">
+      <h3 className="entity-about__title">
+        {t('artist.eurovision', {count: entries.length})}
+      </h3>
+      <ul className="entity-honors">
+        {entries.map(entry => (
+          <li key={`${entry.year}-${entry.country}`} className="entity-honor">
+            <span>
+              {t('artist.eurovision.entry', {
+                song: entry.song,
+                country: entry.country,
+              })}
+              {' · '}
+              {entry.placeFinal
+                ? entry.placeFinal === 1
+                  ? t('artist.eurovision.won', {points: entry.pointsFinal ?? 0})
+                  : t('artist.eurovision.place', {place: entry.placeFinal})
+                : entry.placeSemiFinal
+                  ? t('artist.eurovision.semi', {place: entry.placeSemiFinal})
+                  : t('artist.eurovision.noFinal')}
+            </span>
+            <span className="entity-honor__year">{entry.year}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="entity-intro__source">{t('artist.eurovision.source')}</p>
+    </div>
+  );
+}
+
 /** Awards or nominations as Wikidata lists them: community-edited, so never called a total. */
 function Honors({
   title,
@@ -533,6 +641,9 @@ export default function ArtistScreen() {
 
       {(a.about ||
         a.stage ||
+        a.albumCharts ||
+        a.greatestAlbums.length > 0 ||
+        a.eurovision.length > 0 ||
         a.aliases.length > 0 ||
         a.links.length > 0 ||
         a.sources.length > 0) && (
@@ -557,6 +668,11 @@ export default function ArtistScreen() {
                 wikidataUrl={a.about.wikidataUrl}
               />
             )}
+            {a.albumCharts && <AlbumCharts charts={a.albumCharts} />}
+            {a.greatestAlbums.length > 0 && (
+              <GreatestAlbums albums={a.greatestAlbums} />
+            )}
+            {a.eurovision.length > 0 && <Eurovision entries={a.eurovision} />}
             {a.stage && <Stage stage={a.stage} />}
             {a.aliases.length > 0 && <Aliases aliases={a.aliases} />}
             <Links artist={a} />

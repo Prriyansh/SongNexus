@@ -294,6 +294,63 @@ SOURCES: tuple[DataSource, ...] = (
         "guessed. Non-commercial use only.",
     ),
     DataSource(
+        id="billboard-200",
+        name="Billboard 200 history (utdata/rwd-billboard-data)",
+        homepage="https://github.com/utdata/rwd-billboard-data",
+        license="Charts are Billboard's; archived for teaching by UT Austin (code MIT)",
+        license_url="https://www.billboard.com/charts/billboard-200/",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.DATASET,
+        feeds=("artist pages: Billboard 200 albums, top tens, number ones and their longest runs",),
+        attribution="Chart data: Billboard 200",
+        checked_on="2026-11-23",
+        notes="Every weekly Billboard 200 album chart since 1967, from the same UT Austin archive "
+        "as the Hot 100 (also on Kaggle in older copies). Downloaded by `songnexus "
+        "fetch-billboard` into the raw cache, never committed; only per-album summaries (peak, "
+        "weeks, first and last week) are stored, for albums whose lead performer matches one "
+        "catalog artist by exact name. Non-commercial use only.",
+    ),
+    DataSource(
+        id="rolling-stone-500",
+        name="Rolling Stone's 500 Greatest Albums (The Pudding, via TidyTuesday)",
+        homepage="https://pudding.cool/2024/03/greatest-music/",
+        license="The ranking is Rolling Stone's; compiled by The Pudding, republished by "
+        "TidyTuesday (CC0)",
+        license_url="https://github.com/rfordatascience/tidytuesday/tree/main/data/2024/2024-05-07",
+        tier=Tier.NON_COMMERCIAL,
+        status=Status.IN_USE,
+        kind=Kind.DATASET,
+        feeds=("artist pages: their albums on the list and their rank in each edition",),
+        attribution="Rolling Stone, 500 Greatest Albums of All Time (2003, 2012, 2020); "
+        "compiled by The Pudding",
+        checked_on="2026-11-23",
+        notes='The three editions of the list as The Pudding compiled them for "What makes an '
+        "album the greatest of all time?\" (2024), read from TidyTuesday's copy by `songnexus "
+        "fetch-greatest-albums`. Only the artist, album title, release year and the three ranks "
+        "are read; the file's Spotify popularity and links are never read. Artists are matched "
+        "to the catalog by their whole name. The ranking is Rolling Stone's editorial work, so "
+        "it is credited and kept to non-commercial use.",
+    ),
+    DataSource(
+        id="eurovision",
+        name="Eurovision Song Contest Dataset (Spijkervet and Burgoyne)",
+        homepage="https://github.com/Spijkervet/eurovision-dataset",
+        license="CC-BY-4.0",
+        license_url="https://zenodo.org/records/10088892",
+        tier=Tier.PRODUCTION,
+        status=Status.IN_USE,
+        kind=Kind.DATASET,
+        feeds=("artist pages: Eurovision entries with the country, song, place and points",),
+        attribution="Eurovision Song Contest Dataset, J. Spijkervet and J. A. Burgoyne (CC BY 4.0)",
+        checked_on="2026-11-23",
+        notes="Contestants of every contest from 1956 to 2023 (the 2023 release; compiled from "
+        "EurovisionWorld), read by `songnexus fetch-eurovision`. The file also carries each "
+        "song's lyrics: they are dropped by the parser and never stored or shown. Performers "
+        "are matched to the catalog by their whole name only, so a duo is never credited to "
+        "one of its members.",
+    ),
+    DataSource(
         id="wikimedia-commons",
         name="Wikimedia Commons",
         homepage="https://commons.wikimedia.org",

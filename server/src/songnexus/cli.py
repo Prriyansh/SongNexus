@@ -578,19 +578,75 @@ def _cmd_fetch_billboard(settings: Settings, _args: argparse.Namespace) -> int:
 
     import httpx
 
-    from songnexus.catalog.billboard import download, read_chart_songs
-    from songnexus.service.billboard_job import run_billboard
+    from songnexus.catalog.billboard import BILLBOARD_200_URL, HOT_100_URL, read_chart_songs
+    from songnexus.catalog.datasets import download
+    from songnexus.service.billboard_job import run_billboard, run_billboard_200
     from songnexus.service.readmodel import load_read_model
     from songnexus.storage.db import make_engine
 
+    raw = settings.raw_dir("billboard")
     try:
-        path = download(settings.raw_dir("billboard"))
+        hot_100, billboard_200 = download(raw, HOT_100_URL), download(raw, BILLBOARD_200_URL)
     except httpx.HTTPError as exc:
         print(f"fetch-billboard failed, nothing written: {exc}", file=sys.stderr)
         return EXIT_FAILED
     engine = make_engine(settings.database_url)
     model = load_read_model(engine, settings.genre_sources)
-    _print(run_billboard(engine, model, read_chart_songs(path), now=datetime.now(UTC)))
+    now = datetime.now(UTC)
+    _print(
+        {
+            "hot100": run_billboard(engine, model, read_chart_songs(hot_100), now=now),
+            "billboard200": run_billboard_200(
+                engine, model, read_chart_songs(billboard_200), now=now
+            ),
+        }
+    )
+    return EXIT_OK
+
+
+def _cmd_fetch_greatest_albums(settings: Settings, _args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
+    import httpx
+
+    from songnexus.catalog.datasets import YEAR_S, download
+    from songnexus.catalog.greatest_albums import ROLLING_STONE_URL, read_albums
+    from songnexus.service.lists_job import run_greatest_albums
+    from songnexus.service.readmodel import load_read_model
+    from songnexus.storage.db import make_engine
+
+    try:
+        path = download(
+            settings.raw_dir("rolling-stone-500"), ROLLING_STONE_URL, refresh_after_s=YEAR_S
+        )
+    except httpx.HTTPError as exc:
+        print(f"fetch-greatest-albums failed, nothing written: {exc}", file=sys.stderr)
+        return EXIT_FAILED
+    engine = make_engine(settings.database_url)
+    model = load_read_model(engine, settings.genre_sources)
+    _print(run_greatest_albums(engine, model, read_albums(path), now=datetime.now(UTC)))
+    return EXIT_OK
+
+
+def _cmd_fetch_eurovision(settings: Settings, _args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
+    import httpx
+
+    from songnexus.catalog.datasets import YEAR_S, download
+    from songnexus.catalog.eurovision import CONTESTANTS_URL, read_entries
+    from songnexus.service.lists_job import run_eurovision
+    from songnexus.service.readmodel import load_read_model
+    from songnexus.storage.db import make_engine
+
+    try:
+        path = download(settings.raw_dir("eurovision"), CONTESTANTS_URL, refresh_after_s=YEAR_S)
+    except httpx.HTTPError as exc:
+        print(f"fetch-eurovision failed, nothing written: {exc}", file=sys.stderr)
+        return EXIT_FAILED
+    engine = make_engine(settings.database_url)
+    model = load_read_model(engine, settings.genre_sources)
+    _print(run_eurovision(engine, model, read_entries(path), now=datetime.now(UTC)))
     return EXIT_OK
 
 
@@ -674,8 +730,16 @@ def _add_image_commands(commands: Any) -> None:
     events.set_defaults(handler=_cmd_fetch_events)
     commands.add_parser(
         "fetch-billboard",
-        help="match the Billboard Hot 100 history (1958 on) to catalog songs and artists",
+        help="match the Billboard Hot 100 (1958 on) and Billboard 200 (1967 on) to the catalog",
     ).set_defaults(handler=_cmd_fetch_billboard)
+    commands.add_parser(
+        "fetch-greatest-albums",
+        help="match Rolling Stone's 500 Greatest Albums (2003, 2012, 2020) to catalog artists",
+    ).set_defaults(handler=_cmd_fetch_greatest_albums)
+    commands.add_parser(
+        "fetch-eurovision",
+        help="match the Eurovision Song Contest entries (1956 on) to catalog artists",
+    ).set_defaults(handler=_cmd_fetch_eurovision)
     images = commands.add_parser(
         "fetch-images",
         help="find freely licensed artist photos on Wikimedia Commons through Wikidata",

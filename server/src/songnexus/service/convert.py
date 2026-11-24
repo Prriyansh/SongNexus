@@ -8,7 +8,7 @@ from songnexus.core.graph import collaborations as collab
 from songnexus.core.graph.explain import Explanation
 from songnexus.core.graph.model import ArtistGraph, Category, EdgeKind, SubjectType
 from songnexus.service import schemas as api
-from songnexus.storage import charts, events
+from songnexus.storage import album_lists, charts, events
 from songnexus.storage.artist_facts import FactsRecord, Honor
 from songnexus.storage.catalog_repository import SourceRef
 
@@ -160,6 +160,59 @@ def artist_charts(chart: charts.ArtistChart | None) -> api.ArtistCharts | None:
         first_year=chart.first_week.year,
         last_year=chart.last_week.year,
     )
+
+
+TOP_ALBUMS = 6
+TOP_TEN = 10
+
+
+def album_charts(runs: list[album_lists.AlbumRun]) -> api.AlbumCharts | None:
+    """An artist's Billboard 200 history from their runs (best first), or None."""
+    if not runs:
+        return None
+    return api.AlbumCharts(
+        entries=len(runs),
+        top_ten=sum(r.peak <= TOP_TEN for r in runs),
+        number_ones=sum(r.peak == 1 for r in runs),
+        best_peak=min(r.peak for r in runs),
+        first_year=min(r.first_week for r in runs).year,
+        last_year=max(r.last_week for r in runs).year,
+        top_albums=[
+            api.AlbumChartRun(
+                title=r.title, peak=r.peak, weeks=r.weeks, first_year=r.first_week.year
+            )
+            for r in runs[:TOP_ALBUMS]
+        ],
+    )
+
+
+def greatest_albums(albums: list[album_lists.ListedAlbum]) -> list[api.GreatestAlbum]:
+    """An artist's albums on Rolling Stone's list."""
+    return [
+        api.GreatestAlbum(
+            title=a.title,
+            release_year=a.release_year,
+            rank_2003=a.rank_2003,
+            rank_2012=a.rank_2012,
+            rank_2020=a.rank_2020,
+        )
+        for a in albums
+    ]
+
+
+def eurovision(entries: list[album_lists.ContestEntry]) -> list[api.EurovisionEntry]:
+    """An artist's Eurovision entries."""
+    return [
+        api.EurovisionEntry(
+            year=e.year,
+            country=e.country,
+            song=e.song,
+            place_final=e.place_final,
+            points_final=e.points_final,
+            place_semi_final=e.place_semi_final,
+        )
+        for e in entries
+    ]
 
 
 def song_chart(chart: charts.SongChart | None) -> api.SongChart | None:

@@ -26,6 +26,7 @@ from songnexus.core.search import EntityType, SearchDoc, SearchIndex, log_prior
 from songnexus.core.text import normalize
 from songnexus.service.errors import ApiError, Status
 from songnexus.storage import catalog_repository
+from songnexus.storage.album_lists import album_lists_stamp
 from songnexus.storage.artist_facts import facts_stamp
 from songnexus.storage.artist_images import images_stamp, read_artist_images
 from songnexus.storage.catalog_reader import (
@@ -235,6 +236,7 @@ def _version(session: Session) -> str | None:
         ("cv", covers_stamp(session)),
         ("ch", charts_stamp(session)),
         ("ev", events_stamp(session)),
+        ("al", album_lists_stamp(session)),
     )
     return version + "".join(f".{tag}{stamp}" for tag, stamp in stamps if stamp)
 
