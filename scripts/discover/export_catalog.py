@@ -15,6 +15,7 @@ import json
 import sqlite3
 import sys
 from collections import defaultdict
+from contextlib import closing
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[2] / "src" / "discover" / "data" / "catalog.json"
@@ -32,6 +33,11 @@ def year_of(value: str | None) -> int | None:
 def slug_of(name: str) -> str:
     """A URL name for a genre: letters and digits of any script, joined by hyphens."""
     return "-".join("".join(c if c.isalnum() else " " for c in name.casefold()).split())
+
+
+def secure(url: str | None) -> str | None:
+    """The https form of an address; Commons still lists some licenses by http."""
+    return url.replace("http://", "https://", 1) if url else None
 
 
 def index_of(rows: list[tuple]) -> dict[str, int]:
@@ -59,8 +65,12 @@ def honors(raw: str | None) -> list[list]:
 
 
 def export(path: Path) -> dict:
-    db = sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True)
+    """The catalog in a database, which is opened for reading only and closed again."""
+    with closing(sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True)) as db:
+        return catalog_in(db)
 
+
+def catalog_in(db: sqlite3.Connection) -> dict:
     def q(sql: str) -> list[tuple]:
         return db.execute(sql).fetchall()
 
@@ -221,7 +231,7 @@ def export(path: Path) -> dict:
     # Photos: the address of Commons' 330-pixel version, and the credit its license asks for. A
     # photo that has to be credited but names no author can't be, so it is left out.
     photos = {
-        artist_at[artist]: [thumb, page, author, license_name, license_url]
+        artist_at[artist]: [thumb, page, author, license_name, secure(license_url)]
         for artist, thumb, page, author, license_name, license_url in q(
             "select artist_id, thumbnail_url, page_url, author, license, license_url"
             " from artist_images order by artist_id"

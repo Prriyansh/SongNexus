@@ -49,8 +49,8 @@ const LINK_LENGTH = 1.2;
 const MIN_DISTANCE = 66;
 
 /** Moves apart any two artists the simulation left too close; the one in the middle stays. */
-function separate(x: Float64Array, y: Float64Array, center: number) {
-  for (let pass = 0; pass < 40; pass++) {
+export function separate(x: Float64Array, y: Float64Array, center: number) {
+  for (let pass = 0; pass < 200; pass++) {
     let moved = false;
     for (let i = 0; i < x.length; i++) {
       for (let j = i + 1; j < x.length; j++) {

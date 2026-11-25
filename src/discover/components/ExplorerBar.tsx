@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import { connectionsHref } from "../lib/links";
 import type { Category } from "../lib/types";
 import CategoryFilter from "./CategoryFilter";
@@ -13,16 +13,22 @@ type Props = { artist: string; categories: Category[] };
 export default function ExplorerBar({ artist, categories }: Props) {
   const router = useRouter();
   const [busy, startTransition] = useTransition();
-  const go = (href: string) => startTransition(() => router.push(href, { scroll: false }));
+  // Shown at once, so a second choice builds on the first while the page is still on its way.
+  const [chosen, choose] = useOptimistic(categories);
+  const go = (to: string, next: Category[]) =>
+    startTransition(() => {
+      choose(next);
+      router.push(connectionsHref(to, next), { scroll: false });
+    });
   return (
     <div className="dx-panel dx-explorer-bar" aria-busy={busy}>
       <EntitySearch
         label="Start from"
         placeholder="Another artist"
         kinds={["artist"]}
-        onPick={(picked) => go(connectionsHref(picked.id, categories))}
+        onPick={(picked) => go(picked.id, chosen)}
       />
-      <CategoryFilter value={categories} onChange={(next) => go(connectionsHref(artist, next))} />
+      <CategoryFilter value={chosen} onChange={(next) => go(artist, next)} />
       <div className="dx-busy" data-on={busy || undefined} aria-hidden="true" />
     </div>
   );

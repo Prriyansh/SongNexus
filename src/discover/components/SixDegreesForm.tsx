@@ -2,7 +2,7 @@
 
 import { ArrowLeftRight, Shuffle, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { sixDegreesHref, type SixDegreesState } from "../lib/links";
 import type { ArtistRef } from "../lib/types";
 import CategoryFilter from "./CategoryFilter";
@@ -75,12 +75,18 @@ export default function SixDegreesForm({
 }) {
   const router = useRouter();
   const [busy, startTransition] = useTransition();
+  // Shown at once, so a second choice builds on the first while the page is still on its way.
+  const [shown, show] = useOptimistic(state);
   const go = (change: Partial<SixDegreesState>) =>
-    startTransition(() => router.push(sixDegreesHref({ ...state, ...change }), { scroll: false }));
+    startTransition(() => {
+      const next = { ...shown, ...change };
+      show(next);
+      router.push(sixDegreesHref(next), { scroll: false });
+    });
   const pick = (end: End) => (artist: ArtistRef) => go({ [end]: artist, avoid: [] });
   const surprise = () => {
     const others = surprises.filter(
-      (pair) => pair.from.id !== state.from?.id || pair.to.id !== state.to?.id,
+      (pair) => pair.from.id !== shown.from?.id || pair.to.id !== shown.to?.id,
     );
     const pair = others[Math.floor(Math.random() * others.length)];
     if (pair) go({ from: pair.from, to: pair.to, avoid: [] });
@@ -89,17 +95,17 @@ export default function SixDegreesForm({
   return (
     <div className="dx-panel dx-six-form" aria-busy={busy}>
       <div className="dx-slots">
-        <Slot label="From" artist={state.from} onPick={pick("from")} />
+        <Slot label="From" artist={shown.from} onPick={pick("from")} />
         <button
           type="button"
           className="dx-round"
-          disabled={!state.from && !state.to}
-          onClick={() => go({ from: state.to, to: state.from })}
+          disabled={!shown.from && !shown.to}
+          onClick={() => go({ from: shown.to, to: shown.from })}
           aria-label="Swap the two artists"
         >
           <ArrowLeftRight size={18} aria-hidden="true" />
         </button>
-        <Slot label="To" artist={state.to} onPick={pick("to")} />
+        <Slot label="To" artist={shown.to} onPick={pick("to")} />
       </div>
       <div className="dx-six-bar">
         <fieldset className="dx-segments">
@@ -109,7 +115,7 @@ export default function SixDegreesForm({
               <input
                 type="radio"
                 name="order"
-                checked={state.order === order}
+                checked={shown.order === order}
                 onChange={() => go({ order })}
               />
               <span>{label}</span>
@@ -121,15 +127,15 @@ export default function SixDegreesForm({
           Surprise me
         </button>
       </div>
-      <CategoryFilter value={state.categories} onChange={(categories) => go({ categories })} />
-      {state.avoid.length > 0 && (
+      <CategoryFilter value={shown.categories} onChange={(categories) => go({ categories })} />
+      {shown.avoid.length > 0 && (
         <div className="dx-avoid">
           <span>Going around</span>
-          {state.avoid.map((artist) => (
+          {shown.avoid.map((artist) => (
             <button
               key={artist.id}
               type="button"
-              onClick={() => go({ avoid: state.avoid.filter((a) => a.id !== artist.id) })}
+              onClick={() => go({ avoid: shown.avoid.filter((a) => a.id !== artist.id) })}
               aria-label={`Allow ${artist.name} again`}
             >
               {artist.name}
