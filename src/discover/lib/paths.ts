@@ -8,15 +8,30 @@ export const MAX_PATHS = 3;
 
 export type PathOrder = "shortest" | "strongest";
 
-type Options = { categories: readonly Category[]; order?: PathOrder; avoid?: ReadonlySet<number>; maxSteps?: number };
+type Options = {
+  categories: readonly Category[];
+  order?: PathOrder;
+  avoid?: ReadonlySet<number>;
+  maxSteps?: number;
+};
 
 /**
  * One best path, or null. `shortest` takes the fewest steps and, among those, the closest
  * connections; `strongest` takes the closest connections overall, however many steps (up to the
  * limit) that takes. A stronger connection costs less (1 / strength).
  */
-export function findPath(graph: Graph, from: number, to: number, options: Options): number[] | null {
-  const { categories, order = "shortest", avoid = new Set<number>(), maxSteps = MAX_STEPS } = options;
+export function findPath(
+  graph: Graph,
+  from: number,
+  to: number,
+  options: Options,
+): number[] | null {
+  const {
+    categories,
+    order = "shortest",
+    avoid = new Set<number>(),
+    maxSteps = MAX_STEPS,
+  } = options;
   // `layer` holds, per artist, the cheapest way to reach them in exactly `step` steps.
   let layer = new Map<number, number>([[from, 0]]);
   const parents: Map<number, number>[] = [];
@@ -38,7 +53,11 @@ export function findPath(graph: Graph, from: number, to: number, options: Option
         // A longer way only helps when it is cheaper than every shorter one found.
         if (answer && total >= answer.cost) continue;
         const known = next.get(other);
-        if (known === undefined || total < known || (total === known && artist < parent.get(other)!)) {
+        if (
+          known === undefined ||
+          total < known ||
+          (total === known && artist < parent.get(other)!)
+        ) {
           next.set(other, total);
           parent.set(other, artist);
         }
@@ -66,7 +85,13 @@ export function findPath(graph: Graph, from: number, to: number, options: Option
 }
 
 /** Up to `limit` paths that share no one in between, best first. */
-export function findPaths(graph: Graph, from: number, to: number, options: Options, limit = MAX_PATHS): number[][] {
+export function findPaths(
+  graph: Graph,
+  from: number,
+  to: number,
+  options: Options,
+  limit = MAX_PATHS,
+): number[][] {
   const avoid = new Set(options.avoid);
   const paths: number[][] = [];
   while (paths.length < limit) {

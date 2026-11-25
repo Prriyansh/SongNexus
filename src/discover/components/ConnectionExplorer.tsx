@@ -1,210 +1,202 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { neighborhood, reasons as loadReasons } from "../api";
-import { fitView, growWeb, layoutWeb, MAX_NODES, startWeb, zoomView, type Point, type View, type Web } from "../lib/layout";
-import { connectionsHref } from "../lib/links";
-import { CATEGORY_LABELS, entityHref, type Category, type GraphData, type GraphEdge, type Reason } from "../lib/types";
-import CategoryFilter from "./CategoryFilter";
-import EntitySearch from "./EntitySearch";
+import { MAX_NODES, type Web } from "../lib/layout";
+import { connectionsHref, sixDegreesHref } from "../lib/links";
+import {
+  CATEGORY_LABELS,
+  entityHref,
+  OPEN_LIMIT,
+  type Category,
+  type GraphData,
+  type GraphEdge,
+  type Reason,
+} from "../lib/types";
+import ShareButton from "./ShareButton";
+import { useWeb } from "./useWeb";
+import WebCanvas from "./WebCanvas";
 import { Avatar, plural, Reasons } from "./parts";
 
-const OPEN_LIMIT = 12;
+type Why = { key: string; found: { reasons: Reason[]; total: number } | null };
+type Props = { start: GraphData; opened: GraphData[]; categories: Category[] };
 
-type Why = { key: string; reasons: Reason[]; total: number } | { key: string; failed: true };
+const otherEnd = (edge: GraphEdge, id: string) => (edge.a === id ? edge.b : edge.a);
 
-type Props = { start: GraphData; categories: Category[] };
+/** Keeps the address in step with the web, so a copied link shows the same one. */
+function remember(web: Web, categories: readonly Category[]) {
+  window.history.replaceState(
+    null,
+    "",
+    connectionsHref(web.center, categories, web.opened.slice(1)),
+  );
+}
 
-/** The connection web of one artist. The parent keys it by artist and filters, so a new start is a fresh web. */
-export default function ConnectionExplorer({ start, categories }: Props) {
-  const router = useRouter();
-  const [web, setWeb] = useState<Web>(() => startWeb(start));
-  const [points, setPoints] = useState<Map<string, Point>>(() => layoutWeb(startWeb(start)));
-  const [view, setView] = useState<View>(() => fitView(points.values()));
-  const [selected, setSelected] = useState(start.center);
+/** One artist's collaborators. The parent keys it by artist and filters, so a new start is fresh. */
+export default function ConnectionExplorer({ start, opened, categories }: Props) {
+  const { web, points, view, canUndo, grow, undo, fit, setView } = useWeb(start, opened);
+  const [choice, setChoice] = useState(start.center);
   const [opening, setOpening] = useState<string | null>(null);
   const [problem, setProblem] = useState("");
   const [why, setWhy] = useState<Why | null>(null);
-  const svg = useRef<SVGSVGElement>(null);
-  const drag = useRef<{ id: number; x: number; y: number } | null>(null);
 
   const byId = useMemo(() => new Map(web.nodes.map((n) => [n.id, n])), [web]);
-  const edgesOf = useMemo(() => {
-    const out = new Map<string, GraphEdge[]>();
-    for (const e of web.edges) for (const id of [e.a, e.b]) out.set(id, [...(out.get(id) ?? []), e]);
-    return out;
-  }, [web]);
-  const maxStrength = Math.max(1, ...web.edges.map((e) => e.strength));
+  // Undoing can take away the chosen artist.
+  const selected = byId.has(choice) ? choice : web.center;
   const node = byId.get(selected)!;
-  const linked = new Set((edgesOf.get(selected) ?? []).flatMap((e) => [e.a, e.b]));
-  // The reasons shown are those with the starting artist, or with the closest artist in view.
-  const partner = selected === web.center
-    ? null
-    : linked.has(web.center)
-      ? web.center
-      : [...(edgesOf.get(selected) ?? [])].sort((p, q) => q.strength - p.strength).map((e) => (e.a === selected ? e.b : e.a))[0] ?? null;
-  const whyKey = partner ? `${selected}|${partner}` : "";
+  const links = useMemo(
+    () =>
+      web.edges
+        .filter((e) => e.a === selected || e.b === selected)
+        .sort((p, q) => q.strength - p.strength),
+    [web, selected],
+  );
+  // The credits shown are with the starting artist, else with the closest artist in view.
+  const closest = links.length ? otherEnd(links[0], selected) : null;
+  const meetsCenter = links.some((e) => otherEnd(e, selected) === web.center);
+  const partner = selected === web.center ? null : meetsCenter ? web.center : closest;
+  const whyKey = partner ? `${partner}|${selected}` : "";
 
   useEffect(() => {
     if (!partner) return;
     const controller = new AbortController();
     loadReasons(partner, selected, categories, controller.signal)
-      .then((found) => setWhy({ key: whyKey, ...found }))
-      .catch(() => { if (!controller.signal.aborted) setWhy({ key: whyKey, failed: true }); });
+      .then((found) => setWhy({ key: whyKey, found }))
+      .catch(() => {
+        if (!controller.signal.aborted) setWhy({ key: whyKey, found: null });
+      });
     return () => controller.abort();
-  }, [selected, partner, whyKey, categories]);
+  }, [partner, selected, whyKey, categories]);
 
-  // React attaches wheel listeners as passive, so zooming without scrolling the page needs its own.
-  useEffect(() => {
-    const element = svg.current;
-    if (!element) return;
-    const onWheel = (event: WheelEvent) => {
-      event.preventDefault();
-      const box = element.getBoundingClientRect();
-      const at = { x: (event.clientX - box.left) / box.width, y: (event.clientY - box.top) / box.height };
-      setView((v) => zoomView(v, event.deltaY > 0 ? 1.12 : 1 / 1.12, { x: v.x + at.x * v.width, y: v.y + at.y * v.height }));
-    };
-    element.addEventListener("wheel", onWheel, { passive: false });
-    return () => element.removeEventListener("wheel", onWheel);
-  }, []);
+  const full = web.nodes.length >= MAX_NODES;
+  const isOpen = web.opened.includes(selected);
 
   const open = async (id: string) => {
+    setChoice(id);
+    if (opening || full || web.opened.includes(id)) return;
     setOpening(id);
     setProblem("");
     try {
-      const data = await neighborhood(id, categories, OPEN_LIMIT);
-      const next = growWeb(web, data);
-      const placed = layoutWeb(next, points);
-      setWeb(next);
-      setPoints(placed);
-      setView(fitView(placed.values()));
+      remember(grow(await neighborhood(id, categories, OPEN_LIMIT)), categories);
     } catch {
-      setProblem("That artist’s connections didn’t load. Try again.");
+      setProblem(
+        `The connections of ${byId.get(id)?.name ?? "that artist"} didn’t load. Try again.`,
+      );
     } finally {
       setOpening(null);
     }
   };
-  const zoom = (factor: number) => setView((v) => zoomView(v, factor, { x: v.x + v.width / 2, y: v.y + v.height / 2 }));
-  const onPointerMove = (event: React.PointerEvent<SVGSVGElement>) => {
-    const from = drag.current;
-    if (!from || from.id !== event.pointerId) return;
-    const box = event.currentTarget.getBoundingClientRect();
-    const scale = Math.max(view.width / box.width, view.height / box.height);
-    const [dx, dy] = [(event.clientX - from.x) * scale, (event.clientY - from.y) * scale];
-    drag.current = { ...from, x: event.clientX, y: event.clientY };
-    setView((v) => ({ ...v, x: v.x - dx, y: v.y - dy }));
-  };
-  const list = [...(edgesOf.get(selected) ?? [])].sort((p, q) => q.strength - p.strength);
-  const used = [...new Set(web.edges.map((e) => e.category))];
-  const full = web.nodes.length >= MAX_NODES;
 
   return (
     <div className="dx-explorer">
-      <div className="dx-panel dx-explorer-bar">
-        <EntitySearch label="Start from" placeholder="Another artist" kinds={["artist"]} onPick={(p) => router.push(connectionsHref(p.id, categories))} />
-        <CategoryFilter value={categories} onChange={(next) => router.push(connectionsHref(web.center, next), { scroll: false })} />
-      </div>
-      <div className="dx-web">
-        <svg
-          ref={svg}
-          viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
-          role="group"
-          aria-label={`Connections of ${byId.get(web.center)!.name}. The list beside it has the same content.`}
-          onPointerDown={(e) => {
-            if ((e.target as Element).closest(".dx-node")) return;
-            drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
-            e.currentTarget.setPointerCapture(e.pointerId);
-          }}
-          onPointerMove={onPointerMove}
-          onPointerUp={() => { drag.current = null; }}
-          onPointerCancel={() => { drag.current = null; }}
-        >
-          {web.edges.map((e) => {
-            const [p, q] = [points.get(e.a)!, points.get(e.b)!];
-            return (
-              <line
-                key={`${e.a}|${e.b}`}
-                className="dx-edge"
-                data-category={e.category}
-                data-on={e.a === selected || e.b === selected || undefined}
-                x1={p.x} y1={p.y} x2={q.x} y2={q.y}
-                strokeWidth={1 + 5 * Math.sqrt(e.strength / maxStrength)}
-              />
-            );
-          })}
-          {web.nodes.map((n) => {
-            const p = points.get(n.id)!;
-            const radius = n.id === web.center ? 30 : 16 + Math.min(10, Math.sqrt(n.degree) / 2);
-            return (
-              <g
-                key={n.id}
-                className="dx-node"
-                data-center={n.id === web.center || undefined}
-                data-opened={web.opened.includes(n.id) || undefined}
-                data-selected={n.id === selected || undefined}
-                data-near={linked.has(n.id) || undefined}
-                transform={`translate(${p.x} ${p.y})`}
-                role="button"
-                tabIndex={0}
-                aria-pressed={n.id === selected}
-                aria-label={n.name}
-                onClick={() => setSelected(n.id)}
-                onDoubleClick={() => void open(n.id)}
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter" && e.key !== " ") return;
-                  e.preventDefault();
-                  setSelected(n.id);
-                }}
-              >
-                <circle r={radius} />
-                <text y={radius + 15}>{n.name}</text>
-              </g>
-            );
-          })}
-        </svg>
-        <div className="dx-web-tools">
-          <button type="button" onClick={() => zoom(1 / 1.3)} aria-label="Zoom in">+</button>
-          <button type="button" onClick={() => zoom(1.3)} aria-label="Zoom out">−</button>
-          <button type="button" onClick={() => setView(fitView(points.values()))}>Fit</button>
+      <WebCanvas
+        web={web}
+        points={points}
+        view={view}
+        selected={selected}
+        opening={opening}
+        canUndo={canUndo}
+        onSelect={setChoice}
+        onOpen={(id) => void open(id)}
+        onUndo={() => {
+          const before = undo();
+          if (before) remember(before, categories);
+        }}
+        onFit={fit}
+        onView={setView}
+      />
+      <section className="dx-panel dx-side" aria-label="Selected artist">
+        <div className="dx-picked">
+          <Avatar id={node.id} name={node.name} photo={node.photo} size={64} eager />
+          <span>
+            <h2 aria-live="polite">{node.name}</h2>
+            <small>{node.note || plural(node.degree, "connection")}</small>
+          </span>
         </div>
-        <ul className="dx-legend">{used.map((c) => <li key={c} data-category={c}>{CATEGORY_LABELS[c]}</li>)}</ul>
-      </div>
-      <aside className="dx-panel dx-side" aria-live="polite">
-        <p className="dx-picked">
-          <Avatar id={node.id} name={node.name} size={52} />
-          <span><strong>{node.name}</strong><small>{node.note || plural(node.degree, "connection")}</small></span>
-        </p>
-        <p className="dx-actions">
-          <button type="button" className="dx-button" disabled={opening !== null || web.opened.includes(selected) || full} onClick={() => void open(selected)}>
-            {opening === selected ? "Opening…" : web.opened.includes(selected) ? "Connections open" : "Open their connections"}
-          </button>
-          <Link className="dx-button dx-quiet" href={entityHref({ kind: "artist", id: node.id })}>Artist page</Link>
-        </p>
-        {full && <p className="dx-hint">This web is full ({MAX_NODES} artists). Start from another artist to keep going.</p>}
-        {problem && <p className="dx-hint" role="alert">{problem}</p>}
+        <div className="dx-actions">
+          {!isOpen && (
+            <button
+              type="button"
+              className="dx-button"
+              disabled={opening !== null || full}
+              onClick={() => void open(selected)}
+            >
+              {opening === selected ? "Opening…" : "Open their connections"}
+            </button>
+          )}
+          <Link
+            className="dx-button dx-quiet"
+            href={entityHref({ kind: "artist", id: node.id })}
+            prefetch={false}
+          >
+            Artist page
+          </Link>
+          {selected !== web.center && (
+            <Link
+              className="dx-button dx-quiet"
+              href={sixDegreesHref({ from: byId.get(web.center)!, to: node })}
+              prefetch={false}
+            >
+              Six Degrees
+            </Link>
+          )}
+          <ShareButton label="Share" title={`${byId.get(web.center)!.name}’s collaborators`} />
+        </div>
+        {full && (
+          <p className="dx-hint">
+            This web is full ({MAX_NODES} artists). Undo a step, or start from someone else.
+          </p>
+        )}
+        {problem && (
+          <p className="dx-hint" role="alert">
+            {problem}
+          </p>
+        )}
         {partner && (
           <>
             <h3>With {byId.get(partner)!.name}</h3>
-            {why?.key !== whyKey ? <p className="dx-hint">Loading…</p> : "failed" in why ? <p className="dx-hint">The credits didn’t load.</p> : <Reasons reasons={why.reasons} total={why.total} />}
+            {why?.key !== whyKey ? (
+              <div className="dx-bones" role="status" aria-label="Loading credits">
+                <span className="dx-bone" />
+                <span className="dx-bone" />
+                <span className="dx-bone dx-bone-short" />
+              </div>
+            ) : why.found ? (
+              <Reasons reasons={why.found.reasons} total={why.found.total} />
+            ) : (
+              <p className="dx-hint">The credits didn’t load.</p>
+            )}
           </>
         )}
-        <h3>{selected === web.center ? `Closest of ${plural(node.degree, "connection")}` : "Also connected here"}</h3>
+        <h3>
+          {selected === web.center
+            ? `Closest of ${plural(node.degree, "connection")}`
+            : "Also connected here"}
+        </h3>
+        {links.length === 0 && (
+          <p className="dx-hint">No one, through these kinds of connection.</p>
+        )}
         <ul className="dx-side-list">
-          {list.map((e) => {
-            const other = byId.get(e.a === selected ? e.b : e.a)!;
+          {links.map((edge) => {
+            const other = byId.get(otherEnd(edge, selected))!;
             return (
               <li key={other.id}>
-                <button type="button" onClick={() => setSelected(other.id)}>
-                  <span>{other.name}</span>
-                  <small>{plural(e.count, "credit")}, mostly {CATEGORY_LABELS[e.category].toLowerCase()}</small>
+                <button type="button" onClick={() => setChoice(other.id)}>
+                  <Avatar id={other.id} name={other.name} photo={other.photo} size={36} />
+                  <span>
+                    <strong>{other.name}</strong>
+                    <small data-category={edge.category}>
+                      {plural(edge.count, "credit")}, mostly{" "}
+                      {CATEGORY_LABELS[edge.category].toLowerCase()}
+                    </small>
+                  </span>
                 </button>
               </li>
             );
           })}
         </ul>
-      </aside>
+      </section>
     </div>
   );
 }

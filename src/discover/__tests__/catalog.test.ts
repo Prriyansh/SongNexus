@@ -26,22 +26,71 @@ describe("the catalog file", () => {
 
   it("points only at things it has", () => {
     const within = (at: number, list: unknown[]) => at >= 0 && at < list.length;
-    expect(c.songs.every((s) => s.credits.every((x) => within(x.artist, c.artists) && x.role))).toBe(true);
-    expect(c.releases.every((r) => r.artists.every((a) => within(a, c.artists)) && r.tracks.every((s) => within(s, c.songs)) && r.labels.every((l) => within(l, c.labels)))).toBe(true);
+    expect(
+      c.songs.every((s) => s.credits.every((x) => within(x.artist, c.artists) && x.role)),
+    ).toBe(true);
+    expect(
+      c.releases.every(
+        (r) =>
+          r.artists.every((a) => within(a, c.artists)) &&
+          r.tracks.every((s) => within(s, c.songs)) &&
+          r.labels.every((l) => within(l, c.labels)),
+      ),
+    ).toBe(true);
     expect(c.artists.every((a) => a.genres.every((x) => within(x.genre, c.genres)))).toBe(true);
-    expect(c.relations.every((r) => within(r.subject, c.artists) && within(r.object, c.artists))).toBe(true);
+    expect(
+      c.relations.every((r) => within(r.subject, c.artists) && within(r.object, c.artists)),
+    ).toBe(true);
   });
 
   it("leaves out placeholders, lyrics and album-by-album chart data", () => {
     expect(c.artists.filter((a) => a.name.startsWith("["))).toEqual([]);
     const file = JSON.parse(readFileSync("src/discover/data/catalog.json", "utf8"));
-    expect(Object.keys(file).sort()).toEqual(["artists", "details", "extras", "genres", "labels", "relationTypes", "relations", "releases", "roles", "songs", "version"]);
+    expect(Object.keys(file).sort()).toEqual([
+      "artists",
+      "details",
+      "extras",
+      "genres",
+      "labels",
+      "photos",
+      "relationTypes",
+      "relations",
+      "releases",
+      "roles",
+      "songs",
+      "version",
+    ]);
     const extras = new Set(c.artists.flatMap((a) => Object.keys(a.extras)));
-    expect([...extras].sort()).toEqual(["albums", "eurovision", "eventCount", "events", "facts", "hot100"]);
+    expect([...extras].sort()).toEqual([
+      "albums",
+      "eurovision",
+      "eventCount",
+      "events",
+      "facts",
+      "hot100",
+    ]);
+  });
+
+  it("credits every photo, and only takes freely licensed ones from Commons", () => {
+    const photos = c.artists.flatMap((a) => a.photo ?? []);
+    expect(photos.length).toBeGreaterThan(1000);
+    for (const photo of photos) {
+      expect(photo.url).toMatch(/^https:\/\/(upload|thumb)\.wikimedia\.org\//);
+      expect(photo.page).toMatch(/^https:\/\/commons\.wikimedia\.org\//);
+      expect(photo.license).toMatch(/^(CC0|CC BY|Public domain|PDM|No restrictions|Attribution)/i);
+      // A license that asks for credit needs someone to credit.
+      if (/^CC BY/.test(photo.license)) expect(photo.author).toBeTruthy();
+    }
   });
 
   it("connects well-known artists through real credits", () => {
-    const result = searchPaths(graph(), find("Taylor Swift"), find("Kendrick Lamar"), DEFAULT_CATEGORIES, "shortest");
+    const result = searchPaths(
+      graph(),
+      find("Taylor Swift"),
+      find("Kendrick Lamar"),
+      DEFAULT_CATEGORIES,
+      "shortest",
+    );
     expect(result.status).toBe("ok");
     if (result.status !== "ok") return;
     expect(result.paths[0].steps).toHaveLength(2);
@@ -52,7 +101,15 @@ describe("the catalog file", () => {
     const pairs = surprisePairs(graph());
     expect(pairs.length).toBeGreaterThan(10);
     for (const { from, to } of pairs) {
-      expect(searchPaths(graph(), c.artistAt.get(from.id)!, c.artistAt.get(to.id)!, DEFAULT_CATEGORIES, "shortest").status).toBe("ok");
+      expect(
+        searchPaths(
+          graph(),
+          c.artistAt.get(from.id)!,
+          c.artistAt.get(to.id)!,
+          DEFAULT_CATEGORIES,
+          "shortest",
+        ).status,
+      ).toBe("ok");
     }
   });
 });
@@ -64,7 +121,10 @@ describe("the API", () => {
   };
 
   it("searches names, and rejects an empty or very long search", async () => {
-    expect((await call(getSearch, "q=taylor+swift&kinds=artist")).body.results[0]).toMatchObject({ id: TAYLOR_SWIFT, name: "Taylor Swift" });
+    expect((await call(getSearch, "q=taylor+swift&kinds=artist")).body.results[0]).toMatchObject({
+      id: TAYLOR_SWIFT,
+      name: "Taylor Swift",
+    });
     expect((await call(getSearch, "q=")).status).toBe(400);
     expect((await call(getSearch, `q=${"x".repeat(200)}`)).status).toBe(400);
   });
@@ -72,7 +132,9 @@ describe("the API", () => {
   it("returns an artist’s connections, limited, and says when it doesn’t know them", async () => {
     const { body } = await call(getNeighborhood, `artist=${TAYLOR_SWIFT}&limit=5`);
     expect(body.nodes).toHaveLength(6);
-    expect((await call(getNeighborhood, `artist=${TAYLOR_SWIFT}&limit=9999`)).body.nodes.length).toBeLessThanOrEqual(41);
+    expect(
+      (await call(getNeighborhood, `artist=${TAYLOR_SWIFT}&limit=9999`)).body.nodes.length,
+    ).toBeLessThanOrEqual(41);
     expect((await call(getNeighborhood, "artist=nope")).status).toBe(404);
   });
 

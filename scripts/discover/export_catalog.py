@@ -218,6 +218,17 @@ def export(path: Path) -> dict:
     ):
         events[artist].append([event, name, date, place])
 
+    # Photos: the address of Commons' 330-pixel version, and the credit its license asks for. A
+    # photo that has to be credited but names no author can't be, so it is left out.
+    photos = {
+        artist_at[artist]: [thumb, page, author, license_name, license_url]
+        for artist, thumb, page, author, license_name, license_url in q(
+            "select artist_id, thumbnail_url, page_url, author, license, license_url"
+            " from artist_images order by artist_id"
+        )
+        if artist in artist_at and (author or not license_name.startswith("CC BY"))
+    }
+
     artist_rows = []
     extras = {}
     for artist, name, kind, country, disambiguation, begin, end, level, listeners in artists:
@@ -253,6 +264,7 @@ def export(path: Path) -> dict:
         "relationTypes": relation_types.values,
         "artists": artist_rows,
         "extras": extras,
+        "photos": photos,
         "genres": genre_rows,
         "labels": [[mbid["label"][i], name] for i, name in labels],
         "songs": [

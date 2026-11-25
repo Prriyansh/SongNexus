@@ -25,12 +25,30 @@ export function artistNote(catalog: Catalog, artist: Artist): string {
 
 export function artistRef(catalog: Catalog, at: number): ArtistRef {
   const artist = catalog.artists[at];
-  return { id: artist.id, name: artist.name, note: artistNote(catalog, artist), listeners: artist.listeners };
+  return {
+    id: artist.id,
+    name: artist.name,
+    note: artistNote(catalog, artist),
+    listeners: artist.listeners,
+    photo: artist.photo?.url ?? null,
+  };
+}
+
+/** The cover of the first of a song's albums that has one. */
+export function songCover(catalog: Catalog, at: number): string | null {
+  const release = catalog.songReleases[at].find((r) => catalog.releases[r].cover);
+  return release === undefined ? null : catalog.releases[release].cover;
 }
 
 export function songRef(catalog: Catalog, at: number): EntityRef {
   const song = catalog.songs[at];
-  return { kind: "song", id: song.id, name: song.title, note: song.primary.map((a) => catalog.artists[a].name).join(", ") };
+  return {
+    kind: "song",
+    id: song.id,
+    name: song.title,
+    note: song.primary.map((a) => catalog.artists[a].name).join(", "),
+    image: songCover(catalog, at),
+  };
 }
 
 const PARTS: Record<string, string> = {
@@ -49,13 +67,20 @@ export function partName(role: string, detail: string): string {
 
 function relationText(type: string, a: string, b: string): string {
   switch (type) {
-    case "member_of": return `${a} is or was a member of ${b}`;
-    case "has_subgroup": return `${b} is a subgroup of ${a}`;
-    case "performs_as": return `${a} performs as ${b}`;
-    case "collaboration_in": return `${a} is part of ${b}`;
-    case "supported": return `${a} played in the band of ${b}`;
-    case "taught": return `${a} taught ${b}`;
-    default: return `${a} and ${b} worked together`;
+    case "member_of":
+      return `${a} is or was a member of ${b}`;
+    case "has_subgroup":
+      return `${b} is a subgroup of ${a}`;
+    case "performs_as":
+      return `${a} performs as ${b}`;
+    case "collaboration_in":
+      return `${a} is part of ${b}`;
+    case "supported":
+      return `${a} played in the band of ${b}`;
+    case "taught":
+      return `${a} taught ${b}`;
+    default:
+      return `${a} and ${b} worked together`;
   }
 }
 
@@ -74,22 +99,37 @@ function sentence(catalog: Catalog, e: Evidence): string {
       const featured = [e.aRole, e.bRole].filter((r) => r === "featured").length;
       if (featured === 0) return `${a} and ${b} performed ${title} together`;
       if (featured === 2) return `${a} and ${b} are both featured on ${title}`;
-      return e.aRole === "featured" ? `${a} is featured on ${title} by ${b}` : `${b} is featured on ${title} by ${a}`;
+      return e.aRole === "featured"
+        ? `${a} is featured on ${title} by ${b}`
+        : `${b} is featured on ${title} by ${a}`;
     }
-    case "produced_for": return `${a} produced ${title} by ${b}`;
-    case "co_produced": return `${a} and ${b} both produced ${title}`;
-    case "contributed_to": return `${a} is credited with ${partName(e.aRole, e.detail)} on ${title} by ${b}`;
-    case "sampled": return `${title} by ${b} samples ${a}`;
-    case "engineered": return `${a} engineered ${title} by ${b}`;
-    case "label_mates": return `${a} and ${b} released albums on ${catalog.labels[e.subject.at].name} within three years of each other`;
-    default: return relationText(e.aRole, a, b);
+    case "produced_for":
+      return `${a} produced ${title} by ${b}`;
+    case "co_produced":
+      return `${a} and ${b} both produced ${title}`;
+    case "contributed_to":
+      return `${a} is credited with ${partName(e.aRole, e.detail)} on ${title} by ${b}`;
+    case "sampled":
+      return `${title} by ${b} samples ${a}`;
+    case "engineered":
+      return `${a} engineered ${title} by ${b}`;
+    case "label_mates":
+      return `${a} and ${b} released albums on ${catalog.labels[e.subject.at].name} within three years of each other`;
+    default:
+      return relationText(e.aRole, a, b);
   }
 }
 
 export function reasonOf(catalog: Catalog, e: Evidence): Reason {
   const label = e.subject.type === "label" ? catalog.labels[e.subject.at] : null;
-  const subject: EntityRef | null = e.subject.type === "song"
-    ? songRef(catalog, e.subject.at)
-    : label && { kind: "label", id: label.id, name: label.name, note: "Record label" };
-  return { category: KIND_RULES[e.kind].category, text: sentence(catalog, e), subject, year: e.year };
+  const subject: EntityRef | null =
+    e.subject.type === "song"
+      ? songRef(catalog, e.subject.at)
+      : label && { kind: "label", id: label.id, name: label.name, note: "Record label" };
+  return {
+    category: KIND_RULES[e.kind].category,
+    text: sentence(catalog, e),
+    subject,
+    year: e.year,
+  };
 }

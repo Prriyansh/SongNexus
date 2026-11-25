@@ -37,13 +37,19 @@ function directionsOf(found: Evidence[], artist: number): Direction[] {
   const out = new Set<Direction>();
   for (const e of found) {
     if (e.kind === "co_produced") out.add("produced together");
-    if (e.kind === "produced_for") out.add(e.a === artist ? "produced for them" : "produced by them");
+    if (e.kind === "produced_for")
+      out.add(e.a === artist ? "produced for them" : "produced by them");
   }
   return [...out].sort();
 }
 
 /** Collaborators of one type, most shared work first, and how many there are in all. */
-export function collaborations(graph: Graph, artist: number, type: CollaborationType, limit: number): { items: Collaboration[]; total: number } {
+export function collaborations(
+  graph: Graph,
+  artist: number,
+  type: CollaborationType,
+  limit: number,
+): { items: Collaboration[]; total: number } {
   const categories = TYPE_CATEGORIES[type];
   const items = neighbors(graph, artist, categories).map(({ artist: other }) => {
     const found = evidenceBetween(graph.catalog, artist, other, categories);
@@ -56,10 +62,15 @@ export function collaborations(graph: Graph, artist: number, type: Collaboration
       directions: directionsOf(found, artist),
     };
   });
-  items.sort((x, y) => y.count - x.count || (x.firstYear ?? 9999) - (y.firstYear ?? 9999) || x.other - y.other);
+  items.sort(
+    (x, y) =>
+      y.count - x.count || (x.firstYear ?? 9999) - (y.firstYear ?? 9999) || x.other - y.other,
+  );
   return {
     total: items.length,
-    items: items.slice(0, limit).map(({ other, ...rest }) => ({ artist: artistRef(graph.catalog, other), ...rest })),
+    items: items
+      .slice(0, limit)
+      .map(({ other, ...rest }) => ({ artist: artistRef(graph.catalog, other), ...rest })),
   };
 }
 
@@ -71,8 +82,11 @@ export function timeline(graph: Graph, artist: number): TimelineYear[] {
   const categories = CATEGORIES.filter((c) => c !== "labels" && c !== "bands");
   for (const { artist: other } of neighbors(graph, artist, categories)) {
     for (const e of evidenceBetween(graph.catalog, artist, other, categories)) {
-      if (e.year !== null) years.set(e.year, (years.get(e.year) ?? new Set<string>()).add(subjectKey(e)));
+      if (e.year !== null)
+        years.set(e.year, (years.get(e.year) ?? new Set<string>()).add(subjectKey(e)));
     }
   }
-  return [...years].sort(([x], [y]) => x - y).map(([year, subjects]) => ({ year, count: subjects.size }));
+  return [...years]
+    .sort(([x], [y]) => x - y)
+    .map(([year, subjects]) => ({ year, count: subjects.size }));
 }

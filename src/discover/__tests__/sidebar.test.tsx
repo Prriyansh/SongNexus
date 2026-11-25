@@ -10,7 +10,8 @@ import { currentLink, DISCOVER_LINKS, SidebarLinks } from "../components/Sidebar
 describe("the sidebar", () => {
   it("adds Discover’s features, marking none in the rest of the app", () => {
     const html = renderToStaticMarkup(<SidebarLinks />);
-    for (const { href, label } of DISCOVER_LINKS) expect(html).toContain(`href="${href}" aria-label="${label}"`);
+    for (const { href, label } of DISCOVER_LINKS)
+      expect(html).toContain(`href="${href}" aria-label="${label}"`);
     expect(html).not.toContain("aria-current");
   });
 
@@ -23,10 +24,16 @@ describe("the sidebar", () => {
   it("is the same on Discover’s pages as in the app", () => {
     const html = renderToStaticMarkup(<DiscoverShell>content</DiscoverShell>);
     const app = readFileSync("src/frontend/App.tsx", "utf8");
-    const appLabels = [...app.matchAll(/className=\{`nav-option [^>]*? aria-label="([^"]+)"/g)].map((m) => m[1]);
+    const appLabels = [...app.matchAll(/className=\{`nav-option [^>]*? aria-label="([^"]+)"/g)].map(
+      (m) => m[1],
+    );
     expect(appLabels).toHaveLength(4);
-    const labels = [...html.matchAll(/class="nav-option[^>]*? aria-label="([^"]+)"/g)].map((m) => m[1]);
+    const labels = [...html.matchAll(/class="nav-option[^>]*? aria-label="([^"]+)"/g)].map(
+      (m) => m[1],
+    );
     expect(labels).toEqual([...appLabels, ...DISCOVER_LINKS.map((l) => l.label)]);
-    expect(html).toContain('href="/discover/six-degrees" aria-label="Six Degrees" aria-current="page"');
+    expect(html).toContain(
+      'href="/discover/six-degrees" aria-label="Six Degrees" aria-current="page"',
+    );
   });
 });

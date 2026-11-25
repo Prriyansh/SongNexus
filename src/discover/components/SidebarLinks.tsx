@@ -17,7 +17,13 @@ export function currentLink(pathname: string | null) {
 export function SidebarLinks({ pathname = null }: { pathname?: string | null }) {
   const current = currentLink(pathname);
   return DISCOVER_LINKS.map((link) => (
-    <a key={link.href} className={`nav-option ${link === current ? "active" : ""}`} href={link.href} aria-label={link.label} aria-current={link === current ? "page" : undefined}>
+    <a
+      key={link.href}
+      className={`nav-option ${link === current ? "active" : ""}`}
+      href={link.href}
+      aria-label={link.label}
+      aria-current={link === current ? "page" : undefined}
+    >
       <link.Icon size={22} />
       <span>{link.label}</span>
       {link === current && <span className="nav-track" />}

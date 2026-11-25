@@ -5,14 +5,22 @@ const GROUPS: { title: string; roles: string[] }[] = [
   { title: "Performers", roles: ["primary", "featured"] },
   { title: "Producers", roles: ["producer"] },
   { title: "Vocals and instruments", roles: ["vocal", "instrument", "performer"] },
-  { title: "Programming and arrangement", roles: ["programming", "arranger", "conductor", "remixer"] },
+  {
+    title: "Programming and arrangement",
+    roles: ["programming", "arranger", "conductor", "remixer"],
+  },
   { title: "Engineering", roles: ["engineer"] },
   { title: "Samples", roles: ["sampled"] },
 ];
 
 // Roles that say something the group's title doesn't already.
 const ROLE_WORDS: Record<string, string> = {
-  featured: "featured", vocal: "vocals", programming: "programming", arranger: "arrangement", conductor: "conductor", remixer: "remix",
+  featured: "featured",
+  vocal: "vocals",
+  programming: "programming",
+  arranger: "arrangement",
+  conductor: "conductor",
+  remixer: "remix",
 };
 
 export type CreditGroup = { title: string; people: { artist: number; parts: string[] }[] };

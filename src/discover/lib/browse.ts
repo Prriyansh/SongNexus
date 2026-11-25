@@ -9,14 +9,17 @@ const FULL_PAGE = 2;
 
 /** Artists with full pages, most listened to first (listeners are ListenBrainz's). */
 function knownArtists(catalog: Catalog): number[] {
+  const listeners = (at: number) => catalog.artists[at].listeners ?? 0;
   return catalog.artists
     .map((_, at) => at)
     .filter((at) => catalog.artists[at].level === FULL_PAGE)
-    .sort((x, y) => (catalog.artists[y].listeners ?? 0) - (catalog.artists[x].listeners ?? 0) || x - y);
+    .sort((x, y) => listeners(y) - listeners(x) || x - y);
 }
 
 export function popularArtists(catalog: Catalog, limit: number): ArtistRef[] {
-  return knownArtists(catalog).slice(0, limit).map((at) => artistRef(catalog, at));
+  return knownArtists(catalog)
+    .slice(0, limit)
+    .map((at) => artistRef(catalog, at));
 }
 
 export function biggestGenres(catalog: Catalog, limit: number): EntityRef[] {
@@ -36,29 +39,49 @@ export function biggestLabels(catalog: Catalog, limit: number): EntityRef[] {
     .map(({ label }) => ({ kind: "label", id: label.id, name: label.name, note: "" }));
 }
 
-const MAIN_GENRE_SHARE = 15;
+/** A song by each of the best-known artists. */
+export function knownSongs(catalog: Catalog, limit: number): number[] {
+  return knownArtists(catalog)
+    .flatMap((artist) =>
+      catalog.songsOf[artist].filter((s) => catalog.songs[s].primary.includes(artist)).slice(0, 1),
+    )
+    .slice(0, limit);
+}
 
-type Pair = { from: ArtistRef; to: ArtistRef };
+export type Pair = { from: ArtistRef; to: ArtistRef; steps: number };
+
+/** A genre counts as one of an artist's main ones from this share of their votes, in percent. */
+const MAIN_GENRE_SHARE = 15;
+const KNOWN = 120;
+const PAIRS = 24;
 
 const pairsOf = new WeakMap<Graph, Pair[]>();
 
 /** Connected pairs of well-known artists who share no main genre, so the path says something. */
-export function surprisePairs(graph: Graph, count = 24): Pair[] {
+export function surprisePairs(graph: Graph): Pair[] {
   const ready = pairsOf.get(graph);
   if (ready) return ready;
-  const catalog = graph.catalog;
-  const known = knownArtists(catalog).slice(0, 120);
-  const mainGenres = (at: number) => catalog.artists[at].genres.filter((g) => g.share >= MAIN_GENRE_SHARE).map((g) => g.genre);
+  const { catalog } = graph;
+  const known = knownArtists(catalog).slice(0, KNOWN);
+  const mainGenres = (at: number) =>
+    catalog.artists[at].genres.filter((g) => g.share >= MAIN_GENRE_SHARE).map((g) => g.genre);
   const pairs: Pair[] = [];
-  for (let i = 0; i < known.length && pairs.length < count; i++) {
+  for (let i = 0; i < known.length && pairs.length < PAIRS; i++) {
     const from = known[i];
     const own = new Set(mainGenres(from));
-    // Start each search somewhere else in the list, so the same few artists don't fill every pair.
+    if (!own.size) continue;
+    // Start each search somewhere else in the list, so a few artists don't fill every pair.
     for (let step = 0; step < known.length; step++) {
       const to = known[(i * 37 + 53 + step) % known.length];
-      if (to === from || !own.size || !mainGenres(to).length || mainGenres(to).some((g) => own.has(g))) continue;
-      if (!findPath(graph, from, to, { categories: DEFAULT_CATEGORIES })) continue;
-      pairs.push({ from: artistRef(catalog, from), to: artistRef(catalog, to) });
+      const theirs = mainGenres(to);
+      if (to === from || !theirs.length || theirs.some((g) => own.has(g))) continue;
+      const path = findPath(graph, from, to, { categories: DEFAULT_CATEGORIES });
+      if (!path) continue;
+      pairs.push({
+        from: artistRef(catalog, from),
+        to: artistRef(catalog, to),
+        steps: path.length - 1,
+      });
       break;
     }
   }

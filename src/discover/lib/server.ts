@@ -1,6 +1,14 @@
 // The catalog's graph and the answers pages and API routes ask of it. Server only.
 import { catalog } from "./catalog";
-import { buildGraph, countOf, evidenceBetween, mainCategory, neighbors, strengthOf, type Graph } from "./graph";
+import {
+  buildGraph,
+  countOf,
+  evidenceBetween,
+  mainCategory,
+  neighbors,
+  strengthOf,
+  type Graph,
+} from "./graph";
 import { findPaths, type PathOrder } from "./paths";
 import type { Category, GraphData, GraphEdge, PathSearch } from "./types";
 import { artistRef, reasonOf } from "./words";
@@ -15,7 +23,14 @@ export function graph(): Graph {
 
 const REASONS_PER_STEP = 3;
 
-export function searchPaths(g: Graph, from: number, to: number, categories: readonly Category[], order: PathOrder, avoid: number[] = []): PathSearch {
+export function searchPaths(
+  g: Graph,
+  from: number,
+  to: number,
+  categories: readonly Category[],
+  order: PathOrder,
+  avoid: number[] = [],
+): PathSearch {
   if (from === to) return { status: "same-artist" };
   const paths = findPaths(g, from, to, { categories, order, avoid: new Set(avoid) });
   if (!paths.length) return { status: "not-connected" };
@@ -37,7 +52,12 @@ export function searchPaths(g: Graph, from: number, to: number, categories: read
 }
 
 /** An artist's strongest connections and the connections among those. */
-export function neighborhood(g: Graph, artist: number, categories: readonly Category[], limit: number): GraphData {
+export function neighborhood(
+  g: Graph,
+  artist: number,
+  categories: readonly Category[],
+  limit: number,
+): GraphData {
   const all = neighbors(g, artist, categories);
   const shown = [artist, ...all.slice(0, limit).map((n) => n.artist)];
   const edges: GraphEdge[] = [];
@@ -56,7 +76,10 @@ export function neighborhood(g: Graph, artist: number, categories: readonly Cate
   });
   return {
     center: g.catalog.artists[artist].id,
-    nodes: shown.map((a) => ({ ...artistRef(g.catalog, a), degree: neighbors(g, a, categories).length })),
+    nodes: shown.map((a) => ({
+      ...artistRef(g.catalog, a),
+      degree: neighbors(g, a, categories).length,
+    })),
     edges,
     total: all.length,
   };

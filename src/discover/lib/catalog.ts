@@ -5,15 +5,51 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 type Honor = [id: string, name: string, year: number | null];
-type ChartTotals = [entries: number, topTen: number, numberOnes: number, peak: number, first: number, last: number];
+type ChartTotals = [
+  entries: number,
+  topTen: number,
+  numberOnes: number,
+  peak: number,
+  first: number,
+  last: number,
+];
 type Extras = {
-  facts?: [description: string | null, wikipedia: string | null, awards: Honor[], nominations: Honor[], wikidata: string | null];
+  facts?: [
+    description: string | null,
+    wikipedia: string | null,
+    awards: Honor[],
+    nominations: Honor[],
+    wikidata: string | null,
+  ];
   hot100?: ChartTotals;
   albums?: ChartTotals;
-  eurovision?: [year: number, country: string, song: string, place: number | null, points: number | null, semi: number | null][];
+  eurovision?: [
+    year: number,
+    country: string,
+    song: string,
+    place: number | null,
+    points: number | null,
+    semi: number | null,
+  ][];
   events?: [id: string, name: string, date: string | null, place: string | null][];
   eventCount?: number;
 };
+
+/** A freely licensed photo on Wikimedia Commons, with the credit its license asks for. */
+export type Photo = {
+  url: string;
+  page: string;
+  author: string | null;
+  license: string;
+  licenseUrl: string | null;
+};
+type RawPhoto = [
+  url: string,
+  page: string,
+  author: string | null,
+  license: string,
+  licenseUrl: string | null,
+];
 
 export type RawCatalog = {
   version: number;
@@ -21,34 +57,89 @@ export type RawCatalog = {
   details: string[];
   relationTypes: string[];
   artists: [
-    id: string, name: string, type: string | null, country: string | null, disambiguation: string | null,
-    begin: number | null, end: number | null, level: number, listeners: number | null, genres: number[], aliases: string[],
+    id: string,
+    name: string,
+    type: string | null,
+    country: string | null,
+    disambiguation: string | null,
+    begin: number | null,
+    end: number | null,
+    level: number,
+    listeners: number | null,
+    genres: number[],
+    aliases: string[],
   ][];
   extras: Record<string, Extras>;
+  photos: Record<string, RawPhoto>;
   genres: [name: string, slug: string, parents: number[]][];
   labels: [id: string, name: string][];
-  songs: [id: string, title: string, year: number | null, seconds: number | null, credits: number[]][];
-  releases: [
-    id: string, title: string, year: number | null, cover: string | null,
-    artists: number[], labels: number[], tracks: number[], credits: number[],
+  songs: [
+    id: string,
+    title: string,
+    year: number | null,
+    seconds: number | null,
+    credits: number[],
   ][];
-  relations: [subject: number, object: number, type: number, begin: number | null, end: number | null][];
+  releases: [
+    id: string,
+    title: string,
+    year: number | null,
+    cover: string | null,
+    artists: number[],
+    labels: number[],
+    tracks: number[],
+    credits: number[],
+  ][];
+  relations: [
+    subject: number,
+    object: number,
+    type: number,
+    begin: number | null,
+    end: number | null,
+  ][];
 };
 
 export type Credit = { artist: number; role: string; detail: string };
 export type Artist = {
-  id: string; name: string; type: string | null; country: string | null; disambiguation: string | null;
-  begin: number | null; end: number | null; level: number; listeners: number | null;
+  id: string;
+  name: string;
+  type: string | null;
+  country: string | null;
+  disambiguation: string | null;
+  begin: number | null;
+  end: number | null;
+  level: number;
+  listeners: number | null;
   genres: { genre: number; share: number }[];
   aliases: string[];
+  photo: Photo | null;
   extras: Extras;
 };
-export type Song = { id: string; title: string; year: number | null; seconds: number | null; credits: Credit[]; primary: number[] };
-export type Release = {
-  id: string; title: string; year: number | null; cover: string | null;
-  artists: number[]; labels: number[]; tracks: number[]; credits: Credit[];
+export type Song = {
+  id: string;
+  title: string;
+  year: number | null;
+  seconds: number | null;
+  credits: Credit[];
+  primary: number[];
 };
-export type Relation = { subject: number; object: number; type: string; begin: number | null; end: number | null };
+export type Release = {
+  id: string;
+  title: string;
+  year: number | null;
+  cover: string | null;
+  artists: number[];
+  labels: number[];
+  tracks: number[];
+  credits: Credit[];
+};
+export type Relation = {
+  subject: number;
+  object: number;
+  type: string;
+  begin: number | null;
+  end: number | null;
+};
 
 export type Catalog = {
   artists: Artist[];
@@ -78,8 +169,15 @@ function creditsOf(flat: number[], raw: RawCatalog): Credit[] {
   return out;
 }
 
+function photoOf(raw: RawPhoto | undefined): Photo | null {
+  if (!raw) return null;
+  const [url, page, author, license, licenseUrl] = raw;
+  return { url, page, author, license, licenseUrl };
+}
+
 const lists = (length: number): number[][] => Array.from({ length }, () => []);
-const position = <T,>(rows: T[], key: (row: T) => string) => new Map(rows.map((row, i) => [key(row), i]));
+const position = <T>(rows: T[], key: (row: T) => string) =>
+  new Map(rows.map((row, i) => [key(row), i]));
 
 function push(list: number[], value: number) {
   if (list[list.length - 1] !== value) list.push(value);
@@ -87,23 +185,65 @@ function push(list: number[], value: number) {
 
 /** Turns the exported file into indexed records. */
 export function buildCatalog(raw: RawCatalog): Catalog {
-  const artists: Artist[] = raw.artists.map(([id, name, type, country, disambiguation, begin, end, level, listeners, genres, aliases], i) => ({
-    id, name, type, country, disambiguation, begin, end, level, listeners,
-    genres: Array.from({ length: genres.length / 2 }, (_, g) => ({ genre: genres[2 * g], share: genres[2 * g + 1] })),
-    aliases,
-    extras: raw.extras[i] ?? {},
-  }));
+  const artists: Artist[] = raw.artists.map(
+    (
+      [id, name, type, country, disambiguation, begin, end, level, listeners, genres, aliases],
+      i,
+    ) => ({
+      id,
+      name,
+      type,
+      country,
+      disambiguation,
+      begin,
+      end,
+      level,
+      listeners,
+      genres: Array.from({ length: genres.length / 2 }, (_, g) => ({
+        genre: genres[2 * g],
+        share: genres[2 * g + 1],
+      })),
+      aliases,
+      photo: photoOf(raw.photos[i]),
+      extras: raw.extras[i] ?? {},
+    }),
+  );
   const songs: Song[] = raw.songs.map(([id, title, year, seconds, flat]) => {
     const credits = creditsOf(flat, raw);
-    return { id, title, year, seconds, credits, primary: [...new Set(credits.filter((c) => c.role === "primary").map((c) => c.artist))] };
+    return {
+      id,
+      title,
+      year,
+      seconds,
+      credits,
+      primary: [...new Set(credits.filter((c) => c.role === "primary").map((c) => c.artist))],
+    };
   });
-  const releases: Release[] = raw.releases.map(([id, title, year, cover, by, labels, tracks, flat]) => ({
-    id, title, year, cover, artists: by, labels, tracks, credits: creditsOf(flat, raw),
-  }));
+  const releases: Release[] = raw.releases.map(
+    ([id, title, year, cover, by, labels, tracks, flat]) => ({
+      id,
+      title,
+      year,
+      cover,
+      artists: by,
+      labels,
+      tracks,
+      credits: creditsOf(flat, raw),
+    }),
+  );
   const relations: Relation[] = raw.relations.map(([subject, object, type, begin, end]) => ({
-    subject, object, type: raw.relationTypes[type], begin, end,
+    subject,
+    object,
+    type: raw.relationTypes[type],
+    begin,
+    end,
   }));
-  const genres = raw.genres.map(([name, slug, parents]) => ({ name, slug, parents, children: [] as number[] }));
+  const genres = raw.genres.map(([name, slug, parents]) => ({
+    name,
+    slug,
+    parents,
+    children: [] as number[],
+  }));
   genres.forEach((genre, i) => genre.parents.forEach((parent) => genres[parent].children.push(i)));
 
   const songsOf = lists(artists.length);
@@ -114,7 +254,8 @@ export function buildCatalog(raw: RawCatalog): Catalog {
   const genreArtists = lists(genres.length);
   songs.forEach((song, i) => song.credits.forEach((c) => push(songsOf[c.artist], i)));
   releases.forEach((release, i) => {
-    for (const artist of new Set([...release.artists, ...release.credits.map((c) => c.artist)])) releasesOf[artist].push(i);
+    for (const artist of new Set([...release.artists, ...release.credits.map((c) => c.artist)]))
+      releasesOf[artist].push(i);
     release.tracks.forEach((song) => push(songReleases[song], i));
     release.labels.forEach((label) => push(labelReleases[label], i));
   });
@@ -125,13 +266,22 @@ export function buildCatalog(raw: RawCatalog): Catalog {
   artists.forEach((artist, i) => artist.genres.forEach((g) => genreArtists[g.genre].push(i)));
 
   return {
-    artists, songs, releases, relations, genres,
+    artists,
+    songs,
+    releases,
+    relations,
+    genres,
     labels: raw.labels.map(([id, name]) => ({ id, name })),
     artistAt: position(artists, (a) => a.id),
     songAt: position(songs, (s) => s.id),
     labelAt: position(raw.labels, (l) => l[0]),
     genreAt: position(genres, (g) => g.slug),
-    songsOf, releasesOf, relationsOf, songReleases, labelReleases, genreArtists,
+    songsOf,
+    releasesOf,
+    relationsOf,
+    songReleases,
+    labelReleases,
+    genreArtists,
   };
 }
 
@@ -139,6 +289,10 @@ let loaded: Catalog | null = null;
 
 /** The catalog, read once per server instance. */
 export function catalog(): Catalog {
-  loaded ??= buildCatalog(JSON.parse(readFileSync(path.join(process.cwd(), "src/discover/data/catalog.json"), "utf8")) as RawCatalog);
+  loaded ??= buildCatalog(
+    JSON.parse(
+      readFileSync(path.join(process.cwd(), "src/discover/data/catalog.json"), "utf8"),
+    ) as RawCatalog,
+  );
   return loaded;
 }
