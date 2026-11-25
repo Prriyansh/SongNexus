@@ -38,6 +38,17 @@ the catalog file, so they need no keys and call no other service.
   `ConnectionExplorer.tsx` (the page around them) are the web. `api.ts` — the browser's only calls.
 - `discover.css` — every class starts with `dx-`. `__tests__/`.
 
+## Tests
+
+`npm test` runs everything in `__tests__/`: `graph`, `views`, `helpers` and `api` (logic and routes),
+`properties` (rules checked on made-up catalogs, and paths against a plain search of every one),
+`catalog` (the committed file), `pages` (a spread of every kind of page, rendered whole, with every
+link on it followed), `components`, `shell` and `web` (controls, in jsdom) and `sidebar`. `dom.tsx`,
+`render.tsx` and `fixture.ts` are helpers.
+
+Beside them: `e2e/` (a real browser; see its guide) and `scripts/discover/test_export_catalog.py`
+(`python -m unittest discover -s scripts/discover`).
+
 ## Rules
 
 - Server files (`catalog`, `graph`, `server`, `search`, `words`) never reach the browser. A test follows
