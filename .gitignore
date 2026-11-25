@@ -1,56 +1,50 @@
-# Python
-.venv/
-__pycache__/
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.hypothesis/
-.coverage
-htmlcov/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Node
-node_modules/
-dist/
-coverage/
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Local data: the raw HTTP cache and local databases are regenerated.
-# Committed data lives in data/samples, data/seeds and data/eval.
-data/raw/
-data/*.db
-/*.db
-*.sqlite
+# testing
+/coverage
 
-# Secrets and local configuration
-.env
-.env.*
-!.env.example
-
-# Editors and OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-.import_linter_cache/
-
-# Playwright
-test-results/
-playwright-report/
-
-# Local code graph (graphify), not part of the project
-graphify-out/
-
-# Left on disk by the earlier Next.js app (local dev data and build output); not part of this app.
-/.data/
-/.tools/
+# next.js
 /.next/
-/node_modules/
-next-env.d.ts
-*.tsbuildinfo
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
 .vercel
 
-# song_compare/: raw datasets are downloaded, not committed (see song_compare/README.md)
-song_compare/data/raw/
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+.env*.local
 
-# Built by vercel_build.py for the Vercel deployment.
-catalog.db
+# python (song_compare/)
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+# raw datasets are downloaded, not committed (see song_compare/README.md)
+song_compare/data/raw/

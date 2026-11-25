@@ -2,12 +2,12 @@
 
 Compares two songs on how they sound (Spotify audio features), their structure, shared credits
 and their lyrics (sentiment, themes, meaning), and finds more songs that sound alike. A Python
-(Flask) API built by Ishita. Its analysis is the "Sound and lyrics" part of the app's song
-comparison (how alike the songs are and why, sound profile, structure, lyric mood and themes,
-songs that sound alike); the app's API calls it (`CompareRecordingSound`). It also serves a
-separate **Sound & Lyrics** page at <http://localhost:5050> with its original song pickers and
-comparison layout, whose sidebar links back to the app. Set `NEXUS_URL` on the Flask service to
-change the app address (default `http://localhost:5173`).
+(Flask) API built by Ishita. Its analysis is the main part of Explore's two-song comparison in
+the main app (how alike the songs are, sound profile, structure, lyrics, similar songs), and
+the song pickers search its library. It also serves a separate **Sound & Lyrics** page at
+<http://localhost:5050> with its original song pickers and comparison layout. The main app's
+sidebar links here; this page's sidebar links back to About Me and Explore. Set `NEXUS_URL`
+on the Flask service to change the main app address (default `http://localhost:3000`).
 
 ## Run it
 
@@ -25,18 +25,17 @@ python backend/app.py
 `requirements-prepare.txt`; for the tests, `requirements-dev.txt`.
 
 It listens on <http://localhost:5050> (port 5000 is avoided because macOS uses it for AirPlay;
-set `PORT` to use another). Then run the app (see the repository README) and compare two songs.
-The API finds this service at `SONGNEXUS_SONG_COMPARE_URL` (`server/.env.example` sets
-`http://127.0.0.1:5050`). Without it, song comparisons still work and say the sound and lyrics
-analysis isn't available.
+set `PORT` to use another). Then run the main app (`npm run dev` at the repository root) and
+compare two songs in Explore. The main app finds this service at `SONG_COMPARE_URL`, which
+defaults to `http://localhost:5050` in development. Without it, Explore still works and says
+the sound analysis isn't available.
 
 ## Deploy on Vercel
 
-The repository's `vercel.json` deploys it as the `sound` service of the app's Vercel project, at
-`/api/*` on the same domain, and the API calls it there; nothing to set up. It can also run as
-its own Vercel project: create a project with **Root Directory** `song_compare`. Vercel detects Flask, installs `requirements.txt` (runtime packages only, about
+It runs as its own Vercel project from this repository: create a project with **Root Directory**
+`song_compare`. Vercel detects Flask, installs `requirements.txt` (runtime packages only, about
 364 MB) and serves `index.py` with the committed catalog (26 MB), under the 500 MB function
-limit. Then set `SONGNEXUS_SONG_COMPARE_URL` on the app's API to this project's URL.
+limit. Then set `SONG_COMPARE_URL` in the main Song Nexus project to this project's URL.
 
 ## API
 
@@ -44,7 +43,7 @@ limit. Then set `SONGNEXUS_SONG_COMPARE_URL` on the app's API to this project's 
 | --- | --- |
 | `GET /api/stats` | catalog size and lyric match rate |
 | `GET /api/search?q=&limit=` | songs by title or artist (`limit` 1–25) |
-| `GET /api/match?title=&artist=` | the dataset's version of a named song (how the app maps its catalog songs) |
+| `GET /api/match?title=&artist=` | the dataset's version of a named song (how Explore maps MusicBrainz songs) |
 | `GET /api/compare?a=&b=&w_audio=` | full comparison; `w_audio` (0–1) weights sound vs lyrics |
 | `GET /api/similar/<id>?k=` | songs that sound most alike (`k` 1–30) |
 

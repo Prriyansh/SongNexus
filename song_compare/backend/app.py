@@ -1,6 +1,6 @@
 """
 Song Comparison page and API (Flask). The standalone Sound & Lyrics page lives at /;
-The app's song comparison also calls this API, through its own API (CompareRecordingSound).
+Explore's two-song comparison also calls the API through Next.js /api/sound.
 
   GET /api/stats                      dataset size and cross dataset match rate
   GET /api/search?q=text              find songs by title or artist
@@ -19,8 +19,7 @@ from catalog import Catalog
 import similarity
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
-# The earlier Song Nexus app's look, kept here so this standalone page stays self-contained.
-NEXUS_STYLES = FRONTEND / "nexus"
+NEXUS_STYLES = Path(__file__).resolve().parents[2] / "src" / "frontend"
 NEXUS_STYLESHEETS = ("styles.css", "product.css", "integration.css")
 
 
@@ -84,7 +83,7 @@ def create_app(data_dir=None):
 
     @app.route("/config.js")
     def config_js():
-        nexus_url = os.environ.get("NEXUS_URL", "http://localhost:5173").rstrip("/")
+        nexus_url = os.environ.get("NEXUS_URL", "http://localhost:3000").rstrip("/")
         return app.response_class(f"window.NEXUS_URL = {json.dumps(nexus_url)};\n", mimetype="text/javascript")
 
     @app.route("/api/stats")
