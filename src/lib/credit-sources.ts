@@ -15,16 +15,28 @@ export type SourceOptions = {
   budgetMs?: number;
 };
 
+/**
+ * The caller's headers over our defaults, as a plain object. Headers may come as an object, a
+ * Headers or a list of pairs; names are matched without regard to case, as HTTP does.
+ */
+function withDefaults(given: HeadersInit | undefined, defaults: Record<string, string>): Record<string, string> {
+  const entries: [string, string][] =
+    given instanceof Headers ? [...given.entries()] : Array.isArray(given) ? given.map(([k, v]) => [k, v]) : Object.entries(given ?? {});
+  const out = { ...defaults };
+  for (const [name, value] of entries) {
+    for (const key of Object.keys(out)) if (key.toLowerCase() === name.toLowerCase()) delete out[key];
+    out[name] = value;
+  }
+  return out;
+}
+
 /** Fetches JSON from another source; every failure is an UpstreamError naming that source. */
 export async function sourceJson<T>(source: string, url: string, init: RequestInit = {}, options: SourceOptions = {}): Promise<T> {
   const fetchImpl = options.fetchImpl ?? fetch;
   let response: Response;
   try {
-    response = await fetchImpl(url, {
-      ...init,
-      headers: { "User-Agent": USER_AGENT, Accept: "application/json", ...init.headers },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
+    const headers = withDefaults(init.headers, { "User-Agent": USER_AGENT, Accept: "application/json" });
+    response = await fetchImpl(url, { ...init, headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
   } catch {
     throw new UpstreamError(`Could not reach ${source}.`, 502, true);
   }

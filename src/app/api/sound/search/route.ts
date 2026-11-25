@@ -8,7 +8,10 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const q = (params.get("q") ?? "").trim();
   if (q.length < 2 || q.length > 200) {
-    return NextResponse.json({ error: 'Query param "q" must be 2–200 characters.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Query param "q" must be 2–200 characters.' },
+      { status: 400 },
+    );
   }
   const limit = Math.min(Math.max(Number.parseInt(params.get("limit") ?? "10", 10) || 10, 1), 25);
   const result = await searchSound(q, limit);

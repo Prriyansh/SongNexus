@@ -31,11 +31,14 @@ Thin route handlers over `src/lib`. Each one validates input, calls the lib, and
 | `GET /api/sound/search` | `q` (2–200 chars), `limit` (≤25) | `{ status: "ok", results }` or `{ status: "unavailable" }` | 1 h (`no-store` when unavailable) |
 | `GET /api/sound` | `aTitle`, `bTitle` (required), `aArtist`, `bArtist` | `{ status, comparison?, similar?, missing?, hint? }` | 1 h (`no-store` when unavailable) |
 
-Pattern for every handler:
+Pattern for every handler, in `respond.ts`: wrap the work in `answer(name, what, work)` and reply
+with `ok(body, CACHE.…)` or `fail(status, message)`.
 
 - `ValidationError` → 400 `{ error }`.
-- `UpstreamError` → its status with `{ error, retryable }`; log the detail server-side.
-- Anything else → 500 with a generic message. Never leak upstream bodies to the client.
+- `UpstreamError` → its status with `{ error, retryable }`, logged server-side.
+- Anything else → 500 "Something went wrong while …", logged. Never leak upstream bodies to the client.
+
+`rooms/rooms.ts` holds what the two room routes share.
 
 `q` is passed to MusicBrainz as a Lucene query, so callers can send field queries like
 `recording:"vampire" AND artist:"Olivia Rodrigo"`.
