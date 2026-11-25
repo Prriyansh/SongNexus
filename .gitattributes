@@ -1,4 +1,0 @@
-# Normalize line endings for every contributor, whatever their OS.
-* text=auto eol=lf
-*.gz binary
-*.png binary

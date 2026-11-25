@@ -5,15 +5,12 @@ GitHub configuration.
 ## Files at this level
 
 - `CLAUDE.md` — this guide.
-- `dependabot.yml` — weekly dependency updates for `server/` (uv), `web/` (npm), `song_compare/`
-  (pip) and the workflow actions; minor and patch updates are grouped.
-- `pull_request_template.md` — the checklist every pull request starts from.
 
 ## Folders
 
-- `ISSUE_TEMPLATE/` — issue forms: bug report, feature request, new data source.
-- `workflows/ci.yml` — on every pull request and push to `main`: `server` (uv; ruff format and
-  lint, mypy, import layering, pytest against SQLite and a PostgreSQL service, OpenAPI contract,
-  pip-audit), `web` (Node 22; API types match the contract, lint, typecheck, Vitest, build, bundle
-  budget, npm audit), `e2e` (Playwright against the built app and a freshly ingested API) and
-  `song-compare` (Python 3.12, pytest). Keep it matching the commands in `README.md`.
+- `workflows/ci.yml` — the CI job, on pushes to `main` and on pull requests: checkout, Node from
+  `.nvmrc` with the npm cache, `npm ci`, then `lint`, `typecheck`, `test` and `build` (job
+  `check`); and, in `song_compare/`, Python 3.12 + `requirements-dev.txt` + `pytest` (job
+  `song-compare`).
+  Keep it matching the scripts in `package.json`. No secrets are needed: the tests mock
+  MusicBrainz and Deezer, and the build makes no network calls.
