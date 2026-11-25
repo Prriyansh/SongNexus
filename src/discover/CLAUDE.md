@@ -1,8 +1,9 @@
 # src/discover/
 
-Discover: the people behind the music and how they connect. It is its own area at `/discover` and
-is built only from new files. It imports nothing from `src/frontend` or `src/lib`, and they import
-nothing from it, so neither can break the other.
+Discover: the people behind the music and how they connect. It is its own area at `/discover`, with
+the app's sidebar. It imports nothing from `src/frontend` or `src/lib`. The one link the other way is
+`components/SidebarLinks.tsx`, which `src/frontend/App.tsx` puts at the end of the sidebar;
+`components/DiscoverShell.tsx` draws the same sidebar around Discover's pages (a test compares them).
 
 ## Pages (in `src/app/discover/`)
 
@@ -10,7 +11,7 @@ nothing from it, so neither can break the other.
 | --- | --- |
 | `/discover` | Search, and ways in by artist, genre and label |
 | `/discover/six-degrees` | The path between two artists (`from`, `to`, `via`, `order`, `avoid`) |
-| `/discover/connections` | One artist's connection web (`artist`, `via`) |
+| `/discover/connections` | Collaborators: one artist's web of who they worked with (`artist`, `via`) |
 | `/discover/artist/[id]`, `/song/[id]`, `/label/[id]` | By MusicBrainz ID, so links work across the app |
 | `/discover/genre/[id]` | By genre slug |
 

@@ -28,7 +28,7 @@ export default function DiscoverHome() {
           <p>Pick two artists and see the chain of people between them.</p>
         </Link>
         <Link className="dx-card" href="/discover/connections">
-          <h2>Connections</h2>
+          <h2>Collaborators</h2>
           <p>Start from one artist and open the web of who they worked with.</p>
         </Link>
       </div>

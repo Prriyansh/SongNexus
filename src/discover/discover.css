@@ -1,18 +1,10 @@
 /* Discover's own styles. Every class starts with dx-, and colors come from the app's tokens
    (src/frontend/styles.css), so nothing here changes another screen. */
-.dx-shell{--features:#ff718b;--producers:#9d8ad6;--contributions:#5fb8a8;--samples:#e3b35c;--bands:#cfc8d2;--labels:#8b8590;--engineering:#6f97c9;min-height:100vh;background:var(--bg);color:var(--white);display:flex;flex-direction:column}
-.dx-top{position:sticky;top:0;z-index:12;display:flex;align-items:center;gap:28px;min-height:64px;padding:0 clamp(16px,3.5vw,54px);background:#101015;border-bottom:1px solid #29272f}
-.dx-brand{margin:0;color:#fff;font-size:15px;font-weight:800;letter-spacing:-.02em}
-.dx-nav{display:flex;align-items:center;gap:6px;flex:1;overflow-x:auto}
-.dx-nav a{padding:9px 13px;border-radius:9px;color:var(--soft);font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}
-.dx-nav a:hover{background:#211f25;color:#fff}
-.dx-nav a[aria-current=page]{background:var(--accent-bg);color:#fff}
-.dx-nav .dx-back{margin-left:auto;color:var(--pink)}
-.dx-main{width:min(100%,1240px);margin:0 auto;padding:36px clamp(16px,3.5vw,54px) 40px;flex:1;display:flex;flex-direction:column;gap:18px}
+.dx-shell{--features:#ff718b;--producers:#9d8ad6;--contributions:#5fb8a8;--samples:#e3b35c;--bands:#cfc8d2;--labels:#8b8590;--engineering:#6f97c9}
+.dx-shell .brand,.dx-shell .header-wordmark{text-decoration:none}
+.dx-main{display:flex;flex-direction:column;gap:18px}
 .dx-main a{color:var(--pink)}
-.dx-foot{border-top:1px solid #28262f;padding:20px clamp(16px,3.5vw,54px)}
-.dx-foot p{max-width:1130px;margin:0 auto;font-size:11px}
-.dx-foot a{color:var(--soft)}
+.dx-main footer a{color:inherit}
 .dx-head h1{margin:0 0 8px;overflow-wrap:anywhere}
 .dx-head p{margin:0;max-width:720px;font-size:14px}
 .dx-entity{display:flex;gap:22px;align-items:flex-start}
@@ -146,4 +138,4 @@ ol.dx-tracks{list-style:decimal;padding-left:26px;color:var(--muted)}
 .dx-side-list button:hover{background:var(--panel-hi)}
 .dx-side-list small{display:block;margin-top:2px;font-size:11px}
 @media(max-width:900px){.dx-explorer,.dx-explorer-bar{grid-template-columns:minmax(0,1fr)}.dx-side{max-height:none}}
-@media(max-width:650px){.dx-main{padding-top:24px}.dx-top{gap:12px}.dx-brand{display:none}.dx-panel{padding:16px}.dx-entity{flex-direction:column;gap:12px}.dx-slots{grid-template-columns:minmax(0,1fr)}.dx-slots>.dx-button{justify-self:start}.dx-web svg{min-height:360px}}
+@media(max-width:650px){.dx-panel{padding:16px}.dx-entity{flex-direction:column;gap:12px}.dx-slots{grid-template-columns:minmax(0,1fr)}.dx-slots>.dx-button{justify-self:start}.dx-web svg{min-height:360px}}

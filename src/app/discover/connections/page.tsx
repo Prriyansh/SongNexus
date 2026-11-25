@@ -7,7 +7,7 @@ import { graph, neighborhood } from "@/discover/lib/server";
 import { parseCategories } from "@/discover/lib/types";
 
 export const metadata: Metadata = {
-  title: "Connections · Song Nexus",
+  title: "Collaborators · Song Nexus",
   description: "Start from one artist and open the web of who they worked with.",
 };
 
@@ -28,8 +28,8 @@ export default function ConnectionsPage({ searchParams }: PageProps<"/discover/c
   return (
     <>
       <header className="dx-head">
-        <h1>Connections</h1>
-        <p>Who an artist really worked with. Pick someone to see why, and open their connections to keep going.</p>
+        <h1>Collaborators</h1>
+        <p>The people an artist worked with, from real credits. Pick someone to see why, and open their connections to keep going.</p>
       </header>
       <Suspense fallback={<Loading />}><Content searchParams={searchParams} /></Suspense>
     </>

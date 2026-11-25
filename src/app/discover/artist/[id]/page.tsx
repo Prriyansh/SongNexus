@@ -147,7 +147,7 @@ async function Content({ params }: { params: PageProps<"/discover/artist/[id]">[
           {(facts?.[0] || artist.disambiguation) && <p>{facts?.[0] ?? artist.disambiguation}{facts?.[1] && <> · <a href={facts[1]}>Wikipedia</a></>}</p>}
           <p className="dx-actions">
             <Link className="dx-button" href={`/discover/six-degrees?from=${artist.id}`}>Six Degrees from here</Link>
-            <Link className="dx-button dx-quiet" href={`/discover/connections?artist=${artist.id}`}>Open connections</Link>
+            <Link className="dx-button dx-quiet" href={`/discover/connections?artist=${artist.id}`}>Open collaborators</Link>
             <AppLink className="dx-button dx-quiet" href={`/connections?mode=artist&artist=${artist.id}`}>Similar music</AppLink>
             <AppLink className="dx-button dx-quiet" href={`/compare/artists?artistA=${artist.id}`}>Compare</AppLink>
           </p>
