@@ -108,7 +108,8 @@ function creditPairs(
       pair("contributed_to", a, performer, own, role, detail);
     }
     engineers.forEach((a) =>
-      pair("engineered", a, performer, "engineer", role, roles.get(a)!.get("engineer") ?? ""),
+      // Engineers are those with the role, so it has a detail (perhaps "").
+      pair("engineered", a, performer, "engineer", role, roles.get(a)!.get("engineer")!),
     );
     sampled.forEach((a) => pair("sampled", a, performer, "sampled", role));
   }

@@ -240,7 +240,7 @@ describe("GET /api/similar", () => {
     expect((await call({ kind: "artist", id: A, songs: "0" })).cache).toBe("public, max-age=3600");
   });
   it("refuses a bad kind or id", async () => {
-    for (const q of [{ kind: "label", id: A }, { kind: "artist", id: "x" }, { id: A }])
+    for (const q of [{ kind: "label", id: A }, { kind: "artist", id: "x" }, { id: A }, { kind: "artist" }])
       expect((await call(q)).status).toBe(400);
   });
   it("reports upstream trouble and crashes", () =>
@@ -329,6 +329,7 @@ describe("rooms", () => {
     expect(unknown.status).toBe(404);
     expect(await read("not a code!")).toEqual(unknown);
     expect((await post(roomRoute.POST, SONGS, "ZZZZZZ")).status).toBe(404);
+    expect((await post(roomRoute.POST, SONGS, "not a code!")).status).toBe(404);
   });
 
   it("refuse a playlist without songs", async () => {

@@ -81,7 +81,7 @@ export default function ConnectionExplorer({ start, opened, categories }: Props)
       remember(grow(await neighborhood(id, categories, OPEN_LIMIT)), categories);
     } catch {
       setProblem(
-        `The connections of ${byId.get(id)?.name ?? "that artist"} didn’t load. Try again.`,
+        `The connections of ${byId.get(id)!.name} didn’t load. Try again.`, // only artists on the web open
       );
     } finally {
       setOpening(null);
@@ -99,10 +99,8 @@ export default function ConnectionExplorer({ start, opened, categories }: Props)
         canUndo={canUndo}
         onSelect={setChoice}
         onOpen={(id) => void open(id)}
-        onUndo={() => {
-          const before = undo();
-          if (before) remember(before, categories);
-        }}
+        // The button is off when there's nothing to undo.
+        onUndo={() => remember(undo()!, categories)}
         onFit={fit}
         onView={setView}
       />

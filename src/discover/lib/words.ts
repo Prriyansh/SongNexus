@@ -65,24 +65,17 @@ export function partName(role: string, detail: string): string {
   return PARTS[role] ?? (detail || "a performance");
 }
 
-function relationText(type: string, a: string, b: string): string {
-  switch (type) {
-    case "member_of":
-      return `${a} is or was a member of ${b}`;
-    case "has_subgroup":
-      return `${b} is a subgroup of ${a}`;
-    case "performs_as":
-      return `${a} performs as ${b}`;
-    case "collaboration_in":
-      return `${a} is part of ${b}`;
-    case "supported":
-      return `${a} played in the band of ${b}`;
-    case "taught":
-      return `${a} taught ${b}`;
-    default:
-      return `${a} and ${b} worked together`;
-  }
-}
+/** One per relationship the graph keeps (its RELATION_KINDS); others never become evidence. */
+const RELATION_TEXT: Record<string, (a: string, b: string) => string> = {
+  member_of: (a, b) => `${a} is or was a member of ${b}`,
+  has_subgroup: (a, b) => `${b} is a subgroup of ${a}`,
+  performs_as: (a, b) => `${a} performs as ${b}`,
+  collaboration_in: (a, b) => `${a} is part of ${b}`,
+  supported: (a, b) => `${a} played in the band of ${b}`,
+  taught: (a, b) => `${a} taught ${b}`,
+};
+
+const relationText = (type: string, a: string, b: string) => RELATION_TEXT[type](a, b);
 
 /** The song or album a fact is about, as it reads inside a sentence. */
 function titleOf(catalog: Catalog, { type, at }: Evidence["subject"]): string {

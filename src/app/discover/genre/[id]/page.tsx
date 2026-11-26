@@ -30,8 +30,9 @@ async function find(params: Props["params"]): Promise<number> {
   return catalog().genreAt.get(slug) ?? notFound();
 }
 
+// Artists are listed under a genre only when they have it, so it is always found.
 const shareOf = (c: Catalog, artist: number, genre: number) =>
-  c.artists[artist].genres.find((g) => g.genre === genre)?.share ?? 0;
+  c.artists[artist].genres.find((g) => g.genre === genre)!.share;
 
 function artistsOf(c: Catalog, at: number): number[] {
   const listeners = (artist: number) => c.artists[artist].listeners ?? 0;

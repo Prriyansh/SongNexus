@@ -17,6 +17,7 @@ Vitest tests for the frontend. Run with `npm test` from the repository root.
 - `app.integration.test.tsx` — renders the whole `App` in jsdom with `fetch` mocked by URL
   (search, details, collaborators, top-track) and drives it like a user, including the frame
   (menu, Escape, back closing dialogs, footer) and every way of copying a share link.
+- `client-app.test.tsx` — `ClientApp` shows a placeholder, then loads `App` in the browser.
 - `explore-text.test.ts` — each sentence Explore's insights can show, for every case.
 - `share.test.ts` — what each page shares, its label, and that every link reopens the same thing.
 - `CLAUDE.md` — this guide.

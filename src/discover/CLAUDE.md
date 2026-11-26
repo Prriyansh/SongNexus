@@ -43,8 +43,10 @@ the catalog file, so they need no keys and call no other service.
 `npm test` runs everything in `__tests__/`: `graph`, `views`, `helpers` and `api` (logic and routes),
 `properties` (rules checked on made-up catalogs, and paths against a plain search of every one),
 `catalog` (the committed file), `pages` (a spread of every kind of page, rendered whole, with every
-link on it followed), `components`, `shell` and `web` (controls, in jsdom) and `sidebar`. `dom.tsx`,
-`render.tsx` and `fixture.ts` are helpers.
+link on it followed), `components`, `shell` and `web` (controls, in jsdom) and `sidebar`.
+`sparse-pages` renders pages from a made-up catalog with what the real one lacks (undated albums,
+a photo without an author); `corners` and `corners-ui` cover the remaining small cases, so every
+line and branch is tested. `dom.tsx`, `render.tsx` and `fixture.ts` are helpers.
 
 Beside them: `e2e/` (a real browser; see its guide) and `scripts/discover/test_export_catalog.py`
 (`python -m unittest discover -s scripts/discover`).

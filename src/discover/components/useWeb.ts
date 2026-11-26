@@ -79,7 +79,7 @@ export function useWeb(start: GraphData, opened: GraphData[]) {
       const web = growWeb(scene.web, data);
       const next = { web, points: layoutWeb(web, scene.points) };
       setHistory((past) => [...past, next]);
-      glide(next, scene.points.get(data.center) ?? { x: 0, y: 0 });
+      glide(next, scene.points.get(data.center)!); // only artists already on the web open
       return web;
     },
     [scene, glide],

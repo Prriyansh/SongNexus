@@ -15,6 +15,9 @@ Tests for the Next.js wiring. Run with `npm test` from the repository root.
 - `api-contract.test.ts` — every other route's promises with its library replaced: statuses and
   bodies for good input, bad input, a busy source and a crash; caching; logging; rooms end to end
   on a memory store.
+- `page.test.tsx` — `/` sends only the loading placeholder; the app itself needs the browser.
 - `CLAUDE.md` — this guide.
+
+Discover's pages and API routes are tested in `src/discover/__tests__/`.
 
 What the routes call is tested in `src/lib/__tests__/`. Routes answer through `src/app/api/respond.ts`.
