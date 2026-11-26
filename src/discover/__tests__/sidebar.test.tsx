@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -6,6 +5,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => "/discover/six-degrees" }
 
 import DiscoverShell from "../components/DiscoverShell";
 import { currentLink, DISCOVER_LINKS, SidebarLinks } from "../components/SidebarLinks";
+import { PAGES } from "@/frontend/components/AppFrame";
 
 describe("the sidebar", () => {
   it("adds Discover’s features, marking none in the rest of the app", () => {
@@ -23,10 +23,7 @@ describe("the sidebar", () => {
 
   it("is the same on Discover’s pages as in the app", () => {
     const html = renderToStaticMarkup(<DiscoverShell>content</DiscoverShell>);
-    const app = readFileSync("src/frontend/App.tsx", "utf8");
-    const appLabels = [...app.matchAll(/className=\{`nav-option [^>]*? aria-label="([^"]+)"/g)].map(
-      (m) => m[1],
-    );
+    const appLabels = PAGES.map((p) => p.name);
     expect(appLabels).toHaveLength(4);
     const labels = [...html.matchAll(/class="nav-option[^>]*? aria-label="([^"]+)"/g)].map(
       (m) => m[1],

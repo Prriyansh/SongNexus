@@ -5,6 +5,15 @@ React components for Helen's screens. Markup and class names follow her design; 
 
 ## Files at this level
 
+- `AppFrame.tsx` — the sidebar (one entry per page, plus Discover's links), the top bar and the
+  footer crediting every data source.
+- `Explore.tsx` — the Explore page: pickers, selected cards, song analysis or artist facts,
+  `ComparisonDetails`, the graph and "What connects them?" (wording in `../explore-text.ts`).
+  Song pickers search the sound dataset first and open the MusicBrainz version of the pick.
+- `DetailDrawer.tsx` — the side drawer for an artist, a song or a saved album.
+- `ShareModal.tsx` — the Share dialog; what it shares comes from `../share.ts`. Falls back to
+  `execCommand('copy')` where the Clipboard API is refused.
+- `MiniArtist.tsx`, `LoadError.tsx` — a small artist row; a failed lookup with "Try again".
 - `AboutMe.tsx` — About Me overview and the "Add to your music taste" screen (MusicBrainz
   search; albums come from the picked artist's studio discography; genres from `../genres.ts`).
   Exports `useTaste`, which the details drawer reuses to add and remove favourites.

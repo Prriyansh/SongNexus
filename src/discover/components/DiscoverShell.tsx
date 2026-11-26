@@ -15,7 +15,7 @@ import { Suspense, useEffect, useRef, useState, type MouseEvent, type ReactNode 
 import { currentLink, SidebarLinks } from "./SidebarLinks";
 import { AppLink } from "./parts";
 
-// The app's own screens, as its sidebar lists them (src/frontend/App.tsx).
+// The app's own screens, as its sidebar lists them (PAGES in src/frontend/components/AppFrame.tsx).
 const APP_LINKS = [
   { href: "/about", label: "About Me", Icon: CircleUserRound },
   { href: "/connections", label: "Connection Web", Icon: Network },

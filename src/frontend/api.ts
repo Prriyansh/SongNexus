@@ -72,6 +72,10 @@ export const artistDetails = (id: string) =>
 export const songDetails = (id: string) =>
   once(`song:${id}`, () => getJson<{ details: RecordingDetails }>(`/api/musicbrainz/details?type=recording&id=${id}`).then(r => r.details));
 
+/** An artist's or a song's details, by what kind it is. */
+export const detailsOf = (kind: 'artist' | 'song', id: string): Promise<ArtistDetails | RecordingDetails> =>
+  kind === 'artist' ? artistDetails(id) : songDetails(id);
+
 /**
  * Collaborators shared by two artists. A first scan of two big catalogues can take most of a minute.
  * A scan that ran out of time isn't remembered, so asking again continues it.

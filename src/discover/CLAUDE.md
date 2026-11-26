@@ -2,7 +2,7 @@
 
 Discover: the people behind the music and how they connect. It is its own area at `/discover`, with
 the app's sidebar. It imports nothing from `src/frontend` or `src/lib`. The one link the other way is
-`components/SidebarLinks.tsx`, which `src/frontend/App.tsx` puts at the end of the sidebar;
+`components/SidebarLinks.tsx`, which `src/frontend/components/AppFrame.tsx` puts at the end of the sidebar;
 `components/DiscoverShell.tsx` draws the same sidebar around Discover's pages (a test compares them).
 
 ## Pages (in `src/app/discover/`)

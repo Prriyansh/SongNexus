@@ -15,7 +15,10 @@ Vitest tests for the frontend. Run with `npm test` from the repository root.
 - `resolve.test.ts` — `findRecording`'s query and its choice between versions of a song.
 - `graph.test.ts` — connection web for artists and songs: paths, roles, expansion, layout bounds.
 - `app.integration.test.tsx` — renders the whole `App` in jsdom with `fetch` mocked by URL
-  (search, details, collaborators, top-track) and drives it like a user.
+  (search, details, collaborators, top-track) and drives it like a user, including the frame
+  (menu, Escape, back closing dialogs, footer) and every way of copying a share link.
+- `explore-text.test.ts` — each sentence Explore's insights can show, for every case.
+- `share.test.ts` — what each page shares, its label, and that every link reopens the same thing.
 - `CLAUDE.md` — this guide.
 
 ## Patterns

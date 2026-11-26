@@ -6,10 +6,10 @@ The UI: Helen's design (see `docs/design/`) running on live API data. Browser-on
 ## Files at this level
 
 - `ClientApp.tsx` — loads `App` with `next/dynamic` and `ssr: false`; used by `app/page.tsx`.
-- `App.tsx` — shell (sidebar, top bar, footer), routing state, Explore page, details drawer,
-  share modal, search picker. Song pickers search the sound dataset first (`/api/sound/search`)
-  and open the MusicBrainz version of the pick; without the service they search MusicBrainz.
-  For two songs, Explore shows `SongAnalysis` first, then `ComparisonDetails`, graph, insights.
+- `App.tsx` — routing state and navigation (`go()`, back/forward, first-visit setup), choosing
+  the page, and the drawer, share and setup dialogs. The screens themselves are in `components/`.
+- `explore-text.ts` — the sentences in Explore's "What connects them?" panel and graph status.
+- `share.ts` — what the Share button shares from each page, the line naming it, and the link.
 - `api.ts` — the only place that calls the server (`/api/...`), including `soundComparison` for
   song pairs. Memoises lookups per id for the page's lifetime, retries a retryable error
   (MusicBrainz busy) once after 1.5 s, and drops failures so "Try again" refetches.
@@ -25,7 +25,8 @@ The UI: Helen's design (see `docs/design/`) running on live API data. Browser-on
 - `playlist.ts` — parses CSV/JSON/TXT exports; matches rows via MusicBrainz search.
 - `resolve.ts` — `findRecording(title, artist)`: the MusicBrainz recording of a dataset song
   (earliest official release). Used by the song pickers and the similar-songs list.
-- `types.ts` — `EntityType` (`'artist' | 'song'`) and `Selection` (what the details drawer shows).
+- `types.ts` — `EntityType` (`'artist' | 'song'`), `Selection` (what the details drawer shows),
+  `Details` (an artist's or song's details) and `nameOf`.
 - `model.ts` — display helpers: colours, born/formed labels, album-count text, artist cover
   (`artistCover`), the "First 6 of 18 studio albums" note, link names, role names.
 - `genres.ts` — genres you can add in About Me, grouped by family (MusicBrainz genre names).

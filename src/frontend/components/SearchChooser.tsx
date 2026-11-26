@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Music2, Search } from 'lucide-react';
-import type { Artist, ArtistDetails, RecordingDetails, Song } from '@/lib/types';
+import type { Artist, Song } from '@/lib/types';
 import type { SoundTrackBrief } from '@/lib/sound';
 import { SEARCH_LIMIT, searchArtists, searchSongs, searchSoundSongs } from '../api';
 import type { MusicProfile } from '../profile';
 import { rankSearchResults } from '../search-ranking';
 import { findRecording } from '../resolve';
 import { artistCover, artistSubtitle, capitalize, coverForRelease, firstRelease, songArtists, yearOf } from '../model';
-import type { EntityType } from '../types';
+import { nameOf } from '../types';
+import type { Details, EntityType } from '../types';
 import { ArtistAvatar, AlbumCover } from './Artwork';
-
-type Details = ArtistDetails | RecordingDetails;
-const nameOf = (d: Details) => 'title' in d ? d.title : d.name;
 
 type ChooserItem = Artist | Song | SoundTrackBrief;
 type ChooserResults = { key: string; items?: ChooserItem[]; source?: 'dataset' | 'musicbrainz'; error?: string };

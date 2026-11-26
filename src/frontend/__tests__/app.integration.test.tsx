@@ -290,6 +290,129 @@ describe('details drawer and sharing', () => {
     await type(document.querySelector<HTMLTextAreaElement>('#share-note')!, 'same mixer!');
     expect(document.querySelector<HTMLInputElement>('#share-url')!.value).toContain('note=same+mixer%21');
   });
+
+  describe('copying the link', () => {
+    const clipboard = (writeText?: (text: string) => Promise<void>) =>
+      Object.defineProperty(navigator, 'clipboard', { value: writeText && { writeText }, configurable: true });
+    afterEach(() => {
+      clipboard(undefined);
+      delete (document as { execCommand?: unknown }).execCommand;
+    });
+    const openShare = async () => {
+      await render('/compare/artists');
+      await click(button('Share'));
+      return document.querySelector<HTMLInputElement>('#share-url')!.value;
+    };
+
+    it('copies with the Clipboard API, and typing a note asks to copy again', async () => {
+      const writeText = vi.fn(async () => {});
+      clipboard(writeText);
+      const url = await openShare();
+      await click(button('Copy link'));
+      expect(writeText).toHaveBeenCalledWith(url);
+      expect(button('Copied!')).toBeTruthy();
+      await type(document.querySelector<HTMLTextAreaElement>('#share-note')!, 'hi');
+      expect(button('Copy link')).toBeTruthy();
+    });
+
+    it('falls back to selecting and copying when the Clipboard API is refused', async () => {
+      clipboard(() => Promise.reject(new Error('denied')));
+      const copied: string[] = [];
+      document.execCommand = vi.fn(() => {
+        copied.push(document.querySelector<HTMLTextAreaElement>('body > textarea')!.value);
+        return true;
+      });
+      const url = await openShare();
+      await click(button('Copy link'));
+      expect(copied).toEqual([url]);
+      expect(button('Copied!')).toBeTruthy();
+      expect(document.querySelectorAll('textarea')).toHaveLength(1); // the helper textarea is removed
+    });
+
+    it('asks to copy by hand when neither way works', async () => {
+      document.execCommand = vi.fn(() => false);
+      await openShare();
+      await click(button('Copy link'));
+      expect(document.querySelector('[role="alert"]')!.textContent).toMatch(/copy it manually/);
+      expect(button('Copy link')).toBeTruthy();
+    });
+  });
+
+  it('shares About Me as a snapshot of your taste', async () => {
+    localStorage.setItem('song-nexus-profile', JSON.stringify({ artists: [{ id: OLIVIA, name: 'Olivia Rodrigo' }], songs: [], albums: [], genres: ['pop'] }));
+    await render('/about');
+    const lookups = fetchMock.mock.calls.length;
+    await click(button('Share'));
+    expect(document.querySelector('[role="dialog"]')!.getAttribute('aria-label')).toBe('Share music profile');
+    expect(document.querySelector('.share-pair')!.textContent).toBe('1 artists · 1 genres · 0 albums · 0 songs');
+    expect(new URL(document.querySelector<HTMLInputElement>('#share-url')!.value).pathname).toBe('/about');
+    expect(fetchMock.mock.calls.length).toBe(lookups); // a profile names no music to look up
+  });
+
+  it('shows a song’s release, length and credited artists, and opens an artist from it', async () => {
+    await render(`/compare/songs?songA=${VAMPIRE}&songB=${OPHELIA}`);
+    await click(document.querySelector('.selected-card')!);
+    const drawer = () => document.querySelector('.detail-drawer')!;
+    expect(drawer().getAttribute('aria-label')).toBe('Song details');
+    expect(drawer().textContent).toContain('Released2023-06-30');
+    expect(drawer().textContent).toContain('Length3:40');
+    expect(drawer().textContent).toContain('vampire (single)');
+    await click([...drawer().querySelectorAll('.relation .mini-entity')][0]);
+    expect(document.querySelector('.detail-drawer')!.getAttribute('aria-label')).toBe('Artist details');
+    expect(document.querySelector('.detail-drawer')!.textContent).toContain('Olivia Rodrigo');
+  });
+
+  it('starts a comparison from the drawer, keeping the other side', async () => {
+    await render('/compare/artists');
+    await click(document.querySelectorAll('.selected-card')[1]);
+    const compare = [...document.querySelectorAll('.detail-drawer button')].find(b => b.textContent?.trim() === 'Compare')!;
+    await click(compare);
+    expect(new URLSearchParams(window.location.search).get('artistA')).toBe(TAYLOR);
+    expect(new URLSearchParams(window.location.search).get('artistB')).toBe(OLIVIA);
+    expect(document.querySelector('.detail-drawer')).toBeNull();
+  });
+});
+
+describe('the app frame', () => {
+  it('opens the menu on small screens and closes it with Escape or the backdrop', async () => {
+    await render('/compare/artists');
+    const sidebar = () => document.querySelector('.sidebar')!;
+    await click(button('Open navigation'));
+    expect(sidebar().classList).toContain('open');
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); });
+    expect(sidebar().classList).not.toContain('open');
+    await click(button('Open navigation'));
+    await click(document.querySelector('.sidebar-backdrop')!);
+    expect(sidebar().classList).not.toContain('open');
+  });
+
+  it('names the current page in the top bar and marks it in the sidebar', async () => {
+    await render('/compare/artists');
+    expect(document.querySelector('.topbar strong')!.textContent).toBe('Explore');
+    expect(document.querySelector('[aria-current="page"]')!.getAttribute('aria-label')).toBe('Explore');
+    await click(button('Friends'));
+    expect(document.querySelector('.topbar strong')!.textContent).toBe('Friends');
+    expect(window.location.pathname).toBe('/friends');
+    expect(document.querySelector('footer')).toBeNull();
+  });
+
+  it('closes an open drawer when going back', async () => {
+    await render('/compare/artists');
+    await click(button('Explore'));
+    await click(document.querySelector('.selected-card')!);
+    expect(document.querySelector('.detail-drawer')).not.toBeNull();
+    await act(async () => { window.history.back(); await new Promise(r => setTimeout(r, 30)); });
+    await settle();
+    expect(document.querySelector('.detail-drawer')).toBeNull();
+  });
+
+  it('credits every data source in the footer, each linked', async () => {
+    await render('/compare/artists');
+    const footer = document.querySelector('footer')!;
+    expect(footer.querySelectorAll('a')).toHaveLength(10);
+    expect(footer.textContent).toContain('artist photos from Deezer; artist facts from Wikidata, Wikipedia (CC BY-SA), ListenBrainz and Last.fm;');
+    expect(footer.textContent).toContain('more credits from Genius and Discogs; sound from the Spotify tracks dataset and Genius lyrics.');
+  });
 });
 
 describe('Connection Web workspace', () => {
