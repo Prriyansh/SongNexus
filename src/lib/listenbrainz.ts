@@ -11,7 +11,7 @@ const CACHE_MS = 60 * 60_000;
 type Row = { artist_mbid?: string; total_listen_count?: number | null; total_user_count?: number | null };
 
 export async function listenBrainzAudience(ids: string[], options: SourceOptions = {}): Promise<Map<string, ArtistAudience["listenBrainz"]>> {
-  const rows = await withCache(`listenbrainz:${[...ids].sort().join(",")}`, CACHE_MS, options.useCache ?? true, () =>
+  const rows = await withCache(`listenbrainz:${[...ids].sort().join(",")}`, CACHE_MS, options.useCache, () =>
     sourceJson<Row[]>("ListenBrainz", "https://api.listenbrainz.org/1/popularity/artist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

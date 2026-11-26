@@ -115,7 +115,8 @@ export async function compareSound(a: SongName, b: SongName, options: SoundOptio
       if (response.status === 400 && body.error === "Pick two different songs.") throw new SameTrack();
       throw new Unavailable();
     }
-    return (await response.json()) as T;
+    // A reply that isn't JSON means the service isn't working, like any other failure.
+    return (await response.json().catch(() => { throw new Unavailable(); })) as T;
   };
   const query = (song: SongName) => `title=${encodeURIComponent(song.title)}&artist=${encodeURIComponent(song.artist)}`;
 
@@ -137,9 +138,8 @@ export async function compareSound(a: SongName, b: SongName, options: SoundOptio
     if (!comparison) throw new Unavailable();
     return { status: "ok", comparison, similar: { a: simA?.results ?? [], b: simB?.results ?? [] } };
   } catch (error) {
-    if (error instanceof SameTrack) return { status: "same-track" };
-    if (error instanceof Unavailable) return { status: "unavailable" };
-    throw error;
+    // `get` throws only these two.
+    return error instanceof SameTrack ? { status: "same-track" } : { status: "unavailable" };
   }
 }
 

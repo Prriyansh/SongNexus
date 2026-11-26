@@ -36,9 +36,10 @@ const rounded = (n: number) => Math.round(Math.max(0, Math.min(1, n)) * 1000) / 
 const quoted = (value: string) => `"${value.replace(/["\\]/g, "")}"`;
 /** Deezer serves a generic silhouette for artists without a photo; its address has no image id. */
 const realPicture = (url?: string) => (url && /\/images\/artist\/[0-9a-f]{10,}\//.test(url) ? url : null);
-const leadOf = (credit: string) => credit.split(/\s*(?:,|&|\bfeat\.?|\bft\.?|\bwith\b|\bx\b)\s*/i)[0] ?? credit;
+/** The first artist of a credit like "A feat. B" or "A & B". (`split` always gives at least one piece.) */
+const leadOf = (credit: string) => credit.split(/\s*(?:,|&|\bfeat\.?|\bft\.?|\bwith\b|\bx\b)\s*/i)[0]!;
 
-const cached = <T>(key: string, options: SourceOptions, load: () => Promise<T>) => withCache(key, CACHE_MS, options.useCache ?? true, load);
+const cached = <T>(key: string, options: SourceOptions, load: () => Promise<T>) => withCache(key, CACHE_MS, options.useCache, load);
 
 function lbArtists(mbid: string, options: SourceOptions) {
   return cached(`lb-artists:${mbid}`, options, async () =>
@@ -121,11 +122,11 @@ export function sharedTags(own: string[], other: string[]): string[] {
 
 const tagsOf = (artist: ArtistDetails) => [...new Set([...artist.genres.map((g) => g.name), ...artist.tags])];
 
-async function resolveMissingIds(candidates: ArtistCandidate[]) {
+async function resolveMissingIds(candidates: ArtistCandidate[], options: SourceOptions) {
   const missing = candidates.filter((c) => !c.mbid);
   if (!missing.length) return;
   const query = missing.map((c) => `artist:${quoted(c.name)}`).join(" OR ");
-  const data = await musicBrainzContext<{ artists?: Parameters<typeof mapArtist>[0][] }>("artist", { query, limit: "100" });
+  const data = await musicBrainzContext<{ artists?: Parameters<typeof mapArtist>[0][] }>("artist", { query, limit: "100" }, options);
   for (const raw of data.artists ?? []) {
     const artist = mapArtist(raw);
     // Results arrive best match first, so the first exact name wins.
@@ -143,13 +144,13 @@ async function similarArtists(artist: ArtistDetails, options: SourceOptions, rep
 
   const merged = mergeArtistCandidates(lb.status === "fulfilled" ? lb.value : [], related, artist.id, artist.name);
   const ranked = rankArtists(merged).slice(0, MAX_ARTISTS + 10);
-  await resolveMissingIds(ranked).catch((error) => console.warn("[similar] id lookup failed:", error));
+  await resolveMissingIds(ranked, options).catch((error) => console.warn("[similar] id lookup failed:", error));
   // Without a MusicBrainz id we couldn't open or explore this artist, so it isn't shown.
   const chosen = ranked.filter((c) => c.mbid).slice(0, MAX_ARTISTS);
 
   // Tags come from one combined search; photos for artists that only ListenBrainz listed.
   const tags = new Map<string, { tags: string[]; country: string }>();
-  await musicBrainzContext<{ artists?: Parameters<typeof mapArtist>[0][] }>("artist", { query: chosen.map((c) => `arid:${c.mbid}`).join(" OR "), limit: "100" })
+  await musicBrainzContext<{ artists?: Parameters<typeof mapArtist>[0][] }>("artist", { query: chosen.map((c) => `arid:${c.mbid}`).join(" OR "), limit: "100" }, options)
     .then((data) => { for (const raw of data.artists ?? []) { const a = mapArtist(raw); tags.set(a.id, { tags: a.tags, country: a.country }); } })
     .catch((error) => console.warn("[similar] tag lookup failed:", error));
   await inBatches(chosen.filter((c) => !c.picture), async (c) => {
@@ -223,7 +224,7 @@ export function songCandidates(rows: LbSong[], seedTitles: string[], seedArtist:
 
 /** The Song Compare service's explanation of how two songs sound alike, when it's running. */
 async function addSoundReasons(nodes: SimilarNode[], seed: { title: string; artist: string }, options: SourceOptions, reports: SourceReport[]) {
-  const base = songCompareUrl(options.env ?? process.env);
+  const base = songCompareUrl(options.env);
   if (!base) { reports.push({ source: "Song Compare", status: "no-key" }); return; }
   const match = (title: string, artist: string) =>
     sourceJson<{ track?: { id: string } }>("Song Compare", `${base}/api/match?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`, { signal: AbortSignal.timeout(5000) }, options);
@@ -236,7 +237,7 @@ async function addSoundReasons(nodes: SimilarNode[], seed: { title: string; arti
   }
   if (!seedId) return;
   await inBatches(nodes.slice(0, SOUND_CHECKS), async (node) => {
-    const id = (await match(node.name, leadOf(node.artist ?? ""))).track?.id;
+    const id = (await match(node.name, leadOf(node.subtitle))).track?.id; // a song's subtitle is its credit
     if (!id || id === seedId) return;
     const comparison = await sourceJson<{ audio?: { score?: number }; reasons?: string[] }>("Song Compare", `${base}/api/compare?a=${seedId}&b=${id}`, {}, options);
     const about = (comparison.reasons ?? []).filter((r) => /tempo|close on|different on|keys are/i.test(r)).slice(0, 2).map((r) => r.replace(/\bvalence\b/g, "positivity"));
@@ -249,14 +250,14 @@ async function addSoundReasons(nodes: SimilarNode[], seed: { title: string; arti
 function performedLinks(songs: SimilarNode[], artists: { id: string; name: string }[]): SimilarLink[] {
   const byName = new Map(artists.map((a) => [normalizeName(a.name), a.id]));
   return songs.flatMap((song) => {
-    const id = byName.get(normalizeName(leadOf(song.artist ?? "")));
+    const id = byName.get(normalizeName(leadOf(song.subtitle))); // a song's subtitle is its credit
     return id ? [{ from: id, to: song.id, kind: "performed" as const }] : [];
   });
 }
 
 /** `songs: false` skips similar songs, the slow part: the Connection Web uses it to add artists on zoom-in. */
 export async function similarToArtist(id: string, options: SourceOptions = {}, { songs: withSongs = true } = {}): Promise<SimilarWeb> {
-  const artist = await lookupMusicBrainz({ type: "artist", id }) as ArtistDetails;
+  const artist = await lookupMusicBrainz({ type: "artist", id }, options) as ArtistDetails;
   const sources: SourceReport[] = [];
   const { nodes, links, deezer } = await similarArtists(artist, options, sources);
 
@@ -266,7 +267,7 @@ export async function similarToArtist(id: string, options: SourceOptions = {}, {
   const seeds: { id: string; title: string; art: string | null }[] = [];
   for (const title of seedTitles(titles)) {
     // One song often has several recordings, and listening data may sit on any of them.
-    const recordings = await findRecordings(id, title).catch(() => []);
+    const recordings = await findRecordings(id, title, options).catch(() => []);
     let recording = recordings[0];
     let rows: LbSong[] = [];
     for (const candidate of recordings) {
@@ -288,13 +289,13 @@ export async function similarToArtist(id: string, options: SourceOptions = {}, {
 }
 
 export async function similarToSong(id: string, options: SourceOptions = {}): Promise<SimilarWeb> {
-  const song = await lookupMusicBrainz({ type: "recording", id }) as RecordingDetails;
+  const song = await lookupMusicBrainz({ type: "recording", id }, options) as RecordingDetails;
   const lead = song.artists.find((a) => a.id);
   const sources: SourceReport[] = [];
   let rows = await lbSongs(id, options).catch((error) => { console.warn("[similar] song lookup failed:", error); return null; });
   // Listening data may sit on another recording of the same song.
   if (rows && !rows.length && lead?.id) {
-    for (const other of (await findRecordings(lead.id, song.title).catch(() => [])).filter((r) => r.id !== id)) {
+    for (const other of (await findRecordings(lead.id, song.title, options).catch(() => [])).filter((r) => r.id !== id)) {
       rows = await lbSongs(other.id, options).catch(() => []);
       if (rows.length) break;
     }
@@ -305,7 +306,7 @@ export async function similarToSong(id: string, options: SourceOptions = {}): Pr
   let artists: SimilarNode[] = [], links: SimilarLink[] = [];
   let leadDetails: ArtistDetails | null = null;
   if (lead?.id) {
-    leadDetails = await lookupMusicBrainz({ type: "artist", id: lead.id }) as ArtistDetails;
+    leadDetails = await lookupMusicBrainz({ type: "artist", id: lead.id }, options) as ArtistDetails;
     const found = await similarArtists(leadDetails, options, sources, leadDetails.name);
     artists = found.nodes; links = found.links;
   }

@@ -15,6 +15,9 @@ export type SourceOptions = {
   budgetMs?: number;
 };
 
+/** Where keys and settings come from: the caller's, in tests, or the server's. */
+export const envOf = (options: SourceOptions) => options.env ?? process.env;
+
 /**
  * The caller's headers over our defaults, as a plain object. Headers may come as an object, a
  * Headers or a list of pairs; names are matched without regard to case, as HTTP does.

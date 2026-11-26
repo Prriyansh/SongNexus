@@ -306,13 +306,6 @@ export function isSong(result: Result): result is Song {
   return "title" in result;
 }
 
-/** Narrows detail results the same way (RecordingDetails carry a `title`). */
-export function isRecordingDetails(
-  result: DetailsResult
-): result is RecordingDetails {
-  return "title" in result;
-}
-
 /** Formats a MusicBrainz duration (ms) as m:ss, or a clear fallback when absent. */
 export function formatDuration(ms: number | null): string {
   if (ms == null) return "Not available";

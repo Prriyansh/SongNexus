@@ -29,10 +29,10 @@ const settled = <T>(result: PromiseSettledResult<T>, fallback: T, source: string
 
 export async function artistInsights(aId: string, bId: string, options: SourceOptions = {}): Promise<ArtistInsights> {
   const [a, b] = await Promise.all([
-    lookupMusicBrainz({ type: "artist", id: aId }) as Promise<ArtistDetails>,
-    lookupMusicBrainz({ type: "artist", id: bId }) as Promise<ArtistDetails>,
+    lookupMusicBrainz({ type: "artist", id: aId }, options) as Promise<ArtistDetails>,
+    lookupMusicBrainz({ type: "artist", id: bId }, options) as Promise<ArtistDetails>,
   ]);
-  const key = lastFmKey(options.env ?? process.env);
+  const key = lastFmKey(options.env);
   const wikidataFor = (artist: ArtistDetails) => artist.externalIds?.wikidata ? artistFacts(artist.externalIds.wikidata, options) : Promise.resolve(null);
   const [factsA, factsB, listenBrainz, fmA, fmB, simA, simB] = await Promise.allSettled([
     wikidataFor(a),

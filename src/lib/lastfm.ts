@@ -19,7 +19,7 @@ export const lastFmKey = (env: Record<string, string | undefined> = process.env)
 
 async function call<T extends { error?: number; message?: string }>(method: string, mbid: string, key: string, extra: string, options: SourceOptions): Promise<T | null> {
   const url = `${BASE}?method=${method}&mbid=${mbid}${extra}&api_key=${encodeURIComponent(key)}&format=json`;
-  const data = await withCache(`lastfm:${method}:${mbid}`, CACHE_MS, options.useCache ?? true, async () => {
+  const data = await withCache(`lastfm:${method}:${mbid}`, CACHE_MS, options.useCache, async () => {
     try {
       return await sourceJson<T>("Last.fm", url, {}, options);
     } catch (error) {
