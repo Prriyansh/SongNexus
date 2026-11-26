@@ -20,6 +20,11 @@ Vitest tests for the frontend. Run with `npm test` from the repository root.
 - `client-app.test.tsx` — `ClientApp` shows a placeholder, then loads `App` in the browser.
 - `explore-text.test.ts` — each sentence Explore's insights can show, for every case.
 - `share.test.ts` — what each page shares, its label, and that every link reopens the same thing.
+- `use-async.test.tsx`, `discovery-hooks.test.tsx` — the hooks with the API replaced: late
+  answers, a changed key, unmounting, retries.
+- Edge files for inputs the ordinary tests don't send: `logic-edges.test.ts` (the small helpers:
+  odd files, oversize lists, missing fields), `graph-edges.test.ts` (comparison graph and layout),
+  `map-edges.test.ts` (both maps' detail and discoveries), `connection-web-edges.test.ts`.
 - `CLAUDE.md` — this guide.
 
 ## Patterns
