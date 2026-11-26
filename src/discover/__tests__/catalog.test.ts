@@ -111,7 +111,7 @@ describe("the catalog file", () => {
         ).status,
       ).toBe("ok");
     }
-  });
+  }, 20_000); // A path search per pair over the whole catalog: under 1 s alone, slower beside the full suite.
 });
 
 describe("the API", () => {
