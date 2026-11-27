@@ -1,5 +1,6 @@
 // How every API route answers: JSON with a caching rule, and the same mapping of errors to
 // statuses. Not a route itself (no route.ts), so Next never serves it.
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 import { UpstreamError, ValidationError } from "@/lib/musicbrainz";
 
@@ -31,6 +32,7 @@ export function fail(
  * Runs a route's work and turns what it throws into an answer: bad input is 400, a source that
  * failed keeps its status and says whether trying again may help, and anything else is a 500 that
  * says `what` went wrong without its cause. Every failure but bad input is logged under `name`.
+ * Next's own signals (a route found dynamic while prerendering, notFound) pass through untouched.
  */
 export async function answer(
   name: string,
@@ -40,6 +42,7 @@ export async function answer(
   try {
     return await work();
   } catch (error) {
+    unstable_rethrow(error);
     if (error instanceof ValidationError) return fail(400, error.message);
     if (error instanceof UpstreamError) {
       console.error(`[${name}] upstream failure (${error.status}): ${error.message}`);

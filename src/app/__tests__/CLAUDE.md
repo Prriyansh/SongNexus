@@ -16,6 +16,8 @@ Tests for the Next.js wiring. Run with `npm test` from the repository root.
   bodies for good input, bad input, a busy source and a crash; caching; logging; rooms end to end
   on a memory store.
 - `page.test.tsx` — `/` sends only the loading placeholder; the app itself needs the browser.
+- `respond.test.ts` — the shared route wrapper lets Next's own signals (a route found dynamic while
+  prerendering, `notFound`) through instead of answering 500.
 - `CLAUDE.md` — this guide.
 
 Discover's pages and API routes are tested in `src/discover/__tests__/`.
