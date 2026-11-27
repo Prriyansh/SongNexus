@@ -1,0 +1,13 @@
+# Coverage for the catalog exporter: `python -m coverage run -m unittest discover -s scripts/discover`.
+[run]
+branch = True
+source = scripts/discover
+omit =
+    */test_*.py
+
+[report]
+show_missing = True
+fail_under = 100
+# The script entry point runs only when executed directly; main() itself is tested.
+exclude_also =
+    if __name__ == .__main__.:

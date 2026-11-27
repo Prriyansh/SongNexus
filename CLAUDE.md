@@ -38,6 +38,9 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript (strict), Vitest.
   `Co-Authored-By` trailers, no "generated with" lines.
 - Prefer small, focused commits; each should pass lint, typecheck and tests, and include tests
   for what it changes.
+- Coverage is 100% (statements, branches, functions, lines) for `src/`, `song_compare/` and
+  `scripts/discover/`, and CI fails below it. New code needs tests for each branch. Code that can't
+  run should be removed, not excluded; only `if __name__ == "__main__":` entry points are excluded.
 - The backend (`src/lib`, `src/app/api`) is the source of truth. Adapt the frontend to what the
   API returns rather than changing the API to fit a screen, unless asked.
 - Only show data a source actually provides. No invented popularity numbers, audio features or
@@ -55,6 +58,7 @@ Next.js 16 (App Router, Turbopack), React 19, TypeScript (strict), Vitest.
 npm install
 npm run dev        # http://localhost:3000
 npm test           # Vitest: unit + integration
+npm run test:coverage  # the same, failing below 100% coverage (what CI runs)
 npm run lint
 npm run typecheck  # next typegen && tsc --noEmit (typegen is needed on a fresh clone)
 npm run build

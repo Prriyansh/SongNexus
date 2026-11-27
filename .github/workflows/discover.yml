@@ -39,7 +39,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m unittest discover -s scripts/discover
+      - run: pip install coverage
+      - run: python -m coverage run --rcfile=scripts/discover/.coveragerc -m unittest discover -s scripts/discover
+      - run: python -m coverage report --rcfile=scripts/discover/.coveragerc # fails below 100%
 
   browser:
     runs-on: ubuntu-latest

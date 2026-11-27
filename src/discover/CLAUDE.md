@@ -49,7 +49,8 @@ a photo without an author); `corners` and `corners-ui` cover the remaining small
 line and branch is tested. `dom.tsx`, `render.tsx` and `fixture.ts` are helpers.
 
 Beside them: `e2e/` (a real browser; see its guide) and `scripts/discover/test_export_catalog.py`
-(`python -m unittest discover -s scripts/discover`).
+(`python -m unittest discover -s scripts/discover`; CI holds it at 100% coverage with
+`scripts/discover/.coveragerc`).
 
 ## Rules
 
