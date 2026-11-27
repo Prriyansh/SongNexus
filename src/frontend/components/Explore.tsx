@@ -8,7 +8,7 @@ import { artistInsights, collaborators, detailsOf, moreCredits, soundComparison,
 import { directConnection, graphStatus, mutualCollaborators, peopleOf, sharedArtists, similarity } from '../explore-text';
 import { buildGraph, songArtistPair } from '../graph';
 import type { GraphInput } from '../graph';
-import { artistCover, artistSubtitle, capitalize, ROLE_LABELS, roleText, songArtists, yearOf } from '../model';
+import { artistCover, artistSubtitle, capitalize, errorText, ROLE_LABELS, roleText, songArtists, yearOf } from '../model';
 import type { MusicProfile } from '../profile';
 import { findRecording } from '../resolve';
 import { comparisonFor, ROLE_FILTERS } from '../routing';
@@ -42,7 +42,7 @@ const rolesOf = (c: Collaborator) => roleText([...new Set([...c.roles.a, ...c.ro
 /** The Explore page: two artists or two songs side by side, and everything that connects them. */
 export function Explore({ comparison, onComparison, onRole, onDetails, note, onDismissNote, profile }: Props) {
   const { kind, left, right } = comparison;
-  const role = comparison.role || 'all';
+  const role = comparison.role;
   const da = useAsync<Details>(`${kind}:${left}`, () => detailsOf(kind, left));
   const db = useAsync<Details>(`${kind}:${right}`, () => detailsOf(kind, right));
   const a = da.data;
@@ -66,7 +66,7 @@ export function Explore({ comparison, onComparison, onRole, onDetails, note, onD
   const sharedGenres = a && b ? partitionGenres(a.genres, b.genres).shared.map(capitalize) : [];
   const mutual = mutualCollaborators(collabData, role);
   const pathText = base?.path.length ? base.path.map((id) => base.nodes.find((n) => n.id === id)?.label).join(' → ') : '';
-  const top = useTopSongs(a, b, kind, onComparison);
+  const top = useTopSongs(a, b, onComparison);
   const pick = useSimilarPick(left, onComparison);
 
   return (
@@ -239,21 +239,22 @@ export function Explore({ comparison, onComparison, onRole, onDetails, note, onD
 }
 
 /** "Compare their top songs": finds each artist's top song on MusicBrainz and opens the pair. */
-function useTopSongs(a: Details | undefined, b: Details | undefined, kind: EntityType, onComparison: (c: Comparison) => void) {
+function useTopSongs(a: Details | undefined, b: Details | undefined, onComparison: (c: Comparison) => void) {
   const [state, setState] = useState<{ busy: boolean; error?: string }>({ busy: false });
   const compare = async () => {
-    if (!a || !b || kind !== 'artist') return;
+    // The button is only on two-artist comparisons, and off until both have loaded.
+    const [first, second] = [a!, b!];
     setState({ busy: true });
     try {
-      const [ta, tb] = await Promise.all([topTrack(a.id, nameOf(a)), topTrack(b.id, nameOf(b))]);
+      const [ta, tb] = await Promise.all([topTrack(first.id, nameOf(first)), topTrack(second.id, nameOf(second))]);
       if (!ta || !tb) {
-        setState({ busy: false, error: `Couldn’t match a top song for ${!ta ? nameOf(a) : nameOf(b)} on MusicBrainz.` });
+        setState({ busy: false, error: `Couldn’t match a top song for ${!ta ? nameOf(first) : nameOf(second)} on MusicBrainz.` });
         return;
       }
       setState({ busy: false });
       onComparison(comparisonFor('song', ta.id, tb.id));
     } catch (e) {
-      setState({ busy: false, error: e instanceof Error ? e.message : 'Could not find top songs.' });
+      setState({ busy: false, error: errorText(e, 'Could not find top songs.') });
     }
   };
   return { ...state, compare };
@@ -273,7 +274,7 @@ function useSimilarPick(left: string, onComparison: (c: Comparison) => void) {
       setState({});
       onComparison(comparisonFor('song', left, found.id));
     } catch (e) {
-      setState({ error: e instanceof Error ? e.message : 'Search failed.' });
+      setState({ error: errorText(e, 'Search failed.') });
     }
   };
   return { ...state, compare };

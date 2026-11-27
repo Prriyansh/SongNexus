@@ -12,14 +12,16 @@ export function Modal({ children, onClose, label, drawer = false }: { children: 
     const root = document.getElementById('root');
     if (root) root.inert = true;
     document.body.style.overflow = 'hidden';
-    const focusable = () => Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input, textarea, select, [tabindex="0"]') || []);
-    (focusable()[0] || ref.current)?.focus();
+    // The dialog is mounted for as long as this effect runs, so its ref is set.
+    const dialog = ref.current!;
+    const focusable = () => Array.from(dialog.querySelectorAll<HTMLElement>('button:not(:disabled), input, textarea, select, [tabindex="0"]'));
+    (focusable()[0] ?? dialog).focus();
     const handle = (e: KeyboardEvent) => {
       if (e.key === 'Escape') close.current();
       if (e.key !== 'Tab') return;
       const items = focusable(), first = items[0], last = items[items.length - 1];
       if (!first) { e.preventDefault(); return; }
-      if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { e.preventDefault(); last.focus(); }
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     };
     document.addEventListener('keydown', handle);

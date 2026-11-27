@@ -1,149 +1,16 @@
 // @vitest-environment jsdom
 // Renders the whole app (Helen's screens) against a mocked version of our API routes and drives it
 // like a user: deep links, comparisons, collaborators, top songs, About Me, drawer, share, playlist.
+// The fake API and the helpers are in app-harness.tsx.
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
-import type { Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SimilarWeb, Song, TasteMap } from '@/lib/types';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { button, buttons, called, click, fetchMock, render, samplePlaylist, settle, stored, text, type, unmountApp, vampireSong, webPan, world } from './app-harness';
 import {
-  collab, SOUR_ART, EXPECTATIONS, expectationsDetails, killBill, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, PATIENT_ZERO,
-  patientZeroDetails, PHOEBE, phoebe, phoebeDetails, PUNISHER, soundOk, TAYLOR, taylorDetails, VAMPIRE, vampireDetails,
+  EXPECTATIONS, killBill, OLIVIA, oliviaDetails, OPHELIA, opheliaDetails, PATIENT_ZERO, PHOEBE, phoebe, PUNISHER, SOUR_ART, TAYLOR,
+  taylorDetails, VAMPIRE,
 } from './fixtures';
-import type { SoundResult } from '@/lib/sound';
 import { similarWeb } from './fixtures';
 import { examples } from '../routing';
-
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-
-const DETAILS: Record<string, unknown> = {
-  [OLIVIA]: oliviaDetails, [TAYLOR]: taylorDetails, [PHOEBE]: phoebeDetails,
-  [VAMPIRE]: vampireDetails, [OPHELIA]: opheliaDetails, [EXPECTATIONS]: expectationsDetails, [PATIENT_ZERO]: patientZeroDetails,
-};
-const vampireSong: Song = { ...vampireDetails };
-let failures: Record<string, number> = {};
-let soundReply: SoundResult = soundOk;
-let soundSearchReply: unknown = { status: 'unavailable' };
-const defaultFetch = async (input: string) => {
-  const url = new URL(input, 'http://localhost');
-  const q = url.searchParams;
-  const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
-  const key = `${url.pathname}:${q.get('id') ?? ''}`;
-  if (failures[key]) { failures[key]--; return reply({ error: 'MusicBrainz is busy right now.', retryable: true }, 503); }
-  switch (url.pathname) {
-    case '/api/musicbrainz/details': return DETAILS[q.get('id')!] ? reply({ details: DETAILS[q.get('id')!] }) : reply({ error: 'Not found' }, 404);
-    case '/api/musicbrainz/collaborators': return reply({ collaborators: collab });
-    case '/api/similar': return reply({ similar: similarReply });
-    case '/api/taste': return reply({ taste: tasteReply });
-    case '/api/rooms': return reply(roomsUnavailable ? { error: 'Short codes aren’t set up on this server.', unavailable: true } : { code: 'ABC234' }, roomsUnavailable ? 503 : 200);
-    case '/api/rooms/ABC234': return reply({ room: roomReply });
-    case '/api/rooms/NOPE22': return reply({ error: 'That code doesn’t match a room.' }, 404);
-    case '/api/credits': return reply({ credits: moreCreditsReply });
-    case '/api/artist-insights': return reply({ insights: insightsReply });
-    case '/api/top-track': return reply({ track: q.get('id') === OLIVIA ? expectationsDetails : patientZeroDetails });
-    case '/api/sound': return reply(soundReply);
-    case '/api/sound/search': return reply(soundSearchReply);
-    case '/api/musicbrainz/search': {
-      const query = q.get('q') ?? '';
-      if (q.get('type') === 'artist') return reply({ results: /phoebe/i.test(query) ? [phoebe] : [] });
-      return reply({ results: /vampire/i.test(query) ? [vampireSong] : /Kill Bill/.test(query) ? [killBill, { ...killBill, id: EXPECTATIONS, title: 'Kill Bill (Live)' }] : [] });
-    }
-  }
-  return reply({ error: 'unknown route' }, 404);
-};
-const fetchMock = vi.fn(defaultFetch);
-const moreCreditsReply = {
-  collaborators: [{ source: 'genius', id: '77', name: 'Only On Genius', url: 'https://genius.com/artists/Only-on-genius', roles: { a: ['songwriting'], b: ['producer'] }, count: { a: 2, b: 1 },
-    evidence: { a: [{ title: 'Song One', url: 'https://genius.com/song-one', year: '2021' }], b: [{ title: 'Song Two', url: 'https://genius.com/song-two', year: '2020' }] } }],
-  direct: [],
-  sources: [{ source: 'Genius', status: 'ok', scanned: { a: 30, b: 30 }, unit: 'songs' }, { source: 'Discogs', status: 'no-match' }],
-};
-const insightsReply = {
-  a: { id: OLIVIA, facts: { wikidataUrl: 'https://www.wikidata.org/wiki/Q1', description: 'American singer', activeFrom: '2015', awards: [{ id: 'Q9', name: 'Grammy Award for Best New Artist', year: '2022' }], nominations: [], labels: [],
-    wikipedia: { url: 'https://en.wikipedia.org/wiki/Olivia_Rodrigo', extract: 'Olivia Rodrigo is a singer.', imageUrl: null } }, audience: { listenBrainz: { listeners: 18915, listens: 1329454, url: 'https://listenbrainz.org/artist/x' }, lastFm: null } },
-  b: { id: 'b', facts: null, audience: { listenBrainz: null, lastFm: null } },
-  shared: {
-    awards: [{ id: 'Q10', name: 'Billboard 21 Under 21', year: '' }, { id: 'Q11', name: 'Grammy Award for Best Pop Vocal Album', year: '' }],
-    labels: [{ id: 'Q5', name: 'Republic Records', year: '' }], similarArtists: [],
-  },
-  sources: [{ source: 'Wikidata', status: 'no-match' }, { source: 'ListenBrainz', status: 'ok' }, { source: 'Last.fm', status: 'no-key' }],
-};
-
-let root: Root | null = null;
-let App: typeof import('../App').default;
-let similarReply: SimilarWeb = similarWeb;
-let roomsUnavailable = false;
-const samplePlaylist = [{ title: 'vampire', artist: 'Olivia Rodrigo' }];
-let roomReply: { host: { name: string; songs: typeof samplePlaylist }; guest: { name: string; songs: typeof samplePlaylist } | null } = { host: { name: 'Priya', songs: samplePlaylist }, guest: null };
-const tasteReply: TasteMap = {
-  nodes: [
-    { kind: 'artist', id: 'artist:sza', name: 'SZA', subtitle: '', mbid: PHOEBE, imageUrl: null, group: 'shared', weight: 4, reasons: [{ kind: 'listeners', text: 'On both playlists: 2 songs of yours and 2 songs of Priya’s.' }] },
-    { kind: 'artist', id: 'artist:k', name: 'Kendrick Lamar', subtitle: '', mbid: TAYLOR, imageUrl: null, group: 'for-me', weight: 2, reasons: [{ kind: 'listeners', text: 'You might like this: people who play SZA, on your playlist, often play Kendrick Lamar too.' }] },
-    { kind: 'song', id: 'song:kb', name: 'Kill Bill', subtitle: 'SZA', artist: 'SZA', mbid: null, imageUrl: null, group: 'shared', weight: 1, reasons: [{ kind: 'listeners', text: 'On both of your playlists.' }] },
-  ],
-  links: [{ from: 'artist:sza', to: 'song:kb', kind: 'contains' }, { from: 'artist:sza', to: 'artist:k', kind: 'similar' }],
-  stats: { mineSongs: 2, mineArtists: 1, friendSongs: 3, friendArtists: 2, sharedArtists: 1, sharedSongs: 1, similarLinks: 1 },
-  sources: [{ source: 'ListenBrainz', status: 'ok' }],
-};
-
-beforeEach(async () => {
-  vi.resetModules(); // fresh api memo per test
-  failures = {};
-  similarReply = similarWeb;
-  roomsUnavailable = false;
-  roomReply = { host: { name: 'Priya', songs: samplePlaylist }, guest: null };
-  soundReply = soundOk;
-  soundSearchReply = { status: 'unavailable' };
-  fetchMock.mockReset();
-  fetchMock.mockImplementation(defaultFetch);
-  vi.stubGlobal('fetch', fetchMock);
-  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => setTimeout(() => callback(performance.now()), 0));
-  vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id));
-  vi.stubGlobal('matchMedia', () => ({ matches: true }));
-  window.scrollTo = vi.fn() as typeof window.scrollTo;
-  localStorage.clear();
-  // Most tests start as a returning visitor; the first-visit setup has its own tests below.
-  localStorage.setItem('song-nexus-setup', JSON.stringify({ done: true, name: '', discover: null }));
-  App = (await import('../App')).default;
-  (await import('../api')).retryPolicy.delayMs = 0;
-});
-afterEach(async () => {
-  await act(async () => root?.unmount());
-  root = null;
-  document.body.innerHTML = '';
-  vi.unstubAllGlobals();
-});
-
-const settle = async (ms = 0) => { for (let i = 0; i < 6; i++) await act(async () => { await new Promise(r => setTimeout(r, ms)); }); };
-async function render(path: string) {
-  window.history.replaceState(null, '', path);
-  const container = document.createElement('div');
-  container.id = 'root';
-  document.body.appendChild(container);
-  root = createRoot(container);
-  await act(async () => root!.render(<App />));
-  await settle();
-}
-const text = () => document.body.textContent ?? '';
-const buttons = () => [...document.querySelectorAll('button')];
-const button = (label: string) => {
-  const found = buttons().find(b => b.textContent?.includes(label) || b.getAttribute('aria-label') === label);
-  if (!found) throw new Error(`No button "${label}"`);
-  return found;
-};
-const click = async (el: Element) => { await act(async () => { el.dispatchEvent(new MouseEvent('click', { bubbles: true })); }); await settle(); };
-async function type(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
-  const proto = input instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(proto, 'value')!.set!.call(input, value);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  });
-  await settle(120); // past the 300 ms search debounce
-}
-const called = (part: string) => fetchMock.mock.calls.some(([url]) => String(url).includes(part));
-const webPan = () => { const match = document.querySelector<HTMLElement>('.web-world')!.style.transform.match(/translate3d\(([-\d.]+)px, ([-\d.]+)px/)!; return { x: Number(match[1]), y: Number(match[2]) }; };
-const stored = () => JSON.parse(localStorage.getItem('song-nexus-profile') || 'null');
 
 describe('Explore: artists', () => {
   it('renders a shared comparison link with details, collaborators, graph and insights', async () => {
@@ -245,14 +112,14 @@ describe('Explore: artists', () => {
   });
 
   it('retries a busy MusicBrainz once without showing an error', async () => {
-    failures[`/api/musicbrainz/details:${TAYLOR}`] = 1;
+    world.failures[`/api/musicbrainz/details:${TAYLOR}`] = 1;
     await render('/compare/artists');
     expect(text()).not.toContain('MusicBrainz is busy right now.');
     expect(document.querySelector('.selected-cards')!.textContent).toContain('Taylor Swift');
   });
 
   it('shows the API error and recovers on “Try again”', async () => {
-    failures[`/api/musicbrainz/details:${TAYLOR}`] = 2; // the request and its automatic retry
+    world.failures[`/api/musicbrainz/details:${TAYLOR}`] = 2; // the request and its automatic retry
     await render('/compare/artists');
     expect(text()).toContain('MusicBrainz is busy right now.');
     await click(buttons().find(b => b.textContent === 'Try again')!);
@@ -527,7 +394,7 @@ describe('Connection Web workspace', () => {
   });
 
   it('says what wasn’t available, shows a retry on failure, and recovers', async () => {
-    failures[`/api/similar:${OLIVIA}`] = 2;
+    world.failures[`/api/similar:${OLIVIA}`] = 2;
     await render('/connections');
     await settle(5);
     expect(document.querySelector('[role=alert]')?.textContent).toContain('couldn’t load this map');
@@ -536,7 +403,7 @@ describe('Connection Web workspace', () => {
   });
 
   it('says so when the listening data has nothing for this one', async () => {
-    similarReply = { ...similarWeb, artists: [], songs: [], links: [] };
+    world.similar = { ...similarWeb, artists: [], songs: [], links: [] };
     await render('/connections');
     expect(document.querySelector('.web-map-note')?.textContent).toContain('Nothing to compare yet');
   });
@@ -625,7 +492,7 @@ describe('Friends', () => {
     expect(button('Autofill from About Me').textContent).toBe('My song - Live - My artist');
     await click(button('Autofill from About Me'));
     expect(input.value).toBe('My song - Live - My artist\nAnother song - Another artist');
-    fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ room: { host: roomReply.host, guest: { name: '', songs: songs.slice(0, 2) } } })));
+    fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ room: { host: world.room.host, guest: { name: '', songs: songs.slice(0, 2) } } })));
     await click(button('Use pasted songs'));
     const request = (fetchMock.mock.calls as unknown as [string, RequestInit][]).find(([url, init]) => url === '/api/rooms/ABC234' && init?.method === 'POST')!;
     expect(JSON.parse(String(request[1].body))).toEqual({ name: '', songs: [{ title: 'My song - Live', artist: 'My artist' }, { title: 'Another song', artist: 'Another artist' }] });
@@ -645,7 +512,7 @@ describe('Friends', () => {
     await settle();
     expect(document.querySelector('.room-code')?.textContent).toBe('ABC234');
     expect(document.querySelector('.room-waiting')?.textContent).toContain('Waiting for your friend');
-    roomReply = { ...roomReply, guest: { name: 'Sam', songs: samplePlaylist } };
+    world.room = { ...world.room, guest: { name: 'Sam', songs: samplePlaylist } };
     await act(async () => { await new Promise(r => setTimeout(r, 4100)); });
     await settle();
     expect(button('Why is this here: SZA')).toBeDefined();
@@ -663,7 +530,7 @@ describe('Friends', () => {
     await render('/friends?code=ABC234');
     await settle();
     expect(document.querySelector('.taste-box h3')?.textContent).toBe('Priya wants to compare playlists');
-    fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ room: { host: roomReply.host, guest: { name: '', songs: [{ title: 'Kill Bill', artist: 'SZA' }] } } })));
+    fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ room: { host: world.room.host, guest: { name: '', songs: [{ title: 'Kill Bill', artist: 'SZA' }] } } })));
     await usePlaylist();
     const body = JSON.parse(String((fetchMock.mock.calls as unknown as [string, RequestInit?][]).find(([, init]) => init?.method === 'POST')![1]!.body));
     expect(body.songs.length).toBeGreaterThan(0);
@@ -688,7 +555,7 @@ describe('Friends', () => {
   });
 
   it('falls back to a long link where short codes aren’t set up', async () => {
-    roomsUnavailable = true;
+    world.roomsUnavailable = true;
     await render('/friends');
     await usePlaylist();
     await click(button('Get a code to share'));
@@ -850,7 +717,7 @@ describe('Explore: songs, sound and lyrics', () => {
   });
 
   it('says plainly when a song is not in the song library, and keeps the rest', async () => {
-    soundReply = { status: 'not-found', missing: ['b'] };
+    world.sound = { status: 'not-found', missing: ['b'] };
     await render(songs);
     expect(document.querySelector('.match-panel')!.textContent).toContain('“The Fate of Ophelia” isn’t in the song library (Spotify tracks up to 2022)');
     expect(document.querySelector('.song-analysis')).toBeNull();
@@ -858,7 +725,7 @@ describe('Explore: songs, sound and lyrics', () => {
   });
 
   it('explains how to start the sound service when it is not running', async () => {
-    soundReply = { status: 'unavailable', hint: 'Start it with: cd song_compare && python backend/app.py' };
+    world.sound = { status: 'unavailable', hint: 'Start it with: cd song_compare && python backend/app.py' };
     await render(songs);
     expect(document.querySelector('.match-panel')!.textContent).toContain('isn’t available right now. Start it with: cd song_compare && python backend/app.py');
   });
@@ -895,7 +762,7 @@ describe('Explore: song pickers', () => {
   };
 
   it('offers songs from the sound dataset and opens the MusicBrainz version of the pick', async () => {
-    soundSearchReply = { status: 'ok', results: [{ id: 'sp-kb', title: 'Kill Bill', artists: ['SZA'], album: 'SOS', genre: 'r-n-b', has_lyrics: true }] };
+    world.soundSearch = { status: 'ok', results: [{ id: 'sp-kb', title: 'Kill Bill', artists: ['SZA'], album: 'SOS', genre: 'r-n-b', has_lyrics: true }] };
     await openSongPicker('kill bill');
     expect(called('/api/sound/search?q=kill%20bill&limit=24')).toBe(true);
     expect(text()).toContain('Songs with full sound and lyrics analysis');
@@ -905,7 +772,7 @@ describe('Explore: song pickers', () => {
   });
 
   it('says so when a dataset song cannot be found on MusicBrainz', async () => {
-    soundSearchReply = { status: 'ok', results: [{ id: 'sp-x', title: 'Obscure Song', artists: ['Nobody'], album: null, genre: null, has_lyrics: false }] };
+    world.soundSearch = { status: 'ok', results: [{ id: 'sp-x', title: 'Obscure Song', artists: ['Nobody'], album: null, genre: null, has_lyrics: false }] };
     await openSongPicker('obscure');
     await click(button('Obscure Song'));
     expect(text()).toContain('Couldn’t find “Obscure Song” on MusicBrainz.');
@@ -955,7 +822,7 @@ describe('Search ranking across the workspace', () => {
 
   it.each(['/connections?mode=song', '/compare/songs'])('puts favorite artists first in song-library results on %s', async path => {
     savePreferences([{ id: PHOEBE, name: 'Phoebe Bridgers' }]);
-    soundSearchReply = { status: 'ok', results: [
+    world.soundSearch = { status: 'ok', results: [
       { id: 'sp-popular', title: 'Shared song', artists: ['Popular Artist'], album: null, genre: null, has_lyrics: true },
       { id: 'sp-favorite', title: 'Shared song', artists: ['Phoebe Bridgers'], album: null, genre: null, has_lyrics: true },
       { id: 'sp-next', title: 'Shared song', artists: ['Next Artist'], album: null, genre: null, has_lyrics: true },
@@ -1020,7 +887,7 @@ describe('Search ranking across the workspace', () => {
   });
 
   it('prefers an exact song title with no preferences and retains popularity order for the remaining matches', async () => {
-    soundSearchReply = { status: 'ok', results: [
+    world.soundSearch = { status: 'ok', results: [
       { id: 'sp-popular', title: 'Moonlight Memories', artists: ['Popular Artist'], album: null, genre: null, has_lyrics: true },
       { id: 'sp-exact', title: 'Moonlight', artists: ['Exact Artist'], album: null, genre: null, has_lyrics: true },
       { id: 'sp-next', title: 'Moonlight Dreams', artists: ['Next Artist'], album: null, genre: null, has_lyrics: true },
@@ -1075,7 +942,7 @@ describe('First-visit setup', () => {
     expect(window.location.pathname).toBe('/about');
     expect(stored().genres).toEqual(['jazz']);
     expect(setupStored().done).toBe(true);
-    await act(async () => root?.unmount());
+    await unmountApp();
     await render('/about');
     expect(dialog()).toBeNull();
   });
@@ -1105,7 +972,7 @@ describe('First-visit setup', () => {
     await click(button('Finish'));
     expect(window.location.pathname).toBe('/friends');
     expect(document.querySelector<HTMLInputElement>('#taste-name')?.value).toBe('Alka');
-    await act(async () => root?.unmount());
+    await unmountApp();
     await render('/about');
     expect(dialog()).toBeNull();
     expect(document.querySelector('h1')?.textContent).toBe('Alka’s taste. Your starting point.');
@@ -1116,10 +983,10 @@ describe('First-visit setup', () => {
     firstVisit();
     await render(`/compare/artists?artistA=${OLIVIA}&artistB=${TAYLOR}`);
     expect(dialog()).toBeNull();
-    await act(async () => root?.unmount());
+    await unmountApp();
     await render(`/about?profile=${encodeURIComponent(JSON.stringify({ artists: [], songs: [], albums: [], genres: ['pop'] }))}`);
     expect(dialog()).toBeNull();
-    await act(async () => root?.unmount());
+    await unmountApp();
     localStorage.setItem('song-nexus-profile', JSON.stringify({ artists: [{ id: PHOEBE, name: 'Phoebe Bridgers', subtitle: '' }], songs: [], albums: [], genres: [] }));
     await render('/about');
     expect(dialog()).toBeNull();

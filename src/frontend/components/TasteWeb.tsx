@@ -14,6 +14,7 @@ import type { WebNode } from '../similar-web';
 import type { Selection } from '../types';
 import { useAsync } from '../useAsync';
 import { ConnectionWebCanvas } from './ConnectionWebCanvas';
+import { errorText } from '../model';
 
 type Props = { onExploreArtist: (id: string) => void; onExploreSong: (id: string) => void; onDetails: (s: Selection) => void };
 
@@ -90,7 +91,7 @@ function PlaylistPicker({ onPick, sample, label, savedSongs = [] }: { onPick: (s
       if (!songs.length) throw new Error('These songs have no artist names. Use “Title - Artist” lines, or a file with an Artist column.');
       setError('');
       onPick(songs);
-    } catch (e) { setError(e instanceof Error ? e.message : 'Could not read this playlist.'); }
+    } catch (e) { setError(errorText(e, 'Could not read this playlist.')); }
   };
   const load = async (file?: File) => {
     if (!file) return;
@@ -209,7 +210,7 @@ export function Friends({ profile, ...props }: Props & { profile: MusicProfile }
   const [noCodes, setNoCodes] = useState(false);
   const [longLink, setLongLink] = useState('');
   const [backLink, setBackLink] = useState('');
-  const fail = (e: unknown, fallback: string) => setError(e instanceof Error ? e.message : fallback);
+  const fail = (e: unknown, fallback: string) => setError(errorText(e, fallback));
 
   const pick = (songs: SharedPlaylist['songs']) => { const next = { name: name.trim(), songs }; setMine(next); storePlaylist(next); };
   const showRoom = useCallback((room: Room, role: SavedRoom['role']) => {

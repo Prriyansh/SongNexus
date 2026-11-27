@@ -9,7 +9,7 @@ export type Page = 'about' | 'connections' | 'friends' | 'explore';
 /** comparison: Helen's two-artist Connection Web (left and right); the others start from one artist, song or playlist. */
 export type WebMode = EntityType | 'playlist' | 'comparison';
 export type WebSelection = { mode: WebMode; artist: string; song: string; left: string; right: string };
-export type Comparison = { kind: EntityType; left: string; right: string; role?: string };
+export type Comparison = { kind: EntityType; left: string; right: string; role: string };
 export type Route = { page: Page; manual: boolean; comparison: Comparison; note: string; profile?: MusicProfile; web?: WebSelection };
 
 // Defaults: Olivia Rodrigo and Taylor Swift share credits on MusicBrainz (both mixed by Serban

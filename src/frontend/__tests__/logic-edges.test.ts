@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Artist, ArtistDetails, Song } from '@/lib/types';
 import { sourceNote } from '../credits';
-import { artistSubtitle, firstRelease, linkLabel, roleText, songArtists, studioAlbumText } from '../model';
+import { artistSubtitle, errorText, firstRelease, linkLabel, roleText, songArtists, studioAlbumText } from '../model';
 import { matchQuery, parsePlaylist, readCsv } from '../playlist';
 import { emptyProfile, parseProfile, songSnapshot } from '../profile';
 import type { MusicProfile } from '../profile';
@@ -182,5 +182,12 @@ describe('the last few cases', () => {
   it('ignores a stored playlist that isn’t JSON', () => {
     localStorage.setItem('song-nexus-playlist', '{');
     expect(readStoredPlaylist()).toBeNull();
+  });
+});
+
+describe('error messages', () => {
+  it('use an error’s own words, and the fallback for anything else thrown', () => {
+    expect(errorText(new Error('Offline.'), 'Search failed.')).toBe('Offline.');
+    expect(errorText('a string', 'Search failed.')).toBe('Search failed.');
   });
 });
