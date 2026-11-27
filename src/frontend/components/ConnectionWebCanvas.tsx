@@ -87,7 +87,8 @@ export function ConnectionWebCanvas({ nodes: placeNodes, edges, near: nearOf, ac
     drag.current = null;
     cancelFrame(); setView(camera.current); setPanning(false);
     if (current.moved) suppressClick.current = true;
-    if (canvas.current?.hasPointerCapture?.(current.pointer)) canvas.current.releasePointerCapture(current.pointer);
+    // The map is mounted while a drag can end; jsdom lacks hasPointerCapture.
+    if (canvas.current!.hasPointerCapture?.(current.pointer)) canvas.current!.releasePointerCapture(current.pointer);
   }, [cancelFrame]);
   useEffect(() => {
     window.addEventListener('blur', finishDrag);
@@ -96,16 +97,14 @@ export function ConnectionWebCanvas({ nodes: placeNodes, edges, near: nearOf, ac
   useEffect(() => { exploreCallback.current = onExplore; }, [onExplore]);
   useEffect(() => () => { if (exploreTimer.current) clearTimeout(exploreTimer.current); }, []);
   useEffect(() => {
-    const element = canvas.current;
-    if (!element) return;
+    const element = canvas.current!; // the map is always rendered
     const resize = () => { const { width, height } = element.getBoundingClientRect(); if (width > 0 && height > 0) setSize(previous => previous.width === width && previous.height === height ? previous : { width, height }); };
     resize();
     const observer = new ResizeObserver(resize); observer.observe(element);
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
-    const element = canvas.current;
-    if (!element) return;
+    const element = canvas.current!; // the map is always rendered
     const wheel = (event: WheelEvent) => {
       if ((event.target as Element).closest('.web-info-card')) return;
       event.preventDefault();
@@ -148,7 +147,7 @@ export function ConnectionWebCanvas({ nodes: placeNodes, edges, near: nearOf, ac
   };
   const start = useCallback((width: number) => startAt?.(width) ?? initialWebCamera(), [startAt]);
   const reset = () => { finishDrag(); if (exploreTimer.current) clearTimeout(exploreTimer.current); writeCamera(start(size.width)); setPinned(null); setFocus(null); };
-  useEffect(() => { if (startAt) writeCamera(start(canvas.current?.getBoundingClientRect().width || 900)); }, [startAt, start, writeCamera]);
+  useEffect(() => { if (startAt) writeCamera(start(canvas.current!.getBoundingClientRect().width || 900)); }, [startAt, start, writeCamera]);
 
   const nodes = useMemo(() => placeNodes(size.width, size.height), [placeNodes, size.width, size.height]);
   const lookup = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);

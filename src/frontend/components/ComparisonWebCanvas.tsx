@@ -63,7 +63,8 @@ export function ComparisonWebCanvas({ graph: incomingGraph, onSelect, onLevelCha
     drag.current = null;
     cancelFrame(); setView(camera.current); setPanning(false); setGestureGraph(null);
     if (current.moved) suppressClick.current = true;
-    if (canvas.current?.hasPointerCapture?.(current.pointer)) canvas.current.releasePointerCapture(current.pointer);
+    // The map is mounted while a drag can end; jsdom lacks hasPointerCapture.
+    if (canvas.current!.hasPointerCapture?.(current.pointer)) canvas.current!.releasePointerCapture(current.pointer);
   }, [cancelFrame]);
   useEffect(() => {
     window.addEventListener('blur', finishDrag);
@@ -72,16 +73,14 @@ export function ComparisonWebCanvas({ graph: incomingGraph, onSelect, onLevelCha
   useEffect(() => { scopeCallback.current = onLevelChange; }, [onLevelChange]);
   useEffect(() => { exploreCallback.current = onExplore; }, [onExplore]);
   useEffect(() => {
-    const element = canvas.current;
-    if (!element) return;
+    const element = canvas.current!; // the map is always rendered
     const resize = () => { const { width, height } = element.getBoundingClientRect(); if (width > 0 && height > 0) setSize(previous => previous.width === width && previous.height === height ? previous : { width, height }); };
     resize();
     const observer = new ResizeObserver(resize); observer.observe(element);
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
-    const element = canvas.current;
-    if (!element) return;
+    const element = canvas.current!; // the map is always rendered
     const wheel = (event: WheelEvent) => {
       if ((event.target as Element).closest('.web-edge-card')) return;
       event.preventDefault();
@@ -184,7 +183,7 @@ export function ComparisonWebCanvas({ graph: incomingGraph, onSelect, onLevelCha
           const key = graphEdgeKey(connection), length = Math.hypot(b.x - a.x, b.y - a.y) || 1;
           const dx = (b.x - a.x) / length * 40, dy = (b.y - a.y) / length * 40;
           const d = `M ${a.x + dx} ${a.y + dy} L ${b.x - dx} ${b.y - dy}`;
-          const label = `${a.label} and ${b.label}: ${connection.label}. ${connection.detail ?? ''}`;
+          const label = `${a.label} and ${b.label}: ${connection.label}. ${connection.detail}`; // every line here has a detail
           return <g key={key} className={`web-line ${connection.category} ${connection.onPath ? 'on-path' : ''} ${hover && ![connection.from, connection.to].includes(hover) ? 'muted' : ''} ${edgeKey === key ? 'selected' : ''}`}>
             <path d={d} className="web-line-visible" vectorEffect="non-scaling-stroke" />
             <path d={d} data-web-edge={key} className="web-line-hit" stroke="transparent" strokeWidth={16} vectorEffect="non-scaling-stroke" role="button" tabIndex={0}

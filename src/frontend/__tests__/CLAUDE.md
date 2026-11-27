@@ -34,6 +34,9 @@ Vitest tests for the frontend. Run with `npm test` from the repository root.
   copying; and (with the playlist codec mocked) answers that arrive after the page moved on.
 - `connection-web-flows.test.tsx` — the Connection Web's modes: notes, filters, a song's map,
   zoom-in discovery succeeding and failing, the Comparison mode's partial and failed states.
+- `canvas-edges.test.tsx` — both map canvases with the input their own tests don't send: wheels in
+  lines and pages, sideways scrolling, zooming mid-drag or mid-animation, second fingers, keys on
+  a child, a hidden or resized map, and every kind of explanation card.
 - `search-components.test.tsx` — the pickers and first-visit setup with the API mocked and time
   controlled: failed searches, the song library down, late answers.
 - `client-app.test.tsx` — `ClientApp` shows a placeholder, then loads `App` in the browser.
