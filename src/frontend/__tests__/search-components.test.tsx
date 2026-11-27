@@ -217,3 +217,20 @@ describe('first-visit setup', () => {
     expect(words()).not.toContain('too late');
   });
 });
+
+describe('the rest of setup', () => {
+  it('removes a pick from its chip, and keeps picks without a destination when closed', async () => {
+    api.searchArtists.mockResolvedValue([phoebe]);
+    const onFinish = vi.fn();
+    await show(<TasteSetup onFinish={onFinish} />);
+    await press(named('Skip'));
+    await type('phoebe', 'Search artists');
+    await wait();
+    await press(named('Phoebe Bridgers'));
+    await press(named('Remove Phoebe Bridgers'));
+    expect(document.querySelector('.setup-picked')).toBeNull();
+    await press(named('Phoebe Bridgers'));
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
+    expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ artists: [phoebe], discover: null }));
+  });
+});

@@ -95,7 +95,8 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
   }
   const pages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
   const loading = searching || (category === 'album' && albums.loading);
-  const failure = found.key === searchKey ? found.error : category === 'album' ? albums.error?.message : undefined;
+  // The search failing, or (for albums) the chosen artist's albums failing once the search worked.
+  const failure = (found.key === searchKey ? found.error : undefined) ?? (category === 'album' ? albums.error?.message : undefined);
   const selectedCount = category === 'genre' ? profile.genres.length : profile[`${category}s` as 'artists' | 'songs' | 'albums'].length;
 
   const importSongs = (matched: Song[]) => {

@@ -25,6 +25,15 @@ Vitest tests for the frontend. Run with `npm test` from the repository root.
 - `component-variants.test.tsx` — the song analysis, artist facts, comparison table and
   collaborators rendered alone with every shape of data, loading and error state.
 - `dialogs.test.tsx` — the dialog's focus trap and closing, and every way a playlist file goes wrong.
+- `connection-graph.test.tsx` — Explore's graph alone: hover, focus, selecting lines and people,
+  keyboard and drag panning, zoom limits, "Show more", and its captions.
+- `about-me.test.tsx` — About Me alone: empty, full, shared and named; every category of the add
+  screen, album browsing, paging, failed and late searches, importing a playlist.
+- `friends-flows.test.tsx`, `friends-timing.test.tsx` — Friends and My playlist: opening music
+  from a map, files that can't be used, taken, expired or unknown codes, invitation links,
+  copying; and (with the playlist codec mocked) answers that arrive after the page moved on.
+- `connection-web-flows.test.tsx` — the Connection Web's modes: notes, filters, a song's map,
+  zoom-in discovery succeeding and failing, the Comparison mode's partial and failed states.
 - `search-components.test.tsx` — the pickers and first-visit setup with the API mocked and time
   controlled: failed searches, the song library down, late answers.
 - `client-app.test.tsx` — `ClientApp` shows a placeholder, then loads `App` in the browser.

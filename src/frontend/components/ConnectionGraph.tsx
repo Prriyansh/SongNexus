@@ -50,8 +50,7 @@ export function ConnectionGraph({ input, status, onSelect }: { input: GraphInput
   const scale = fit * zoom;
   const clearSelection = () => { setSelectedId(null); setSelectedEdgeKey(null); };
   useEffect(() => {
-    const element = canvas.current;
-    if (!element) return;
+    const element = canvas.current!; // the canvas is always rendered
     const resize = () => { const { width, height } = element.getBoundingClientRect(); setViewport({ width, height }); };
     resize();
     const observer = new ResizeObserver(resize);
@@ -62,7 +61,8 @@ export function ConnectionGraph({ input, status, onSelect }: { input: GraphInput
   const selectEdge = (edge: GraphEdge) => { setSelectedEdgeKey(graphEdgeKey(edge)); setSelectedId(null); };
   const selectedNode = selectedId ? lookup.get(selectedId) : undefined;
   const canExpand = !!selectedId && graph.expandable.includes(selectedId);
-  const edgeDescription = (edge: GraphEdge) => `${edge.category === 'similarity' ? 'Musical similarity · calculated' : 'Factual connection'}: ${lookup.get(edge.from)?.label} and ${lookup.get(edge.to)?.label}. ${edge.label}. ${edge.detail || ''}`;
+  // Every line here comes from presentEdges, which always sets its detail and relationships.
+  const edgeDescription = (edge: GraphEdge) => `${edge.category === 'similarity' ? 'Musical similarity · calculated' : 'Factual connection'}: ${lookup.get(edge.from)?.label} and ${lookup.get(edge.to)?.label}. ${edge.label}. ${edge.detail}`;
   const hoveredRoute = routed.find(r => graphEdgeKey(r.edge) === hoveredEdgeKey);
   const tooltipPosition = hoveredRoute ? {
     left: Math.max(12, Math.min(viewport.width - 252, viewport.width / 2 + pan.x + (hoveredRoute.midpoint.x - graph.width / 2) * scale - 120)),
@@ -121,7 +121,7 @@ export function ConnectionGraph({ input, status, onSelect }: { input: GraphInput
     </div>
     {selectedNode && <div className="graph-selection"><div><strong>{selectedNode.label}</strong><p>{selectedNode.subtitle}</p>{canExpand && <small>{selectedNode.entityType === 'artist' && selectedNode.contributor ? 'Show the songs that connect them' : 'More collaborators available'}</small>}</div><button className="text-cta" onClick={() => onSelect({ type: selectedNode.entityType, id: selectedNode.id })}>View details <ArrowLeft className="reverse-arrow" size={14}/></button><button className="secondary-button" disabled={!canExpand} onClick={() => setExpanded(p => [...p, selectedNode.id])}><Plus size={14}/> Show more</button><button className="icon-button" aria-label="Clear node selection" onClick={clearSelection}><X size={16}/></button></div>}
     {selectedEdge && <div className="graph-selection graph-edge-selection"><div><small className="graph-relationship-category">{selectedEdge.category === 'similarity' ? 'Musical similarity · calculated from metadata' : 'Factual connection · documented relationship'}</small><strong>{lookup.get(selectedEdge.from)?.label} <span aria-hidden="true">↔</span> {lookup.get(selectedEdge.to)?.label}</strong>
-      {(selectedEdge.relationships || [selectedEdge]).map((record, i) => <div className="graph-relationship-detail" key={record.relationshipId || i}><b>{record.label}</b><p>{record.detail}</p>{!!record.sourceUrls?.length && <div className="graph-sources">{record.sourceUrls.map((url, index) => <a href={url} key={url} target="_blank" rel="noreferrer">Source {index + 1}</a>)}</div>}</div>)}
+      {selectedEdge.relationships!.map((record, i) => <div className="graph-relationship-detail" key={record.relationshipId || i}><b>{record.label}</b><p>{record.detail}</p>{!!record.sourceUrls?.length && <div className="graph-sources">{record.sourceUrls.map((url, index) => <a href={url} key={url} target="_blank" rel="noreferrer">Source {index + 1}</a>)}</div>}</div>)}
     </div><button className="icon-button" aria-label="Clear connection selection" onClick={clearSelection}><X size={16}/></button></div>}
     <div className="graph-foot"><span className="graph-hint">Select a node or connection to explore</span><button className="text-cta" onClick={() => { setExpanded([]); clearSelection(); resetView(); }}><RotateCcw size={13}/> Initial comparison</button></div>
     {status && <p className="filter-caption" role="status">{status}</p>}

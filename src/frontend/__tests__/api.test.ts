@@ -35,7 +35,7 @@ describe('api client', () => {
   });
 
   it('asks for similar music by kind and id, and shares the result', async () => {
-    fetchMock.mockReturnValue(json({ similar: { artists: [], songs: [] } }));
+    fetchMock.mockReturnValue(json({ similar: { artists: [], songs: [], sources: [] } }));
     const [a, b] = await Promise.all([api.similarMusic('artist', ARTIST_ID), api.similarMusic('artist', ARTIST_ID)]);
     expect(a).toBe(b);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -43,7 +43,7 @@ describe('api client', () => {
   });
 
   it('asks for similar artists only (no songs) for the zoom-in, cached apart from the full map', async () => {
-    fetchMock.mockReturnValue(json({ similar: { artists: [], songs: [] } }));
+    fetchMock.mockReturnValue(json({ similar: { artists: [], songs: [], sources: [] } }));
     await api.similarArtistsOf(ARTIST_ID);
     await api.similarArtistsOf(ARTIST_ID);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -151,5 +151,16 @@ describe('api client: the rest', () => {
     await api.soundComparison(song('a'), song('b'));
     const q = new URL(fetchMock.mock.calls[0][0], 'http://x').searchParams;
     expect([q.get('aArtist'), q.get('bArtist')]).toEqual(['', '']);
+  });
+});
+
+describe('api client: similar music', () => {
+  it('asks again for a map with a source that failed, but keeps a complete one', async () => {
+    fetchMock.mockReturnValueOnce(json({ similar: { artists: [], songs: [], sources: [{ source: 'Deezer', status: 'failed' }] } }))
+      .mockReturnValue(json({ similar: { artists: [], songs: [], sources: [{ source: 'Deezer', status: 'ok' }] } }));
+    await api.similarMusic('artist', ARTIST_ID);
+    await api.similarMusic('artist', ARTIST_ID);
+    await api.similarMusic('artist', ARTIST_ID);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

@@ -251,3 +251,26 @@ describe('artwork', () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe('the Comparison web’s count', () => {
+  it('says “1 artist” when only one is in view', async () => {
+    vi.resetModules();
+    vi.doMock('../components/ComparisonWebCanvas', () => ({
+      ComparisonWebCanvas: ({ onVisibleCount }: { onVisibleCount: (n: number) => void }) => { queueMicrotask(() => onVisibleCount(1)); return null; },
+    }));
+    vi.doMock('../api', async (original) => {
+      const actual = await original<typeof import('../api')>();
+      const { oliviaDetails: a, taylorDetails: b, collab: c } = await import('./fixtures');
+      return { ...actual, artistDetails: vi.fn(async (id: string) => (id === a.id ? a : b)), collaborators: vi.fn(async () => c), discoverWebArtists: vi.fn(async () => ({ artists: [], failed: [] })) };
+    });
+    const { ComparisonWeb } = await import('../components/ComparisonWeb');
+    const { oliviaDetails: a, taylorDetails: b } = await import('./fixtures');
+    const { defaultWeb } = await import('../routing');
+    const { emptyProfile: profile } = await import('../profile');
+    await show(<ComparisonWeb selection={{ ...defaultWeb(), mode: 'comparison', left: a.id, right: b.id }} onChange={vi.fn()} onSelect={vi.fn()} profile={profile} />);
+    await act(async () => { await new Promise(r => setTimeout(r, 10)); });
+    expect(host.querySelector('.web-live-label small')!.textContent).toBe('1 artist');
+    vi.doUnmock('../components/ComparisonWebCanvas');
+    vi.doUnmock('../api');
+  });
+});
