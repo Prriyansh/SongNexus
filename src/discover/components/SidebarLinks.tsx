@@ -1,4 +1,4 @@
-import { BookOpen, Gamepad2, MessageCircleQuestion, Search, Spline, Waypoints } from "lucide-react";
+import { BookOpen, Gamepad2, Library, MessageCircleQuestion, Route, Search, Spline, Waypoints } from "lucide-react";
 
 /** Discover's entries in the sidebar, after the app's own four. */
 export const DISCOVER_LINKS = [
@@ -8,6 +8,8 @@ export const DISCOVER_LINKS = [
   { href: "/discover/stories", label: "Stories", Icon: BookOpen },
   { href: "/discover/ask", label: "Ask", Icon: MessageCircleQuestion },
   { href: "/discover/games", label: "Games", Icon: Gamepad2 },
+  { href: "/discover/library", label: "Library", Icon: Library },
+  { href: "/discover/friends", label: "Friend paths", Icon: Route },
 ] as const;
 
 /** Which entry a page belongs to; artist, song, label and genre pages belong to Discover. */

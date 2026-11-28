@@ -16,6 +16,8 @@ the app's sidebar. It imports nothing from `src/frontend` or `src/lib`. The one 
 | `/discover/ask` | A question in plain words, answered from the credits (`q`) |
 | `/discover/games` | Today's three games, your streak and totals, and the archive |
 | `/discover/games/[game]` | `connect`, `credits` or `link` for a day (`day`, `2026-11-28`; today without it) |
+| `/discover/library` | Listening from ListenBrainz, Last.fm or Deezer, and Your Nexus |
+| `/discover/friends` | Friend paths: your artists as a link; opened with a friend's (`with`, `name`), the paths between |
 | `/discover/artist/[id]`, `/song/[id]`, `/label/[id]` | By MusicBrainz ID, so links work across the app |
 | `/discover/genre/[id]` | By genre slug |
 
@@ -30,7 +32,9 @@ They answer from the catalog file, so they need no keys and call no other servic
 in `games/`: `step` (one Connect step), `answer` (one quiz answer), `score` (a finished game onto the
 day's leaderboard, the score worked out from its answers) and `board` (a day's leaderboard). Leaderboards
 need Redis (`KV_REST_API_URL`/`TOKEN` or `UPSTASH_REDIS_REST_URL`/`TOKEN`) in production; without it
-they answer 503 and the games still work.
+they answer 503 and the games still work. `listening` reads a service by public username (Last.fm
+needs `LASTFM_API_KEY`) and `nexus` answers how artists hang together (with `theirs`, the paths to a
+friend's).
 
 ## Files
 
@@ -56,6 +60,10 @@ they answer 503 and the games still work.
   `lib/leaderboard.ts` — a day's board per game, lower scores first, ties by who finished first.
   `lib/store.ts` — Redis or memory storage. `lib/days.ts` — day numbers (UTC) and launch day.
   `lib/random.ts` — the fixed shuffle.
+- `lib/listening.ts` — top artists from ListenBrainz, Last.fm and Deezer, matched to the catalog by
+  MusicBrainz ID or exact name. `lib/services.ts` — the services and the ones connected in this
+  browser (safe for the browser). `lib/nexus.ts` — which artists worked together, the people between
+  them, and the shortest paths from one person's artists to another's.
 - `lib/collaborations.ts`, `lib/credits.ts` — who worked with whom, on what.
 - `lib/search.ts` — names. `lib/match.ts` — marking what matched. `lib/browse.ts` — ways in.
 - `lib/words.ts` — facts as sentences. `lib/metadata.ts` — titles, descriptions and link previews.
@@ -66,8 +74,9 @@ they answer 503 and the games still work.
   `ConnectionExplorer.tsx` (the page around them) are the web. `StoryKeys.tsx` moves between stories
   (arrow keys, swipes). `TodayCard`, `ForYouShelf` and `RecentShelf` are the home page's personal
   parts, read in the browser (`useStored`); `RememberVisit` notes each artist page opened.
-  `ConnectGame`, `QuizGame`, `Leaderboard` and `GameProgress` (badges and stats) are the games. `api.ts`
-  — the browser's only calls.
+  `ConnectGame`, `QuizGame`, `Leaderboard` and `GameProgress` (badges and stats) are the games.
+  `Library` and `FriendPaths` read the connected services through `useListening`. `api.ts` — the
+  browser's only calls.
 - `discover.css` — every class starts with `dx-`. `__tests__/`.
 
 ## Tests
@@ -86,7 +95,8 @@ from the search box.
 `for-you` covers the picks on made-up catalogs and the `for-you` and `today` routes; `home-ui` covers
 what the browser keeps and the home page's personal parts. `games` covers making each day's games,
 checking answers, results, storage and leaderboards; `games-routes`, `games-pages` and `games-ui`
-cover the routes, the pages and playing.
+cover the routes, the pages and playing. `library`, `library-ui` and `library-pages` cover listening,
+Your Nexus and Friend paths.
 `dom.tsx`, `render.tsx`, `fixture.ts` and `world.ts` are helpers.
 
 Beside them: `e2e/` (a real browser; see its guide) and `scripts/discover/test_export_catalog.py`

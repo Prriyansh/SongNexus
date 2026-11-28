@@ -7,7 +7,11 @@ async function getJson<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   const response = await fetch(`/api/discover/${path}?${new URLSearchParams(params)}`, { signal });
-  if (!response.ok) throw new Error(`Discover ${path} failed (${response.status})`);
+  if (!response.ok) {
+    // Discover's routes say what went wrong in words meant for the reader.
+    const data = (await response.json().catch(() => null)) as { error?: unknown } | null;
+    throw new Error(typeof data?.error === "string" ? data.error : `Discover ${path} failed (${response.status})`);
+  }
   return (await response.json()) as T;
 }
 
@@ -83,3 +87,22 @@ export const submitScore = (game: string, day: number, player: string, name: str
 
 export const board = (game: string, day: number, player: string | null, signal?: AbortSignal) =>
   getJson<Board>("games/board", { game, day: String(day), ...(player ? { player } : {}) }, signal);
+
+export type Listened = { name: string; plays: number | null; artist: ArtistRef | null };
+
+export const listening = (service: string, user: string, signal?: AbortSignal) =>
+  getJson<{ artists: Listened[] }>("listening", { service, user }, signal);
+
+export type Between = { artist: ArtistRef; with: ArtistRef[] };
+export type Nexus = { artists: ArtistRef[]; linked: { a: ArtistRef; b: ArtistRef; reason: Reason }[]; between: Between[] };
+export type FriendPaths = {
+  shared: ArtistRef[];
+  paths: { artists: ArtistRef[]; reasons: Reason[] }[];
+  between: Between[];
+};
+
+export const nexus = (artists: string[], signal?: AbortSignal) =>
+  getJson<Nexus>("nexus", { artists: artists.join(",") }, signal);
+
+export const friendPaths = (mine: string[], theirs: string[], signal?: AbortSignal) =>
+  getJson<FriendPaths>("nexus", { artists: mine.join(","), theirs: theirs.join(",") }, signal);

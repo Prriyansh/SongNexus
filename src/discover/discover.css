@@ -1994,3 +1994,38 @@
   font-size: 13px;
   font-weight: 650;
 }
+
+/* Library and Friend paths */
+.dx-main .dx-select {
+  height: 48px;
+  padding: 0 12px;
+  border: 1px solid #4b4552;
+  border-radius: 13px;
+  background: #121015;
+  color: var(--dx-text);
+}
+.dx-heard {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 6px 14px;
+  margin: 0;
+  padding-left: 30px;
+}
+.dx-heard li::marker {
+  color: var(--dx-muted);
+  font-size: 13px;
+}
+.dx-heard-missing {
+  display: grid;
+  gap: 2px;
+  padding: 8px 0;
+}
+.dx-heard-missing strong {
+  color: var(--dx-soft);
+}
+.dx-heard-missing small {
+  color: var(--dx-muted);
+}
+.dx-main .dx-line h2 a {
+  color: inherit;
+}
