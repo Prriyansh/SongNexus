@@ -9,6 +9,7 @@ import { z } from "zod";
 import { answerQuestion, ask, nameOf, type Answer, type Question } from "./ask";
 import { dayNumber } from "./days";
 import type { Graph } from "./graph";
+import { LIMITS, withinLimit } from "./limits";
 import { normalize } from "./search";
 import { store, type Store } from "./store";
 
@@ -211,19 +212,22 @@ type Options = {
   kept?: Store | null;
   env?: Record<string, string | undefined>;
   now?: number;
+  /** Who is asking, for the per-visitor limit; without one only the day's limit applies. */
+  visitor?: string;
 };
 
 export type Asked = { answer: Answer; ai: boolean };
 
 /** Answers like `ask`, reading the question with AI when the patterns get nowhere. */
 export async function askWithAi(g: Graph, raw: string, options: Options = {}): Promise<Asked> {
-  const { read = readWithAi, kept = store(), env = process.env, now = Date.now() } = options;
+  const { read = readWithAi, kept = store(), env = process.env, now = Date.now(), visitor } = options;
   const plain = ask(g, raw);
   const nowhere = (a: Answer) => a.kind === "unknown" || (a.kind === "lookup" && !a.results.length);
   if (!(nowhere(plain) || plain.kind === "missing") || !aiEnabled(env)) return { answer: plain, ai: false };
   const key = normalize(raw);
   let question = remembered.get(key);
   if (question === undefined) {
+    if (visitor && !(await withinLimit(visitor, LIMITS.ai, kept, now))) return { answer: plain, ai: false };
     if (!(await aiAllowed(kept, env, now))) return { answer: plain, ai: false };
     question = await read(raw);
     if (question === undefined) return { answer: plain, ai: false };

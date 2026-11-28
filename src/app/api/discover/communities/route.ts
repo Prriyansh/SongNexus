@@ -1,6 +1,7 @@
 import { authConfig, personOf } from "@/discover/lib/auth";
 import { communityOf, join, leave, MAX_SHARED, memberships, viewOf } from "@/discover/lib/communities";
 import { dayNumber } from "@/discover/lib/days";
+import { LIMITS, tooMany } from "@/discover/lib/limits";
 import { graph } from "@/discover/lib/server";
 import { store } from "@/discover/lib/store";
 import { ready, refuse, reply } from "../account/shared";
@@ -29,6 +30,8 @@ export async function POST(request: Request) {
   const found = ready(request, true);
   if (found instanceof Response) return found;
   if (!found.person) return refuse(401, "Sign in first.");
+  const busy = await tooMany(request, LIMITS.community, found.store);
+  if (busy) return busy;
   const body = await bodyOf(request);
   const community = typeof body?.id === "string" ? communityOf(body.id) : null;
   if (!community) return refuse(400, "That isn’t a campus or a country.");
@@ -47,6 +50,8 @@ export async function DELETE(request: Request) {
   const found = ready(request, true);
   if (found instanceof Response) return found;
   if (!found.person) return refuse(401, "Sign in first.");
+  const busy = await tooMany(request, LIMITS.community, found.store);
+  if (busy) return busy;
   const community = communityOf(new URL(request.url).searchParams.get("id") ?? "");
   if (!community) return refuse(400, "That isn’t a campus or a country.");
   await leave(found.store, community.id, found.person.sub);

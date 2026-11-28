@@ -7,7 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => {} }), usePathname: () => "/discover/library" }));
 
 import { listening } from "../api";
-import FriendPaths, { friendHref } from "../components/FriendPaths";
+import FriendPaths from "../components/FriendPaths";
+import { friendHref } from "../lib/links";
 import Library from "../components/Library";
 import { myArtists } from "../components/useListening";
 import { TOP_KEY } from "../lib/account-data";

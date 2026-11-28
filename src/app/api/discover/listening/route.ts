@@ -1,3 +1,4 @@
+import { LIMITS, tooMany } from "@/discover/lib/limits";
 import { heardFrom, ListeningError, matchHeard } from "@/discover/lib/listening";
 import { graph } from "@/discover/lib/server";
 import { isService, isUser } from "@/discover/lib/services";
@@ -10,6 +11,8 @@ export async function GET(request: Request) {
   const user = (params.get("user") ?? "").trim();
   if (!isService(service) || !isUser(service, user))
     return Response.json({ error: "That isn’t a username this service would have." }, { status: 400 });
+  const busy = await tooMany(request, LIMITS.listening);
+  if (busy) return busy;
   try {
     const heard = await heardFrom(service, user, process.env, fetch);
     return Response.json(

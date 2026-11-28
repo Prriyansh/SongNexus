@@ -1,11 +1,15 @@
 import Library from "@/discover/components/Library";
 import { pageMetadata } from "@/discover/lib/metadata";
 
-export const metadata = pageMetadata(
-  "Library",
-  "Bring your listening from ListenBrainz, Last.fm or Deezer, and see how the artists you play are connected.",
-  "/discover/library",
-);
+// About one person, so search engines leave it out.
+export const metadata = {
+  ...pageMetadata(
+    "Library",
+    "Bring your listening from ListenBrainz, Last.fm or Deezer, and see how the artists you play are connected.",
+    "/discover/library",
+  ),
+  robots: { index: false, follow: true },
+};
 
 export default function LibraryPage() {
   return (

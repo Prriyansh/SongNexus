@@ -27,6 +27,16 @@ export function sixDegreesHref(state: Ends & Partial<SixDegreesState>): string {
 
 export const storyHref = (n: number) => `/discover/stories?story=${n}`;
 
+/** Friend paths compare this many artists from each side. */
+export const FRIEND_SIDE = 5;
+
+/** A link carrying someone's top artists, and the name they give if any. */
+export function friendHref(ids: string[], name: string): string {
+  const params = new URLSearchParams({ with: ids.join(",") });
+  if (name.trim()) params.set("name", name.trim());
+  return `/discover/friends?${params}`;
+}
+
 /** `opened` are the artists whose connections were opened after the starting one, in order. */
 export function connectionsHref(
   artist: string,

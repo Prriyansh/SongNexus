@@ -1,5 +1,6 @@
 import { syncedIn } from "@/discover/lib/account-data";
 import { MAX_SYNCED, saveSynced } from "@/discover/lib/accounts";
+import { LIMITS, tooMany } from "@/discover/lib/limits";
 import { ready, refuse, reply } from "../shared";
 
 // Saves the signed-in person's synced data (games, hidden artists, Top 5, services), checked first.
@@ -7,6 +8,8 @@ export async function PUT(request: Request) {
   const found = ready(request, true);
   if (found instanceof Response) return found;
   if (!found.person) return refuse(401, "Sign in first.");
+  const busy = await tooMany(request, LIMITS.sync, found.store);
+  if (busy) return busy;
   const text = await request.text();
   if (text.length > MAX_SYNCED) return refuse(413, "That’s more than an account keeps.");
   let body: unknown;

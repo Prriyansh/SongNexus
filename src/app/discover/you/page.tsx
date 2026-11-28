@@ -2,11 +2,15 @@ import You from "@/discover/components/You";
 import { authConfig } from "@/discover/lib/auth";
 import { pageMetadata } from "@/discover/lib/metadata";
 
-export const metadata = pageMetadata(
-  "You",
-  "Your account, your Top 5, the artists you’ve hidden, and everything Song Nexus keeps for you.",
-  "/discover/you",
-);
+// About one person, so search engines leave it out.
+export const metadata = {
+  ...pageMetadata(
+    "You",
+    "Your account, your Top 5, the artists you’ve hidden, and everything Song Nexus keeps for you.",
+    "/discover/you",
+  ),
+  robots: { index: false, follow: true },
+};
 
 export default function YouPage() {
   return (

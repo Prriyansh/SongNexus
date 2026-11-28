@@ -13,8 +13,11 @@ import {
   Skeleton,
   SongLink,
 } from "@/discover/components/parts";
+import { headers } from "next/headers";
+import { connection } from "next/server";
 import { aiEnabled, askWithAi } from "@/discover/lib/ai-ask";
 import type { Answer, CreditPerson, CreditRole, Took } from "@/discover/lib/ask";
+import { visitorOf } from "@/discover/lib/limits";
 import { pageMetadata } from "@/discover/lib/metadata";
 import { oneOf } from "@/discover/lib/query";
 import { askHref, EXAMPLE_QUESTIONS } from "@/discover/lib/question";
@@ -319,7 +322,10 @@ function AnswerView({ answer }: { answer: Answer }) {
 
 async function Content({ searchParams }: Pick<PageProps<"/discover/ask">, "searchParams">) {
   const question = oneOf(await searchParams, "q").trim().slice(0, MAX_QUESTION);
-  const asked = question ? await askWithAi(graph(), question) : null;
+  // Reading a question checks today's limits, so this waits for the request (not a prefetch).
+  await connection();
+  const visitor = visitorOf(await headers());
+  const asked = question ? await askWithAi(graph(), question, { visitor }) : null;
   const answer = asked?.answer ?? null;
   return (
     <>

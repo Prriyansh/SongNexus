@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { communities, community, joinCommunity, leaveCommunity, type CommunityView } from "../api";
 import { topIn, TOP_KEY } from "../lib/account-data";
-import { aroundHref, COUNTRIES } from "../lib/places";
+import { aroundHref } from "../lib/places";
 import { favouritesIn, PROFILE_KEY } from "../lib/stored";
 import { ArtistLink, plural, Section, Skeleton } from "./parts";
 import ShareButton from "./ShareButton";
@@ -107,7 +107,8 @@ function Card({ view, signedIn, share, leave }: CardProps) {
 }
 
 /** Around You: charts for a campus or a country, from members who share their artists. */
-export default function AroundYou({ looking }: { looking: string | null }) {
+// The countries come from the server: browsers name and sort them a little differently.
+export default function AroundYou({ looking, countries }: { looking: string | null; countries: [code: string, name: string][] }) {
   const router = useRouter();
   const { connected, heard } = useListening();
   const favourites = favouritesIn(useStored(PROFILE_KEY)).artists;
@@ -167,7 +168,7 @@ export default function AroundYou({ looking }: { looking: string | null }) {
         <label htmlFor="around-country">Look around a country</label>
         <div className="dx-ask-row">
           <select id="around-country" className="dx-select" value={country} onChange={(event) => setCountry(event.target.value)}>
-            {COUNTRIES.map(([code, name]) => (
+            {countries.map(([code, name]) => (
               <option key={code} value={code}>
                 {name}
               </option>
@@ -187,7 +188,7 @@ export default function AroundYou({ looking }: { looking: string | null }) {
       )}
       {!overview && !problem && <Skeleton panels={1} />}
       {overview && !overview.signedIn && (
-        <p className="dx-hint">
+        <p className="dx-panel dx-hint">
           <Link href="/discover/you" prefetch={false}>
             Sign in on You
           </Link>{" "}
@@ -206,9 +207,13 @@ export default function AroundYou({ looking }: { looking: string | null }) {
           </button>
         </Section>
       )}
-      {overview && overview.joined.length > 0 && (
+      {overview?.signedIn && (
         <Section title="Your communities" note="What you share: your Top 5, then the artists you play most, then your favourites.">
-          {overview.joined.filter((v) => v.id !== viewed?.id).map(card)}
+          {overview.joined.length ? (
+            overview.joined.filter((v) => v.id !== viewed?.id).map(card)
+          ) : (
+            <p className="dx-hint">None yet. Join your campus, or look around a country and join it.</p>
+          )}
         </Section>
       )}
     </>

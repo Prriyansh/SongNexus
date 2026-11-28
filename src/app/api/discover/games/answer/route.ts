@@ -1,9 +1,12 @@
 import { checkAnswer } from "@/discover/lib/games";
+import { LIMITS, tooMany } from "@/discover/lib/limits";
 import { graph } from "@/discover/lib/server";
 import { bodyOf, dayOf, NO_STORE, refuse } from "../request";
 
 // Checks one quiz answer: {game: "credits" | "link", day, question, choice} with an artist ID.
 export async function POST(request: Request) {
+  const busy = await tooMany(request, LIMITS.play);
+  if (busy) return busy;
   const body = await bodyOf(request);
   const day = dayOf(body?.day);
   const game = body?.game;

@@ -17,6 +17,8 @@ Thin route handlers over `src/lib`. Each one validates input, calls the lib, and
   - `top-track/route.ts` — an artist's top song (Deezer rank → MusicBrainz recording)
   - `sound/route.ts` — sound & lyrics comparison of two songs from the song_compare service
   - `sound/search/route.ts` — songs in the sound dataset, for the song pickers
+  - `health/route.ts` — what a deployment has switched on and what it is set up wrong for (no
+    secrets); use it to check a release
 
 ## Routes
 

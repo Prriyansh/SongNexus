@@ -1,22 +1,27 @@
 import { Suspense } from "react";
-import FriendPaths, { SIDE } from "@/discover/components/FriendPaths";
+import FriendPaths from "@/discover/components/FriendPaths";
 import { Avatar, Skeleton } from "@/discover/components/parts";
 import { cleanName } from "@/discover/lib/leaderboard";
+import { FRIEND_SIDE } from "@/discover/lib/links";
 import { pageMetadata } from "@/discover/lib/metadata";
 import { artistsIn, oneOf } from "@/discover/lib/query";
 import { graph } from "@/discover/lib/server";
 import { artistRef } from "@/discover/lib/words";
 
-export const metadata = pageMetadata(
-  "Friend paths",
-  "How are your top artists connected to a friend’s? Share yours as a link and see the paths between them.",
-  "/discover/friends",
-);
+// About one person, so search engines leave it out.
+export const metadata = {
+  ...pageMetadata(
+    "Friend paths",
+    "How are your top artists connected to a friend’s? Share yours as a link and see the paths between them.",
+    "/discover/friends",
+  ),
+  robots: { index: false, follow: true },
+};
 
 async function Content({ searchParams }: Pick<PageProps<"/discover/friends">, "searchParams">) {
   const query = await searchParams;
   const c = graph().catalog;
-  const theirs = artistsIn(query, "with", c.artistAt, SIDE).map((at) => artistRef(c, at));
+  const theirs = artistsIn(query, "with", c.artistAt, FRIEND_SIDE).map((at) => artistRef(c, at));
   const friend = cleanName(oneOf(query, "name")) ?? "your friend";
   return (
     <>

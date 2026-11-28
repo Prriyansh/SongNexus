@@ -1,6 +1,7 @@
 import { isGame, isPlayer } from "@/discover/lib/game-info";
 import { scoreOf } from "@/discover/lib/games";
 import { cleanName, submitScore } from "@/discover/lib/leaderboard";
+import { LIMITS, tooMany } from "@/discover/lib/limits";
 import { graph } from "@/discover/lib/server";
 import { store } from "@/discover/lib/store";
 import { bodyOf, dayOf, NO_STORE, refuse } from "../request";
@@ -8,6 +9,8 @@ import { bodyOf, dayOf, NO_STORE, refuse } from "../request";
 // Puts a finished game on the day's leaderboard: {game, day, player, name, answers}. The score is
 // worked out here from the answers (a Connect chain, or a quiz's choices), never taken on trust.
 export async function POST(request: Request) {
+  const busy = await tooMany(request, LIMITS.score);
+  if (busy) return busy;
   const body = await bodyOf(request);
   const day = dayOf(body?.day);
   const game = typeof body?.game === "string" && isGame(body.game) ? body.game : null;

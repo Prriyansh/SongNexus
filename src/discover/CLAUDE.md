@@ -64,6 +64,9 @@ from its own Google Workspace domain.
   the page says the question was read by AI and sent to Google. Readings are remembered and capped
   per day (`AI_DAILY_LIMIT`, default 200). Needs `GEMINI_API_KEY`; without it Ask works as before.
   The question is never logged.
+- `lib/limits.ts` — per-visitor limits (by forwarded address, an hour at a time) on Connect steps
+  and answers, scores, sign-ins, saves, communities, listening, Your Nexus and AI readings; over a
+  limit a route answers 429 with `Retry-After`.
 - `lib/for-you.ts` — For you: artists connected to the favourites saved in About Me (those connected
   to more of them first, each with the favourite and credit behind it), then the best-known artists
   of favourite genres. `lib/stored.ts` — what the browser keeps: About Me's favourites (read, never
@@ -74,7 +77,8 @@ from its own Google Workspace domain.
   worked with both). Answers are checked on the server; the answer key never reaches the browser.
   `lib/game-info.ts` — names, rules and the results kept in this browser (safe for the browser).
   `lib/leaderboard.ts` — a day's board per game, lower scores first, ties by who finished first.
-  `lib/store.ts` — Redis or memory storage. `lib/days.ts` — day numbers (UTC) and launch day.
+  `lib/store.ts` — Redis or memory storage (`SONG_NEXUS_MEMORY_STORE=1` allows memory in production,
+  for browser tests and one-server demos only). `lib/days.ts` — day numbers (UTC) and launch day.
   `lib/random.ts` — the fixed shuffle.
 - `lib/listening.ts` — top artists from ListenBrainz, Last.fm and Deezer, matched to the catalog by
   MusicBrainz ID or exact name. `lib/services.ts` — the services and the ones connected in this

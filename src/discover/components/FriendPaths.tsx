@@ -5,20 +5,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { friendPaths, type FriendPaths as Paths } from "../api";
 import { topIn, TOP_KEY } from "../lib/account-data";
+import { FRIEND_SIDE, friendHref } from "../lib/links";
 import { favouritesIn, PROFILE_KEY } from "../lib/stored";
 import { entityHref, type ArtistRef } from "../lib/types";
 import { AppLink, ArtistCard, Avatar, plural, Reasons, Section, Skeleton } from "./parts";
 import { keyOf, myArtists, useListening } from "./useListening";
 import { useStored } from "./useStored";
 
-/** Each side shares this many artists. */
-export const SIDE = 5;
-
-export const friendHref = (ids: string[], name: string) => {
-  const params = new URLSearchParams({ with: ids.join(",") });
-  if (name.trim()) params.set("name", name.trim());
-  return `/discover/friends?${params}`;
-};
 
 function CopyLink({ path }: { path: string }) {
   const [copied, setCopied] = useState<boolean | null>(null);
@@ -124,7 +117,7 @@ export default function FriendPaths({ theirs, friend }: { theirs: ArtistRef[]; f
   const top = topIn(useStored(TOP_KEY)).map((v) => v.id);
   const [name, setName] = useState("");
   const waiting = connected.some((c) => !heard[keyOf(c)]);
-  const mine = myArtists(connected, heard, favourites, top).slice(0, SIDE);
+  const mine = myArtists(connected, heard, favourites, top).slice(0, FRIEND_SIDE);
   if (waiting) return <Skeleton panels={2} />;
   if (!mine.length)
     return (

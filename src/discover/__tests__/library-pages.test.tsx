@@ -46,3 +46,14 @@ describe("Friend paths", () => {
     expect(alone).toContain("How are your top artists connected to a friend’s?");
   });
 });
+
+describe("personal pages", () => {
+  it("are left out of search engines", async () => {
+    const pages = await Promise.all([
+      import("@/app/discover/library/page"),
+      import("@/app/discover/friends/page"),
+      import("@/app/discover/you/page"),
+    ]);
+    for (const { metadata } of pages) expect(metadata.robots).toEqual({ index: false, follow: true });
+  });
+});

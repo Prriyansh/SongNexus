@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import AroundYou from "@/discover/components/AroundYou";
 import { Skeleton } from "@/discover/components/parts";
 import { pageMetadata } from "@/discover/lib/metadata";
+import { COUNTRIES } from "@/discover/lib/places";
 import { oneOf } from "@/discover/lib/query";
 
 export const metadata = pageMetadata(
@@ -12,7 +13,7 @@ export const metadata = pageMetadata(
 
 async function Content({ searchParams }: Pick<PageProps<"/discover/around">, "searchParams">) {
   const looking = oneOf(await searchParams, "c") || null;
-  return <AroundYou key={looking} looking={looking} />;
+  return <AroundYou key={looking} looking={looking} countries={COUNTRIES} />;
 }
 
 export default function AroundPage({ searchParams }: PageProps<"/discover/around">) {

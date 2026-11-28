@@ -1,5 +1,6 @@
 import { sessionCookie, sessionValue, verifyGoogle } from "@/discover/lib/auth";
 import { signedIn } from "@/discover/lib/accounts";
+import { LIMITS, tooMany } from "@/discover/lib/limits";
 import { bodyOf } from "../../games/request";
 import { ready, refuse, reply } from "../shared";
 
@@ -7,6 +8,8 @@ import { ready, refuse, reply } from "../shared";
 export async function POST(request: Request) {
   const found = ready(request, true);
   if (found instanceof Response) return found;
+  const busy = await tooMany(request, LIMITS.signIn, found.store);
+  if (busy) return busy;
   const credential = (await bodyOf(request))?.credential;
   if (typeof credential !== "string" || credential.length > 4096) return refuse(400, "That isn’t a sign-in from Google.");
   let person;

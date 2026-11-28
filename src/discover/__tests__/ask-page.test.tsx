@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 
 const crafted = vi.hoisted(() => ({ answer: null as unknown }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => {} }), usePathname: () => "/discover" }));
+// Outside a request, connection() refuses; here it only marks the page as dynamic.
+vi.mock("next/server", async (actual) => ({ ...(await actual<object>()), connection: async () => {} }));
+// The visitor asking, as Vercel forwards it.
+vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" }) }));
 vi.mock("next/link", async () => {
   const { createElement } = await import("react");
   type Props = { href: string; prefetch?: boolean; scroll?: boolean; children?: unknown };

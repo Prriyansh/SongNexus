@@ -110,11 +110,14 @@ export function redisStore(url: string, token: string, fetchImpl: typeof fetch =
 // On globalThis so every route shares one in development, and it survives hot reloads.
 const shared = globalThis as { __songNexusStore?: Store };
 
-/** Null in production without Redis: memory there would lose everything between server instances. */
+/**
+ * Null in production without Redis: memory there would lose everything between server instances.
+ * SONG_NEXUS_MEMORY_STORE=1 allows memory anyway, for browser tests and one-server demos only.
+ */
 export function store(env: Record<string, string | undefined> = process.env): Store | null {
   const url = env.KV_REST_API_URL ?? env.UPSTASH_REDIS_REST_URL;
   const token = env.KV_REST_API_TOKEN ?? env.UPSTASH_REDIS_REST_TOKEN;
   if (url && token) return redisStore(url, token);
-  if (env.NODE_ENV === "production") return null;
+  if (env.NODE_ENV === "production" && env.SONG_NEXUS_MEMORY_STORE !== "1") return null;
   return (shared.__songNexusStore ??= memoryStore());
 }

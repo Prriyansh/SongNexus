@@ -1,3 +1,4 @@
+import { LIMITS, tooMany } from "@/discover/lib/limits";
 import { friendPathsOf, MAX_ARTISTS, MAX_SIDE, nexusOf } from "@/discover/lib/nexus";
 import { artistsIn } from "@/discover/lib/query";
 import { graph } from "@/discover/lib/server";
@@ -8,6 +9,8 @@ const CACHE = { headers: { "Cache-Control": "public, max-age=600, s-maxage=86400
 // How artists hang together: ?artists=<ids>. With &theirs=<ids>, the paths between two people's
 // artists instead (`artists` being yours).
 export async function GET(request: Request) {
+  const busy = await tooMany(request, LIMITS.nexus);
+  if (busy) return busy;
   const query = Object.fromEntries(new URL(request.url).searchParams);
   const g = graph();
   if (query.theirs === undefined)

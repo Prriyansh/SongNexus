@@ -61,7 +61,7 @@ describe("Around You", () => {
   it("lets anyone look around a country's chart, with the week's moves", async () => {
     handlers["/api/discover/communities"] = (_m, url) =>
       url.searchParams.get("id") ? view() : { joined: [], campus: null, signedIn: false };
-    await render(<AroundYou looking="country:SE" />);
+    await render(<AroundYou countries={COUNTRIES} looking="country:SE" />);
     await settle();
     expect(box.textContent).toContain("Sweden");
     expect(box.textContent).toContain("Country · 6 members, 5 sharing");
@@ -77,7 +77,7 @@ describe("Around You", () => {
 
   it("looks around the country picked", async () => {
     handlers["/api/discover/communities"] = () => ({ joined: [], campus: null, signedIn: false });
-    await render(<AroundYou looking={null} />);
+    await render(<AroundYou countries={COUNTRIES} looking={null} />);
     await settle();
     await act(async () => {
       const select = find<HTMLSelectElement>("select");
@@ -103,9 +103,10 @@ describe("Around You", () => {
       }
       return { joined, campus: "campus:wisc.edu", signedIn: true };
     };
-    await render(<AroundYou looking={null} />);
+    await render(<AroundYou countries={COUNTRIES} looking={null} />);
     await settle();
     expect(box.textContent).toContain("Your account is from wisc.edu.");
+    expect(box.textContent).toContain("None yet. Join your campus");
     await click(control("Join wisc.edu and share my artists"));
     await settle();
     expect(sent.find((s) => s.method === "POST")!.body).toEqual({ id: "campus:wisc.edu", artists: [id(9)] });
@@ -126,7 +127,7 @@ describe("Around You", () => {
       if (method === "POST") return 403;
       return url.searchParams.get("id") ? view({ joined: false, recap: null }) : { joined: [view({ id: "campus:a.edu", name: "a.edu", joined: true })], campus: "campus:a.edu", signedIn: true };
     };
-    await render(<AroundYou looking="country:SE" />);
+    await render(<AroundYou countries={COUNTRIES} looking="country:SE" />);
     await settle();
     expect(box.textContent).toContain("Your communities");
     await click(control("Join and share my artists"));
@@ -139,13 +140,13 @@ describe("Around You", () => {
     handlers["/api/discover/listening"] = (_m, _u, _b, signal) =>
       new Promise((_, reject) => signal!.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))));
     handlers["/api/discover/communities"] = () => ({ joined: [], campus: "campus:a.edu", signedIn: true });
-    await render(<AroundYou looking={null} />);
+    await render(<AroundYou countries={COUNTRIES} looking={null} />);
     await settle();
     expect(control("Join a.edu and share my artists").hasAttribute("disabled")).toBe(true);
     await unmount();
     mount();
     handlers["/api/discover/communities"] = () => 503;
-    await render(<AroundYou looking="country:SE" />);
+    await render(<AroundYou countries={COUNTRIES} looking="country:SE" />);
     await settle();
     expect(box.textContent).toContain("Refused (503)");
   });
@@ -153,14 +154,14 @@ describe("Around You", () => {
   it("shows it's loading, and stops asking when it leaves", async () => {
     handlers["/api/discover/communities"] = (_m, _u, _b, signal) =>
       new Promise((_, reject) => signal!.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))));
-    await render(<AroundYou looking="country:SE" />);
+    await render(<AroundYou countries={COUNTRIES} looking="country:SE" />);
     expect(box.querySelectorAll("[role=status]")).toHaveLength(2);
     await unmount();
     mount();
     // The chart can arrive before knowing who is looking: no joining until then.
     const pending = handlers["/api/discover/communities"];
     handlers["/api/discover/communities"] = (m, url, b, signal) => (url.searchParams.get("id") ? view() : pending(m, url, b, signal));
-    await render(<AroundYou looking="country:SE" />);
+    await render(<AroundYou countries={COUNTRIES} looking="country:SE" />);
     await settle();
     expect(box.textContent).toContain("Sweden");
     expect(all("button").some((b) => b.textContent!.includes("Join"))).toBe(false);
