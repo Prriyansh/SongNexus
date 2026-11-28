@@ -1,10 +1,12 @@
 "use client";
 
 import { LoaderCircle, Search, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { search } from "../api";
 import { matchRange } from "../lib/match";
+import { askHref, looksLikeQuestion } from "../lib/question";
 import { entityHref, type EntityKind, type EntityRef } from "../lib/types";
 import { Avatar, Cover } from "./parts";
 
@@ -98,6 +100,8 @@ export default function EntitySearch({ label, placeholder, kinds, onPick, main =
   const ready = found?.query === query;
   const at = Math.min(active, Math.max(0, results.length - 1));
   const showList = open && query !== "";
+  // A question typed into a search that opens pages can be asked instead.
+  const question = !onPick && looksLikeQuestion(query);
 
   const pick = (picked: EntityRef) => {
     setText("");
@@ -115,6 +119,11 @@ export default function EntitySearch({ label, placeholder, kinds, onPick, main =
     if (event.key === "Escape") {
       if (showList) event.preventDefault();
       setOpen(false);
+      return;
+    }
+    if (event.key === "Enter" && question && ready && !results.length) {
+      event.preventDefault();
+      router.push(askHref(query));
       return;
     }
     if (!results.length) return;
@@ -203,9 +212,15 @@ export default function EntitySearch({ label, placeholder, kinds, onPick, main =
         </ul>
         {ready && !results.length && (
           <p>
-            {found.failed
-              ? "Search isn’t working right now. Try again in a moment."
-              : `Nothing called “${query}” in this catalog.`}
+            {found.failed ? (
+              "Search isn’t working right now. Try again in a moment."
+            ) : question ? (
+              <>
+                No name matches. <Link href={askHref(query)}>Ask it as a question</Link>
+              </>
+            ) : (
+              `Nothing called “${query}” in this catalog.`
+            )}
           </p>
         )}
       </div>

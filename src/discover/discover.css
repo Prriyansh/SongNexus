@@ -1665,3 +1665,60 @@
     display: none;
   }
 }
+
+/* Ask */
+.dx-ask {
+  max-width: 860px;
+  margin-bottom: 18px;
+}
+.dx-ask-row {
+  display: flex;
+  gap: 10px;
+}
+.dx-ask-row .dx-field {
+  flex: 1;
+}
+.dx-ask-row .dx-button {
+  height: 48px;
+}
+.dx-reply {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+.dx-reply > * {
+  max-width: 100%;
+}
+.dx-reply h3 {
+  margin: 10px 0 0;
+}
+.dx-reply .dx-grid,
+.dx-reply .dx-portraits,
+.dx-reply .dx-reasons,
+.dx-reply .dx-steps,
+.dx-reply .dx-chain {
+  justify-self: stretch;
+}
+.dx-took {
+  margin: 0;
+  color: var(--dx-soft);
+  font-size: 13px;
+}
+.dx-main .dx-took a {
+  color: #ff8fa1;
+}
+.dx-lead {
+  margin: 0;
+  color: var(--dx-text);
+  font-size: 17px;
+  font-weight: 700;
+}
+.dx-main .dx-results p a {
+  color: #ff8fa1;
+  font-weight: 700;
+}
+@media (max-width: 650px) {
+  .dx-ask-row {
+    flex-direction: column;
+  }
+}
