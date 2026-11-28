@@ -1,4 +1,4 @@
-import { ArrowRight, MessageCircleQuestion } from "lucide-react";
+import { ArrowRight, MessageCircleQuestion, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import {
@@ -13,7 +13,8 @@ import {
   Skeleton,
   SongLink,
 } from "@/discover/components/parts";
-import { ask, type Answer, type CreditPerson, type CreditRole, type Took } from "@/discover/lib/ask";
+import { aiEnabled, askWithAi } from "@/discover/lib/ai-ask";
+import type { Answer, CreditPerson, CreditRole, Took } from "@/discover/lib/ask";
 import { pageMetadata } from "@/discover/lib/metadata";
 import { oneOf } from "@/discover/lib/query";
 import { askHref, EXAMPLE_QUESTIONS } from "@/discover/lib/question";
@@ -318,10 +319,17 @@ function AnswerView({ answer }: { answer: Answer }) {
 
 async function Content({ searchParams }: Pick<PageProps<"/discover/ask">, "searchParams">) {
   const question = oneOf(await searchParams, "q").trim().slice(0, MAX_QUESTION);
-  const answer = question ? ask(graph(), question) : null;
+  const asked = question ? await askWithAi(graph(), question) : null;
+  const answer = asked?.answer ?? null;
   return (
     <>
       <AskForm key={question} question={question} />
+      {asked?.ai && (
+        <p className="dx-ai-note" role="note">
+          <Sparkles size={16} aria-hidden="true" /> Read by AI as the question below. The answer itself comes
+          from the credits; if it isn’t what you meant, try other words.
+        </p>
+      )}
       {answer && <AnswerView answer={answer} />}
       {(!answer || answer.kind === "unknown" || answer.kind === "missing") && (
         <Examples title={answer ? "Questions Ask can answer" : "Try asking"} />
@@ -337,7 +345,7 @@ export default function AskPage({ searchParams }: PageProps<"/discover/ask">) {
         <h1>Ask</h1>
         <p>
           Ask in plain words. The words choose the question; every answer comes from the credits in
-          this catalog.
+          this catalog.{aiEnabled() && " Questions the patterns can’t read, or with a misspelled name, are read by AI."}
         </p>
       </header>
       <Suspense fallback={<Skeleton panels={2} />}>

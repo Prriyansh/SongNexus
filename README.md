@@ -25,6 +25,7 @@ settings) add more; each page says which sources were checked or what isn't set 
 | `DISCOGS_TOKEN` | A higher Discogs rate limit (60 requests a minute, not 25), so more albums per scan | Discogs still runs, more slowly |
 | `LASTFM_API_KEY` | Last.fm listeners and artists similar to both; Last.fm in Discover's Library | Last.fm is skipped |
 | `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`) | Short friend codes when deployed (rooms are stored in Redis for a week), the games' leaderboards, accounts and Around You | In production, Friends falls back to a long link holding the playlist, and leaderboards, accounts and Around You say they aren't set up. In development, all of it lives in memory |
+| `ANTHROPIC_API_KEY` (and optionally `AI_DAILY_LIMIT`, default 1,000 readings a day) | AI search in Discover's Ask: questions the patterns can't read, or with a misspelled name, are read by Claude, and the catalog still answers | Ask reads questions with its patterns only |
 | `GOOGLE_CLIENT_ID` and `SESSION_SECRET` (32+ random characters) | Sign in with Google on Discover's You page, keeping games, Top 5, hidden artists and services the same in every browser, and joining Around You | Everything is kept in the browser |
 
 The sidebar contains **About Me**, **Connection Web**, **Friends** and **Explore**, then Discover's

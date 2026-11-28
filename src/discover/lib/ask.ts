@@ -455,8 +455,10 @@ function connectionsAnswer(g: Graph, q: Extract<Question, { intent: "connections
 }
 
 /** Answers a question from the catalog. */
-export function ask(g: Graph, raw: string): Answer {
-  const q = parseQuestion(raw);
+export const ask = (g: Graph, raw: string): Answer => answerQuestion(g, parseQuestion(raw));
+
+/** Answers a question already read, by the patterns or by AI. */
+export function answerQuestion(g: Graph, q: Question): Answer {
   switch (q.intent) {
     case "path":
       return pathAnswer(g, q);

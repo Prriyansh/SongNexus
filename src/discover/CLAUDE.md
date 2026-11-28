@@ -55,6 +55,11 @@ from its own Google Workspace domain.
   pick the question and the names; it never states anything the catalog doesn't hold, and says which
   artist or song each name was taken to be. `lib/question.ts` — telling a question from a name, the
   address that asks it, and the example questions (safe for the browser).
+- `lib/ai-ask.ts` — AI search: when the patterns can't read a question, a name isn't found or a search
+  finds nothing, Claude (`claude-opus-5-5`, low effort, structured output, server-side safety
+  fallback, 12 s timeout) reads it into one of Ask's questions; the catalog still answers, and the
+  page says it was read by AI. Readings are remembered and capped per day (`AI_DAILY_LIMIT`, default
+  1,000). Needs `ANTHROPIC_API_KEY`; without it Ask works as before. The question is never logged.
 - `lib/for-you.ts` — For you: artists connected to the favourites saved in About Me (those connected
   to more of them first, each with the favourite and credit behind it), then the best-known artists
   of favourite genres. `lib/stored.ts` — what the browser keeps: About Me's favourites (read, never
@@ -106,7 +111,8 @@ link on it followed), `components`, `shell` and `web` (controls, in jsdom) and `
 a photo without an author); `corners` and `corners-ui` cover the remaining small cases, so every
 line and branch is tested. `stories` finds each kind of story in a made-up catalog built by name
 (`world.ts`) and checks the real feed; `stories-page` and `stories-ui` cover the page and its keys.
-`ask` reads every form of question and answers each kind on a made-up catalog (and checks every
+`ai-ask` covers AI readings (the request sent, failures, cache, daily limit) with a stand-in client;
+`ask-ai-page` the page with AI on. `ask` reads every form of question and answers each kind on a made-up catalog (and checks every
 example question gets a real answer); `ask-page` renders each kind of answer; `ask-ui` covers asking
 from the search box.
 `for-you` covers the picks on made-up catalogs and the `for-you` and `today` routes; `home-ui` covers

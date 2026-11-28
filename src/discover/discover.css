@@ -2107,3 +2107,31 @@ ul.dx-top {
   align-items: center;
   gap: 6px;
 }
+
+/* AI search */
+.dx-ai-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 860px;
+  margin: 0 0 12px;
+  color: var(--dx-soft);
+  font-size: 13px;
+}
+.dx-ai-note svg {
+  flex-shrink: 0;
+  color: #c9b8ff;
+}
+.dx-main .dx-ask-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--dx-border);
+  color: #ff8fa1;
+  font-weight: 700;
+  text-decoration: none;
+}
+.dx-main .dx-ask-link:hover {
+  background: #221f27;
+}

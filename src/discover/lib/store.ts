@@ -8,6 +8,8 @@ export type Store = {
   set: (key: string, value: string, ttlSeconds: number) => Promise<void>;
   get: (key: string) => Promise<string | null>;
   del: (key: string) => Promise<void>;
+  /** Adds one to a count, starting it (for `ttlSeconds`) if there is none, and gives the new count. */
+  increment: (key: string, ttlSeconds: number) => Promise<number>;
   /** Adds a member to a ranked list (lower scores first) unless it is there. False if it was. */
   rankNew: (key: string, member: string, score: number, ttlSeconds: number) => Promise<boolean>;
   /** Takes a member out of a ranked list. */
@@ -47,6 +49,12 @@ export function memoryStore(now: () => number = Date.now): Store {
     set: async (key, value, ttl) => void data.set(key, { value, expires: now() + ttl * 1000 }),
     get: async (key) => (live(key)?.value as string | undefined) ?? null,
     del: async (key) => void data.delete(key),
+    increment: async (key, ttl) => {
+      const entry = live(key);
+      const count = Number(entry?.value ?? 0) + 1;
+      data.set(key, { value: String(count), expires: entry?.expires ?? now() + ttl * 1000 });
+      return count;
+    },
     rankNew: async (key, member, score, ttl) => {
       const list = (live(key)?.value as Map<string, number> | undefined) ?? new Map<string, number>();
       if (list.has(member)) return false;
@@ -79,6 +87,11 @@ export function redisStore(url: string, token: string, fetchImpl: typeof fetch =
     set: async (key, value, ttl) => void (await command(["SET", key, value, "EX", ttl])),
     get: (key) => command<string | null>(["GET", key]),
     del: async (key) => void (await command(["DEL", key])),
+    increment: async (key, ttl) => {
+      const count = await command<number>(["INCR", key]);
+      if (count === 1) await command(["EXPIRE", key, ttl]);
+      return count;
+    },
     rankNew: async (key, member, score, ttl) => {
       const added = await command<number>(["ZADD", key, "NX", score, member]);
       await command(["EXPIRE", key, ttl]);

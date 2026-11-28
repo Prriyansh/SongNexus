@@ -42,4 +42,22 @@ describe("asking from search", () => {
     await press(find("input"), "Enter");
     expect(push).not.toHaveBeenCalled();
   });
+
+  it("offers a search of a few words to Ask, under any names it matched", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ results: [{ kind: "artist", id: "1", name: "Rihanna", note: "", image: null }] }),
+      })),
+    );
+    await render(<EntitySearch label="Search" placeholder="" kinds={["artist"]} />);
+    await type("rihanna rainy song");
+    const link = find(".dx-ask-link");
+    expect(link.textContent).toContain("Ask: “rihanna rainy song”");
+    expect(link.getAttribute("href")).toBe("/discover/ask?q=rihanna%20rainy%20song");
+    await type("rihanna songs");
+    expect(box.querySelector(".dx-ask-link")).toBeNull();
+  });
 });
