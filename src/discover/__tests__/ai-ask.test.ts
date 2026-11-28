@@ -1,19 +1,23 @@
-// AI search: readings mapped onto Ask's questions, the request sent to Claude, failures that fall
-// back to the patterns, the cache, the daily limit, and the answers that come of it.
-import Anthropic from "@anthropic-ai/sdk";
+// AI search: readings mapped onto Ask's questions, the request sent to Gemini's free models, falling
+// back across them, the cache, the daily limit, and the answers that come of it.
+import { GoogleGenAI } from "@google/genai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  AI_MODEL,
   aiAllowed,
   aiClient,
   aiEnabled,
   askWithAi,
   DEFAULT_DAILY_LIMIT,
   forgetReadings,
+  FREE_MODELS,
   INSTRUCTIONS,
+  modelsOf,
   questionOf,
+  readingIn,
   readWithAi,
   REMEMBERED,
+  SCHEMA,
+  type Gemini,
   type Reading,
 } from "../lib/ai-ask";
 import type { Question } from "../lib/ask";
@@ -22,7 +26,7 @@ import { graph } from "../lib/server";
 
 const blank: Reading = { intent: "unknown", a: "", b: "", song: "", role: "all", type: "any", direction: "none", strongest: false };
 const reading = (over: Partial<Reading>): Reading => ({ ...blank, ...over });
-const ON = { ANTHROPIC_API_KEY: "key" };
+const ON = { GEMINI_API_KEY: "key" };
 
 beforeEach(() => forgetReadings());
 afterEach(() => vi.restoreAllMocks());
@@ -48,77 +52,101 @@ describe("readings as questions", () => {
   });
 });
 
-describe("reading with Claude", () => {
-  const client = (reply: () => unknown) => {
-    const parse = vi.fn(async (params: unknown) => {
-      void params;
-      return reply();
+describe("reading with Gemini's free models", () => {
+  type Reply = { output_text?: string } | { status: number } | Error;
+  /** A stand-in client answering each call with the next reply: an interaction, an error status, or an error. */
+  const gemini = (...replies: Reply[]) => {
+    const create = vi.fn(async (params: Record<string, unknown>, options: Record<string, unknown>) => {
+      void [params, options];
+      const reply = replies.shift()!;
+      if (reply instanceof Error) throw reply;
+      if ("status" in reply) throw Object.assign(new Error(`HTTP ${reply.status}`), { status: reply.status });
+      return reply;
     });
-    return { client: { beta: { messages: { parse } } } as unknown as Pick<Anthropic, "beta">, parse };
+    return { client: { interactions: { create } } as unknown as Gemini, create };
   };
+  const json = (r: Partial<Reading>) => ({ output_text: JSON.stringify(reading(r)) });
+  const quiet = () => vi.spyOn(console, "error").mockImplementation(() => {});
 
-  it("asks for a structured reading, with the question in its own turn after the cached instructions", async () => {
-    const { client: fake, parse } = client(() => ({ stop_reason: "end_turn", parsed_output: reading({ intent: "lookup", a: "Adele" }) }));
-    expect(await readWithAi("adel", fake)).toEqual({ intent: "lookup", text: "Adele" });
-    const params = parse.mock.calls[0][0] as Record<string, unknown>;
-    expect(params).toMatchObject({
-      model: AI_MODEL,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: { effort: "low" },
-      system: [{ type: "text", text: INSTRUCTIONS, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: "<question>adel</question>" }],
+  it("asks the lightest free model first, for a reading that fits the schema, kept nowhere", async () => {
+    const { client, create } = gemini(json({ intent: "lookup", a: "Adele" }));
+    expect(await readWithAi("adel", client)).toEqual({ intent: "lookup", text: "Adele" });
+    const [params, options] = create.mock.calls[0];
+    expect(params).toEqual({
+      model: FREE_MODELS[0],
+      system_instruction: INSTRUCTIONS,
+      input: "Question: adel\nReading:",
+      response_format: { type: "text", mime_type: "application/json", schema: SCHEMA },
+      generation_config: { temperature: 0, max_output_tokens: 400, thinking_level: "minimal" },
+      store: false,
     });
-    expect((params.output_config as { format: { type: string } }).format.type).toBe("json_schema");
-    await readWithAi("x".repeat(300), fake);
-    expect((parse.mock.calls[1][0] as { messages: { content: string }[] }).messages[0].content).toHaveLength(200 + "<question></question>".length);
+    expect(options).toMatchObject({ retries: { strategy: "none" } });
+    expect(options.timeout_ms).toBeLessThanOrEqual(12_000);
+    expect(SCHEMA).not.toHaveProperty("$schema");
+    expect(SCHEMA).toMatchObject({ type: "object", additionalProperties: false });
+    await readWithAi("x".repeat(300), gemini(json({})).client);
   });
 
-  it("gives up on a declined, unparsed or unknown reading", async () => {
-    expect(await readWithAi("q", client(() => ({ stop_reason: "refusal", parsed_output: null })).client)).toBeUndefined();
-    expect(await readWithAi("q", client(() => ({ stop_reason: "end_turn", parsed_output: null })).client)).toBeUndefined();
-    expect(await readWithAi("q", client(() => ({ stop_reason: "end_turn", parsed_output: blank })).client)).toBeNull();
-  });
-
-  it("logs failures without the question, and gives up", async () => {
-    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
-    const headers = new Headers();
-    const failures = [
-      new Anthropic.RateLimitError(429, {}, "slow down", headers),
-      new Anthropic.APIConnectionTimeoutError(),
-      new Anthropic.InternalServerError(500, {}, "oops", headers),
-      new SyntaxError("bad JSON"),
-    ];
-    for (const failure of failures)
-      expect(
-        await readWithAi("my private question", client(() => {
-          throw failure;
-        }).client),
-      ).toBeUndefined();
+  it("moves to the next free model when one is over its limit, unavailable or gives a bad reading", async () => {
+    const logged = quiet();
+    const { client, create } = gemini({ status: 429 }, { output_text: "not json" }, json({ intent: "sampled", a: "James Brown" }));
+    expect(await readWithAi("my private question", client)).toEqual({ intent: "sampled", artist: "James Brown" });
+    expect(create.mock.calls.map(([p]) => p.model)).toEqual(FREE_MODELS);
+    expect((create.mock.calls[2][0].generation_config as { thinking_level: string }).thinking_level).toBe("low");
     expect(logged.mock.calls.map(([line]) => line)).toEqual([
-      "[ask] AI reading rate limited",
-      "[ask] AI reading didn’t answer in time",
-      "[ask] AI reading failed (500)",
-      "[ask] AI reading failed: SyntaxError",
+      `[ask] ${FREE_MODELS[0]} failed (429)`,
+      `[ask] ${FREE_MODELS[1]} gave a reading that doesn’t fit`,
     ]);
     expect(JSON.stringify(logged.mock.calls)).not.toContain("private");
+    const tried = gemini({ status: 404 }, { status: 503 }, {});
+    expect(await readWithAi("q", tried.client)).toBeUndefined();
+    expect(tried.create).toHaveBeenCalledTimes(3);
   });
 
-  it("uses one client per server instance, retrying once and waiting a while", () => {
-    vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
-    const made = aiClient();
-    expect(made).toBeInstanceOf(Anthropic);
-    expect(aiClient()).toBe(made);
-    expect(made.maxRetries).toBe(1);
-    expect(made.timeout).toBe(12_000);
-    vi.unstubAllEnvs();
+  it("stops at a refusal it can't get past, or a failure without a status", async () => {
+    quiet();
+    const refused = gemini({ status: 400 }, json({ intent: "lookup", a: "x" }));
+    expect(await readWithAi("q", refused.client)).toBeUndefined();
+    expect(refused.create).toHaveBeenCalledTimes(1);
+    const timedOut = gemini(new TypeError("timed out"), json({ intent: "lookup", a: "x" }));
+    expect(await readWithAi("q", timedOut.client)).toBeUndefined();
+    expect(timedOut.create).toHaveBeenCalledTimes(1);
   });
 
-  it("is on with a key or token", () => {
-    expect(aiEnabled({ ANTHROPIC_API_KEY: " k " })).toBe(true);
-    expect(aiEnabled({ ANTHROPIC_AUTH_TOKEN: "t" })).toBe(true);
-    expect(aiEnabled({ ANTHROPIC_API_KEY: " " })).toBe(false);
+  it("gives every model only the time left, and none once it's gone", async () => {
+    quiet();
+    let clock = 0;
+    const { create } = gemini({ status: 429 }, { status: 429 }, json({ intent: "lookup", a: "x" }));
+    const slow = vi.fn(async (params: Record<string, unknown>, options: Record<string, unknown>) => {
+      clock += 7_000;
+      return create(params, options);
+    });
+    expect(await readWithAi("q", { interactions: { create: slow } } as unknown as Gemini, FREE_MODELS, () => clock)).toBeUndefined();
+    expect(slow.mock.calls.map(([, o]) => o.timeout_ms)).toEqual([12_000, 5_000]);
+  });
+
+  it("reads JSON in a code fence, and nothing that doesn't fit", () => {
+    expect(readingIn('```json\n{"intent":"lookup","a":"ABBA","b":"","song":"","role":"all","type":"any","direction":"none","strongest":false}\n```')).toMatchObject({ a: "ABBA" });
+    expect(readingIn(JSON.stringify({ intent: "dance" }))).toBeNull();
+    expect(readingIn("{")).toBeNull();
+    expect(readingIn(undefined)).toBeNull();
+    expect(readWithAi).toBeTypeOf("function");
+  });
+
+  it("is on with a Gemini or Google key, and tries the models GEMINI_MODELS names", () => {
+    expect(aiEnabled({ GEMINI_API_KEY: " k " })).toBe(true);
+    expect(aiEnabled({ GOOGLE_API_KEY: "k" })).toBe(true);
+    expect(aiEnabled({ GEMINI_API_KEY: " " })).toBe(false);
     expect(aiEnabled({})).toBe(false);
+    expect(modelsOf({ GEMINI_MODELS: " gemini-4-hydrogen , Bad Name!, gemini-3.6-flash" })).toEqual(["gemini-4-hydrogen", "gemini-3.6-flash"]);
+    expect(modelsOf({ GEMINI_MODELS: "!!" })).toEqual(FREE_MODELS);
+    expect(modelsOf({})).toEqual(FREE_MODELS);
+  });
+
+  it("uses one client per server instance", () => {
+    const made = aiClient({ GEMINI_API_KEY: "test-key" });
+    expect(made).toBeInstanceOf(GoogleGenAI);
+    expect(aiClient({ GOOGLE_API_KEY: "other" })).toBe(made);
   });
 });
 

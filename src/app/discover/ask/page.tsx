@@ -345,7 +345,8 @@ export default function AskPage({ searchParams }: PageProps<"/discover/ask">) {
         <h1>Ask</h1>
         <p>
           Ask in plain words. The words choose the question; every answer comes from the credits in
-          this catalog.{aiEnabled() && " Questions the patterns can’t read, or with a misspelled name, are read by AI."}
+          this catalog.{aiEnabled() &&
+            " Questions the patterns can’t read, or with a misspelled name, are read by AI: they’re sent to Google’s Gemini, and on its free tier Google may use them to improve its products."}
         </p>
       </header>
       <Suspense fallback={<Skeleton panels={2} />}>

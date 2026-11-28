@@ -55,11 +55,15 @@ from its own Google Workspace domain.
   pick the question and the names; it never states anything the catalog doesn't hold, and says which
   artist or song each name was taken to be. `lib/question.ts` — telling a question from a name, the
   address that asks it, and the example questions (safe for the browser).
-- `lib/ai-ask.ts` — AI search: when the patterns can't read a question, a name isn't found or a search
-  finds nothing, Claude (`claude-opus-5-5`, low effort, structured output, server-side safety
-  fallback, 12 s timeout) reads it into one of Ask's questions; the catalog still answers, and the
-  page says it was read by AI. Readings are remembered and capped per day (`AI_DAILY_LIMIT`, default
-  1,000). Needs `ANTHROPIC_API_KEY`; without it Ask works as before. The question is never logged.
+- `lib/ai-ask.ts` — AI search on Gemini's free tier: when the patterns can't read a question, a name
+  isn't found or a search finds nothing, a free Gemini model reads it into one of Ask's questions
+  (JSON schema output checked again here, worked examples in the instructions, temperature 0, least
+  thinking, nothing stored on Google's side). It tries `gemini-3.5-flash-lite`, then
+  `gemini-3.6-flash`, then `gemini-3.8-flash` (`GEMINI_MODELS` to change), moving on when one is over
+  its free limit, unavailable or gives a bad reading, all within 12 s. The catalog still answers, and
+  the page says the question was read by AI and sent to Google. Readings are remembered and capped
+  per day (`AI_DAILY_LIMIT`, default 200). Needs `GEMINI_API_KEY`; without it Ask works as before.
+  The question is never logged.
 - `lib/for-you.ts` — For you: artists connected to the favourites saved in About Me (those connected
   to more of them first, each with the favourite and credit behind it), then the best-known artists
   of favourite genres. `lib/stored.ts` — what the browser keeps: About Me's favourites (read, never

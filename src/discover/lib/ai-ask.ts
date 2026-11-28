@@ -1,10 +1,10 @@
-// AI search for Ask. When the patterns can't read a question, a name in it isn't found, or a search
-// finds nothing, Claude reads the question into the same fixed set of questions. The model only
-// interprets: it picks the question and spells the names. Every fact in the answer still comes
-// from the catalog, and the page says the question was read by AI. Needs ANTHROPIC_API_KEY;
-// without it Ask works as before. Server only.
-import Anthropic from "@anthropic-ai/sdk";
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+// AI search for Ask, on Gemini's free tier. When the patterns can't read a question, a name in it
+// isn't found, or a search finds nothing, a free Gemini model reads the question into the same fixed
+// set of questions. The model only interprets: it picks the question and spells the names. Every
+// fact in the answer still comes from the catalog, and the page says the question was read by AI.
+// Needs GEMINI_API_KEY (a free key from Google AI Studio); without it Ask works as before.
+// Server only.
+import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import { answerQuestion, ask, nameOf, type Answer, type Question } from "./ask";
 import { dayNumber } from "./days";
@@ -12,15 +12,22 @@ import type { Graph } from "./graph";
 import { normalize } from "./search";
 import { store, type Store } from "./store";
 
-export const AI_MODEL = "claude-opus-5-5";
-/** A search waits this long for a reading, then answers without one. */
+/**
+ * Free-tier models, tried in turn: the lightest first (fastest, and the most generous free limits),
+ * the next when one is over its free limit, unavailable, or gives a reading that doesn't fit.
+ * GEMINI_MODELS (comma-separated) replaces the list.
+ */
+export const FREE_MODELS = ["gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3.8-flash"];
+/** Thinking kept to the least each model allows: reading a question needs little of it. */
+const THINKING: Record<string, "minimal" | "low"> = { "gemini-3.8-flash": "low" };
+/** A search waits this long in all for a reading, then answers without one. */
 export const AI_TIMEOUT_MS = 12_000;
-/** Readings a day, so a busy or abused page can't run up the bill. AI_DAILY_LIMIT changes it. */
-export const DEFAULT_DAILY_LIMIT = 1000;
+/** Readings a day, kept well inside the free tier's daily limits. AI_DAILY_LIMIT changes it. */
+export const DEFAULT_DAILY_LIMIT = 200;
 export const MAX_QUESTION = 200;
 const MAX_NAME = 120;
 
-/** What the model returns: one of Ask's questions, every field present (structured outputs). */
+/** A reading: one of Ask's questions, every field present. */
 export const Reading = z.object({
   intent: z.enum(["path", "compare", "credits", "collaborators", "sampled", "connections", "lookup", "unknown"]),
   a: z.string(),
@@ -32,35 +39,64 @@ export const Reading = z.object({
   strongest: z.boolean(),
 });
 export type Reading = z.infer<typeof Reading>;
+/** The reading as JSON Schema, without `$schema`, which Gemini's subset of JSON Schema leaves out. */
+export const SCHEMA = Object.fromEntries(Object.entries(z.toJSONSchema(Reading)).filter(([key]) => key !== "$schema"));
 
-// Stable, so it is cached across requests; the question comes after it, in the user turn.
-export const INSTRUCTIONS = `You read search questions for Song Nexus, a catalog of artists, songs and the credits that connect them: who performed, produced, was featured on, played on or sampled what, and which bands artists were in.
+const blank = { a: "", b: "", song: "", role: "all", type: "any", direction: "none", strongest: false };
+const example = (question: string, reading: Partial<Reading>) =>
+  `Question: ${question}\nReading: ${JSON.stringify({ ...blank, ...reading })}`;
 
-Your only job is to read the question into one of the intents below and to write the names the way they are usually written. Never answer the question yourself: the app answers it from its catalog, and anything you add beyond the reading is thrown away.
+// Small free models follow examples better than rules, so the instructions are mostly examples.
+export const INSTRUCTIONS = `You read search questions for Song Nexus, a catalog of artists, songs and the credits that connect them (who performed, produced, was featured on, played on or sampled what, and which bands artists were in).
+
+Read the question into exactly one intent, and write each name the way it is usually written. Never answer the question: the app answers it from its catalog.
 
 Intents:
-- path: how two artists are connected. a and b are the two artists. strongest is true only if they ask for the closest or strongest working relationships rather than the fewest steps.
-- compare: what two artists, or two songs, have in common. a and b are the two.
-- credits: who is credited on one song. song is its title, followed by " by " and the artist if the question names one. role is producer (who produced it), featured (guest artists), performer (who sang or released it) or all.
-- collaborators: who one artist worked with. a is the artist. type is features (performed with, featured), production, bands (bands or projects they were in) or any. For production, direction is "produced by them" when asking who produced for the artist, and "produced for them" when asking whom the artist produced for.
-- sampled: who sampled one artist. a is the artist.
-- connections: artists connected to, or like, one artist. a is the artist.
-- lookup: the question is only the name of an artist, song, label or genre. a is that name.
-- unknown: anything the credits can't answer, such as opinions, lyrics, meanings, charts, sales, news, tours, or recommendations by mood or genre alone.
+- path: how two artists are connected (a, b). strongest is true only if they ask for the closest or strongest connection.
+- compare: what two artists or two songs have in common (a, b).
+- credits: who is credited on one song. song is the title, plus " by " and the artist if named. role: producer, featured (guests), performer (who sang or released it), or all.
+- collaborators: who one artist (a) worked with. type: features, production, bands, or any. For production, direction is "produced by them" (who produced for the artist) or "produced for them" (whom the artist produced for).
+- sampled: who sampled one artist (a).
+- connections: artists connected to, or like, one artist (a).
+- lookup: the question is only a name (a).
+- unknown: anything else: opinions, lyrics, meanings, charts, sales, news, tours, moods.
 
-Rules:
-- Correct misspellings of names ("Rihana" is "Rihanna", "Jonny Cash" is "Johnny Cash").
-- If the question describes an artist or song instead of naming it, name it only when the description is unambiguous; otherwise choose unknown.
-- Leave fields that don't apply as empty strings, role "all", type "any", direction "none" and strongest false.`;
+Fix misspelled names. Name an artist the question only describes only if the description is unambiguous; otherwise use unknown. Fields that don't apply stay as in the examples.
 
-export const aiEnabled = (env: Record<string, string | undefined> = process.env) =>
-  Boolean(env.ANTHROPIC_API_KEY?.trim() || env.ANTHROPIC_AUTH_TOKEN?.trim());
+${[
+  example("how r jonny cash n rihana linked", { intent: "path", a: "Johnny Cash", b: "Rihanna" }),
+  example("closest connection between adele and drake", { intent: "path", a: "Adele", b: "Drake", strongest: true }),
+  example("what do beyonce and jay z have in common", { intent: "compare", a: "Beyoncé", b: "JAY-Z" }),
+  example("who made the beat on umbrella", { intent: "credits", song: "Umbrella", role: "producer" }),
+  example("whos the guest on monster by kanye", { intent: "credits", song: "Monster by Kanye West", role: "featured" }),
+  example("taylor swift's producers", { intent: "collaborators", a: "Taylor Swift", type: "production", direction: "produced by them" }),
+  example("which bands was dave grohl in", { intent: "collaborators", a: "Dave Grohl", type: "bands" }),
+  example("who sampled james brown", { intent: "sampled", a: "James Brown" }),
+  example("artists similar to bon iver", { intent: "connections", a: "Bon Iver" }),
+  example("kendrik lamar", { intent: "lookup", a: "Kendrick Lamar" }),
+  example("what is the saddest song ever", { intent: "unknown" }),
+].join("\n\n")}`;
 
-let shared: Anthropic | null = null;
+/** The Gemini API key, from GEMINI_API_KEY or GOOGLE_API_KEY; "" without one. */
+const keyOf = (env: Record<string, string | undefined>) => env.GEMINI_API_KEY?.trim() || env.GOOGLE_API_KEY?.trim() || "";
 
-/** One client per server instance: a failed request is retried once, and none waits too long. */
-export function aiClient(): Anthropic {
-  shared ??= new Anthropic({ maxRetries: 1, timeout: AI_TIMEOUT_MS });
+export const aiEnabled = (env: Record<string, string | undefined> = process.env) => keyOf(env) !== "";
+
+/** The free models to try, from GEMINI_MODELS when it names any. */
+export function modelsOf(env: Record<string, string | undefined> = process.env): string[] {
+  const named = (env.GEMINI_MODELS ?? "")
+    .split(",")
+    .map((m) => m.trim())
+    .filter((m) => /^[a-z0-9][a-z0-9.-]{2,60}$/.test(m));
+  return named.length ? named : FREE_MODELS;
+}
+
+export type Gemini = Pick<GoogleGenAI, "interactions">;
+let shared: Gemini | null = null;
+
+/** One client per server instance. */
+export function aiClient(env: Record<string, string | undefined> = process.env): Gemini {
+  shared ??= new GoogleGenAI({ apiKey: keyOf(env) });
   return shared;
 }
 
@@ -93,35 +129,58 @@ export function questionOf(reading: Reading): Question | null {
   }
 }
 
+/** A model's text as a reading, if it is one: free models sometimes wrap JSON in a code fence. */
+export function readingIn(text: string | undefined): Reading | null {
+  const json = (text ?? "").trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
+  try {
+    const found = Reading.safeParse(JSON.parse(json));
+    return found.success ? found.data : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Over its free limit, overloaded, or not served: worth trying the next free model. */
+const passOn = (status: number | undefined) => status === 429 || status === 404 || (status !== undefined && status >= 500);
+
 /**
- * Reads a question with Claude. Null when it isn't one the catalog can answer; undefined when it
- * couldn't be read (the service failed, timed out or declined), so it can be tried again later.
+ * Reads a question with the free models in turn. Null when it isn't one the catalog can answer;
+ * undefined when no model could read it (limits, failures, time), so it can be tried again later.
  */
 export async function readWithAi(
   question: string,
-  client: Pick<Anthropic, "beta"> = aiClient(),
+  client: Gemini = aiClient(),
+  models: string[] = modelsOf(),
+  now: () => number = Date.now,
 ): Promise<Question | null | undefined> {
-  try {
-    const response = await client.beta.messages.parse({
-      model: AI_MODEL,
-      max_tokens: 4096,
-      // A question a safety check declines is retried on the fallback model it picks.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: { effort: "low", format: betaZodOutputFormat(Reading) },
-      system: [{ type: "text", text: INSTRUCTIONS, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: `<question>${question.slice(0, MAX_QUESTION)}</question>` }],
-    });
-    if (response.stop_reason === "refusal" || !response.parsed_output) return undefined;
-    return questionOf(response.parsed_output);
-  } catch (error) {
-    // Logged without the question: it's what someone typed.
-    if (error instanceof Anthropic.RateLimitError) console.error("[ask] AI reading rate limited");
-    else if (error instanceof Anthropic.APIConnectionError) console.error("[ask] AI reading didn’t answer in time");
-    else if (error instanceof Anthropic.APIError) console.error(`[ask] AI reading failed (${error.status})`);
-    else console.error(`[ask] AI reading failed: ${(error as Error).name}`);
-    return undefined;
+  const deadline = now() + AI_TIMEOUT_MS;
+  for (const model of models) {
+    const left = deadline - now();
+    if (left <= 0) break;
+    try {
+      const interaction = await client.interactions.create(
+        {
+          model,
+          system_instruction: INSTRUCTIONS,
+          input: `Question: ${question.slice(0, MAX_QUESTION)}\nReading:`,
+          response_format: { type: "text", mime_type: "application/json", schema: SCHEMA },
+          generation_config: { temperature: 0, max_output_tokens: 400, thinking_level: THINKING[model] ?? "minimal" },
+          // Nothing kept on Google's side once the reading is back.
+          store: false,
+        },
+        { timeout_ms: left, retries: { strategy: "none" } },
+      );
+      const reading = readingIn(interaction.output_text);
+      if (reading) return questionOf(reading);
+      console.error(`[ask] ${model} gave a reading that doesn’t fit`);
+    } catch (error) {
+      // Logged without the question: it's what someone typed.
+      const status = (error as { status?: number }).status;
+      console.error(`[ask] ${model} failed${status ? ` (${status})` : `: ${(error as Error).name}`}`);
+      if (!passOn(status)) return undefined;
+    }
   }
+  return undefined;
 }
 
 const counted = new Map<number, number>();
@@ -137,7 +196,7 @@ export async function aiAllowed(kept: Store | null, env: Record<string, string |
   return used <= limit;
 }
 
-/** Readings already made, so the same question isn't read (or paid for) twice. */
+/** Readings already made, so the same question isn't read (or counted) twice. */
 const remembered = new Map<string, Question | null>();
 export const REMEMBERED = 500;
 
