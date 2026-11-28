@@ -1,10 +1,11 @@
-import { Search, Spline, Waypoints } from "lucide-react";
+import { BookOpen, Search, Spline, Waypoints } from "lucide-react";
 
 /** Discover's entries in the sidebar, after the app's own four. */
 export const DISCOVER_LINKS = [
   { href: "/discover", label: "Discover", Icon: Search },
   { href: "/discover/six-degrees", label: "Six Degrees", Icon: Spline },
   { href: "/discover/connections", label: "Collaborators", Icon: Waypoints },
+  { href: "/discover/stories", label: "Stories", Icon: BookOpen },
 ] as const;
 
 /** Which entry a page belongs to; artist, song, label and genre pages belong to Discover. */

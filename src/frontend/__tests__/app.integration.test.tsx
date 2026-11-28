@@ -10,6 +10,7 @@ import {
   taylorDetails, VAMPIRE,
 } from './fixtures';
 import { similarWeb } from './fixtures';
+import { DISCOVER_LINKS } from '@/discover/components/SidebarLinks';
 import { examples } from '../routing';
 
 describe('Explore: artists', () => {
@@ -669,7 +670,7 @@ describe('Explore: songs, sound and lyrics', () => {
     expect(button('2 Songs').getAttribute('aria-pressed')).toBe('true');
     expect(button('Explore').getAttribute('aria-current')).toBe('page');
     expect(document.querySelector('.topbar-left > strong')?.textContent).toBe('Explore');
-    expect(Array.from(document.querySelectorAll('nav[aria-label="Main navigation"] .nav-option'), item => item.textContent)).toEqual(['About Me', 'Connection Web', 'Friends', 'Explore', 'Discover', 'Six Degrees', 'Collaborators']);
+    expect(Array.from(document.querySelectorAll('nav[aria-label="Main navigation"] .nav-option'), item => item.textContent)).toEqual(['About Me', 'Connection Web', 'Friends', 'Explore', ...DISCOVER_LINKS.map(link => link.label)]);
 
     await click(button('About Me'));
     expect(window.location.pathname).toBe('/about');

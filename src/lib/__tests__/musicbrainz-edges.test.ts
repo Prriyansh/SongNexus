@@ -120,11 +120,20 @@ describe("credits from sparse recordings", () => {
 
 describe("the request core", () => {
   it("spaces requests out when throttled", async () => {
+    // Timers are faked so a busy machine can't stretch the gap and skip the wait; the clock starts
+    // well after any earlier request, so the first goes at once.
+    vi.useFakeTimers({ now: Date.now() + 60_000 });
     const at: number[] = [];
     const fetchImpl = fakeWeb(() => { at.push(Date.now()); return { artists: [] }; });
-    await searchMusicBrainz({ type: "artist", query: "one", limit: 5 }, { fetchImpl, throttleMs: 300, useCache: false });
-    await searchMusicBrainz({ type: "artist", query: "two", limit: 5 }, { fetchImpl, throttleMs: 300, useCache: false });
-    expect(at[1] - at[0]).toBeGreaterThanOrEqual(290);
+    const search = (query: string) => searchMusicBrainz({ type: "artist", query, limit: 5 }, { fetchImpl, throttleMs: 300, useCache: false });
+    await search("one");
+    const second = search("two");
+    await vi.advanceTimersByTimeAsync(299);
+    expect(at).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    await second;
+    expect(at[1] - at[0]).toBe(300);
+    vi.useRealTimers();
   });
 
   it("gives up on a request after ten seconds", async () => {
