@@ -77,6 +77,10 @@ const RELATION_TEXT: Record<string, (a: string, b: string) => string> = {
 
 const relationText = (type: string, a: string, b: string) => RELATION_TEXT[type](a, b);
 
+/** A song and its artist: "“Umbrella” by Rihanna", or "“Umbrella” (featuring JAŸ-Z)" for a guest. */
+const withArtist = (title: string, artist: string, role: string) =>
+  role === "featured" ? `${title} (featuring ${artist})` : `${title} by ${artist}`;
+
 /** The song or album a fact is about, as it reads inside a sentence. */
 function titleOf(catalog: Catalog, { type, at }: Evidence["subject"]): string {
   if (type === "song") return `“${catalog.songs[at].title}”`;
@@ -97,15 +101,15 @@ function sentence(catalog: Catalog, e: Evidence): string {
         : `${b} is featured on ${title} by ${a}`;
     }
     case "produced_for":
-      return `${a} produced ${title} by ${b}`;
+      return `${a} produced ${withArtist(title, b, e.bRole)}`;
     case "co_produced":
       return `${a} and ${b} both produced ${title}`;
     case "contributed_to":
-      return `${a} is credited with ${partName(e.aRole, e.detail)} on ${title} by ${b}`;
+      return `${a} is credited with ${partName(e.aRole, e.detail)} on ${withArtist(title, b, e.bRole)}`;
     case "sampled":
-      return `${title} by ${b} samples ${a}`;
+      return `${withArtist(title, b, e.bRole)} samples ${a}`;
     case "engineered":
-      return `${a} engineered ${title} by ${b}`;
+      return `${a} engineered ${withArtist(title, b, e.bRole)}`;
     case "label_mates":
       return `${a} and ${b} released albums on ${catalog.labels[e.subject.at].name} within three years of each other`;
     default:

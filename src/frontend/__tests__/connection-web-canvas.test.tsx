@@ -148,15 +148,17 @@ describe('Connection Web pan UX', () => {
 
   it('animates distances through intermediate frames', async () => {
     vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    // The clock stands still, so a busy machine can't move the animation's start past the frames.
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(0);
     await render();
-    const started = performance.now();
     await click(button('Zoom in'));
-    await flushFrame(started + 60);
+    await flushFrame(60);
     const middle = Number(document.querySelector('output')!.textContent!.replace('%', ''));
     expect(middle).toBeGreaterThan(100);
     expect(middle).toBeLessThan(135);
-    await flushFrame(started + 400);
+    await flushFrame(400);
     expect(document.querySelector('output')!.textContent).toBe('135%');
+    clock.mockRestore();
   });
 
   it('keeps lines on the avatar edges at different scales', async () => {

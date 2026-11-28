@@ -59,6 +59,14 @@ export type Reason = {
   year: number | null;
 };
 
+/** An artist For You suggests, and why: a favourite they're connected to, or a favourite genre. */
+export type ForYouPick = {
+  artist: ArtistRef;
+  because: ArtistRef | null;
+  reason: Reason | null;
+  genre: EntityRef | null;
+};
+
 export type PathStep = { from: ArtistRef; to: ArtistRef; reasons: Reason[]; reasonCount: number };
 export type FoundPath = { artists: ArtistRef[]; steps: PathStep[] };
 export type PathSearch =

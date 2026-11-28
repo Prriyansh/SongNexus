@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import AccountSync from "./AccountSync";
 import { currentLink, SidebarLinks } from "./SidebarLinks";
 import { AppLink } from "./parts";
 
@@ -42,7 +43,8 @@ function leadsToPage(event: MouseEvent): boolean {
 }
 
 /** The app's sidebar and top bar around Discover's pages, with the app's own class names. */
-export default function DiscoverShell({ children }: { children: ReactNode }) {
+/** `accounts`: sign-in is set up, so a signed-in person's data is kept in step. */
+export default function DiscoverShell({ children, accounts = false }: { children: ReactNode; accounts?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [arrive] = useState(() => () => {
@@ -144,6 +146,7 @@ export default function DiscoverShell({ children }: { children: ReactNode }) {
             </strong>
           </div>
         </header>
+        {accounts && <AccountSync />}
         {children}
       </div>
     </div>

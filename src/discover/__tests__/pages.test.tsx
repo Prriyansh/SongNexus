@@ -66,7 +66,7 @@ type Kind = keyof typeof pages;
 
 /** Addresses outside Discover that its pages may lead to. */
 const APP =
-  /^\/(connections\?mode=(artist|song)&(artist|song)=|compare\/(artists\?artistA|songs\?songA)=)/;
+  /^\/(about$|connections\?mode=(artist|song)&(artist|song)=|compare\/(artists\?artistA|songs\?songA)=)/;
 
 /** What must be true of any page. */
 function check(html: string) {

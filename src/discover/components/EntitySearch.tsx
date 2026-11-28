@@ -1,14 +1,18 @@
 "use client";
 
-import { LoaderCircle, Search, X } from "lucide-react";
+import { LoaderCircle, Search, Sparkles, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { search } from "../api";
 import { matchRange } from "../lib/match";
+import { askHref, looksLikeQuestion } from "../lib/question";
 import { entityHref, type EntityKind, type EntityRef } from "../lib/types";
 import { Avatar, Cover } from "./parts";
 
 const DEBOUNCE_MS = 160;
+/** A search of this many words is offered to Ask, which can read it with AI. */
+export const ASK_WORDS = 3;
 const KIND_LABELS: Record<EntityKind, string> = {
   artist: "Artist",
   song: "Song",
@@ -98,6 +102,8 @@ export default function EntitySearch({ label, placeholder, kinds, onPick, main =
   const ready = found?.query === query;
   const at = Math.min(active, Math.max(0, results.length - 1));
   const showList = open && query !== "";
+  // A question, or a few words, typed into a search that opens pages can be asked instead.
+  const question = !onPick && (looksLikeQuestion(query) || query.split(/\s+/).length >= ASK_WORDS);
 
   const pick = (picked: EntityRef) => {
     setText("");
@@ -115,6 +121,11 @@ export default function EntitySearch({ label, placeholder, kinds, onPick, main =
     if (event.key === "Escape") {
       if (showList) event.preventDefault();
       setOpen(false);
+      return;
+    }
+    if (event.key === "Enter" && question && ready && !results.length) {
+      event.preventDefault();
+      router.push(askHref(query));
       return;
     }
     if (!results.length) return;
@@ -201,11 +212,22 @@ export default function EntitySearch({ label, placeholder, kinds, onPick, main =
             </li>
           ))}
         </ul>
+        {question && ready && results.length > 0 && (
+          <Link className="dx-ask-link" href={askHref(query)}>
+            <Sparkles size={16} aria-hidden="true" /> Ask: “{query}”
+          </Link>
+        )}
         {ready && !results.length && (
           <p>
-            {found.failed
-              ? "Search isn’t working right now. Try again in a moment."
-              : `Nothing called “${query}” in this catalog.`}
+            {found.failed ? (
+              "Search isn’t working right now. Try again in a moment."
+            ) : question ? (
+              <>
+                No name matches. <Link href={askHref(query)}>Ask it as a question</Link>
+              </>
+            ) : (
+              `Nothing called “${query}” in this catalog.`
+            )}
           </p>
         )}
       </div>

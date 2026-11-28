@@ -1,13 +1,18 @@
 // The only place Discover's browser code calls the server.
-import type { Category, EntityRef, GraphData, Reason } from "./lib/types";
+import type { Synced } from "./lib/account-data";
+import type { ArtistRef, Category, EntityRef, ForYouPick, GraphData, Reason } from "./lib/types";
 
 async function getJson<T>(
   path: string,
-  params: Record<string, string>,
+  params: Record<string, string> | URLSearchParams,
   signal?: AbortSignal,
 ): Promise<T> {
   const response = await fetch(`/api/discover/${path}?${new URLSearchParams(params)}`, { signal });
-  if (!response.ok) throw new Error(`Discover ${path} failed (${response.status})`);
+  if (!response.ok) {
+    // Discover's routes say what went wrong in words meant for the reader.
+    const data = (await response.json().catch(() => null)) as { error?: unknown } | null;
+    throw new Error(typeof data?.error === "string" ? data.error : `Discover ${path} failed (${response.status})`);
+  }
   return (await response.json()) as T;
 }
 
@@ -36,3 +41,99 @@ export function reasons(
 ): Promise<{ reasons: Reason[]; total: number }> {
   return getJson("reasons", { a, b, categories: categories.join(",") }, signal);
 }
+
+export type TodayStory = { n: number; title: string; text: string; artists: ArtistRef[] };
+
+export function today(signal?: AbortSignal): Promise<{ day: number; story: TodayStory | null }> {
+  return getJson("today", {}, signal);
+}
+
+/** Picks for the favourites (artist IDs and genre names) and without the hidden artists. */
+export function forYou(
+  favourites: { artists: string[]; genres: string[] },
+  hidden: string[],
+  signal?: AbortSignal,
+): Promise<{ picks: ForYouPick[]; known: { artists: number; genres: number } }> {
+  return getJson("for-you", forYouQuery(favourites, hidden), signal);
+}
+
+export function forYouQuery(favourites: { artists: string[]; genres: string[] }, hidden: string[]) {
+  const params = new URLSearchParams({ artists: favourites.artists.join(",") });
+  favourites.genres.forEach((genre) => params.append("genre", genre));
+  if (hidden.length) params.set("hidden", hidden.join(","));
+  return params;
+}
+
+async function send<T>(path: string, method: "POST" | "PUT" | "DELETE", body?: unknown): Promise<T> {
+  const response = await fetch(`/api/discover/${path}`, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const data = (await response.json().catch(() => ({}))) as T & { error?: string };
+  if (!response.ok) throw new Error(data.error ?? `Discover ${path} failed (${response.status})`);
+  return data;
+}
+
+const postJson = <T>(path: string, body: unknown) => send<T>(path, "POST", body);
+
+export const step = (day: number, from: string, guess: string) =>
+  postJson<{ linked: boolean; reason: Reason | null; reached: boolean }>("games/step", { day, from, guess });
+
+export const checkAnswer = (game: string, day: number, question: number, choice: string) =>
+  postJson<{ correct: boolean; answer: ArtistRef; proof: Reason[] }>("games/answer", { game, day, question, choice });
+
+export type Board = { entries: { name: string; score: number }[]; total: number; mine: number | null };
+
+export const submitScore = (game: string, day: number, player: string, name: string, answers: string[]) =>
+  postJson<{ score: number; added: boolean; place: number; total: number }>("games/score", { game, day, player, name, answers });
+
+export const board = (game: string, day: number, player: string | null, signal?: AbortSignal) =>
+  getJson<Board>("games/board", { game, day: String(day), ...(player ? { player } : {}) }, signal);
+
+export type Listened = { name: string; plays: number | null; artist: ArtistRef | null };
+
+export const listening = (service: string, user: string, signal?: AbortSignal) =>
+  getJson<{ artists: Listened[] }>("listening", { service, user }, signal);
+
+export type Between = { artist: ArtistRef; with: ArtistRef[] };
+export type Nexus = { artists: ArtistRef[]; linked: { a: ArtistRef; b: ArtistRef; reason: Reason }[]; between: Between[] };
+export type FriendPaths = {
+  shared: ArtistRef[];
+  paths: { artists: ArtistRef[]; reasons: Reason[] }[];
+  between: Between[];
+};
+
+export const nexus = (artists: string[], signal?: AbortSignal) =>
+  getJson<Nexus>("nexus", { artists: artists.join(",") }, signal);
+
+export const friendPaths = (mine: string[], theirs: string[], signal?: AbortSignal) =>
+  getJson<FriendPaths>("nexus", { artists: mine.join(","), theirs: theirs.join(",") }, signal);
+
+export type Signed = { name: string; picture: string | null; domain: string | null };
+export type AccountState = { enabled: boolean; person: Signed | null; synced: Synced | null };
+
+export const account = (signal?: AbortSignal) => getJson<AccountState>("account", {}, signal);
+export const signIn = (credential: string) => send<{ person: Signed; synced: Synced }>("account/session", "POST", { credential });
+export const signOut = () => send<{ signedOut: true }>("account/session", "DELETE");
+export const saveSynced = (synced: Synced) => send<{ synced: Synced }>("account/data", "PUT", synced);
+export const deleteAccount = () => send<{ deleted: true }>("account", "DELETE");
+
+export type Moved = { artist: ArtistRef; from: number; to: number };
+export type CommunityView = {
+  id: string;
+  kind: "campus" | "country";
+  name: string;
+  members: number;
+  sharing: number;
+  needed: number;
+  chart: { artist: ArtistRef; members: number }[];
+  recap: { rose: Moved[]; fell: Moved[]; entered: ArtistRef[]; left: ArtistRef[] } | null;
+  joined: boolean;
+};
+
+export const communities = (signal?: AbortSignal) =>
+  getJson<{ joined: CommunityView[]; campus: string | null; signedIn: boolean }>("communities", {}, signal);
+export const community = (id: string, signal?: AbortSignal) => getJson<CommunityView>("communities", { id }, signal);
+export const joinCommunity = (id: string, artists: string[]) => send<CommunityView>("communities", "POST", { id, artists });
+export const leaveCommunity = (id: string) => send<{ left: string }>(`communities?id=${encodeURIComponent(id)}`, "DELETE");

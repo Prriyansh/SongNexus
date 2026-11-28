@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { CSSProperties, ReactNode } from "react";
+import RememberVisit from "@/discover/components/RememberVisit";
 import ShareButton from "@/discover/components/ShareButton";
 import Tabs, { type Tab } from "@/discover/components/Tabs";
 import {
@@ -407,6 +408,9 @@ export default async function ArtistPage({ params }: Props) {
 
   return (
     <>
+      <RememberVisit
+        visit={{ id: artist.id, name: artist.name, note: artistNote(c, artist), photo: artist.photo?.url ?? null }}
+      />
       <header className="dx-entity">
         <div className="dx-entity-photo">
           <Avatar

@@ -8,7 +8,7 @@ import { artistRef } from "./words";
 const FULL_PAGE = 2;
 
 /** Artists with full pages, most listened to first (listeners are ListenBrainz's). */
-function knownArtists(catalog: Catalog): number[] {
+export function knownArtists(catalog: Catalog): number[] {
   const listeners = (at: number) => catalog.artists[at].listeners ?? 0;
   return catalog.artists
     .map((_, at) => at)

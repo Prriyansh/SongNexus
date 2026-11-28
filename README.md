@@ -17,16 +17,20 @@ npm run dev
 Then open <http://localhost:3000>.
 
 Everything runs without keys. These optional environment variables (in `.env.local`, or Vercel's
-settings) add more to the two-artist comparison; each page says which sources were checked.
+settings) add more; each page says which sources were checked or what isn't set up.
 
 | Variable | Adds | Without it |
 | --- | --- | --- |
 | `GENIUS_ACCESS_TOKEN` | Song-level producers and writers from Genius | Genius is skipped |
 | `DISCOGS_TOKEN` | A higher Discogs rate limit (60 requests a minute, not 25), so more albums per scan | Discogs still runs, more slowly |
-| `LASTFM_API_KEY` | Last.fm listeners and artists similar to both | Last.fm is skipped |
-| `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`) | Short friend codes when deployed: rooms are stored in Redis for a week | In production, Friends falls back to a long link holding the playlist. In development, rooms live in memory |
+| `LASTFM_API_KEY` | Last.fm listeners and artists similar to both; Last.fm in Discover's Library | Last.fm is skipped |
+| `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`) | Short friend codes when deployed (rooms are stored in Redis for a week), the games' leaderboards, accounts and Around You | In production, Friends falls back to a long link holding the playlist, and leaderboards, accounts and Around You say they aren't set up. In development, all of it lives in memory |
+| `GEMINI_API_KEY` (a free key from [Google AI Studio](https://aistudio.google.com/apikey); optionally `AI_DAILY_LIMIT`, default 200 readings a day, and `GEMINI_MODELS`) | AI search in Discover's Ask on Gemini's free tier: questions the patterns can't read, or with a misspelled name, are read by a free Gemini model, and the catalog still answers. On the free tier Google may use those questions to improve its products; the Ask page says so | Ask reads questions with its patterns only |
+| `GOOGLE_CLIENT_ID` and `SESSION_SECRET` (32+ random characters) | Sign in with Google on Discover's You page, keeping games, Top 5, hidden artists and services the same in every browser, and joining Around You | Everything is kept in the browser |
 
-The sidebar contains **About Me**, **Connection Web**, **Friends** and **Explore**. Connection Web
+The sidebar contains **About Me**, **Connection Web**, **Friends** and **Explore**, then Discover's
+pages: **Discover** (home, For you), **Six Degrees**, **Collaborators**, **Stories**, **Ask**,
+**Games**, **Library**, **Friend paths**, **Around You** and **You** (see `src/discover/CLAUDE.md`). Connection Web
 starts from an artist, a song or your playlist, and maps what's similar: closer means more similar,
 calculated from listening data, and selecting anything says why it's there. Friends puts two playlists on
 one map, joined with a 6-character code, with colors for yours, theirs, what you share and what each of

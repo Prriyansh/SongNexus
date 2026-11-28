@@ -1,7 +1,10 @@
 import { Spline, Waypoints } from "lucide-react";
 import Link from "next/link";
 import EntitySearch from "@/discover/components/EntitySearch";
-import { ArtistCard, Avatar, Chips, plural, Section } from "@/discover/components/parts";
+import ForYouShelf from "@/discover/components/ForYouShelf";
+import RecentShelf from "@/discover/components/RecentShelf";
+import TodayCard from "@/discover/components/TodayCard";
+import { AppLink, ArtistCard, Avatar, Chips, plural, Section } from "@/discover/components/parts";
 import { biggestGenres, biggestLabels, popularArtists, surprisePairs } from "@/discover/lib/browse";
 import { sixDegreesHref } from "@/discover/lib/links";
 import { pageMetadata } from "@/discover/lib/metadata";
@@ -35,7 +38,19 @@ export default function DiscoverHome() {
           placeholder="An artist, song, label or genre"
           kinds={["artist", "song", "label", "genre"]}
         />
+        <TodayCard />
       </header>
+      <Section
+        title="For you"
+        note={
+          <>
+            Artists connected to your favourites in <AppLink href="/about">About Me</AppLink>.
+          </>
+        }
+      >
+        <ForYouShelf />
+      </Section>
+      <RecentShelf title="Where you left off" />
       <div className="dx-cards">
         <Link className="dx-card" href="/discover/six-degrees">
           <Spline size={26} aria-hidden="true" />
