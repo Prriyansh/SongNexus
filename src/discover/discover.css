@@ -2029,3 +2029,71 @@
 .dx-main .dx-line h2 a {
   color: inherit;
 }
+
+/* You */
+.dx-google {
+  min-height: 44px;
+}
+.dx-you {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+.dx-you img {
+  border-radius: 50%;
+}
+.dx-you > div {
+  display: grid;
+  gap: 2px;
+  margin-right: auto;
+}
+.dx-you small {
+  color: var(--dx-muted);
+}
+.dx-top {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding-left: 24px;
+}
+.dx-top li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dx-top li > a {
+  flex: 1;
+  min-width: 0;
+}
+ul.dx-top {
+  padding-left: 0;
+  list-style: none;
+}
+.dx-main .dx-icon-button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  place-items: center;
+  background: none;
+  color: var(--dx-muted);
+}
+.dx-main .dx-icon-button:hover {
+  background: #2b2831;
+  color: var(--dx-text);
+}
+.dx-main .dx-button.dx-danger {
+  border-color: #b8495b;
+  background: #3a1820;
+  color: #ffd5dc;
+}
+.dx-pick {
+  position: relative;
+}
+.dx-pick .dx-icon-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+}

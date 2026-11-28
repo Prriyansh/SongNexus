@@ -18,6 +18,7 @@ the app's sidebar. It imports nothing from `src/frontend` or `src/lib`. The one 
 | `/discover/games/[game]` | `connect`, `credits` or `link` for a day (`day`, `2026-11-28`; today without it) |
 | `/discover/library` | Listening from ListenBrainz, Last.fm or Deezer, and Your Nexus |
 | `/discover/friends` | Friend paths: your artists as a link; opened with a friend's (`with`, `name`), the paths between |
+| `/discover/you` | Your account (sign in with Google), Top 5, hidden artists, and your data |
 | `/discover/artist/[id]`, `/song/[id]`, `/label/[id]` | By MusicBrainz ID, so links work across the app |
 | `/discover/genre/[id]` | By genre slug |
 
@@ -34,7 +35,10 @@ day's leaderboard, the score worked out from its answers) and `board` (a day's l
 need Redis (`KV_REST_API_URL`/`TOKEN` or `UPSTASH_REDIS_REST_URL`/`TOKEN`) in production; without it
 they answer 503 and the games still work. `listening` reads a service by public username (Last.fm
 needs `LASTFM_API_KEY`) and `nexus` answers how artists hang together (with `theirs`, the paths to a
-friend's).
+friend's). `account` (who is signed in; DELETE deletes the account), `account/session` (POST signs in
+with Google's ID token, DELETE signs out) and `account/data` (PUT saves synced data) need
+`GOOGLE_CLIENT_ID`, `SESSION_SECRET` (32+ characters) and Redis; without them they answer 503 and
+You keeps everything in the browser.
 
 ## Files
 
@@ -64,6 +68,11 @@ friend's).
   MusicBrainz ID or exact name. `lib/services.ts` — the services and the ones connected in this
   browser (safe for the browser). `lib/nexus.ts` — which artists worked together, the people between
   them, and the shortest paths from one person's artists to another's.
+- `lib/auth.ts` — checks Google's ID tokens against Google's published keys and keeps a signed,
+  HTTP-only session cookie; changes must come from the site itself. Only Google's ID for the person,
+  their name, photo and workplace domain are kept, never an email. `lib/accounts.ts` — accounts in
+  storage. `lib/account-data.ts` — what is synced (game results, hidden artists, Top 5, services) and
+  how a browser's data merges with an account's (safe for the browser).
 - `lib/collaborations.ts`, `lib/credits.ts` — who worked with whom, on what.
 - `lib/search.ts` — names. `lib/match.ts` — marking what matched. `lib/browse.ts` — ways in.
 - `lib/words.ts` — facts as sentences. `lib/metadata.ts` — titles, descriptions and link previews.
@@ -75,7 +84,9 @@ friend's).
   (arrow keys, swipes). `TodayCard`, `ForYouShelf` and `RecentShelf` are the home page's personal
   parts, read in the browser (`useStored`); `RememberVisit` notes each artist page opened.
   `ConnectGame`, `QuizGame`, `Leaderboard` and `GameProgress` (badges and stats) are the games.
-  `Library` and `FriendPaths` read the connected services through `useListening`. `api.ts` — the
+  `Library` and `FriendPaths` read the connected services through `useListening`. `You` is the You
+  page; `AccountSync` (in the shell when sign-in is set up) merges an account's data in and saves
+  changes. `api.ts` — the
   browser's only calls.
 - `discover.css` — every class starts with `dx-`. `__tests__/`.
 
@@ -96,7 +107,8 @@ from the search box.
 what the browser keeps and the home page's personal parts. `games` covers making each day's games,
 checking answers, results, storage and leaderboards; `games-routes`, `games-pages` and `games-ui`
 cover the routes, the pages and playing. `library`, `library-ui` and `library-pages` cover listening,
-Your Nexus and Friend paths.
+Your Nexus and Friend paths. `auth` (with real signed tokens from `token.ts`), `accounts`,
+`account-ui` and `account-pages` cover signing in, sessions, syncing and the You page.
 `dom.tsx`, `render.tsx`, `fixture.ts` and `world.ts` are helpers.
 
 Beside them: `e2e/` (a real browser; see its guide) and `scripts/discover/test_export_catalog.py`

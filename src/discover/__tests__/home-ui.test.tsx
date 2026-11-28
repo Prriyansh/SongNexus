@@ -88,7 +88,8 @@ describe("what the browser keeps", () => {
   });
 
   it("reads hidden artists", () => {
-    expect(hiddenIn(JSON.stringify([id(1), id(1), "x", 3]))).toEqual([id(1)]);
+    const one = { id: id(1), name: "One" };
+    expect(hiddenIn(JSON.stringify([one, one, id(2), { id: "x", name: "X" }, 3]))).toEqual([id(1)]);
   });
 
   it("writes, removes and tells this tab, and survives storage that refuses", () => {
@@ -130,7 +131,7 @@ describe("for you", () => {
 
   it("suggests artists for the favourites, saying why, without hidden artists", async () => {
     favour();
-    localStorage.setItem(HIDDEN_KEY, JSON.stringify([id(9)]));
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify([{ id: id(9), name: "Hidden" }]));
     const fetchMock = answering({ picks, known: { artists: 1, genres: 1 } });
     await render(<ForYouShelf />);
     await settle();

@@ -1,4 +1,5 @@
 // The only place Discover's browser code calls the server.
+import type { Synced } from "./lib/account-data";
 import type { ArtistRef, Category, EntityRef, ForYouPick, GraphData, Reason } from "./lib/types";
 
 async function getJson<T>(
@@ -63,16 +64,18 @@ export function forYouQuery(favourites: { artists: string[]; genres: string[] },
   return params;
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
+async function send<T>(path: string, method: "POST" | "PUT" | "DELETE", body?: unknown): Promise<T> {
   const response = await fetch(`/api/discover/${path}`, {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
   const data = (await response.json().catch(() => ({}))) as T & { error?: string };
   if (!response.ok) throw new Error(data.error ?? `Discover ${path} failed (${response.status})`);
   return data;
 }
+
+const postJson = <T>(path: string, body: unknown) => send<T>(path, "POST", body);
 
 export const step = (day: number, from: string, guess: string) =>
   postJson<{ linked: boolean; reason: Reason | null; reached: boolean }>("games/step", { day, from, guess });
@@ -106,3 +109,12 @@ export const nexus = (artists: string[], signal?: AbortSignal) =>
 
 export const friendPaths = (mine: string[], theirs: string[], signal?: AbortSignal) =>
   getJson<FriendPaths>("nexus", { artists: mine.join(","), theirs: theirs.join(",") }, signal);
+
+export type Signed = { name: string; picture: string | null; domain: string | null };
+export type AccountState = { enabled: boolean; person: Signed | null; synced: Synced | null };
+
+export const account = (signal?: AbortSignal) => getJson<AccountState>("account", {}, signal);
+export const signIn = (credential: string) => send<{ person: Signed; synced: Synced }>("account/session", "POST", { credential });
+export const signOut = () => send<{ signedOut: true }>("account/session", "DELETE");
+export const saveSynced = (synced: Synced) => send<{ synced: Synced }>("account/data", "PUT", synced);
+export const deleteAccount = () => send<{ deleted: true }>("account", "DELETE");

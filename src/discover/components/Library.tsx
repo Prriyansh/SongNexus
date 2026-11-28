@@ -4,6 +4,7 @@ import { ExternalLink, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { nexus, type Nexus } from "../api";
 import { connectedIn, isUser, MAX_CONNECTED, SERVICE_INFO, SERVICES, SERVICES_KEY, type Connected, type Service } from "../lib/services";
+import { topIn, TOP_KEY } from "../lib/account-data";
 import { favouritesIn, PROFILE_KEY, readStored, writeStored } from "../lib/stored";
 import { AppLink, ArtistCard, ArtistLink, plural, Reasons, Section, Skeleton } from "./parts";
 import { keyOf, myArtists, useListening, type Heard } from "./useListening";
@@ -179,6 +180,7 @@ function YourNexus({ ids }: { ids: string[] }) {
 export default function Library() {
   const { connected, heard } = useListening();
   const favourites = favouritesIn(useStored(PROFILE_KEY)).artists;
+  const top = topIn(useStored(TOP_KEY)).map((v) => v.id);
   const waiting = connected.some((c) => !heard[keyOf(c)]);
   return (
     <>
@@ -187,7 +189,7 @@ export default function Library() {
         <Listening key={keyOf(c)} connected={c} heard={heard[keyOf(c)]} />
       ))}
       <Section title="Your Nexus" note="The artists you play most and your About Me favourites, in the credits.">
-        {waiting ? <Skeleton panels={1} /> : <YourNexus ids={myArtists(connected, heard, favourites).slice(0, NEXUS_ARTISTS)} />}
+        {waiting ? <Skeleton panels={1} /> : <YourNexus ids={myArtists(connected, heard, favourites, top).slice(0, NEXUS_ARTISTS)} />}
       </Section>
       <Section title="Playlist maps">
         <p className="dx-hint">

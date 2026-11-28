@@ -46,8 +46,9 @@ export type Visit = { id: string; name: string; note: string; photo: string | nu
 const photoOf = (value: unknown) =>
   typeof value === "string" && value.startsWith("https://upload.wikimedia.org/") ? value : null;
 
-/** The artists opened lately, the latest first. */
-export function recentIn(raw: string | null): Visit[] {
+/** A stored list of artists, each once, at most `max`. */
+export function artistsIn(raw: string | null, max: number): Visit[] {
+  const seen = new Set<string>();
   return listOf(parse(raw))
     .map((v) => ({
       id: fieldOf(v, "id"),
@@ -55,18 +56,21 @@ export function recentIn(raw: string | null): Visit[] {
       note: text(fieldOf(v, "note")),
       photo: photoOf(fieldOf(v, "photo")),
     }))
-    .filter((v): v is Visit => isId(v.id) && v.name !== "")
-    .slice(0, MAX_RECENT);
+    .filter((v): v is Visit => isId(v.id) && v.name !== "" && !seen.has(v.id) && !!seen.add(v.id))
+    .slice(0, max);
 }
+
+/** The artists opened lately, the latest first. */
+export const recentIn = (raw: string | null) => artistsIn(raw, MAX_RECENT);
 
 /** The list with this visit first, once. */
 export function withVisit(raw: string | null, visit: Visit): Visit[] {
   return [visit, ...recentIn(raw).filter((v) => v.id !== visit.id)].slice(0, MAX_RECENT);
 }
 
-export function hiddenIn(raw: string | null): string[] {
-  return [...new Set(listOf(parse(raw)).filter(isId))].slice(0, MAX_HIDDEN);
-}
+/** The artists hidden from suggestions. */
+export const hiddenArtistsIn = (raw: string | null) => artistsIn(raw, MAX_HIDDEN);
+export const hiddenIn = (raw: string | null) => hiddenArtistsIn(raw).map((v) => v.id);
 
 export function readStored(key: string): string | null {
   try {

@@ -4,6 +4,7 @@ import { Check, Copy } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { friendPaths, type FriendPaths as Paths } from "../api";
+import { topIn, TOP_KEY } from "../lib/account-data";
 import { favouritesIn, PROFILE_KEY } from "../lib/stored";
 import { entityHref, type ArtistRef } from "../lib/types";
 import { AppLink, ArtistCard, Avatar, plural, Reasons, Section, Skeleton } from "./parts";
@@ -120,9 +121,10 @@ function Compare({ mine, theirs, friend }: { mine: string[]; theirs: string[]; f
 export default function FriendPaths({ theirs, friend }: { theirs: ArtistRef[]; friend: string }) {
   const { connected, heard } = useListening();
   const favourites = favouritesIn(useStored(PROFILE_KEY)).artists;
+  const top = topIn(useStored(TOP_KEY)).map((v) => v.id);
   const [name, setName] = useState("");
   const waiting = connected.some((c) => !heard[keyOf(c)]);
-  const mine = myArtists(connected, heard, favourites).slice(0, SIDE);
+  const mine = myArtists(connected, heard, favourites, top).slice(0, SIDE);
   if (waiting) return <Skeleton panels={2} />;
   if (!mine.length)
     return (

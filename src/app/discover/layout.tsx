@@ -1,9 +1,10 @@
 import DiscoverShell from "@/discover/components/DiscoverShell";
+import { authConfig } from "@/discover/lib/auth";
 import "@/discover/discover.css";
 
 export default function DiscoverLayout({ children }: LayoutProps<"/discover">) {
   return (
-    <DiscoverShell>
+    <DiscoverShell accounts={authConfig() !== null}>
       <main className="main-content dx-main" id="discover-main" tabIndex={-1}>
         {children}
         <footer>

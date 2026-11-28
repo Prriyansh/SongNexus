@@ -1,8 +1,10 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { forYou, forYouQuery } from "../api";
-import { favouritesIn, hiddenIn, HIDDEN_KEY, PROFILE_KEY } from "../lib/stored";
+import { topIn, TOP_KEY } from "../lib/account-data";
+import { favouritesIn, hiddenArtistsIn, hiddenIn, HIDDEN_KEY, PROFILE_KEY, readStored, writeStored } from "../lib/stored";
 import type { ForYouPick } from "../lib/types";
 import { AppLink, ArtistCard, Skeleton } from "./parts";
 import { useStored } from "./useStored";
@@ -13,11 +15,22 @@ function why(pick: ForYouPick): string {
   return pick.because ? `Because you like ${pick.because.name}` : `Known for ${pick.genre!.name}`;
 }
 
-/** Artists to try, from the favourites in About Me; without favourites, how to add some. */
+/** Leaves an artist out of suggestions from now on. */
+function hide(pick: ForYouPick) {
+  const { id, name, note, photo } = pick.artist;
+  writeStored(HIDDEN_KEY, [...hiddenArtistsIn(readStored(HIDDEN_KEY)), { id, name, note, photo }]);
+}
+
+/** Artists to try, from your Top 5 and About Me favourites; without any, how to add some. */
 export default function ForYouShelf() {
   const profile = useStored(PROFILE_KEY);
   const hidden = useStored(HIDDEN_KEY);
-  const [favourites, skip] = useMemo(() => [favouritesIn(profile), hiddenIn(hidden)], [profile, hidden]);
+  const top = useStored(TOP_KEY);
+  const [favourites, skip] = useMemo(() => {
+    const found = favouritesIn(profile);
+    const artists = [...new Set([...topIn(top).map((v) => v.id), ...found.artists])];
+    return [{ ...found, artists }, hiddenIn(hidden)];
+  }, [profile, hidden, top]);
   const query = favourites.artists.length || favourites.genres.length ? String(forYouQuery(favourites, skip)) : "";
   const [result, setResult] = useState<Result | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -60,6 +73,9 @@ export default function ForYouShelf() {
         <div key={pick.artist.id} className="dx-pick">
           <ArtistCard artist={pick.artist} />
           <small title={pick.reason?.text}>{why(pick)}</small>
+          <button type="button" className="dx-icon-button" aria-label={`Don’t suggest ${pick.artist.name}`} onClick={() => hide(pick)}>
+            <X size={14} aria-hidden="true" />
+          </button>
         </div>
       ))}
     </div>

@@ -10,6 +10,7 @@ import { listening } from "../api";
 import FriendPaths, { friendHref } from "../components/FriendPaths";
 import Library from "../components/Library";
 import { myArtists } from "../components/useListening";
+import { TOP_KEY } from "../lib/account-data";
 import { connectedIn, SERVICES_KEY } from "../lib/services";
 import { PROFILE_KEY } from "../lib/stored";
 import type { ArtistRef } from "../lib/types";
@@ -130,6 +131,21 @@ describe("Library", () => {
     expect(new URL(String(nexusCall[0]), "http://x").searchParams.get("artists")).toBe(`${ADELE.id},${DRAKE.id}`);
     await click(all("button").find((b) => b.textContent!.includes("Disconnect"))!);
     expect(connectedIn(localStorage.getItem(SERVICES_KEY))).toEqual([{ service: "deezer", user: "12" }]);
+  });
+
+  it("starts Your Nexus and Friend paths from your Top 5", async () => {
+    localStorage.setItem(TOP_KEY, JSON.stringify([{ id: HUB.id, name: HUB.name }]));
+    localStorage.setItem(PROFILE_KEY, JSON.stringify({ artists: [{ id: ADELE.id }], songs: [], albums: [], genres: [] }));
+    const asked: (string | null)[] = [];
+    handlers["/api/discover/nexus"] = (url) => {
+      asked.push(url.searchParams.get("artists"));
+      return { artists: [], linked: [], between: [], shared: [], paths: [] };
+    };
+    await render(<Library />);
+    await settle();
+    await render(<FriendPaths theirs={[FRIEND]} friend="Sam" />);
+    await settle();
+    expect(asked).toEqual([`${HUB.id},${ADELE.id}`, `${HUB.id},${ADELE.id}`]);
   });
 
   it("says when the artists share nothing, and when Your Nexus fails", async () => {

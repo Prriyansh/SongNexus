@@ -31,8 +31,8 @@ export function useListening(): { connected: Connected[]; heard: Record<string, 
   return { connected, heard: heard.key === key ? heard.by : {} };
 }
 
-/** A listener's artists in the catalog: the most played (each service in turn), then favourites. */
-export function myArtists(connected: Connected[], heard: Record<string, Heard>, favourites: string[]): string[] {
+/** A listener's artists in the catalog: their Top 5, the most played (each service in turn), then favourites. */
+export function myArtists(connected: Connected[], heard: Record<string, Heard>, favourites: string[], top: string[] = []): string[] {
   const lists = connected.map((c) => {
     const found = heard[keyOf(c)];
     return found && "artists" in found ? found.artists.flatMap((a) => (a.artist ? [a.artist.id] : [])) : [];
@@ -40,5 +40,5 @@ export function myArtists(connected: Connected[], heard: Record<string, Heard>, 
   const played: string[] = [];
   const longest = Math.max(0, ...lists.map((list) => list.length));
   for (let i = 0; i < longest; i++) for (const list of lists) if (list[i]) played.push(list[i]);
-  return [...new Set([...played, ...favourites])];
+  return [...new Set([...top, ...played, ...favourites])];
 }
