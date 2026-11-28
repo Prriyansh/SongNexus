@@ -7,11 +7,11 @@ import {
   MAX_PER_KIND,
   shuffled,
   stories,
-  storyHref,
   storyNumber,
   storyOfDay,
   type StoryKind,
 } from "../lib/stories";
+import { storyHref } from "../lib/links";
 import { reasonOf } from "../lib/words";
 import { songsBy, world, type WorldSpec } from "./world";
 

@@ -18,6 +18,8 @@ export type WorldSpec = {
   relations?: [subject: string, type: string, object: string][];
   /** Genre positions (0 pop, 1 rock) and shares, in percent. */
   genres?: Record<string, [genre: number, share: number][]>;
+  /** ListenBrainz listeners, where the default (fewer down the list; none for `others`) won't do. */
+  listeners?: Record<string, number | null>;
 };
 
 export function world(spec: WorldSpec): Graph {
@@ -51,7 +53,7 @@ export function world(spec: WorldSpec): Graph {
       null,
       null,
       full(i) ? 2 : 0,
-      full(i) ? 100_000 - i : null,
+      name in (spec.listeners ?? {}) ? spec.listeners![name] : full(i) ? 100_000 - i : null,
       (spec.genres?.[name] ?? []).flat(),
       [],
     ]),

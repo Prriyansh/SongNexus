@@ -1722,3 +1722,69 @@
     flex-direction: column;
   }
 }
+
+/* Home: today's story and For you */
+.dx-today {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 860px;
+  min-height: 84px;
+  margin-top: 18px;
+  padding: 14px 18px;
+  border: 1px solid var(--dx-border);
+  border-radius: var(--dx-radius);
+  background: var(--dx-raised);
+  text-align: left;
+}
+.dx-main a.dx-today {
+  color: var(--dx-text);
+  text-decoration: none;
+}
+.dx-main a.dx-today:hover {
+  border-color: #655e6d;
+}
+.dx-main a.dx-today:focus-visible {
+  outline: none;
+  box-shadow: var(--dx-ring);
+}
+.dx-today > span:last-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.dx-today small {
+  color: #ff8fa1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.dx-today strong {
+  font-size: 15px;
+  line-height: 1.45;
+}
+.dx-today-faces {
+  display: flex;
+  flex-shrink: 0;
+}
+.dx-today-faces .dx-avatar + .dx-avatar {
+  margin-left: -14px;
+}
+.dx-pick {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.dx-pick > small {
+  color: var(--dx-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+@media (max-width: 650px) {
+  .dx-today {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

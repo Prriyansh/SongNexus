@@ -390,4 +390,3 @@ export function storyNumber(value: string, total: number): number {
   return Number.isInteger(n) && n >= 1 && n <= total ? n : 1;
 }
 
-export const storyHref = (n: number) => `/discover/stories?story=${n}`;

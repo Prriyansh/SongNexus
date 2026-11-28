@@ -9,7 +9,7 @@ the app's sidebar. It imports nothing from `src/frontend` or `src/lib`. The one 
 
 | URL | What it shows |
 | --- | --- |
-| `/discover` | Search, and ways in by pair, artist, genre and label |
+| `/discover` | Home: search, today's story, For you, where you left off, and ways in by pair, artist, genre and label |
 | `/discover/six-degrees` | The path between two artists (`from`, `to`, `via`, `order`, `avoid`) |
 | `/discover/connections` | Collaborators: one artist's web of who they worked with (`artist`, `via`, `open`) |
 | `/discover/stories` | Stories found in the credits, one at a time (`story`, counting from 1) |
@@ -22,8 +22,9 @@ genres are prerendered; the rest are made on their first visit and kept. `error.
 `not-found.tsx` keep the sidebar; an unknown ID is marked `noindex` (Next streams its first
 visit, so that one answers 200, and 404 after).
 
-API routes are in `src/app/api/discover/`: `search`, `neighborhood` and `reasons`. They answer from
-the catalog file, so they need no keys and call no other service.
+API routes are in `src/app/api/discover/`: `search`, `neighborhood`, `reasons`, `for-you` (picks for
+favourite artists and genres) and `today` (the day's story, the same for everyone until midnight UTC).
+They answer from the catalog file, so they need no keys and call no other service.
 
 ## Files
 
@@ -37,6 +38,10 @@ the catalog file, so they need no keys and call no other service.
   pick the question and the names; it never states anything the catalog doesn't hold, and says which
   artist or song each name was taken to be. `lib/question.ts` — telling a question from a name, the
   address that asks it, and the example questions (safe for the browser).
+- `lib/for-you.ts` — For you: artists connected to the favourites saved in About Me (those connected
+  to more of them first, each with the favourite and credit behind it), then the best-known artists
+  of favourite genres. `lib/stored.ts` — what the browser keeps: About Me's favourites (read, never
+  written), recently opened artists and hidden artists, all checked when read.
 - `lib/collaborations.ts`, `lib/credits.ts` — who worked with whom, on what.
 - `lib/search.ts` — names. `lib/match.ts` — marking what matched. `lib/browse.ts` — ways in.
 - `lib/words.ts` — facts as sentences. `lib/metadata.ts` — titles, descriptions and link previews.
@@ -45,7 +50,9 @@ the catalog file, so they need no keys and call no other service.
 - `lib/server.ts` — the graph, built once per server instance. `lib/types.ts` — what goes to the browser.
 - `components/parts.tsx` — shared pieces; `useWeb.ts` (state and motion), `WebCanvas.tsx` (drawing) and
   `ConnectionExplorer.tsx` (the page around them) are the web. `StoryKeys.tsx` moves between stories
-  (arrow keys, swipes). `api.ts` — the browser's only calls.
+  (arrow keys, swipes). `TodayCard`, `ForYouShelf` and `RecentShelf` are the home page's personal
+  parts, read in the browser (`useStored`); `RememberVisit` notes each artist page opened. `api.ts` —
+  the browser's only calls.
 - `discover.css` — every class starts with `dx-`. `__tests__/`.
 
 ## Tests
@@ -61,6 +68,8 @@ line and branch is tested. `stories` finds each kind of story in a made-up catal
 `ask` reads every form of question and answers each kind on a made-up catalog (and checks every
 example question gets a real answer); `ask-page` renders each kind of answer; `ask-ui` covers asking
 from the search box.
+`for-you` covers the picks on made-up catalogs and the `for-you` and `today` routes; `home-ui` covers
+what the browser keeps and the home page's personal parts.
 `dom.tsx`, `render.tsx`, `fixture.ts` and `world.ts` are helpers.
 
 Beside them: `e2e/` (a real browser; see its guide) and `scripts/discover/test_export_catalog.py`

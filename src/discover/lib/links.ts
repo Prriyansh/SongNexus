@@ -25,6 +25,8 @@ export function sixDegreesHref(state: Ends & Partial<SixDegreesState>): string {
   return query ? `/discover/six-degrees?${query}` : "/discover/six-degrees";
 }
 
+export const storyHref = (n: number) => `/discover/stories?story=${n}`;
+
 /** `opened` are the artists whose connections were opened after the starting one, in order. */
 export function connectionsHref(
   artist: string,

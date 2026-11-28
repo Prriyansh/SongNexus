@@ -4,11 +4,11 @@ import { Suspense } from "react";
 import ShareButton from "@/discover/components/ShareButton";
 import StoryKeys from "@/discover/components/StoryKeys";
 import { Avatar, Reasons, Skeleton } from "@/discover/components/parts";
-import { sixDegreesHref } from "@/discover/lib/links";
+import { sixDegreesHref, storyHref } from "@/discover/lib/links";
 import { pageMetadata } from "@/discover/lib/metadata";
 import { oneOf } from "@/discover/lib/query";
 import { graph } from "@/discover/lib/server";
-import { stories, storyHref, storyNumber, type Story } from "@/discover/lib/stories";
+import { stories, storyNumber, type Story } from "@/discover/lib/stories";
 import { entityHref } from "@/discover/lib/types";
 
 export const metadata = pageMetadata(
