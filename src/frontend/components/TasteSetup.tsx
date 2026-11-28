@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Check, Compass, Plus, Search, Sparkles, Users, X
 import type { Artist, Song } from '@/lib/types';
 import { searchArtists, searchSongs } from '../api';
 import { genreFamilies } from '../genres';
-import { artistSubtitle, capitalize, songArtists } from '../model';
+import { artistSubtitle, capitalize, errorText, songArtists } from '../model';
 import type { Discover, SetupAnswers } from '../setup';
 import { Modal } from './Modal';
 
@@ -30,7 +30,7 @@ function SearchPicks<T extends Artist | Song>({ kind, picked, onChange }: { kind
       const request = (kind === 'artist' ? searchArtists(q, controller.signal, 8) : searchSongs(q, controller.signal, 8)) as Promise<T[]>;
       request.then(
         items => { if (!controller.signal.aborted) setFound({ key: q, items }); },
-        error => { if (!controller.signal.aborted) setFound({ key: q, error: error instanceof Error ? error.message : 'Search failed.' }); },
+        error => { if (!controller.signal.aborted) setFound({ key: q, error: errorText(error, 'Search failed.') }); },
       );
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };

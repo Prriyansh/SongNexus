@@ -3,7 +3,7 @@
 // rate limit (25 requests a minute); DISCOGS_TOKEN raises it to 60.
 
 import { withCache } from "./musicbrainz";
-import { addCredit, creditRole, normalizeName, scanInOrder, sourceJson } from "./credit-sources";
+import { addCredit, creditRole, envOf, normalizeName, scanInOrder, sourceJson } from "./credit-sources";
 import type { SourcedPeople, SourceOptions } from "./credit-sources";
 
 const BASE = "https://api.discogs.com";
@@ -23,11 +23,10 @@ export type DiscogsCredits = { people: SourcedPeople; scanned: number; complete:
 
 /** `albumTitles`: the artist's studio albums per MusicBrainz. Discogs' list doesn't separate them from singles. */
 export async function discogsCredits(artistId: string, albumTitles: string[], options: SourceOptions = {}): Promise<DiscogsCredits> {
-  const env = options.env ?? process.env;
+  const env = envOf(options);
   const token = env.DISCOGS_TOKEN?.trim();
   const headers: Record<string, string> = token ? { Authorization: `Discogs token=${token}` } : {};
-  const useCache = options.useCache ?? true;
-  const get = <T>(path: string) => withCache(`discogs:${path}`, CACHE_MS, useCache, () => sourceJson<T>("Discogs", `${BASE}${path}`, { headers }, options));
+  const get = <T>(path: string) => withCache(`discogs:${path}`, CACHE_MS, options.useCache, () => sourceJson<T>("Discogs", `${BASE}${path}`, { headers }, options));
 
   const listing = await get<RawListing>(`/artists/${encodeURIComponent(artistId)}/releases?sort=year&sort_order=desc&per_page=100`);
   // A master groups a record's editions; its main release is the one Discogs treats as the reference.

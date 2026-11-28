@@ -2,7 +2,7 @@
 // having no token only removes its results, and its report says why.
 
 import { lookupMusicBrainz } from "./musicbrainz";
-import { commonPeople } from "./credit-sources";
+import { commonPeople, envOf } from "./credit-sources";
 import type { SourcedPeople, SourceOptions } from "./credit-sources";
 import { discogsCredits } from "./discogs";
 import { geniusCredits } from "./genius";
@@ -11,8 +11,8 @@ import type { ArtistDetails, CreditEvidence, CreditSource, MoreCredits, SourcedC
 type Found = { collaborators: SourcedCollaborator[]; direct: (CreditEvidence & { source: CreditSource })[]; report: SourceReport };
 
 /** Work where one artist appears in the other's credits. */
-function directWork(source: CreditSource, a: SourcedPeople, b: SourcedPeople, aId?: string, bId?: string) {
-  const work = [...(bId ? a.get(bId)?.work.values() ?? [] : []), ...(aId ? b.get(aId)?.work.values() ?? [] : [])];
+function directWork(source: CreditSource, a: SourcedPeople, b: SourcedPeople, aId: string, bId: string) {
+  const work = [...(a.get(bId)?.work.values() ?? []), ...(b.get(aId)?.work.values() ?? [])];
   return [...new Map(work.map((w) => [w.url, { ...w, source }])).values()].slice(0, 6);
 }
 
@@ -30,7 +30,7 @@ async function fromDiscogs(a: ArtistDetails, b: ArtistDetails, options: SourceOp
 }
 
 async function fromGenius(a: ArtistDetails, b: ArtistDetails, options: SourceOptions): Promise<Found> {
-  const token = (options.env ?? process.env).GENIUS_ACCESS_TOKEN?.trim();
+  const token = envOf(options).GENIUS_ACCESS_TOKEN?.trim();
   if (!token) return { collaborators: [], direct: [], report: { source: "Genius", status: "no-key" } };
   const [ca, cb] = await Promise.all([
     geniusCredits({ name: a.name, slug: a.externalIds?.genius }, token, options),
@@ -46,8 +46,8 @@ async function fromGenius(a: ArtistDetails, b: ArtistDetails, options: SourceOpt
 
 export async function moreCredits(aId: string, bId: string, options: SourceOptions = {}): Promise<MoreCredits> {
   const [a, b] = await Promise.all([
-    lookupMusicBrainz({ type: "artist", id: aId }) as Promise<ArtistDetails>,
-    lookupMusicBrainz({ type: "artist", id: bId }) as Promise<ArtistDetails>,
+    lookupMusicBrainz({ type: "artist", id: aId }, options) as Promise<ArtistDetails>,
+    lookupMusicBrainz({ type: "artist", id: bId }, options) as Promise<ArtistDetails>,
   ]);
   const names = ["Genius", "Discogs"];
   const results = await Promise.allSettled([fromGenius(a, b, options), fromDiscogs(a, b, options)]);

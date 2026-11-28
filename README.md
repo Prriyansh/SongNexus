@@ -101,6 +101,7 @@ describing the files at that level and the conventions to follow.
 
 ```bash
 npm test            # unit + integration tests (Vitest)
+npm run test:coverage  # the same, failing below 100% coverage
 npm run lint        # ESLint
 npm run typecheck   # Next route types + tsc
 npm run build       # production build

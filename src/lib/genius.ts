@@ -41,8 +41,7 @@ function pickArtist(hits: { result?: { primary_artist?: RawArtist } }[], name: s
 /** Null when Genius has no artist we can be sure of. */
 export async function geniusCredits(artist: { name: string; slug?: string }, token: string, options: SourceOptions = {}): Promise<GeniusCredits | null> {
   const headers = { Authorization: `Bearer ${token}` };
-  const useCache = options.useCache ?? true;
-  const get = <T>(path: string) => withCache(`genius:${path}`, CACHE_MS, useCache, async () =>
+  const get = <T>(path: string) => withCache(`genius:${path}`, CACHE_MS, options.useCache, async () =>
     (await sourceJson<{ response?: T }>("Genius", `${BASE}${path}`, { headers }, options)).response as T);
 
   const search = await get<{ hits?: { result?: { primary_artist?: RawArtist } }[] }>(`/search?q=${encodeURIComponent(artist.name)}`);

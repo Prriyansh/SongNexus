@@ -72,11 +72,6 @@ export function discoveryGenres(a: string[], b: string[] | undefined, level: num
   return result;
 }
 
-export const similarityTo = (tags: string[], reference: string[]) => {
-  const overlap = tags.filter(t => reference.includes(t)).length;
-  return overlap / Math.max(1, new Set([...tags, ...reference]).size);
-};
-
 export type DiscoveryArtist = Artist & { neighborhood: string; reasons?: DiscoveryReason[]; originId?: string; focus?: { x: number; y: number }; discoveryZoom?: number };
 export type DiscoveryFocus = { artistId: string; x: number; y: number };
 

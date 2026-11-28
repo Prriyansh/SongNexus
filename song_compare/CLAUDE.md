@@ -19,7 +19,9 @@ function; keep the runtime bundle under Vercel's 500 MB (runtime deps only in re
   what a deployment installs, so don't add data-prep or test packages here.
 - `requirements-prepare.txt` — adds scikit-learn and vaderSentiment for `prepare_data.py`;
   `datasets` is opt-in, only for `--hf`.
-- `requirements-dev.txt` — adds pytest on top of the prepare requirements.
+- `requirements-dev.txt` — adds pytest and pytest-cov on top of the prepare requirements.
+- `.coveragerc` — coverage for `pytest --cov`: every line and branch, failing below 100%; only
+  `if __name__ == "__main__":` entry points are left out.
 - `pytest.ini` — tests live in `tests/`; `.` and `backend/` are on the import path.
 - `prepare_data.py` — builds `data/processed/` from the Spotify CSV + Genius lyrics: matching,
   lyric NLP, TF-IDF/LSA vectors, audio bounds, match report. `prepare()` is the entry point

@@ -66,7 +66,9 @@ export function shelfOf(rows: PlaylistSong[]): Shelf {
   return shelf;
 }
 
-const topKeys = (shelf: Shelf, count: number) => [...shelf.artists].sort(([, x], [, y]) => y.songs.length - x.songs.length).slice(0, count).map(([key]) => key);
+/** A playlist's most-played artists, as their keys and names. */
+const topArtists = (shelf: Shelf, count: number) =>
+  [...shelf.artists].sort(([, x], [, y]) => y.songs.length - x.songs.length).slice(0, count).map(([key, { name }]) => [key, name] as const);
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const listNames = (names: string[]) => {
   if (names.length > 3) return `${names.slice(0, 3).join(", ")} and ${names.length - 3} more`;
@@ -85,11 +87,11 @@ export function buildTasteMap(mine: Shelf, friend: Shelf | null, similarTo: Map<
   const sharedArtists = [...mine.artists.keys()].filter((key) => theirs.artists.has(key));
   const sharedSongs = [...mine.songs.keys()].filter((key) => theirs.songs.has(key));
 
-  // Which of one person's artists does this artist sit close to?
+  // Which of one person's artists does this artist sit close to? (Never itself: artists on both
+  // playlists are shared, and only the others are asked about.)
   const closeTo = (key: string, shelf: Shelf) => {
     const names: string[] = [];
     for (const [source, entry] of shelf.artists) {
-      if (source === key) continue;
       const fromSource = similarTo.get(source)?.some((row) => normalizeName(row.name) === key);
       const toSource = similarTo.get(key)?.some((row) => normalizeName(row.name) === source);
       if (fromSource || toSource) names.push(entry.name);
@@ -202,11 +204,11 @@ export function buildTasteMap(mine: Shelf, friend: Shelf | null, similarTo: Map<
 }
 
 /** MusicBrainz ids for playlist artists, by exact name. An artist without one still shows, with no similar artists. */
-async function resolveArtists(names: string[]): Promise<Map<string, string>> {
+async function resolveArtists(names: string[], options: SourceOptions): Promise<Map<string, string>> {
   const ids = new Map<string, string>();
   if (!names.length) return ids;
   const query = names.map((name) => `artist:"${name.replace(/["\\]/g, "")}"`).join(" OR ");
-  const data = await musicBrainzContext<{ artists?: Parameters<typeof mapArtist>[0][] }>("artist", { query, limit: "100" });
+  const data = await musicBrainzContext<{ artists?: Parameters<typeof mapArtist>[0][] }>("artist", { query, limit: "100" }, options);
   for (const raw of data.artists ?? []) {
     const artist = mapArtist(raw);
     const key = normalizeName(artist.name);
@@ -221,11 +223,13 @@ export async function buildTaste(request: TasteRequest, options: SourceOptions =
   const friend = request.friend ? shelfOf(request.friend) : null;
   const sources: SourceReport[] = [];
 
-  const keys = [...new Set([...topKeys(mine, ARTISTS_TO_CHECK), ...(friend ? topKeys(friend, ARTISTS_TO_CHECK) : [])])];
-  const nameOf = (key: string) => mine.artists.get(key)?.name ?? friend?.artists.get(key)?.name ?? key;
+  // The artists to look up: yours first, then your friend's that aren't on yours.
+  const checked = new Map(topArtists(mine, ARTISTS_TO_CHECK));
+  for (const [key, name] of friend ? topArtists(friend, ARTISTS_TO_CHECK) : []) if (!checked.has(key)) checked.set(key, name);
+  const keys = [...checked.keys()];
   let mbids = new Map<string, string>();
   try {
-    mbids = await resolveArtists(keys.map(nameOf));
+    mbids = await resolveArtists([...checked.values()], options);
     sources.push({ source: "MusicBrainz", status: "ok" });
   } catch (error) {
     console.warn("[taste] artist lookup failed:", error);
@@ -248,9 +252,10 @@ export async function buildTaste(request: TasteRequest, options: SourceOptions =
       node.imageUrl = realPicture((await dzArtist(node.name, options))?.picture_medium);
       return;
     }
-    const q = encodeURIComponent(`${node.name} ${leadOf(node.artist ?? "")}`);
+    const artist = leadOf(node.subtitle); // a song's subtitle is its artist
+    const q = encodeURIComponent(`${node.name} ${artist}`);
     const body = await sourceJson<{ data?: { title?: string; title_short?: string; artist?: { name?: string }; album?: { cover_medium?: string } }[] }>("Deezer", `https://api.deezer.com/search/track?q=${q}&limit=5`, {}, options);
-    const wanted = normalizeName(leadOf(node.artist ?? ""));
+    const wanted = normalizeName(artist);
     const match = (body.data ?? []).find((t) => normalizeName(t.artist?.name ?? "") === wanted && normalizeName(t.title_short ?? t.title ?? "") === normalizeName(node.name.replace(/\s*[([].*?[)\]]/g, "")));
     node.imageUrl = match?.album?.cover_medium ?? null;
   });

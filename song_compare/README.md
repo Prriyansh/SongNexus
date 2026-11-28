@@ -81,7 +81,7 @@ Lyrics remain copyrighted by their owners.
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest
+python -m pytest --cov   # fails below 100% coverage
 ```
 
 The tests build a small catalog from the demo data, so they need no downloads. CI runs them on

@@ -51,7 +51,7 @@ export function buildWebDetailIndex(nodes: GraphNode[], path: string[], width: n
     cells.set(key, cell);
   }
   const overview = new Map<string, string>();
-  if (previous?.width === width && previous.height === height) for (const [key, id] of previous.overview ?? []) {
+  if (previous?.width === width && previous.height === height) for (const [key, id] of previous.overview) {
     if (available.has(id)) overview.set(key, id);
   }
   const parentCandidates = new Map<string, string[]>();

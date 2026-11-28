@@ -106,3 +106,6 @@ export function linkLabel(link: LinkRef): string {
 
 export const musicBrainzUrl = (kind: 'artist' | 'recording' | 'release' | 'release-group', id: string) =>
   `https://musicbrainz.org/${kind}/${id}`;
+
+/** What went wrong, in the error's own words, or `fallback` for something thrown that isn't an Error. */
+export const errorText = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);

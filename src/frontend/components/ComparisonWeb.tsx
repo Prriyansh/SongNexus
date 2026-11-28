@@ -19,10 +19,10 @@ type ComparisonProps = { selection: WebSelection; onChange: (s: WebSelection) =>
 export function ComparisonWeb({ selection, onChange, onSelect, profile }: ComparisonProps) {
   const { left, right } = selection;
   const selectionKey = `comparison:${left}:${right}`;
-  const [scope, setScope] = useState({ key: selectionKey, level: 0 });
+  // A new pair starts from the overview: ConnectionWeb keys this by the pair, so it starts afresh.
+  const [level, setLevelState] = useState(0);
   const [visibleCount, setVisibleCount] = useState<number | null>(null);
-  const level = scope.key === selectionKey ? scope.level : 0;
-  const setLevel = (next: number) => setScope({ key: selectionKey, level: Math.max(-1, Math.min(2, next)) });
+  const setLevel = (next: number) => setLevelState(Math.max(-1, Math.min(2, next)));
   const a = useAsync(`artist:${left}`, () => artistDetails(left));
   const b = useAsync(`artist:${right}`, () => artistDetails(right));
   const credits = useAsync(`collab:${left}:${right}`, () => collaborators(left, right));

@@ -56,7 +56,7 @@ describe('Connection Web pan UX', () => {
     expect(canvas().hasAttribute('data-panning')).toBe(false);
     expect(onExplore).not.toHaveBeenCalled();
     expect(onVisibleCount).toHaveBeenLastCalledWith(visible().length);
-  });
+  }, 20_000); // 40 moves, each checking every visible node: 3–7 s on a laptop, past the 5 s default.
 
   it('coalesces rapid pointer input into one frame and flushes the last position on release', async () => {
     await render(); await pointer('pointerdown', 50, 50);

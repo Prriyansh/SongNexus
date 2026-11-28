@@ -14,6 +14,7 @@ import type { WebNode } from '../similar-web';
 import type { Selection } from '../types';
 import { useAsync } from '../useAsync';
 import { ConnectionWebCanvas } from './ConnectionWebCanvas';
+import { errorText } from '../model';
 
 type Props = { onExploreArtist: (id: string) => void; onExploreSong: (id: string) => void; onDetails: (s: Selection) => void };
 
@@ -35,10 +36,10 @@ function PlaylistPicker({ onPick, sample, label, savedSongs = [] }: { onPick: (s
   const [error, setError] = useState('');
 
   useLayoutEffect(() => {
-    const field = textarea.current;
-    const box = field?.closest<HTMLElement>('.taste-box');
-    const panel = box?.closest<HTMLElement>('.taste-panel-upload');
-    if (!field || !box || !panel) return;
+    // Every picker sits in a .taste-box inside a .taste-panel-upload.
+    const field = textarea.current!;
+    const box = field.closest<HTMLElement>('.taste-box')!;
+    const panel = box.closest<HTMLElement>('.taste-panel-upload')!;
     const px = (value: string) => parseFloat(value) || 0;
     const visibleChildren = (element: Element) => Array.from(element.children).filter(child => getComputedStyle(child).display !== 'none');
     const outerHeight = (element: Element) => {
@@ -90,14 +91,14 @@ function PlaylistPicker({ onPick, sample, label, savedSongs = [] }: { onPick: (s
       if (!songs.length) throw new Error('These songs have no artist names. Use “Title - Artist” lines, or a file with an Artist column.');
       setError('');
       onPick(songs);
-    } catch (e) { setError(e instanceof Error ? e.message : 'Could not read this playlist.'); }
+    } catch (e) { setError(errorText(e, 'Could not read this playlist.')); }
   };
   const load = async (file?: File) => {
     if (!file) return;
     if (file.size > 2_000_000) { setError('Please choose a file under 2 MB.'); return; }
     if (!/\.(csv|json|txt)$/i.test(file.name)) { setError('Please choose a CSV, JSON, or TXT file.'); return; }
     take(file.name, await file.text());
-    if (input.current) input.current.value = '';
+    input.current!.value = ''; // so choosing the same file again reads it again
   };
   const submit = () => {
     // Saved titles can contain " - "; keep their original fields until the user edits them.
@@ -125,24 +126,24 @@ function TasteMapView({ mine, friend, onExploreArtist, onExploreSong, onDetails,
   const [opening, setOpening] = useState<string>('');
   const map = state.data;
   const hasFriend = !!friend;
-  const place = useCallback((width: number, height: number) => map ? layoutTaste(map, width, height, hasFriend) : [], [map, hasFriend]);
+  // The canvas, the only caller of place, near, open and actions, is shown once there's a map,
+  // and passes them only nodes drawn from it.
+  const place = useCallback((width: number, height: number) => layoutTaste(map!, width, height, hasFriend), [map, hasFriend]);
   const edges = useMemo(() => map ? tasteEdges(map.links) : [], [map]);
-  const near = useCallback((id: string) => map ? tasteNear(id, map) : [], [map]);
+  const near = useCallback((id: string) => tasteNear(id, map!), [map]);
   const label = friend?.name || 'Friend';
   const open = async (node: WebNode) => {
-    const found = map?.nodes.find(n => n.id === node.id);
-    if (!found) return;
+    const found = map!.nodes.find(n => n.id === node.id)!;
     if (found.mbid) { onExploreArtist(found.mbid); return; }
     setOpening(found.id);
     try {
-      const recording = await findRecording(found.name, found.artist ?? '');
+      const recording = await findRecording(found.name, found.subtitle); // a song's subtitle is its artist
       if (recording) onExploreSong(recording.id);
       else setOpening(`Couldn’t find “${found.name}” on MusicBrainz.`);
     } catch { setOpening(`Couldn’t look up “${found.name}” just now.`); }
   };
   const actions = (node: WebNode) => {
-    const found = map?.nodes.find(n => n.id === node.id);
-    if (!found) return null;
+    const found = map!.nodes.find(n => n.id === node.id)!;
     const openable = found.kind === 'song' || !!found.mbid;
     return <>
       {openable && <button className="primary-button" disabled={opening === found.id} onClick={() => void open(node)}><Compass size={13} /> {opening === found.id ? 'Opening…' : 'Explore from here'}</button>}
@@ -158,7 +159,7 @@ function TasteMapView({ mine, friend, onExploreArtist, onExploreSong, onDetails,
       {hasFriend ? <><span><strong>{map.stats.sharedArtists}</strong> artists in common</span><span><strong>{map.stats.sharedSongs}</strong> songs in common</span><span><strong>{map.stats.similarLinks}</strong> similar-artist links between you</span></> : <span><strong>{map.stats.mineSongs}</strong> songs by <strong>{map.stats.mineArtists}</strong> artists</span>}
       <div className="taste-legend" aria-label="What the colors mean">{(hasFriend ? LEGEND_FRIEND(label) : LEGEND_SOLO).map(([group, text, color]) => <span key={group}><i style={{ borderColor: color, borderStyle: group.startsWith('for-') ? 'dashed' : 'solid' }} />{text}</span>)}<span><i className="is-line" style={{ borderColor: '#c7a5ff', borderStyle: 'dashed' }} />Listeners play both</span><span><i className="is-line" style={{ borderColor: '#8f8a9a' }} />By this artist</span><span>Circle: artist · Square: song</span></div>
     </div>}
-    {map ? <ConnectionWebCanvas key={`${hasFriend}:${state.data ? map.nodes.length : 0}`} nodes={place} edges={edges} near={near} actions={actions} showCloseness={false} startAt={hasFriend ? centerOnBoth : undefined} onVisibleCount={setVisible} empty={!map.nodes.length} status={missing.length ? <div className="web-map-status" role="status"><span>{sourceNote(missing)}</span></div> : null} />
+    {map ? <ConnectionWebCanvas key={`${hasFriend}:${map.nodes.length}`} nodes={place} edges={edges} near={near} actions={actions} showCloseness={false} startAt={hasFriend ? centerOnBoth : undefined} onVisibleCount={setVisible} empty={!map.nodes.length} status={missing.length ? <div className="web-map-status" role="status"><span>{sourceNote(missing)}</span></div> : null} />
       : <div className="web-map web-loading" aria-busy={!state.error}>{state.error ? <div role="alert"><strong>We couldn’t build this map.</strong><p>{state.error.message}</p><button className="secondary-button" onClick={state.retry}>Try again</button></div> : <div role="status"><Network size={42} strokeWidth={1} /><p><LoaderCircle size={14} className="web-spinner" /> Reading the playlists and finding connections…</p></div>}</div>}
   </>;
 }
@@ -209,7 +210,7 @@ export function Friends({ profile, ...props }: Props & { profile: MusicProfile }
   const [noCodes, setNoCodes] = useState(false);
   const [longLink, setLongLink] = useState('');
   const [backLink, setBackLink] = useState('');
-  const fail = (e: unknown, fallback: string) => setError(e instanceof Error ? e.message : fallback);
+  const fail = (e: unknown, fallback: string) => setError(errorText(e, fallback));
 
   const pick = (songs: SharedPlaylist['songs']) => { const next = { name: name.trim(), songs }; setMine(next); storePlaylist(next); };
   const showRoom = useCallback((room: Room, role: SavedRoom['role']) => {
@@ -256,17 +257,18 @@ export function Friends({ profile, ...props }: Props & { profile: MusicProfile }
     return () => { live = false; clearInterval(timer); };
   }, [saved, friend, showRoom]);
 
+  // Its button is only there once there's a playlist.
   const startRoom = async () => {
-    if (!mine) return;
+    const playlist = mine!;
     setBusy(true); setError('');
     try {
-      const code = await createRoom({ name: name.trim(), songs: mine.songs });
+      const code = await createRoom({ name: name.trim(), songs: playlist.songs });
       const room = { code, role: 'host' as const };
       saveRoom(room); setSaved(room);
     } catch (e) {
       if (e instanceof ApiError && e.unavailable) {
         setNoCodes(true);
-        setLongLink(friendLink(window.location.origin, await encodePlaylist({ ...mine, name: name.trim() })));
+        setLongLink(friendLink(window.location.origin, await encodePlaylist({ ...playlist, name: name.trim() })));
       } else fail(e, 'Couldn’t create a code.');
     } finally { setBusy(false); }
   };
@@ -279,13 +281,13 @@ export function Friends({ profile, ...props }: Props & { profile: MusicProfile }
       saveRoom(entry); setSaved(entry); showRoom(room, 'guest');
     } catch (e) { fail(e, 'Couldn’t join this room.'); } finally { setBusy(false); }
   };
+  // Where short codes aren't set up, a long link carries the playlist itself instead.
+  const [invite, setInvite] = useState<SharedPlaylist | null>(null);
   const startOver = () => {
-    saveRoom(null); setSaved(null); setFriend(null); setJoining(''); setHostName(null); setError(''); setBackLink('');
+    saveRoom(null); setSaved(null); setFriend(null); setJoining(''); setHostName(null); setError(''); setBackLink(''); setInvite(null);
     window.history.replaceState(null, '', '/friends');
   };
 
-  // Where short codes aren't set up, a long link carries the playlist itself instead.
-  const [invite, setInvite] = useState<SharedPlaylist | null>(null);
   useEffect(() => {
     const params = new URLSearchParams(window.location.hash.slice(1));
     const [a, b] = [params.get('a'), params.get('b')];

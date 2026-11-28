@@ -72,6 +72,10 @@ export const artistDetails = (id: string) =>
 export const songDetails = (id: string) =>
   once(`song:${id}`, () => getJson<{ details: RecordingDetails }>(`/api/musicbrainz/details?type=recording&id=${id}`).then(r => r.details));
 
+/** An artist's or a song's details, by what kind it is. */
+export const detailsOf = (kind: 'artist' | 'song', id: string): Promise<ArtistDetails | RecordingDetails> =>
+  kind === 'artist' ? artistDetails(id) : songDetails(id);
+
 /**
  * Collaborators shared by two artists. A first scan of two big catalogues can take most of a minute.
  * A scan that ran out of time isn't remembered, so asking again continues it.
@@ -88,8 +92,15 @@ export const moreCredits = (a: string, b: string) =>
   once(`credits:${a}:${b}`, () => getJson<{ credits: MoreCredits }>(`/api/credits?a=${a}&b=${b}`).then(r => r.credits));
 
 /** Artists and songs similar to this one, each with the reasons it's there. */
-export const similarMusic = (kind: 'artist' | 'song', id: string) =>
-  once(`similar:${kind}:${id}`, () => getJson<{ similar: SimilarWeb }>(`/api/similar?kind=${kind}&id=${id}`).then(r => r.similar));
+export const similarMusic = (kind: 'artist' | 'song', id: string) => {
+  const key = `similar:${kind}:${id}`;
+  return once(key, async () => {
+    const { similar } = await getJson<{ similar: SimilarWeb }>(`/api/similar?kind=${kind}&id=${id}`);
+    // A map with a source that failed isn't kept, so "Try again" asks again.
+    if (similar.sources.some(s => s.status === 'failed')) memo.delete(key);
+    return similar;
+  });
+};
 /** A bounded search per style, preserving partial results when one neighborhood fails. */
 export function discoverWebArtists(journey: string[], focus: string[][] = []) {
   const key = `web:${JSON.stringify([journey, focus])}`;

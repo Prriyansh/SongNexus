@@ -60,17 +60,19 @@ function SimilarView({ selection, onChange, onSelect, onCompare, mode, profile }
   const missing = web ? web.sources.filter(s => s.status !== 'ok') : [];
   const empty = !!web && !web.artists.length && !web.songs.length;
 
-  const place = useCallback((width: number, height: number) => shown ? placeDiscovered(layoutSimilarWeb(shown, width, height), found) : [], [shown, found]);
+  // The canvas, the only caller of place, near and onExplore, is shown once the map has loaded,
+  // and explores only from artists on it.
+  const place = useCallback((width: number, height: number) => placeDiscovered(layoutSimilarWeb(shown!, width, height), found), [shown, found]);
   const everything = useMemo(() => web && {
     ...web,
     artists: [...web.artists, ...found],
     links: [...web.links, ...found.map(n => ({ from: n.via.id, to: n.id, kind: 'listeners' as const })), ...discovery.discoveries.flatMap(d => d.similar.links)],
   }, [web, found, discovery.discoveries]);
-  const near = useCallback((nodeId: string) => everything ? connectionsOf(nodeId, everything) : [], [everything]);
+  const near = useCallback((nodeId: string) => connectionsOf(nodeId, everything!), [everything]);
   const { explore } = discovery;
   const onExplore = useCallback((nodeId: string, zoom: number) => {
-    const artist = everything?.artists.find(a => a.id === nodeId);
-    if (artist) explore(artist.id, artist.name, zoom);
+    const artist = everything!.artists.find(a => a.id === nodeId)!;
+    explore(artist.id, artist.name, zoom);
   }, [everything, explore]);
   const discoveryStatus = discovery.loading ? <><LoaderCircle size={14} className="web-spinner" /><span>Finding artists similar to {discovery.loading.name}…</span></>
     : discovery.failed ? <><span>Couldn’t load more around {discovery.failed.name}.</span><button onClick={discovery.retry}>Try again</button></> : null;
@@ -89,8 +91,8 @@ function SimilarView({ selection, onChange, onSelect, onCompare, mode, profile }
       {shown ? <ConnectionWebCanvas key={`${mode}:${id}`} nodes={place} edges={edges} near={near} actions={actions} levelOfDetail onExplore={onExplore} onVisibleCount={setVisibleCount} status={discoveryStatus || sourceStatus ? <div className="web-map-status" role="status">{discoveryStatus ?? <><span>{sourceStatus}</span>{missing.some(s => s.status === 'failed') && <button onClick={state.retry}>Try again</button>}</>}</div> : null} empty={empty} />
         : <div className="web-map web-loading" aria-busy={!state.error}>{state.error ? <div role="alert"><strong>We couldn’t load this map.</strong><p>{state.error.message}</p><button className="secondary-button" onClick={state.retry}>Try again</button></div> : <div role="status"><Network size={42} strokeWidth={1} /><p><LoaderCircle size={14} className="web-spinner" /> Finding similar artists and songs…</p></div>}</div>}
       <div className="web-selection-dock search-mode">
-        {mode === 'artist' ? <SearchChooser key="artist" type="artist" label="ARTIST" value={selection.artist} display={undefined} displayName={web?.center.kind === 'artist' ? web.center.name : undefined} other="" onChange={next => onChange({ ...selection, artist: next })} profile={profile} />
-          : <SearchChooser key="song" type="song" label="SONG" value={selection.song} display={undefined} displayName={web?.center.kind === 'song' ? web.center.name : undefined} other="" onChange={next => onChange({ ...selection, song: next })} profile={profile} />}
+        {mode === 'artist' ? <SearchChooser key="artist" type="artist" label="ARTIST" value={selection.artist} display={undefined} displayName={web?.center.name} other="" onChange={next => onChange({ ...selection, artist: next })} profile={profile} />
+          : <SearchChooser key="song" type="song" label="SONG" value={selection.song} display={undefined} displayName={web?.center.name} other="" onChange={next => onChange({ ...selection, song: next })} profile={profile} />}
       </div>
     </section>
   </>;

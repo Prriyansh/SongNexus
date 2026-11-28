@@ -103,7 +103,7 @@ describe('Connection Web pan UX', () => {
     expect(world().style.transform).toBe('translate3d(0px, 0px, 0)');
     expect(canvas().hasAttribute('data-panning')).toBe(false);
     expect(onVisibleCount).toHaveBeenLastCalledWith(visible().length);
-  });
+  }, 20_000); // 40 moves, each checking every visible node: 3–7 s on a laptop, past the 5 s default.
 
   it('coalesces rapid pointer input into one frame and flushes the last position on release', async () => {
     await render();
@@ -191,8 +191,11 @@ describe('Connection Web zoom levels', () => {
   const wheel = async (deltaY: number, x: number, y: number) => {
     await act(async () => { canvas().dispatchEvent(new WheelEvent('wheel', { deltaY, clientX: x, clientY: y, bubbles: true, cancelable: true })); });
   };
-  const settle = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 200)); });
-  beforeEach(() => onExplore.mockReset());
+  // The map explores 140 ms after a zoom settles. On a slow machine real time can pass that
+  // within one event, so time here moves only when a test says.
+  const settle = () => act(async () => { vi.advanceTimersByTime(200); });
+  beforeEach(() => { onExplore.mockReset(); vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }); });
+  afterEach(() => { vi.useRealTimers(); });
 
   it('shows fewer artists zoomed out and more zoomed in', async () => {
     await renderDetailed();

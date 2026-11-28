@@ -57,3 +57,25 @@ describe("GET /api/sound/search", () => {
   });
 });
 
+
+describe("the sound routes' other answers", () => {
+  it("needs titles even when no parameters come at all", async () => {
+    const GET = await route({ status: "ok" });
+    expect((await GET(url(""))).status).toBe(400);
+  });
+
+  it("gives no hint outside development", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const GET = await route({ status: "unavailable" });
+    expect(await (await GET(url("aTitle=a&bTitle=b"))).json()).toEqual({ status: "unavailable" });
+  });
+
+  it("needs a search query, and reads an unreadable limit as 10", async () => {
+    const searchSound = vi.fn(async () => ({ status: "ok", results: [] }));
+    vi.doMock("@/lib/sound", () => ({ searchSound }));
+    const { GET } = await import("../api/sound/search/route");
+    expect((await GET(new Request("http://localhost/api/sound/search"))).status).toBe(400);
+    await GET(new Request("http://localhost/api/sound/search?q=drivers&limit=lots"));
+    expect(searchSound).toHaveBeenCalledWith("drivers", 10);
+  });
+});

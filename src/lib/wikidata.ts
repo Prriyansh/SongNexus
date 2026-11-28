@@ -40,7 +40,7 @@ function labelled(claims: Claim[] | undefined, names: Map<string, string>): Wiki
 
 export async function artistFacts(qid: string, options: SourceOptions = {}): Promise<ArtistFacts | null> {
   if (!/^Q\d+$/.test(qid)) return null;
-  return withCache(`wikidata:${qid}`, CACHE_MS, options.useCache ?? true, async () => {
+  return withCache(`wikidata:${qid}`, CACHE_MS, options.useCache, async () => {
     const entity = (await sourceJson<Entities>("Wikidata", `${API}?action=wbgetentities&ids=${qid}&props=claims|sitelinks/urls|descriptions&languages=en&sitefilter=enwiki&format=json`, {}, options)).entities?.[qid];
     if (!entity?.claims) return null;
 

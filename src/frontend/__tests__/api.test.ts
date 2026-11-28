@@ -35,7 +35,7 @@ describe('api client', () => {
   });
 
   it('asks for similar music by kind and id, and shares the result', async () => {
-    fetchMock.mockReturnValue(json({ similar: { artists: [], songs: [] } }));
+    fetchMock.mockReturnValue(json({ similar: { artists: [], songs: [], sources: [] } }));
     const [a, b] = await Promise.all([api.similarMusic('artist', ARTIST_ID), api.similarMusic('artist', ARTIST_ID)]);
     expect(a).toBe(b);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -43,7 +43,7 @@ describe('api client', () => {
   });
 
   it('asks for similar artists only (no songs) for the zoom-in, cached apart from the full map', async () => {
-    fetchMock.mockReturnValue(json({ similar: { artists: [], songs: [] } }));
+    fetchMock.mockReturnValue(json({ similar: { artists: [], songs: [], sources: [] } }));
     await api.similarArtistsOf(ARTIST_ID);
     await api.similarArtistsOf(ARTIST_ID);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -98,6 +98,69 @@ describe('api client', () => {
     await api.collaborators('a', 'b');
     await api.collaborators('a', 'b');
     await api.collaborators('a', 'b');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('api client: the rest', () => {
+  it('doesn’t retry a request that was cancelled while it waited to', async () => {
+    const controller = new AbortController();
+    fetchMock.mockImplementationOnce(() => { controller.abort(); return json({ error: 'busy', retryable: true }, 503); });
+    await expect(api.searchSongs('xx', controller.signal)).rejects.toMatchObject({ message: 'busy' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const late = new AbortController();
+    api.retryPolicy.delayMs = 5;
+    fetchMock.mockImplementationOnce(() => { setTimeout(() => late.abort(), 1); return json({ error: 'busy', retryable: true }, 503); });
+    await expect(api.searchSongs('yy', late.signal)).rejects.toMatchObject({ message: 'busy' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('names the status when an error has no message, and treats an unavailable service as not worth retrying', async () => {
+    fetchMock.mockReturnValueOnce(Promise.resolve(new Response('not json', { status: 418 })));
+    await expect(api.artistDetails(ARTIST_ID)).rejects.toMatchObject({ message: 'Request failed (418).', retryable: false });
+    fetchMock.mockReturnValueOnce(json({ error: 'Not set up.', unavailable: true }, 503));
+    await expect(api.createRoom({ name: '', songs: [] })).rejects.toMatchObject({ unavailable: true, retryable: false });
+  });
+
+  it('searches each style with its closest other tag, leaves out placeholders, and asks again after a failure', async () => {
+    const artist = (name: string, tags: string[] = []) => ({ id: name, name, tags });
+    fetchMock.mockImplementation((url: string) => {
+      const q = new URL(url, 'http://x').searchParams.get('q')!;
+      if (q.includes('jazz')) return json({ error: 'down' }, 400);
+      return json({ results: [artist('Real'), artist('Various Artists'), artist('Odd', ['Special Purpose'])] });
+    });
+    const first = await api.discoverWebArtists(['pop', 'jazz'], [['pop', 'synth-pop']]);
+    expect(first.failed).toEqual(['jazz']);
+    expect(first.artists.map(a => [a.name, a.neighborhood])).toEqual([['Real', 'pop']]);
+    expect(fetchMock.mock.calls.map(([u]) => new URL(u, 'http://x').searchParams.get('q'))).toContain('tag:"pop" AND tag:"synth-pop"');
+    await api.discoverWebArtists(['pop', 'jazz'], [['pop', 'synth-pop']]);
+    expect(fetchMock.mock.calls.filter(([u]) => String(u).includes('jazz')).length).toBe(2);
+  });
+
+  it('asks again for a neighborhood that came back partial, but not for a complete one', async () => {
+    fetchMock.mockReturnValueOnce(json({ neighborhood: { artists: [], failed: ['labels'] } })).mockReturnValue(json({ neighborhood: { artists: [], failed: [] } }));
+    await api.artistNeighborhood(ARTIST_ID);
+    await api.artistNeighborhood(ARTIST_ID);
+    await api.artistNeighborhood(ARTIST_ID);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('compares songs whose artists are unknown with empty artist names', async () => {
+    fetchMock.mockReturnValueOnce(json({ status: 'unavailable' }));
+    const song = (id: string) => ({ id, title: id, artists: [] }) as never;
+    await api.soundComparison(song('a'), song('b'));
+    const q = new URL(fetchMock.mock.calls[0][0], 'http://x').searchParams;
+    expect([q.get('aArtist'), q.get('bArtist')]).toEqual(['', '']);
+  });
+});
+
+describe('api client: similar music', () => {
+  it('asks again for a map with a source that failed, but keeps a complete one', async () => {
+    fetchMock.mockReturnValueOnce(json({ similar: { artists: [], songs: [], sources: [{ source: 'Deezer', status: 'failed' }] } }))
+      .mockReturnValue(json({ similar: { artists: [], songs: [], sources: [{ source: 'Deezer', status: 'ok' }] } }));
+    await api.similarMusic('artist', ARTIST_ID);
+    await api.similarMusic('artist', ARTIST_ID);
+    await api.similarMusic('artist', ARTIST_ID);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

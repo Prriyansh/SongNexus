@@ -332,7 +332,7 @@ export function mapDiscography(browse: RawAlbumBrowse | null | undefined): Disco
       id: str(g?.id),
       title: str(g?.title),
       year: yearOf(str(g?.["first-release-date"])),
-      type: str(g?.["primary-type"]) || "Album",
+      type: "Album", // studio albums are Albums with no secondary type
       artUrl: coverArtUrl("release-group", str(g?.id)),
     }))
     .filter((r) => r.id && r.title)
@@ -495,12 +495,14 @@ export function indexCredits(recordings: RawRecording[], selfId: string, coverag
 
 type RawTrack = { "artist-credit"?: RawArtistCredit[]; recording?: RawRecording | null };
 type RawReleaseWithTracks = { media?: { tracks?: RawTrack[] }[]; relations?: RawRelation[] };
+/** A recording from a tracklist: its relations always include the album's own credits, so are always there. */
+type TrackRecording = RawRecording & { relations: RawRelation[] };
 
 /**
  * The recordings on a release's tracklist, each carrying its track-level artist credit. A credit on
  * the release itself (say, a producer of the whole album) applies to every track, so it's added to each.
  */
-export function releaseRecordings(release: RawReleaseWithTracks | null | undefined): RawRecording[] {
+export function releaseRecordings(release: RawReleaseWithTracks | null | undefined): TrackRecording[] {
   const albumWide = (release?.relations ?? []).filter((rel) => rel?.artist);
   return (release?.media ?? []).flatMap((medium) =>
     (medium?.tracks ?? []).flatMap((track) =>
@@ -516,14 +518,14 @@ export function releaseRecordings(release: RawReleaseWithTracks | null | undefin
 }
 
 /** Keeps only what the credit index reads: an album's raw response can be close to a megabyte. */
-function compactRecording(rec: RawRecording, firstReleaseDate: unknown): RawRecording {
+function compactRecording(rec: TrackRecording, firstReleaseDate: unknown): RawRecording {
   const person = (artist: RawArtist | null | undefined) => ({ id: artist?.id, name: artist?.name });
   return {
     id: rec.id,
     title: rec.title,
     "first-release-date": firstReleaseDate,
     "artist-credit": (rec["artist-credit"] ?? []).map((c) => ({ artist: person(c?.artist) })),
-    relations: (rec.relations ?? []).flatMap((rel): RawRelation[] => {
+    relations: rec.relations.flatMap((rel): RawRelation[] => {
       if (CREDIT_ROLES[str(rel?.type)]) return [{ type: rel.type, artist: person(rel.artist) }];
       const writers = (rel?.work?.relations ?? []).filter((w) => WORK_ROLES.has(str(w?.type)));
       return writers.length
@@ -661,7 +663,7 @@ function scheduleThrottled(spacingMs: number): Promise<void> {
     if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
     lastRequestAt = Date.now();
   });
-  throttleChain = run.catch(() => {});
+  throttleChain = run; // the wait itself can't fail
   return run;
 }
 
@@ -806,11 +808,12 @@ async function fetchJsonUncoalesced(
 export async function withCache<T>(
   key: string,
   ttl: number,
-  useCache: boolean,
+  /** Off in tests; on unless a caller says otherwise. */
+  useCache: boolean | undefined,
   producer: () => Promise<T>
 ): Promise<T> {
   const now = Date.now();
-  if (useCache) {
+  if (useCache ?? true) {
     const hit = cache.get(key);
     if (hit && hit.freshUntil > now) return hit.data as T;
     try {
@@ -858,7 +861,7 @@ export async function searchMusicBrainz(
   input: SearchParams,
   options: RequestOptions = {}
 ): Promise<Result[]> {
-  const { useCache = true } = options;
+  const { useCache } = options;
   const key = `search:${input.type}:${input.limit}:${input.query.toLowerCase()}`;
   return withCache(key, SEARCH_TTL_MS, useCache, async () => {
     const payload = await fetchJson(buildSearchUrl(input), options);
@@ -870,7 +873,7 @@ export async function searchMusicBrainz(
 export function musicBrainzContext<T>(path: string, params: Record<string, string>, options: RequestOptions = {}): Promise<T> {
   const query = new URLSearchParams({ ...params, fmt: 'json' });
   const url = `${MB_BASE}/${path}?${query}`;
-  return withCache(`context:${url}`, params.query ? SEARCH_TTL_MS : LOOKUP_TTL_MS, options.useCache ?? true,
+  return withCache(`context:${url}`, params.query ? SEARCH_TTL_MS : LOOKUP_TTL_MS, options.useCache,
     async () => await fetchJson(url, options) as T);
 }
 
@@ -879,7 +882,7 @@ export async function lookupMusicBrainz(
   input: DetailsParams,
   options: RequestOptions = {}
 ): Promise<DetailsResult> {
-  const { useCache = true } = options;
+  const { useCache } = options;
   const key = `lookup:${input.type}:${input.id}`;
   return withCache(key, LOOKUP_TTL_MS, useCache, async () => {
     const payload = await fetchJson(buildLookupUrl(input), options);
@@ -890,8 +893,8 @@ export async function lookupMusicBrainz(
     try {
       albums = await albumBrowse(input.id, options);
     } catch (error) {
-      if (!(error instanceof UpstreamError)) throw error;
-      console.warn(`[musicbrainz] album browse failed for ${input.id}: ${error.message}`);
+      // fetchJson turns every failure into an UpstreamError.
+      console.warn(`[musicbrainz] album browse failed for ${input.id}: ${(error as UpstreamError).message}`);
     }
     return mapArtistDetails(payload as RawArtist, albums);
   });
@@ -899,7 +902,7 @@ export async function lookupMusicBrainz(
 
 /** An artist's album release-groups, cached: shared by the details card and the collaborator scan. */
 function albumBrowse(artistId: string, options: RequestOptions): Promise<RawAlbumBrowse> {
-  return withCache(`albums:${artistId}`, LOOKUP_TTL_MS, options.useCache ?? true, async () =>
+  return withCache(`albums:${artistId}`, LOOKUP_TTL_MS, options.useCache, async () =>
     (await fetchJson(buildAlbumBrowseUrl(artistId), options)) as RawAlbumBrowse
   );
 }
@@ -917,7 +920,7 @@ function buildAlbumCreditsUrl(releaseGroupId: string): string {
 /** One album's credits across its editions; cached per album so a later scan can pick up from here. */
 function albumRecordings(group: RawReleaseGroup, options: RequestOptions): Promise<RawRecording[]> {
   const id = str(group.id);
-  return withCache(`album-credits:${id}`, LOOKUP_TTL_MS, options.useCache ?? true, async () => {
+  return withCache(`album-credits:${id}`, LOOKUP_TTL_MS, options.useCache, async () => {
     const page = (await fetchJson(buildAlbumCreditsUrl(id), options)) as { releases?: RawReleaseWithTracks[] };
     return (page.releases ?? []).flatMap(releaseRecordings).map((rec) => compactRecording(rec, group["first-release-date"]));
   });
@@ -935,7 +938,7 @@ async function artistCredits(artistId: string, options: RequestOptions): Promise
     .sort((x, y) => str(y?.["first-release-date"]).localeCompare(str(x?.["first-release-date"])));
 
   if (!studio.length) {
-    return withCache(`credits:${artistId}`, LOOKUP_TTL_MS, options.useCache ?? true, async () => {
+    return withCache(`credits:${artistId}`, LOOKUP_TTL_MS, options.useCache, async () => {
       const page = (await fetchJson(buildRecordingCreditsUrl(artistId), options)) as {
         recordings?: RawRecording[];
         "recording-count"?: unknown;

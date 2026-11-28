@@ -5,6 +5,7 @@ import { searchSongs } from '../api';
 import { MAX_MATCH_ROWS, matchQuery, parsePlaylist, pickMatch } from '../playlist';
 import type { PlaylistRow } from '../playlist';
 import { Modal } from './Modal';
+import { errorText } from '../model';
 
 type Match = { row: PlaylistRow; song?: Song; status: 'waiting' | 'matched' | 'missing' | 'failed' };
 const SAMPLE = 'vampire — Olivia Rodrigo\nAnti-Hero — Taylor Swift\nKill Bill — SZA\nNot a real song — Nobody';
@@ -35,7 +36,7 @@ export function PlaylistUpload({ onClose, onImport }: { onClose: () => void; onI
       } catch (e) {
         if (controller.signal.aborted) return;
         next = { row: queue[i], status: 'failed' };
-        setError(e instanceof Error ? e.message : 'MusicBrainz search failed.');
+        setError(errorText(e, 'MusicBrainz search failed.'));
       }
       setMatches(current => current.map((m, j) => (j === i ? next : m)));
     }
@@ -48,8 +49,8 @@ export function PlaylistUpload({ onClose, onImport }: { onClose: () => void; onI
       if (file.size > 2_000_000) throw new Error('Please choose a file under 2 MB.');
       if (!/\.(csv|json|txt)$/i.test(file.name)) throw new Error('Please choose a CSV, JSON, or TXT file.');
       void start(parsePlaylist(file.name, await file.text()), file.name);
-    } catch (e) { setError(e instanceof Error ? e.message : 'Could not read this file.'); }
-    if (input.current) input.current.value = '';
+    } catch (e) { setError(errorText(e, 'Could not read this file.')); }
+    input.current!.value = ''; // so choosing the same file again reads it again
   };
 
   const matched = [...new Map(matches.flatMap(m => (m.song ? [[m.song.id, m.song] as const] : []))).values()];

@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { parseDetailsParams, UpstreamError, ValidationError } from "@/lib/musicbrainz";
+import { parseDetailsParams, ValidationError } from "@/lib/musicbrainz";
 import { similarToArtist, similarToSong } from "@/lib/similar";
+import { answer, CACHE, ok } from "../respond";
 
 // Several sources, one after another for MusicBrainz's sake, so allow time when nothing is cached.
 export const maxDuration = 60;
@@ -9,19 +9,22 @@ export const maxDuration = 60;
 // Artists and songs similar to this one, each with the reasons it's there. songs=0 (artists only)
 // leaves out similar songs.
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const kind = searchParams.get("kind");
-  const withSongs = searchParams.get("songs") !== "0";
-  try {
-    if (kind !== "artist" && kind !== "song") throw new ValidationError('Query param "kind" must be "artist" or "song".');
-    const { id } = parseDetailsParams(new URLSearchParams({ type: kind === "artist" ? "artist" : "recording", id: searchParams.get("id") ?? "" }));
-    const similar = kind === "artist" ? await similarToArtist(id, {}, { songs: withSongs }) : await similarToSong(id);
-    const settled = similar.sources.every((s) => s.status !== "failed") && (similar.songs.length > 0 || !withSongs) && similar.artists.length > 0;
-    return NextResponse.json({ similar }, { headers: { "Cache-Control": settled ? "public, max-age=3600" : "no-store" } });
-  } catch (error) {
-    if (error instanceof ValidationError) return NextResponse.json({ error: error.message }, { status: 400 });
-    if (error instanceof UpstreamError) return NextResponse.json({ error: error.message, retryable: error.retryable }, { status: error.status });
-    console.error("[similar] unexpected failure:", error);
-    return NextResponse.json({ error: "Something went wrong while finding similar music." }, { status: 500 });
-  }
+  const params = new URL(request.url).searchParams;
+  return answer("similar", "finding similar music", async () => {
+    const kind = params.get("kind");
+    if (kind !== "artist" && kind !== "song") {
+      throw new ValidationError('Query param "kind" must be "artist" or "song".');
+    }
+    const type = kind === "artist" ? "artist" : "recording";
+    const { id } = parseDetailsParams(new URLSearchParams({ type, id: params.get("id") ?? "" }));
+    const songs = params.get("songs") !== "0";
+    const similar =
+      kind === "artist" ? await similarToArtist(id, {}, { songs }) : await similarToSong(id);
+    // Keep only a whole answer: every source heard from, and something in each part asked for.
+    const settled =
+      similar.sources.every((s) => s.status !== "failed") &&
+      similar.artists.length > 0 &&
+      (similar.songs.length > 0 || !songs);
+    return ok({ similar }, settled ? CACHE.hour : CACHE.never);
+  });
 }

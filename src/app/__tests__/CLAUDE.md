@@ -12,6 +12,14 @@ Tests for the Next.js wiring. Run with `npm test` from the repository root.
 - `sound-route.test.ts` — `/api/sound` and `/api/sound/search`: input validation, caching and
   the development hint.
 - `api-config.test.ts` — the collaborators route allows enough time (`maxDuration`) for a cold scan.
+- `api-contract.test.ts` — every other route's promises with its library replaced: statuses and
+  bodies for good input, bad input, a busy source and a crash; caching; logging; rooms end to end
+  on a memory store.
+- `page.test.tsx` — `/` sends only the loading placeholder; the app itself needs the browser.
+- `respond.test.ts` — the shared route wrapper lets Next's own signals (a route found dynamic while
+  prerendering, `notFound`) through instead of answering 500.
 - `CLAUDE.md` — this guide.
 
-Other API route behaviour is covered through the functions they call, in `src/lib/__tests__/`.
+Discover's pages and API routes are tested in `src/discover/__tests__/`.
+
+What the routes call is tested in `src/lib/__tests__/`. Routes answer through `src/app/api/respond.ts`.

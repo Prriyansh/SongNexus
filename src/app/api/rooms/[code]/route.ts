@@ -1,23 +1,23 @@
-import { NextResponse } from "next/server";
 import { isRoomCode, joinRoom, normalizeCode, readRoom, roomStore } from "@/lib/rooms";
 import { parseMember } from "@/lib/taste";
+import { bodyOf, CACHE, fail, ok } from "../../respond";
+import { BAD_PLAYLIST, notFound, unavailable } from "../rooms";
 
 type Context = { params: Promise<{ code: string }> };
-const NO_STORE = { headers: { "Cache-Control": "no-store" } };
-const NOT_FOUND = { error: "That code doesn’t match a room. It may have expired after a week, or have a typo." };
 
-// GET /api/rooms/ABC234 → { room: { host, guest } }. The code is the key: anyone holding it can read both playlists.
+// GET /api/rooms/ABC234 → { room: { host, guest } }. The code is the key: anyone holding it can
+// read both playlists. Codes are read loosely ("abc-234" works).
 export async function GET(_request: Request, { params }: Context) {
   const code = normalizeCode((await params).code);
   const store = roomStore();
-  if (!store) return NextResponse.json({ error: "Short codes aren’t set up on this server.", unavailable: true }, { status: 503 });
-  if (!isRoomCode(code)) return NextResponse.json(NOT_FOUND, { status: 404 });
+  if (!store) return unavailable();
+  if (!isRoomCode(code)) return notFound();
   try {
     const room = await readRoom(store, code);
-    return room ? NextResponse.json({ room }, NO_STORE) : NextResponse.json(NOT_FOUND, { status: 404 });
+    return room ? ok({ room }, CACHE.never) : notFound();
   } catch (error) {
     console.error("[rooms] read failed:", error);
-    return NextResponse.json({ error: "Couldn’t load this room just now.", retryable: true }, { status: 502 });
+    return fail(502, "Couldn’t load this room just now.", { retryable: true });
   }
 }
 
@@ -25,17 +25,18 @@ export async function GET(_request: Request, { params }: Context) {
 export async function POST(request: Request, { params }: Context) {
   const code = normalizeCode((await params).code);
   const store = roomStore();
-  if (!store) return NextResponse.json({ error: "Short codes aren’t set up on this server.", unavailable: true }, { status: 503 });
-  if (!isRoomCode(code)) return NextResponse.json(NOT_FOUND, { status: 404 });
-  const member = parseMember(await request.json().catch(() => null));
-  if (!member) return NextResponse.json({ error: "Send at least one song with both a title and an artist, up to 250." }, { status: 400 });
+  if (!store) return unavailable();
+  if (!isRoomCode(code)) return notFound();
+  const member = parseMember(await bodyOf(request));
+  if (!member) return fail(400, BAD_PLAYLIST);
   try {
     const result = await joinRoom(store, code, member);
-    if (result === "missing") return NextResponse.json(NOT_FOUND, { status: 404 });
-    if (result === "full") return NextResponse.json({ error: "Someone has already joined this room. Ask for a new code." }, { status: 409 });
-    return NextResponse.json({ room: result }, NO_STORE);
+    if (result === "missing") return notFound();
+    if (result === "full")
+      return fail(409, "Someone has already joined this room. Ask for a new code.");
+    return ok({ room: result }, CACHE.never);
   } catch (error) {
     console.error("[rooms] join failed:", error);
-    return NextResponse.json({ error: "Couldn’t join this room just now.", retryable: true }, { status: 502 });
+    return fail(502, "Couldn’t join this room just now.", { retryable: true });
   }
 }

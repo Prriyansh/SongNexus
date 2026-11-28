@@ -46,8 +46,8 @@ const id = (value: unknown) => (typeof value === 'string' && UUID.test(value) ? 
 const art = (value: unknown) => (typeof value === 'string' && value.startsWith('https://coverartarchive.org/') ? value : null);
 const record = (value: unknown) => (value && typeof value === 'object' ? (value as Record<string, unknown>) : {});
 
-function list<T extends { id: string }>(value: unknown, read: (item: Record<string, unknown>) => T | null): T[] {
-  if (!Array.isArray(value)) return [];
+/** Valid items of a list parseProfile has already checked is an array, once each, at most MAX_ITEMS. */
+function list<T extends { id: string }>(value: unknown[], read: (item: Record<string, unknown>) => T | null): T[] {
   const seen = new Set<string>();
   const out: T[] = [];
   for (const raw of value) {
@@ -63,15 +63,15 @@ export function parseProfile(value: unknown): MusicProfile | null {
   const raw = value as Record<string, unknown>;
   if (!['artists', 'songs', 'albums', 'genres'].every(key => Array.isArray(raw[key]))) return null;
   return {
-    artists: list(raw.artists, item => {
+    artists: list(raw.artists as unknown[], item => {
       const key = id(item.id), name = text(item.name);
       return key && name ? { id: key, name, subtitle: text(item.subtitle), artUrl: art(item.artUrl) } : null;
     }),
-    songs: list(raw.songs, item => {
+    songs: list(raw.songs as unknown[], item => {
       const key = id(item.id), title = text(item.title);
       return key && title ? { id: key, title, artist: text(item.artist), artistId: id(item.artistId), album: text(item.album), year: text(item.year, 4), duration: text(item.duration, 8) || '—', artUrl: art(item.artUrl) } : null;
     }),
-    albums: list(raw.albums, item => {
+    albums: list(raw.albums as unknown[], item => {
       const key = id(item.id), title = text(item.title);
       return key && title ? { id: key, title, artist: text(item.artist), artistId: id(item.artistId), year: text(item.year, 4), artUrl: art(item.artUrl) } : null;
     }),

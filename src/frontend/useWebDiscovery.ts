@@ -7,7 +7,7 @@ import type { DiscoveryArtist, DiscoveryFocus } from './connection-web';
 export function useWebDiscovery(journey: string[]) {
   const key = JSON.stringify(journey);
   const [artists, setArtists] = useState<DiscoveryArtist[]>([]);
-  const [base, setBase] = useState<{ key: string; failed: string[]; error?: Error }>({ key: '', failed: [] });
+  const [base, setBase] = useState<{ key: string; failed: string[] }>({ key: '', failed: [] });
   const [attempt, setAttempt] = useState(0);
   const [focused, setFocused] = useState({ pending: 0, failed: [] as string[], error: '' });
   const counts = useRef(new Map<string, number>());
@@ -17,13 +17,14 @@ export function useWebDiscovery(journey: string[]) {
   useEffect(() => {
     if (!journey.length) return;
     let active = true;
-    discoverWebArtists(JSON.parse(key)).then(result => {
+    // Never rejects: each style's search settles alone, and the ones that failed are listed.
+    void discoverWebArtists(JSON.parse(key)).then(result => {
       if (!active) return;
       // Initial breadth stays small; every zoom-in adds additional local matches.
       const first = journey.flatMap(genre => result.artists.filter(a => a.neighborhood === genre).slice(0, 3));
       setArtists(previous => mergeDiscoveryArtists(previous, first));
       setBase({ key, failed: result.failed });
-    }, error => { if (active) setBase({ key, failed: [], error: error instanceof Error ? error : new Error(String(error)) }); });
+    });
     return () => { active = false; };
     // The serialized journey is the stable identity of this request.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -37,14 +38,16 @@ export function useWebDiscovery(journey: string[]) {
     try {
       const result = await artistNeighborhood(focus.artistId);
       if (!alive.current) return;
-      const count = counts.current.get(focus.artistId) ?? 10;
+      // Set above; a retry repeats an expansion that set it.
+      const count = counts.current.get(focus.artistId)!;
       const additions: DiscoveryArtist[] = result.artists.slice(0, count).map(a => ({ ...a,
         neighborhood: a.tags[0] ?? 'Related artist', originId: focus.artistId, focus: { x: focus.x, y: focus.y }, discoveryZoom: Math.max(1, zoom),
       }));
       setArtists(previous => mergeDiscoveryArtists(previous, additions));
       setFocused(previous => ({ ...previous, failed: result.failed }));
     } catch (error) {
-      if (alive.current) setFocused(previous => ({ ...previous, error: error instanceof Error ? error.message : 'Discovery failed.' }));
+      // The API client only throws Errors.
+      if (alive.current) setFocused(previous => ({ ...previous, error: (error as Error).message }));
     } finally {
       if (alive.current) setFocused(previous => ({ ...previous, pending: Math.max(0, previous.pending - 1) }));
     }
@@ -52,7 +55,6 @@ export function useWebDiscovery(journey: string[]) {
   const retry = () => { setAttempt(a => a + 1); if (lastFocus.current) void expand(lastFocus.current.focus, lastFocus.current.zoom, true); };
   return { artists, expand, retry,
     loading: !!journey.length && base.key !== key || focused.pending > 0,
-    partial: !!base.failed.length || !!base.error || !!focused.failed.length || !!focused.error,
-    error: focused.error || base.error?.message,
+    partial: !!base.failed.length || !!focused.failed.length || !!focused.error,
   };
 }

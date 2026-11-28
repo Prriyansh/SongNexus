@@ -4,7 +4,7 @@ import { ArrowLeft, Check, ChevronLeft, ChevronRight, Disc3, Music2, Plus, Searc
 import type { Artist, Song } from '@/lib/types';
 import { artistDetails, searchArtists, searchSongs } from '../api';
 import { allGenres, familyOf } from '../genres';
-import { artistSubtitle, capitalize, colorFor, recentAlbums, songArtists, yearOf, firstRelease } from '../model';
+import { artistSubtitle, capitalize, colorFor, errorText, recentAlbums, songArtists, yearOf, firstRelease } from '../model';
 import { albumSnapshot, artistSnapshot, songSnapshot } from '../profile';
 import type { MusicProfile, SavedAlbum, SavedArtist, SavedSong } from '../profile';
 import { rankSearchResults } from '../search-ranking';
@@ -62,7 +62,7 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
       const request = category === 'song' ? searchSongs(q, controller.signal) : searchArtists(q, controller.signal);
       request.then(
         (items: (Artist | Song)[]) => { if (!controller.signal.aborted) setFound({ key: searchKey, items }); },
-        error => { if (!controller.signal.aborted) setFound({ key: searchKey, error: error instanceof Error ? error.message : 'Search failed.' }); }
+        error => { if (!controller.signal.aborted) setFound({ key: searchKey, error: errorText(error, 'Search failed.') }); }
       );
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };
@@ -95,7 +95,8 @@ export function AboutMe({ onSelect, profile, onProfileChange, readOnly = false, 
   }
   const pages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
   const loading = searching || (category === 'album' && albums.loading);
-  const failure = found.key === searchKey ? found.error : category === 'album' ? albums.error?.message : undefined;
+  // The search failing, or (for albums) the chosen artist's albums failing once the search worked.
+  const failure = (found.key === searchKey ? found.error : undefined) ?? (category === 'album' ? albums.error?.message : undefined);
   const selectedCount = category === 'genre' ? profile.genres.length : profile[`${category}s` as 'artists' | 'songs' | 'albums'].length;
 
   const importSongs = (matched: Song[]) => {

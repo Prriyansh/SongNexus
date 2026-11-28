@@ -32,18 +32,16 @@ const Bars = ({ a, b }: { a: number; b?: number }) =>
 const Row = ({ name, a, b }: { name: string; a: ReactNode; b: ReactNode }) =>
   <div className="comparison-row"><span>{name}</span><div className="comparison-cell"><p>{a}</p></div><div className="comparison-cell"><p>{b}</p></div></div>;
 
-/** Why there's no analysis, in a sentence; null while loading or when there is data. */
-export function soundUnavailableText(sound: SoundState, titles: [string, string]): string | null {
-  const result = sound.data;
-  if (sound.error) return `The sound and lyrics comparison failed: ${sound.error.message}`;
+/** Why there's no analysis, in a sentence; null while it loads. */
+export function soundUnavailableText(error: Error | undefined, result: Exclude<SoundResult, { status: 'ok' }> | undefined, titles: [string, string]): string | null {
+  if (error) return `The sound and lyrics comparison failed: ${error.message}`;
   if (!result) return null;
   if (result.status === 'not-found') {
     const names = result.missing.map(side => `“${titles[side === 'a' ? 0 : 1]}”`).join(' and ');
     return `${names} ${result.missing.length > 1 ? 'aren’t' : 'isn’t'} in the song library (Spotify tracks up to 2022), so there’s no sound and lyrics analysis for this pair. Pick songs with the search above to see it.`;
   }
   if (result.status === 'same-track') return 'Both are the same track in the song library, so there’s nothing to compare.';
-  if (result.status === 'unavailable') return `The sound and lyrics analysis isn’t available right now.${'hint' in result && result.hint ? ` ${result.hint}` : ''}`;
-  return null;
+  return `The sound and lyrics analysis isn’t available right now.${result.hint ? ` ${result.hint}` : ''}`;
 }
 
 /** The overall match, sound and lyric scores, reasons, and shared credits. */
@@ -146,15 +144,16 @@ export function SongAnalysis({ sound, songs, onPickSimilar, busyId, pickError }:
   pickError?: string;
 }) {
   const titles: [string, string] = [songs[0].title, songs[1].title];
-  if (sound.data?.status !== 'ok') {
-    const why = soundUnavailableText(sound, titles);
+  const result = sound.data;
+  if (result?.status !== 'ok') {
+    const why = soundUnavailableText(sound.error, result, titles);
     return <section className="panel match-panel" aria-busy={sound.loading}>
       <Title title="Listen for the similarities." />
       {why ? <p className="analysis-missing">{why}</p> : <><p className="loading-text">Measuring their sound and lyrics…</p><div className="skeleton-lines"><span /><span /><span /></div></>}
       {sound.error && <button className="secondary-button" onClick={sound.retry}>Try again</button>}
     </section>;
   }
-  const { comparison: c, similar } = sound.data;
+  const { comparison: c, similar } = result;
   return <div className="song-analysis">
     <MatchPanel c={c} />
     <div className="content-columns"><SoundPanel c={c} titles={titles} /><StructurePanel c={c} titles={titles} /></div>
