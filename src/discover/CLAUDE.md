@@ -18,6 +18,7 @@ the app's sidebar. It imports nothing from `src/frontend` or `src/lib`. The one 
 | `/discover/games/[game]` | `connect`, `credits` or `link` for a day (`day`, `2026-11-28`; today without it) |
 | `/discover/library` | Listening from ListenBrainz, Last.fm or Deezer, and Your Nexus |
 | `/discover/friends` | Friend paths: your artists as a link; opened with a friend's (`with`, `name`), the paths between |
+| `/discover/around` | Around You: campus and country charts from members who share (`c`, `campus:wisc.edu` or `country:SE`) |
 | `/discover/you` | Your account (sign in with Google), Top 5, hidden artists, and your data |
 | `/discover/artist/[id]`, `/song/[id]`, `/label/[id]` | By MusicBrainz ID, so links work across the app |
 | `/discover/genre/[id]` | By genre slug |
@@ -38,7 +39,9 @@ needs `LASTFM_API_KEY`) and `nexus` answers how artists hang together (with `the
 friend's). `account` (who is signed in; DELETE deletes the account), `account/session` (POST signs in
 with Google's ID token, DELETE signs out) and `account/data` (PUT saves synced data) need
 `GOOGLE_CLIENT_ID`, `SESSION_SECRET` (32+ characters) and Redis; without them they answer 503 and
-You keeps everything in the browser.
+You keeps everything in the browser. `communities` shows any community's chart to anyone; joining
+(POST, sharing up to 25 artists) and leaving (DELETE) need sign-in, and a campus only takes accounts
+from its own Google Workspace domain.
 
 ## Files
 
@@ -73,6 +76,9 @@ You keeps everything in the browser.
   their name, photo and workplace domain are kept, never an email. `lib/accounts.ts` — accounts in
   storage. `lib/account-data.ts` — what is synced (game results, hidden artists, Top 5, services) and
   how a browser's data merges with an account's (safe for the browser).
+- `lib/communities.ts` — Around You: memberships, charts (locked until 5 members share; only artists
+  2+ members named), daily snapshots and the weekly recap. Deleting an account leaves every
+  community. `lib/places.ts` — the countries to look around (safe for the browser).
 - `lib/collaborations.ts`, `lib/credits.ts` — who worked with whom, on what.
 - `lib/search.ts` — names. `lib/match.ts` — marking what matched. `lib/browse.ts` — ways in.
 - `lib/words.ts` — facts as sentences. `lib/metadata.ts` — titles, descriptions and link previews.
@@ -86,7 +92,7 @@ You keeps everything in the browser.
   `ConnectGame`, `QuizGame`, `Leaderboard` and `GameProgress` (badges and stats) are the games.
   `Library` and `FriendPaths` read the connected services through `useListening`. `You` is the You
   page; `AccountSync` (in the shell when sign-in is set up) merges an account's data in and saves
-  changes. `api.ts` — the
+  changes. `AroundYou` is the Around You page. `api.ts` — the
   browser's only calls.
 - `discover.css` — every class starts with `dx-`. `__tests__/`.
 
@@ -108,7 +114,8 @@ what the browser keeps and the home page's personal parts. `games` covers making
 checking answers, results, storage and leaderboards; `games-routes`, `games-pages` and `games-ui`
 cover the routes, the pages and playing. `library`, `library-ui` and `library-pages` cover listening,
 Your Nexus and Friend paths. `auth` (with real signed tokens from `token.ts`), `accounts`,
-`account-ui` and `account-pages` cover signing in, sessions, syncing and the You page.
+`account-ui` and `account-pages` cover signing in, sessions, syncing and the You page. `communities`, `around-ui` and `around-pages`
+cover Around You.
 `dom.tsx`, `render.tsx`, `fixture.ts` and `world.ts` are helpers.
 
 Beside them: `e2e/` (a real browser; see its guide) and `scripts/discover/test_export_catalog.py`

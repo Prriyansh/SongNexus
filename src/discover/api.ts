@@ -118,3 +118,22 @@ export const signIn = (credential: string) => send<{ person: Signed; synced: Syn
 export const signOut = () => send<{ signedOut: true }>("account/session", "DELETE");
 export const saveSynced = (synced: Synced) => send<{ synced: Synced }>("account/data", "PUT", synced);
 export const deleteAccount = () => send<{ deleted: true }>("account", "DELETE");
+
+export type Moved = { artist: ArtistRef; from: number; to: number };
+export type CommunityView = {
+  id: string;
+  kind: "campus" | "country";
+  name: string;
+  members: number;
+  sharing: number;
+  needed: number;
+  chart: { artist: ArtistRef; members: number }[];
+  recap: { rose: Moved[]; fell: Moved[]; entered: ArtistRef[]; left: ArtistRef[] } | null;
+  joined: boolean;
+};
+
+export const communities = (signal?: AbortSignal) =>
+  getJson<{ joined: CommunityView[]; campus: string | null; signedIn: boolean }>("communities", {}, signal);
+export const community = (id: string, signal?: AbortSignal) => getJson<CommunityView>("communities", { id }, signal);
+export const joinCommunity = (id: string, artists: string[]) => send<CommunityView>("communities", "POST", { id, artists });
+export const leaveCommunity = (id: string) => send<{ left: string }>(`communities?id=${encodeURIComponent(id)}`, "DELETE");

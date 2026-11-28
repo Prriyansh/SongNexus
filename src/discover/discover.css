@@ -2097,3 +2097,13 @@ ul.dx-top {
   top: 0;
   right: 0;
 }
+
+/* Around You */
+.dx-recap h3 {
+  margin: 14px 0 6px;
+}
+.dx-recap li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

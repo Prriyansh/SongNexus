@@ -10,6 +10,8 @@ export type Store = {
   del: (key: string) => Promise<void>;
   /** Adds a member to a ranked list (lower scores first) unless it is there. False if it was. */
   rankNew: (key: string, member: string, score: number, ttlSeconds: number) => Promise<boolean>;
+  /** Takes a member out of a ranked list. */
+  unrank: (key: string, member: string) => Promise<void>;
   /** The first `count` members, with their scores. */
   top: (key: string, count: number) => Promise<[member: string, score: number][]>;
   size: (key: string) => Promise<number>;
@@ -51,6 +53,7 @@ export function memoryStore(now: () => number = Date.now): Store {
       data.set(key, { value: list.set(member, score), expires: now() + ttl * 1000 });
       return true;
     },
+    unrank: async (key, member) => void (live(key)?.value as Map<string, number> | undefined)?.delete(member),
     top: async (key, count) => ranked(key).slice(0, count),
     size: async (key) => ranked(key).length,
     place: async (key, member) => {
@@ -81,6 +84,7 @@ export function redisStore(url: string, token: string, fetchImpl: typeof fetch =
       await command(["EXPIRE", key, ttl]);
       return added === 1;
     },
+    unrank: async (key, member) => void (await command(["ZREM", key, member])),
     top: async (key, count) => {
       const flat = await command<string[]>(["ZRANGE", key, 0, count - 1, "WITHSCORES"]);
       return Array.from({ length: flat.length / 2 }, (_, i) => [flat[2 * i], Number(flat[2 * i + 1])]);

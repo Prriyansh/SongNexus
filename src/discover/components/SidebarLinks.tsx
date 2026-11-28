@@ -1,4 +1,4 @@
-import { BookOpen, Gamepad2, Library, MessageCircleQuestion, Route, Search, Spline, UserRound, Waypoints } from "lucide-react";
+import { BookOpen, Gamepad2, Library, MapPin, MessageCircleQuestion, Route, Search, Spline, UserRound, Waypoints } from "lucide-react";
 
 /** Discover's entries in the sidebar, after the app's own four. */
 export const DISCOVER_LINKS = [
@@ -10,6 +10,7 @@ export const DISCOVER_LINKS = [
   { href: "/discover/games", label: "Games", Icon: Gamepad2 },
   { href: "/discover/library", label: "Library", Icon: Library },
   { href: "/discover/friends", label: "Friend paths", Icon: Route },
+  { href: "/discover/around", label: "Around You", Icon: MapPin },
   { href: "/discover/you", label: "You", Icon: UserRound },
 ] as const;
 

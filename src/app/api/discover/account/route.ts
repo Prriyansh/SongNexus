@@ -1,5 +1,6 @@
 import { authConfig, sessionCookie } from "@/discover/lib/auth";
 import { deleteAccount, readAccount } from "@/discover/lib/accounts";
+import { leaveAll } from "@/discover/lib/communities";
 import { ready, refuse, reply } from "./shared";
 
 // Who is signed in, and their synced data: { enabled, person, synced }.
@@ -13,11 +14,12 @@ export async function GET(request: Request) {
   return reply({ enabled: true, person: { name, picture, domain }, synced: account?.synced ?? null });
 }
 
-// Deletes the signed-in account and everything synced to it, and signs out.
+// Deletes the signed-in account, everything synced to it and its communities, and signs out.
 export async function DELETE(request: Request) {
   const found = ready(request, true);
   if (found instanceof Response) return found;
   if (!found.person) return refuse(401, "Sign in first.");
+  await leaveAll(found.store, found.person.sub);
   await deleteAccount(found.store, found.person.sub);
   return reply({ deleted: true }, 200, { "Set-Cookie": sessionCookie(null) });
 }
