@@ -14,6 +14,8 @@ the app's sidebar. It imports nothing from `src/frontend` or `src/lib`. The one 
 | `/discover/connections` | Collaborators: one artist's web of who they worked with (`artist`, `via`, `open`) |
 | `/discover/stories` | Stories found in the credits, one at a time (`story`, counting from 1) |
 | `/discover/ask` | A question in plain words, answered from the credits (`q`) |
+| `/discover/games` | Today's three games, your streak and totals, and the archive |
+| `/discover/games/[game]` | `connect`, `credits` or `link` for a day (`day`, `2026-11-28`; today without it) |
 | `/discover/artist/[id]`, `/song/[id]`, `/label/[id]` | By MusicBrainz ID, so links work across the app |
 | `/discover/genre/[id]` | By genre slug |
 
@@ -24,7 +26,11 @@ visit, so that one answers 200, and 404 after).
 
 API routes are in `src/app/api/discover/`: `search`, `neighborhood`, `reasons`, `for-you` (picks for
 favourite artists and genres) and `today` (the day's story, the same for everyone until midnight UTC).
-They answer from the catalog file, so they need no keys and call no other service.
+They answer from the catalog file, so they need no keys and call no other service. The games' routes are
+in `games/`: `step` (one Connect step), `answer` (one quiz answer), `score` (a finished game onto the
+day's leaderboard, the score worked out from its answers) and `board` (a day's leaderboard). Leaderboards
+need Redis (`KV_REST_API_URL`/`TOKEN` or `UPSTASH_REDIS_REST_URL`/`TOKEN`) in production; without it
+they answer 503 and the games still work.
 
 ## Files
 
@@ -42,6 +48,14 @@ They answer from the catalog file, so they need no keys and call no other servic
   to more of them first, each with the favourite and credit behind it), then the best-known artists
   of favourite genres. `lib/stored.ts` — what the browser keeps: About Me's favourites (read, never
   written), recently opened artists and hidden artists, all checked when read.
+- `lib/games.ts` — the daily games, the same for everyone each day (a fixed shuffle seeded by the day):
+  Connect (two well-known artists 3–4 steps apart), Credit check (five questions on who produced,
+  is featured on or played on a song) and The missing link (three pairs with exactly one person who
+  worked with both). Answers are checked on the server; the answer key never reaches the browser.
+  `lib/game-info.ts` — names, rules and the results kept in this browser (safe for the browser).
+  `lib/leaderboard.ts` — a day's board per game, lower scores first, ties by who finished first.
+  `lib/store.ts` — Redis or memory storage. `lib/days.ts` — day numbers (UTC) and launch day.
+  `lib/random.ts` — the fixed shuffle.
 - `lib/collaborations.ts`, `lib/credits.ts` — who worked with whom, on what.
 - `lib/search.ts` — names. `lib/match.ts` — marking what matched. `lib/browse.ts` — ways in.
 - `lib/words.ts` — facts as sentences. `lib/metadata.ts` — titles, descriptions and link previews.
@@ -51,8 +65,9 @@ They answer from the catalog file, so they need no keys and call no other servic
 - `components/parts.tsx` — shared pieces; `useWeb.ts` (state and motion), `WebCanvas.tsx` (drawing) and
   `ConnectionExplorer.tsx` (the page around them) are the web. `StoryKeys.tsx` moves between stories
   (arrow keys, swipes). `TodayCard`, `ForYouShelf` and `RecentShelf` are the home page's personal
-  parts, read in the browser (`useStored`); `RememberVisit` notes each artist page opened. `api.ts` —
-  the browser's only calls.
+  parts, read in the browser (`useStored`); `RememberVisit` notes each artist page opened.
+  `ConnectGame`, `QuizGame`, `Leaderboard` and `GameProgress` (badges and stats) are the games. `api.ts`
+  — the browser's only calls.
 - `discover.css` — every class starts with `dx-`. `__tests__/`.
 
 ## Tests
@@ -69,7 +84,9 @@ line and branch is tested. `stories` finds each kind of story in a made-up catal
 example question gets a real answer); `ask-page` renders each kind of answer; `ask-ui` covers asking
 from the search box.
 `for-you` covers the picks on made-up catalogs and the `for-you` and `today` routes; `home-ui` covers
-what the browser keeps and the home page's personal parts.
+what the browser keeps and the home page's personal parts. `games` covers making each day's games,
+checking answers, results, storage and leaderboards; `games-routes`, `games-pages` and `games-ui`
+cover the routes, the pages and playing.
 `dom.tsx`, `render.tsx`, `fixture.ts` and `world.ts` are helpers.
 
 Beside them: `e2e/` (a real browser; see its guide) and `scripts/discover/test_export_catalog.py`

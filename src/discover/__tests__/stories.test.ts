@@ -5,13 +5,13 @@ import { graph } from "../lib/server";
 import {
   findStories,
   MAX_PER_KIND,
-  shuffled,
   stories,
   storyNumber,
   storyOfDay,
   type StoryKind,
 } from "../lib/stories";
 import { storyHref } from "../lib/links";
+import { shuffled } from "../lib/random";
 import { reasonOf } from "../lib/words";
 import { songsBy, world, type WorldSpec } from "./world";
 

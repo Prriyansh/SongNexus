@@ -58,3 +58,28 @@ export function forYouQuery(favourites: { artists: string[]; genres: string[] },
   if (hidden.length) params.set("hidden", hidden.join(","));
   return params;
 }
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`/api/discover/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = (await response.json().catch(() => ({}))) as T & { error?: string };
+  if (!response.ok) throw new Error(data.error ?? `Discover ${path} failed (${response.status})`);
+  return data;
+}
+
+export const step = (day: number, from: string, guess: string) =>
+  postJson<{ linked: boolean; reason: Reason | null; reached: boolean }>("games/step", { day, from, guess });
+
+export const checkAnswer = (game: string, day: number, question: number, choice: string) =>
+  postJson<{ correct: boolean; answer: ArtistRef; proof: Reason[] }>("games/answer", { game, day, question, choice });
+
+export type Board = { entries: { name: string; score: number }[]; total: number; mine: number | null };
+
+export const submitScore = (game: string, day: number, player: string, name: string, answers: string[]) =>
+  postJson<{ score: number; added: boolean; place: number; total: number }>("games/score", { game, day, player, name, answers });
+
+export const board = (game: string, day: number, player: string | null, signal?: AbortSignal) =>
+  getJson<Board>("games/board", { game, day: String(day), ...(player ? { player } : {}) }, signal);

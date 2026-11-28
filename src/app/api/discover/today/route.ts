@@ -1,11 +1,7 @@
 import { connection } from "next/server";
+import { DAY_MS, dayNumber } from "@/discover/lib/days";
 import { graph } from "@/discover/lib/server";
 import { stories, storyOfDay } from "@/discover/lib/stories";
-
-const DAY_MS = 86_400_000;
-
-/** Days since 1 January 1970, in UTC: one number per day, the same everywhere. */
-export const dayNumber = (now: number) => Math.floor(now / DAY_MS);
 
 // Today's pick, the same for everyone until midnight UTC.
 export async function GET() {

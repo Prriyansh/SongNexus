@@ -10,7 +10,8 @@ vi.mock("@/discover/lib/stories", async (actual) => {
 });
 
 import { GET as forYouRoute } from "@/app/api/discover/for-you/route";
-import { dayNumber, GET as todayRoute } from "@/app/api/discover/today/route";
+import { GET as todayRoute } from "@/app/api/discover/today/route";
+import { dayNumber } from "../lib/days";
 import { forYou, genreIndex, PICKS } from "../lib/for-you";
 import { normalize, searchCatalog } from "../lib/search";
 import { graph } from "../lib/server";
