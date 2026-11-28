@@ -1,6 +1,6 @@
 // What every page owes its readers: accessible, fits, quick, and well described.
 import AxeBuilder from "@axe-core/playwright";
-import { ABBA, expect, NOBODY, SIX, test, WEB } from "./page.mjs";
+import { ABBA, expect, KENDRICK, NOBODY, SIX, TAYLOR, test, WEB } from "./page.mjs";
 
 const PAGES = [
   ["home", "/discover"],
@@ -12,6 +12,21 @@ const PAGES = [
   ["a song", "/discover/song/bfdcfb41-167c-4f5b-b163-bde83bbf69ac"],
   ["a label", "/discover/label/011d1192-6f65-45bd-85c4-0400dd45693e"],
   ["a genre", "/discover/genre/pop"],
+  ["stories", "/discover/stories"],
+  ["a story", "/discover/stories?story=2"],
+  ["ask", "/discover/ask"],
+  ["an answer", "/discover/ask?q=Who%20produced%20Umbrella%3F"],
+  ["a question it can't answer", "/discover/ask?q=what%20is%20the%20meaning%20of%20life"],
+  ["games", "/discover/games"],
+  ["connect", "/discover/games/connect"],
+  ["credit check", "/discover/games/credits"],
+  ["the missing link", "/discover/games/link"],
+  ["library", "/discover/library"],
+  ["friend paths", "/discover/friends"],
+  ["a friend's link", `/discover/friends?with=${TAYLOR},${KENDRICK}&name=Sam`],
+  ["around you", "/discover/around"],
+  ["a country", "/discover/around?c=country:SE"],
+  ["you", "/discover/you"],
 ];
 const RULES = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"];
 
@@ -56,6 +71,8 @@ test("controls are big enough to touch", async ({ page, isMobile }) => {
 });
 
 test("pages stay light", async ({ page }) => {
+  // It visits every page, so it gets more than one page's time.
+  test.setTimeout(PAGES.length * 10_000);
   for (const [name, address] of PAGES) {
     let script = 0;
     const count = async (response) => {

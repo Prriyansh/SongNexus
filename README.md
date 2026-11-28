@@ -16,7 +16,8 @@ npm run dev
 
 Then open <http://localhost:3000>.
 
-Everything runs without keys. These optional environment variables (in `.env.local`, or Vercel's
+Everything runs without keys. `/api/health` shows which features a deployment has switched on and
+what it is set up wrong for (never a secret); see `docs/alpha-readiness.md` before a release. These optional environment variables (in `.env.local`, or Vercel's
 settings) add more; each page says which sources were checked or what isn't set up.
 
 | Variable | Adds | Without it |

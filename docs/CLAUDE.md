@@ -7,6 +7,8 @@ Documentation, not application code. Nothing here is built, served or tested.
 - `CLAUDE.md` — this guide.
 - `architecture.md` — how the app works: frontend overview, data sources, comparison features,
   rate limiting and caching. Keep it current when those change (unlike the folders below).
+- `alpha-readiness.md` — before a release: the settings in Vercel, how to check a deployment
+  (`/api/health`), what CI holds, the safeguards, the alpha's known limits, and rolling back.
 
 ## Folders
 

@@ -119,6 +119,14 @@ layer ([`src/lib/musicbrainz.ts`](../src/lib/musicbrainz.ts)) mitigates this wit
 > amount of latency/cost, so it is recommended only if rate-limit errors persist
 > in production.
 
+Visitors are limited too. Discover's routes that write or call outside services
+(game steps and scores, sign-in and saves, communities, Library's listening reads,
+Your Nexus, and AI readings in Ask) allow each address so many requests an hour
+([`src/discover/lib/limits.ts`](../src/discover/lib/limits.ts)) and answer 429 with
+`Retry-After` past that. The counts live in Redis when it is configured (so they
+are shared across instances), and per instance otherwise. AI search also has a
+daily cap and remembers readings. `docs/alpha-readiness.md` lists every limit.
+
 ## Hosting
 
 The app deploys to Vercel as-is (see the README). Notes for a public deployment:

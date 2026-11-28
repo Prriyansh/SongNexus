@@ -28,6 +28,8 @@ export default defineConfig({
     cwd: "..",
     url: `http://127.0.0.1:${port}/discover`,
     reuseExistingServer: !process.env.CI,
+    // Leaderboards, accounts and Around You keep their data in memory: one server, no Redis.
+    env: { SONG_NEXUS_MEMORY_STORE: "1" },
     timeout: 60_000,
   },
 });
